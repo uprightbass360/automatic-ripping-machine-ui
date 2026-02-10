@@ -1,0 +1,190 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { fetchJobs } from '$lib/api/jobs';
+	import type { Job, JobListResponse } from '$lib/types/arm';
+	import JobCard from '$lib/components/JobCard.svelte';
+	import JobRow from '$lib/components/JobRow.svelte';
+	import StatusBadge from '$lib/components/StatusBadge.svelte';
+
+	let data = $state<JobListResponse | null>(null);
+	let error = $state<string | null>(null);
+	let loading = $state(true);
+
+	let page = $state(1);
+	let perPage = $state(25);
+	let statusFilter = $state('');
+	let videoTypeFilter = $state('');
+	let searchQuery = $state('');
+	let viewMode = $state<'card' | 'table'>('table');
+
+	let searchTimeout: ReturnType<typeof setTimeout>;
+
+	async function load() {
+		loading = true;
+		error = null;
+		try {
+			data = await fetchJobs({
+				page,
+				per_page: perPage,
+				status: statusFilter || undefined,
+				search: searchQuery || undefined,
+				video_type: videoTypeFilter || undefined
+			});
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to load jobs';
+		} finally {
+			loading = false;
+		}
+	}
+
+	function onSearch(e: Event) {
+		const val = (e.target as HTMLInputElement).value;
+		clearTimeout(searchTimeout);
+		searchTimeout = setTimeout(() => {
+			searchQuery = val;
+			page = 1;
+			load();
+		}, 300);
+	}
+
+	function setFilter(type: 'status' | 'videoType', value: string) {
+		if (type === 'status') statusFilter = value;
+		else videoTypeFilter = value;
+		page = 1;
+		load();
+	}
+
+	function goPage(p: number) {
+		page = p;
+		load();
+	}
+
+	onMount(() => {
+		load();
+	});
+</script>
+
+<svelte:head>
+	<title>Jobs - ARM UI</title>
+</svelte:head>
+
+<div class="space-y-4">
+	<div class="flex flex-wrap items-center justify-between gap-4">
+		<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Jobs</h1>
+		<div class="flex gap-2">
+			<button
+				onclick={() => viewMode = 'table'}
+				class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}"
+			>Table</button>
+			<button
+				onclick={() => viewMode = 'card'}
+				class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'card' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}"
+			>Cards</button>
+		</div>
+	</div>
+
+	<!-- Filters -->
+	<div class="flex flex-wrap gap-3">
+		<input
+			type="text"
+			placeholder="Search titles..."
+			oninput={onSearch}
+			class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+		/>
+		<select
+			value={statusFilter}
+			onchange={(e) => setFilter('status', (e.target as HTMLSelectElement).value)}
+			class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+		>
+			<option value="">All Statuses</option>
+			<option value="active">Active</option>
+			<option value="ripping">Ripping</option>
+			<option value="transcoding">Transcoding</option>
+			<option value="success">Success</option>
+			<option value="fail">Failed</option>
+		</select>
+		<select
+			value={videoTypeFilter}
+			onchange={(e) => setFilter('videoType', (e.target as HTMLSelectElement).value)}
+			class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+		>
+			<option value="">All Types</option>
+			<option value="movie">Movie</option>
+			<option value="series">Series</option>
+			<option value="music">Music</option>
+		</select>
+	</div>
+
+	{#if error}
+		<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+			{error}
+		</div>
+	{:else if loading}
+		<div class="py-8 text-center text-gray-400">Loading...</div>
+	{:else if data}
+		{#if viewMode === 'table'}
+			<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+				<table class="w-full text-left text-sm">
+					<thead class="bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+						<tr>
+							<th class="px-4 py-3 font-medium">Title</th>
+							<th class="px-4 py-3 font-medium">Year</th>
+							<th class="px-4 py-3 font-medium">Status</th>
+							<th class="px-4 py-3 font-medium">Type</th>
+							<th class="px-4 py-3 font-medium">Disc</th>
+							<th class="px-4 py-3 font-medium">Device</th>
+							<th class="px-4 py-3 font-medium">Started</th>
+							<th class="px-4 py-3 font-medium">Actions</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+						{#each data.jobs as job (job.job_id)}
+							<JobRow {job} onaction={load} />
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{:else}
+			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				{#each data.jobs as job (job.job_id)}
+					<JobCard {job} />
+				{/each}
+			</div>
+		{/if}
+
+		<!-- Pagination -->
+		{#if data.pages > 1}
+			<div class="flex items-center justify-between">
+				<p class="text-sm text-gray-500 dark:text-gray-400">
+					Showing {(data.page - 1) * data.per_page + 1}–{Math.min(data.page * data.per_page, data.total)} of {data.total}
+				</p>
+				<div class="flex gap-1">
+					<button
+						disabled={data.page <= 1}
+						onclick={() => goPage(data!.page - 1)}
+						class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+					>Prev</button>
+					{#each Array.from({ length: data.pages }, (_, i) => i + 1) as p}
+						{#if p === data.page || p === 1 || p === data.pages || Math.abs(p - data.page) <= 1}
+							<button
+								onclick={() => goPage(p)}
+								class="rounded px-3 py-1 text-sm {p === data.page ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-300'}"
+							>{p}</button>
+						{:else if Math.abs(p - data.page) === 2}
+							<span class="px-1 text-gray-400">...</span>
+						{/if}
+					{/each}
+					<button
+						disabled={data.page >= data.pages}
+						onclick={() => goPage(data!.page + 1)}
+						class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+					>Next</button>
+				</div>
+			</div>
+		{/if}
+
+		{#if data.jobs.length === 0}
+			<p class="py-8 text-center text-gray-400">No jobs found.</p>
+		{/if}
+	{/if}
+</div>

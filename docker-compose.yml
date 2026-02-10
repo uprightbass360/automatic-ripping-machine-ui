@@ -1,0 +1,15 @@
+services:
+  arm-ui:
+    build: .
+    ports:
+      - "8888:8888"
+    environment:
+      - ARM_UI_ARM_DB_PATH=/data/arm.db
+      - ARM_UI_ARM_LOG_PATH=/data/logs
+      - ARM_UI_ARM_URL=http://192.168.0.92:8080
+      - ARM_UI_TRANSCODER_URL=http://192.168.0.92:5000
+      - ARM_UI_TRANSCODER_API_KEY=
+    volumes:
+      - /home/upb/local-storage/arm/db/arm.db:/data/arm.db:ro
+      - /nfs/files/Containers/arm/logs:/data/logs:ro
+    restart: unless-stopped
