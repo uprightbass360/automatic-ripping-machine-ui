@@ -1,4 +1,4 @@
-import type { JobDetail, JobListResponse } from '$lib/types/arm';
+import type { JobDetail, JobListResponse, MediaDetail, SearchResult, TitleUpdate } from '$lib/types/arm';
 import { apiFetch } from './client';
 
 export function fetchJobs(params?: {
@@ -32,4 +32,21 @@ export function deleteJob(id: number): Promise<unknown> {
 
 export function fixJobPermissions(id: number): Promise<unknown> {
 	return apiFetch(`/api/jobs/${id}/fix-permissions`, { method: 'POST' });
+}
+
+export function searchMetadata(query: string, year?: string): Promise<SearchResult[]> {
+	const params = new URLSearchParams({ q: query });
+	if (year) params.set('year', year);
+	return apiFetch<SearchResult[]>(`/api/metadata/search?${params}`);
+}
+
+export function fetchMediaDetail(imdbId: string): Promise<MediaDetail> {
+	return apiFetch<MediaDetail>(`/api/metadata/${imdbId}`);
+}
+
+export function updateJobTitle(jobId: number, data: Partial<TitleUpdate>): Promise<unknown> {
+	return apiFetch(`/api/jobs/${jobId}/title`, {
+		method: 'PUT',
+		body: JSON.stringify(data)
+	});
 }

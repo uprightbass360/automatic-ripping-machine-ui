@@ -60,6 +60,8 @@ class JobSchema(BaseModel):
     disctype: str | None = None
     label: str | None = None
     path: str | None = None
+    raw_path: str | None = None
+    transcode_path: str | None = None
     ejected: bool | None = None
     pid: int | None = None
 
@@ -175,4 +177,35 @@ class LogContentResponse(BaseModel):
 
 class SettingsResponse(BaseModel):
     arm_config: dict[str, Any] | None = None
+    arm_metadata: dict[str, Any] | None = None
+    arm_handbrake_presets: list[str] | None = None
     transcoder_config: dict[str, Any] | None = None
+    arm_gpu_support: dict[str, Any] | None = None
+    transcoder_gpu_support: dict[str, Any] | None = None
+    # Deprecated — kept for backward compat; mirrors transcoder_gpu_support
+    gpu_support: dict[str, Any] | None = None
+
+
+# --- Metadata Search Schemas ---
+
+
+class SearchResultSchema(BaseModel):
+    title: str
+    year: str
+    imdb_id: str | None = None
+    media_type: str
+    poster_url: str | None = None
+
+
+class MediaDetailSchema(SearchResultSchema):
+    """Full detail for a single title (distinct from JobDetailSchema)."""
+    plot: str | None = None
+    background_url: str | None = None
+
+
+class TitleUpdateRequest(BaseModel):
+    title: str | None = None
+    year: str | None = None
+    video_type: str | None = None
+    imdb_id: str | None = None
+    poster_url: str | None = None

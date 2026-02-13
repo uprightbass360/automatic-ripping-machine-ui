@@ -6,10 +6,23 @@
 	import type { JobDetail } from '$lib/types/arm';
 	import JobActions from '$lib/components/JobActions.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
+	import TitleSearch from '$lib/components/TitleSearch.svelte';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
 
 	let job = $state<JobDetail | null>(null);
 	let error = $state<string | null>(null);
+	let showTitleSearch = $state(false);
+
+	let isVideoDisc = $derived(
+		job?.disctype === 'dvd' || job?.disctype === 'bluray'
+	);
+
+	let hasAutoManualDiff = $derived(
+		job != null &&
+			job.title_auto != null &&
+			job.title != null &&
+			job.title_auto !== job.title
+	);
 
 	async function loadJob() {
 		const id = Number($page.params.id);
@@ -22,6 +35,11 @@
 			}
 			error = e instanceof Error ? e.message : 'Failed to load job';
 		}
+	}
+
+	function handleTitleApply() {
+		showTitleSearch = false;
+		loadJob();
 	}
 
 	onMount(() => {
@@ -137,6 +155,45 @@
 				{/if}
 			</div>
 		</div>
+
+		<!-- Auto vs Manual title info -->
+		{#if hasAutoManualDiff}
+			<div class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm dark:border-amber-800 dark:bg-amber-900/20">
+				<svg class="h-4 w-4 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+				</svg>
+				<span class="text-amber-800 dark:text-amber-300">
+					Auto-detected: <span class="font-medium">{job.title_auto}{#if job.year_auto} ({job.year_auto}){/if}</span>
+				</span>
+			</div>
+		{/if}
+
+		<!-- Title search / edit -->
+		{#if isVideoDisc}
+			{#if !showTitleSearch}
+				<button
+					onclick={() => (showTitleSearch = true)}
+					class="rounded-lg px-3 py-1.5 text-sm font-medium bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
+				>
+					Search / Edit Title
+				</button>
+			{:else}
+				<section class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+					<div class="mb-3 flex items-center justify-between">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Search / Edit Title</h2>
+						<button
+							onclick={() => (showTitleSearch = false)}
+							class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+						>
+							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+					<TitleSearch {job} onapply={handleTitleApply} />
+				</section>
+			{/if}
+		{/if}
 
 		<!-- Tracks -->
 		{#if job.tracks.length > 0}

@@ -47,6 +47,8 @@ export interface Job {
 	disctype: string | null;
 	label: string | null;
 	path: string | null;
+	raw_path: string | null;
+	transcode_path: string | null;
 	ejected: boolean | null;
 	pid: number | null;
 }
@@ -127,7 +129,47 @@ export interface LogContent {
 	lines: number;
 }
 
+export interface SearchResult {
+	title: string;
+	year: string;
+	imdb_id: string | null;
+	media_type: string;
+	poster_url: string | null;
+}
+
+export interface MediaDetail extends SearchResult {
+	plot: string | null;
+	background_url: string | null;
+}
+
+export interface TitleUpdate {
+	title?: string;
+	year?: string;
+	video_type?: string;
+	imdb_id?: string;
+	poster_url?: string;
+}
+
+export interface TranscoderConfig {
+	config: Record<string, unknown>;
+	updatable_keys: string[];
+	paths?: { raw_path: string; completed_path: string; work_path: string };
+	valid_video_encoders?: string[];
+	valid_audio_encoders?: string[];
+	valid_subtitle_modes?: string[];
+	valid_log_levels?: string[];
+	valid_handbrake_presets?: string[];
+	valid_preset_files?: string[];
+	presets_by_file?: Record<string, string[]>;
+}
+
 export interface SettingsData {
 	arm_config: Record<string, string | null> | null;
-	transcoder_config: Record<string, unknown> | null;
+	arm_metadata: Record<string, string> | null;
+	arm_handbrake_presets: string[] | null;
+	transcoder_config: TranscoderConfig | null;
+	arm_gpu_support: Record<string, boolean> | null;
+	transcoder_gpu_support: Record<string, boolean> | null;
+	/** @deprecated Use transcoder_gpu_support instead */
+	gpu_support: Record<string, boolean> | null;
 }

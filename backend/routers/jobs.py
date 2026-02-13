@@ -1,7 +1,14 @@
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.models.schemas import JobDetailSchema, JobListResponse, JobSchema, TrackSchema
-from backend.services import arm_db
+from backend.models.schemas import (
+    JobDetailSchema,
+    JobListResponse,
+    JobSchema,
+    MediaDetailSchema,
+    SearchResultSchema,
+    TrackSchema,
+)
+from backend.services import arm_db, metadata
 
 router = APIRouter(prefix="/api", tags=["jobs"])
 
@@ -35,3 +42,21 @@ def get_job(job_id: int):
 
     job_data = JobSchema.model_validate(job).model_dump()
     return JobDetailSchema(**job_data, tracks=tracks, config=config)
+
+
+@router.get("/metadata/search", response_model=list[SearchResultSchema])
+async def search_metadata(
+    q: str = Query(..., min_length=1),
+    year: str | None = None,
+):
+    """Search OMDb/TMDb for titles matching the query."""
+    return await metadata.search(q, year)
+
+
+@router.get("/metadata/{imdb_id}", response_model=MediaDetailSchema)
+async def get_media_detail(imdb_id: str):
+    """Fetch full details for a title by IMDb ID."""
+    result = await metadata.get_details(imdb_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Title not found")
+    return result
