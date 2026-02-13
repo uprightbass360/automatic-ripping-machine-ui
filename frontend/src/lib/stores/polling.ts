@@ -7,6 +7,7 @@ export interface PollingStore<T> extends Readable<T> {
 	stop: () => void;
 	readonly loading: Readable<boolean>;
 	readonly error: Readable<string | null>;
+	readonly initialized: Readable<boolean>;
 }
 
 export function createPollingStore<T>(
@@ -17,6 +18,7 @@ export function createPollingStore<T>(
 	const data = writable<T>(initialValue);
 	const loading = writable<boolean>(false);
 	const error = writable<string | null>(null);
+	const initialized = writable<boolean>(false);
 	let timer: ReturnType<typeof setInterval> | null = null;
 	let refreshing = false;
 
@@ -28,6 +30,7 @@ export function createPollingStore<T>(
 			const result = await fetcher();
 			data.set(result);
 			error.set(null);
+			initialized.set(true);
 		} catch (e) {
 			error.set(e instanceof Error ? e.message : 'Unknown error');
 		} finally {
@@ -77,6 +80,7 @@ export function createPollingStore<T>(
 		start,
 		stop,
 		loading: { subscribe: loading.subscribe },
-		error: { subscribe: error.subscribe }
+		error: { subscribe: error.subscribe },
+		initialized: { subscribe: initialized.subscribe }
 	};
 }

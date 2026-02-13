@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { createPollingStore } from '$lib/stores/polling';
 	import { fetchDashboard } from '$lib/api/dashboard';
 	import { fetchJobs } from '$lib/api/jobs';
 	import type { DashboardData, JobListResponse } from '$lib/types/arm';
@@ -9,7 +8,8 @@
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 
-	const emptyDashboard: DashboardData = {
+	// --- Dashboard state (simple $state, no store) ---
+	let dash = $state<DashboardData>({
 		db_available: true,
 		active_jobs: [],
 		system_info: null,
@@ -18,10 +18,19 @@
 		transcoder_online: false,
 		transcoder_stats: null,
 		active_transcodes: []
-	};
+	});
+	let dashReady = $state(false);
+	let dashError = $state<string | null>(null);
 
-	const dashboard = createPollingStore(fetchDashboard, emptyDashboard, 5000);
-	const dashboardError = dashboard.error;
+	async function refreshDashboard() {
+		try {
+			dash = await fetchDashboard();
+			dashReady = true;
+			dashError = null;
+		} catch (e) {
+			dashError = e instanceof Error ? e.message : 'Unknown error';
+		}
+	}
 
 	// --- Jobs section state ---
 	let jobsData = $state<JobListResponse | null>(null);
@@ -78,9 +87,10 @@
 	}
 
 	onMount(() => {
-		dashboard.start();
+		refreshDashboard();
 		loadJobs();
-		return () => dashboard.stop();
+		const timer = setInterval(refreshDashboard, 5000);
+		return () => clearInterval(timer);
 	});
 </script>
 
@@ -92,14 +102,14 @@
 	<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
 
 	<!-- API error (backend unreachable) -->
-	{#if $dashboardError}
+	{#if dashError}
 		<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-			Failed to reach backend: {$dashboardError}
+			Failed to reach backend: {dashError}
 		</div>
 	{/if}
 
 	<!-- Service status banners -->
-	{#if !$dashboard.db_available}
+	{#if dashReady && !dash.db_available}
 		<div class="flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-900/20">
 			<div class="h-3 w-3 flex-shrink-0 rounded-full bg-yellow-500"></div>
 			<div>
@@ -109,7 +119,7 @@
 		</div>
 	{/if}
 
-	{#if !$dashboard.transcoder_online}
+	{#if dashReady && !dash.transcoder_online}
 		<div class="flex items-center gap-3 rounded-lg border border-gray-300 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800">
 			<div class="h-3 w-3 flex-shrink-0 rounded-full bg-gray-400"></div>
 			<div>
@@ -124,76 +134,81 @@
 		<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 			<p class="text-sm text-gray-500 dark:text-gray-400">Active Rips</p>
 			<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-				{$dashboard.db_available ? $dashboard.active_jobs.length : '--'}
+				{dash.db_available ? dash.active_jobs.length : '--'}
 			</p>
 		</div>
 		<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 			<p class="text-sm text-gray-500 dark:text-gray-400">Active Transcodes</p>
 			<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-				{$dashboard.transcoder_online ? $dashboard.active_transcodes.length : '--'}
+				{dashReady ? (dash.transcoder_online ? dash.active_transcodes.length : '--') : '...'}
 			</p>
 		</div>
 		<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 			<p class="text-sm text-gray-500 dark:text-gray-400">Drives Online</p>
 			<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-				{$dashboard.db_available ? $dashboard.drives_online : '--'}
+				{dash.db_available ? dash.drives_online : '--'}
 			</p>
 		</div>
 		<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 			<p class="text-sm text-gray-500 dark:text-gray-400">System</p>
 			<div class="mt-1">
-				{#if $dashboard.system_info}
-					<p class="text-sm text-gray-700 dark:text-gray-300">CPU: {$dashboard.system_info.cpu ?? 'N/A'}</p>
-					<p class="text-sm text-gray-700 dark:text-gray-300">RAM: {$dashboard.system_info.mem_total ? `${$dashboard.system_info.mem_total.toFixed(1)} GB` : 'N/A'}</p>
+				{#if dash.system_info}
+					<p class="text-sm text-gray-700 dark:text-gray-300">CPU: {dash.system_info.cpu ?? 'N/A'}</p>
+					<p class="text-sm text-gray-700 dark:text-gray-300">RAM: {dash.system_info.mem_total ? `${dash.system_info.mem_total.toFixed(1)} GB` : 'N/A'}</p>
 				{:else}
-					<p class="text-sm text-gray-400">{$dashboard.db_available ? 'No data' : '--'}</p>
+					<p class="text-sm text-gray-400">{dash.db_available ? 'No data' : '--'}</p>
 				{/if}
 			</div>
 		</div>
 	</div>
 
-	<!-- Transcoder stats (only show when online) -->
-	{#if $dashboard.transcoder_online && $dashboard.transcoder_stats}
-		{@const ts = $dashboard.transcoder_stats}
-		<section>
-			<div class="mb-3 flex items-center gap-2">
-				<div class="h-2.5 w-2.5 rounded-full {ts.worker_running ? 'bg-green-500' : 'bg-yellow-500'}"></div>
-				<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcoder</h2>
-				<span class="text-sm text-gray-500 dark:text-gray-400">
-					&mdash; Worker {ts.worker_running ? 'running' : 'idle'}
-				</span>
+	<!-- Transcoder stats -->
+	<section>
+		<div class="mb-3 flex items-center gap-2">
+			<div class="h-2.5 w-2.5 rounded-full {dash.transcoder_online && dash.transcoder_stats?.worker_running ? 'bg-green-500' : dash.transcoder_online ? 'bg-yellow-500' : 'bg-gray-400'}"></div>
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcoder</h2>
+			<span class="text-sm text-gray-500 dark:text-gray-400">
+				{#if !dashReady}
+					&mdash; Loading...
+				{:else if !dash.transcoder_online}
+					&mdash; Offline
+				{:else if dash.transcoder_stats?.worker_running}
+					&mdash; Worker running
+				{:else}
+					&mdash; Worker idle
+				{/if}
+			</span>
+		</div>
+		<div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
+			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+				<p class="text-sm text-gray-500 dark:text-gray-400">Pending</p>
+				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{dash.transcoder_stats?.pending ?? 0}</p>
 			</div>
-			<div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
-				<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-					<p class="text-sm text-gray-500 dark:text-gray-400">Pending</p>
-					<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{ts.pending ?? 0}</p>
-				</div>
-				<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-					<p class="text-sm text-gray-500 dark:text-gray-400">Processing</p>
-					<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{ts.processing ?? 0}</p>
-				</div>
-				<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-					<p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
-					<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{ts.completed ?? 0}</p>
-				</div>
-				<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-					<p class="text-sm text-gray-500 dark:text-gray-400">Failed</p>
-					<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{ts.failed ?? 0}</p>
-				</div>
-				<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-					<p class="text-sm text-gray-500 dark:text-gray-400">Cancelled</p>
-					<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{ts.cancelled ?? 0}</p>
-				</div>
+			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+				<p class="text-sm text-gray-500 dark:text-gray-400">Processing</p>
+				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{dash.transcoder_stats?.processing ?? 0}</p>
 			</div>
-		</section>
-	{/if}
+			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+				<p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
+				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{dash.transcoder_stats?.completed ?? 0}</p>
+			</div>
+			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+				<p class="text-sm text-gray-500 dark:text-gray-400">Failed</p>
+				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{dash.transcoder_stats?.failed ?? 0}</p>
+			</div>
+			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+				<p class="text-sm text-gray-500 dark:text-gray-400">Cancelled</p>
+				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{dash.transcoder_stats?.cancelled ?? 0}</p>
+			</div>
+		</div>
+	</section>
 
 	<!-- Active rips -->
-	{#if $dashboard.db_available && $dashboard.active_jobs.length > 0}
+	{#if dash.active_jobs.length > 0}
 		<section>
 			<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Active Rips</h2>
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-				{#each $dashboard.active_jobs as job (job.job_id)}
+				{#each dash.active_jobs as job (job.job_id)}
 					<JobCard {job} />
 				{/each}
 			</div>
@@ -201,15 +216,15 @@
 	{/if}
 
 	<!-- Active transcodes -->
-	{#if $dashboard.active_transcodes.length > 0}
+	{#if dash.active_transcodes.length > 0}
 		<section>
 			<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Active Transcodes</h2>
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-				{#each $dashboard.active_transcodes as tc}
+				{#each dash.active_transcodes as tc}
 					<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 						<div class="flex items-start justify-between gap-2">
 							<p class="truncate font-medium text-gray-900 dark:text-white">
-								{tc.input_path?.split('/').pop() ?? `Transcode #${tc.id}`}
+								{tc.title || tc.source_path?.split('/').pop() || `Transcode #${tc.id}`}
 							</p>
 							<StatusBadge status={tc.status} />
 						</div>
