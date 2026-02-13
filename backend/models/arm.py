@@ -52,6 +52,8 @@ class Job(Base):
     disctype = Column(String(20))
     label = Column(String(256))
     path = Column(String(256))
+    raw_path = Column(String(256))
+    transcode_path = Column(String(256))
     ejected = Column(Boolean)
     updated = Column(Boolean)
     pid = Column(Integer)

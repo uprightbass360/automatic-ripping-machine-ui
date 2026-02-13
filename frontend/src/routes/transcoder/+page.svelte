@@ -17,6 +17,27 @@
 	let loadingJobs = $state(false);
 	let jobsError = $state<string | null>(null);
 
+	function formatDuration(startISO: string | null, endISO?: string | null): string | null {
+		if (!startISO) return null;
+		const start = new Date(startISO).getTime();
+		if (isNaN(start)) return null;
+		const end = endISO ? new Date(endISO).getTime() : Date.now();
+		if (isNaN(end)) return null;
+		const diffSec = Math.max(0, Math.floor((end - start) / 1000));
+		const h = Math.floor(diffSec / 3600);
+		const m = Math.floor((diffSec % 3600) / 60);
+		const s = diffSec % 60;
+		if (h > 0) return `${h}h ${m}m ${s}s`;
+		if (m > 0) return `${m}m ${s}s`;
+		return `${s}s`;
+	}
+
+	function sourceBasename(path: string | null | undefined): string {
+		if (!path) return '';
+		const parts = path.replace(/\/+$/, '').split('/');
+		return parts[parts.length - 1] ?? '';
+	}
+
 	async function loadJobs() {
 		loadingJobs = true;
 		jobsError = null;
@@ -88,29 +109,31 @@
 		<div class="flex items-center gap-2">
 			<div class="h-2.5 w-2.5 rounded-full {s.worker_running ? 'bg-green-500' : 'bg-yellow-500'}"></div>
 			<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-				Worker {s.worker_running ? 'running' : 'idle'}
+				Worker {s.worker_running ? 'running' : 'idle'}{#if s.worker_running && s.current_job}
+					<span class="text-gray-500 dark:text-gray-400"> &mdash; {s.current_job}</span>
+				{/if}
 			</span>
 		</div>
 		<div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
 			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Pending</p>
-				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{s.pending}</p>
+				<p class="mt-1 text-3xl font-bold text-blue-600 dark:text-blue-400">{s.pending}</p>
 			</div>
 			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Processing</p>
-				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{s.processing}</p>
+				<p class="mt-1 text-3xl font-bold text-indigo-600 dark:text-indigo-400">{s.processing}</p>
 			</div>
 			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
-				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{s.completed}</p>
+				<p class="mt-1 text-3xl font-bold text-green-600 dark:text-green-400">{s.completed}</p>
 			</div>
 			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Failed</p>
-				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{s.failed}</p>
+				<p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">{s.failed}</p>
 			</div>
 			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Cancelled</p>
-				<p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{s.cancelled}</p>
+				<p class="mt-1 text-3xl font-bold text-gray-500 dark:text-gray-400">{s.cancelled}</p>
 			</div>
 		</div>
 	{/if}
@@ -134,7 +157,7 @@
 			{/each}
 		</div>
 
-		<!-- Jobs table -->
+		<!-- Jobs list -->
 		{#if jobsError}
 			<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
 				{jobsError}
@@ -144,54 +167,74 @@
 		{:else if jobs.jobs.length === 0}
 			<p class="py-8 text-center text-gray-400">No transcode jobs found.</p>
 		{:else}
-			<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-				<table class="w-full text-left text-sm">
-					<thead class="bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-						<tr>
-							<th class="px-4 py-3 font-medium">Input</th>
-							<th class="px-4 py-3 font-medium">Status</th>
-							<th class="px-4 py-3 font-medium">Progress</th>
-							<th class="px-4 py-3 font-medium">Preset</th>
-							<th class="px-4 py-3 font-medium">Started</th>
-							<th class="px-4 py-3 font-medium">Actions</th>
-						</tr>
-					</thead>
-					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-						{#each jobs.jobs as job}
-							<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-								<td class="max-w-[300px] truncate px-4 py-3 text-gray-900 dark:text-white" title={job.input_path}>
-									{job.input_path?.split('/').pop() ?? ''}
-								</td>
-								<td class="px-4 py-3"><StatusBadge status={job.status} /></td>
-								<td class="w-40 px-4 py-3">
-									{#if typeof job.progress === 'number'}
-										<ProgressBar value={job.progress} color="bg-indigo-500" />
-									{:else}
-										<span class="text-gray-400">&mdash;</span>
-									{/if}
-								</td>
-								<td class="px-4 py-3 text-gray-600 dark:text-gray-400">{job.preset ?? '—'}</td>
-								<td class="px-4 py-3 text-gray-600 dark:text-gray-400">
-									<TimeAgo date={job.started_at ?? job.created_at} />
-								</td>
-								<td class="px-4 py-3">
-									<div class="flex gap-2">
-										{#if job.status === 'failed'}
-											<button
-												onclick={() => handleRetry(job.id)}
-												class="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
-											>Retry</button>
-										{/if}
-										<button
-											onclick={() => handleDelete(job.id)}
-											class="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
-										>Delete</button>
-									</div>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
+			<div class="space-y-3">
+				{#each jobs.jobs as job}
+					<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+						<!-- Top row: title, status, actions -->
+						<div class="flex items-start justify-between gap-4">
+							<div class="min-w-0 flex-1">
+								<div class="flex items-center gap-3">
+									<h3 class="truncate font-semibold text-gray-900 dark:text-white" title={job.title}>
+										{job.title || 'Untitled'}
+									</h3>
+									<StatusBadge status={job.status} />
+								</div>
+								{#if job.source_path}
+									<p class="mt-1 truncate font-mono text-xs text-gray-500 dark:text-gray-400" title={job.source_path}>
+										{sourceBasename(job.source_path)}
+									</p>
+								{/if}
+							</div>
+							<div class="flex flex-shrink-0 gap-2">
+								{#if job.status === 'failed'}
+									<button
+										onclick={() => handleRetry(job.id)}
+										class="rounded bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700"
+									>Retry</button>
+								{/if}
+								<button
+									onclick={() => handleDelete(job.id)}
+									class="rounded bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700"
+								>Delete</button>
+							</div>
+						</div>
+
+						<!-- Error message for failed jobs -->
+						{#if job.status === 'failed' && job.error}
+							<p class="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+								{job.error}
+							</p>
+						{/if}
+
+						<!-- Progress bar for pending/processing -->
+						{#if (job.status === 'pending' || job.status === 'processing') && typeof job.progress === 'number'}
+							<div class="mt-3">
+								<ProgressBar value={job.progress} color="bg-indigo-500" />
+							</div>
+						{/if}
+
+						<!-- Bottom row: timestamps + duration -->
+						<div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+							{#if job.created_at}
+								<span>Queued <TimeAgo date={job.created_at} /></span>
+							{/if}
+							{#if job.started_at}
+								<span>Started <TimeAgo date={job.started_at} /></span>
+							{/if}
+							{#if job.status === 'completed' && job.started_at}
+								{@const dur = formatDuration(job.started_at, job.completed_at)}
+								{#if dur}
+									<span class="text-green-600 dark:text-green-400">Took {dur}</span>
+								{/if}
+							{:else if job.status === 'processing' && job.started_at}
+								{@const dur = formatDuration(job.started_at)}
+								{#if dur}
+									<span class="text-indigo-600 dark:text-indigo-400">Running for {dur}</span>
+								{/if}
+							{/if}
+						</div>
+					</div>
+				{/each}
 			</div>
 		{/if}
 	</section>

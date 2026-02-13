@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { LogContent } from '$lib/types/arm';
 	import { fetchLogContent } from '$lib/api/logs';
 
 	interface Props {
@@ -7,9 +8,10 @@
 		lines?: number;
 		autoRefresh?: boolean;
 		refreshInterval?: number;
+		fetchFn?: (filename: string, mode: 'tail' | 'full', lines: number) => Promise<LogContent>;
 	}
 
-	let { filename, mode = 'tail', lines = 200, autoRefresh = true, refreshInterval = 5000 }: Props = $props();
+	let { filename, mode = 'tail', lines = 200, autoRefresh = true, refreshInterval = 5000, fetchFn = fetchLogContent }: Props = $props();
 
 	let content = $state('');
 	let error = $state<string | null>(null);
@@ -18,7 +20,7 @@
 
 	async function load() {
 		try {
-			const data = await fetchLogContent(filename, mode, lines);
+			const data = await fetchFn(filename, mode, lines);
 			content = data.content;
 			error = null;
 			if (mode === 'tail' && container) {

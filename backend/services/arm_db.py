@@ -226,23 +226,54 @@ def get_notification_count() -> int:
 
 
 def get_all_config_safe() -> dict | None:
-    """Return the most recent config with sensitive fields masked."""
+    """Return the most recent config with sensitive fields masked.
+
+    Falls back to reading arm.yaml directly if the DB has no config rows
+    (e.g. fresh install with no jobs yet).
+    """
+    # Try DB first
     try:
         with get_session() as session:
             stmt = select(Config).order_by(Config.CONFIG_ID.desc()).limit(1)
             config = session.scalars(stmt).first()
-            if not config:
-                return None
-            result = {}
-            for col in Config.__table__.columns:
-                name = col.name
-                if name in ("CONFIG_ID", "job_id"):
-                    continue
-                value = getattr(config, name, None)
-                if name in HIDDEN_CONFIG_FIELDS:
-                    result[name] = "***" if value else None
-                else:
-                    result[name] = value
-            return result
+            if config:
+                result = {}
+                for col in Config.__table__.columns:
+                    name = col.name
+                    if name in ("CONFIG_ID", "job_id"):
+                        continue
+                    value = getattr(config, name, None)
+                    if name in HIDDEN_CONFIG_FIELDS:
+                        result[name] = "***" if value else None
+                    else:
+                        result[name] = value
+                return result
     except Exception:
+        pass
+
+    # Fallback: read arm.yaml directly
+    return _read_arm_yaml()
+
+
+def _read_arm_yaml() -> dict | None:
+    """Read arm.yaml from the mounted config volume."""
+    import os
+    yaml_path = settings.arm_config_path
+    if not yaml_path or not os.path.isfile(yaml_path):
+        return None
+    try:
+        import yaml
+        with open(yaml_path, "r") as f:
+            config = yaml.safe_load(f)
+        if not isinstance(config, dict):
+            return None
+        # Mask sensitive fields
+        for key in list(config.keys()):
+            if key in HIDDEN_CONFIG_FIELDS and config[key]:
+                config[key] = "***"
+            else:
+                config[key] = config[key]
+        return config
+    except Exception as e:
+        log.warning("Failed to read arm.yaml: %s", e)
         return None

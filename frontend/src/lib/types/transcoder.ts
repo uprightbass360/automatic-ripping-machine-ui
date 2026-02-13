@@ -1,10 +1,9 @@
 export interface TranscoderJob {
 	id: number;
-	input_path: string;
-	output_path: string;
+	title: string;
+	source_path: string;
 	status: string;
 	progress: number;
-	preset: string | null;
 	error: string | null;
 	created_at: string | null;
 	started_at: string | null;
@@ -24,7 +23,7 @@ export interface TranscoderStatsData {
 	failed: number;
 	cancelled: number;
 	worker_running: boolean;
-	current_job: number | null;
+	current_job: string | null;
 	[key: string]: unknown;
 }
 

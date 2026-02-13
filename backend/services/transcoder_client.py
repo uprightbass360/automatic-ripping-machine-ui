@@ -42,6 +42,26 @@ async def health() -> dict[str, Any] | None:
         return None
 
 
+async def get_config() -> dict[str, Any] | None:
+    """Fetch transcoder config with valid option lists. Returns None if offline."""
+    try:
+        resp = await get_client().get("/config")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None
+
+
+async def update_config(config: dict[str, Any]) -> dict[str, Any] | None:
+    """Patch transcoder config. Returns response dict or None if offline."""
+    try:
+        resp = await get_client().patch("/config", json=config)
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None
+
+
 async def get_jobs(
     status: str | None = None,
     limit: int = 50,
@@ -83,3 +103,27 @@ async def delete_job(job_id: int) -> bool:
         return True
     except (httpx.HTTPError, httpx.ConnectError):
         return False
+
+
+async def list_logs() -> list[dict[str, Any]] | None:
+    """List transcoder log files. Returns None if offline."""
+    try:
+        resp = await get_client().get("/logs")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None
+
+
+async def read_log(
+    filename: str, mode: str = "tail", lines: int = 100
+) -> dict[str, Any] | None:
+    """Read a transcoder log file. Returns None if offline."""
+    try:
+        resp = await get_client().get(
+            f"/logs/{filename}", params={"mode": mode, "lines": lines}
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None

@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     arm_db_path: str = "/home/arm/db/arm.db"
     arm_log_path: str = "/home/arm/logs"
+    arm_config_path: str = ""
+    arm_hb_presets_path: str = ""
     arm_url: str = "http://localhost:8080"
     transcoder_url: str = "http://localhost:5000"
     transcoder_api_key: str = ""

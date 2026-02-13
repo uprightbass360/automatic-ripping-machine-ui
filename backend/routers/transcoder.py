@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.models.schemas import TranscoderJobListResponse, TranscoderStatsResponse
+from backend.models.schemas import LogContentResponse, LogFileSchema, TranscoderJobListResponse, TranscoderStatsResponse
 from backend.services import transcoder_client
 
 router = APIRouter(prefix="/api/transcoder", tags=["transcoder"])
@@ -46,3 +46,23 @@ async def delete_job(job_id: int) -> dict[str, str]:
     if not success:
         raise HTTPException(status_code=503, detail="Transcoder offline or job not found")
     return {"status": "deleted"}
+
+
+@router.get("/logs", response_model=list[LogFileSchema])
+async def list_logs():
+    data = await transcoder_client.list_logs()
+    if data is None:
+        return []
+    return data
+
+
+@router.get("/logs/{filename}", response_model=LogContentResponse)
+async def get_log(
+    filename: str,
+    mode: str = Query("tail", pattern="^(tail|full)$"),
+    lines: int = Query(100, ge=1, le=10000),
+):
+    data = await transcoder_client.read_log(filename, mode=mode, lines=lines)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Log not found or transcoder offline")
+    return data
