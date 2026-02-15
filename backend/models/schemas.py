@@ -94,6 +94,11 @@ class SystemInfoSchema(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class HardwareInfoSchema(BaseModel):
+    cpu: str | None = None
+    memory_total_gb: float | None = None
+
+
 class DriveSchema(BaseModel):
     drive_id: int
     name: str | None = None
@@ -130,18 +135,47 @@ class NotificationSchema(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# --- System Stats Schemas ---
+
+
+class MemoryInfoSchema(BaseModel):
+    total_gb: float
+    used_gb: float
+    free_gb: float
+    percent: float
+
+
+class StoragePathSchema(BaseModel):
+    name: str
+    path: str
+    total_gb: float
+    used_gb: float
+    free_gb: float
+    percent: float
+
+
+class SystemStatsSchema(BaseModel):
+    cpu_percent: float = 0
+    cpu_temp: float = 0
+    memory: MemoryInfoSchema | None = None
+    storage: list[StoragePathSchema] = []
+
+
 # --- Dashboard Schema ---
 
 
 class DashboardResponse(BaseModel):
     db_available: bool = True
     active_jobs: list[JobSchema] = []
-    system_info: SystemInfoSchema | None = None
+    system_info: HardwareInfoSchema | None = None
     drives_online: int = 0
     notification_count: int = 0
+    ripping_enabled: bool = True
     transcoder_online: bool = False
     transcoder_stats: dict[str, Any] | None = None
     active_transcodes: list[dict[str, Any]] = []
+    system_stats: SystemStatsSchema | None = None
+    transcoder_info: HardwareInfoSchema | None = None
 
 
 # --- Transcoder Schemas ---
@@ -209,3 +243,16 @@ class TitleUpdateRequest(BaseModel):
     video_type: str | None = None
     imdb_id: str | None = None
     poster_url: str | None = None
+
+
+class JobConfigUpdateRequest(BaseModel):
+    RIPMETHOD: str | None = None
+    DISCTYPE: str | None = None
+    MAINFEATURE: bool | None = None
+    MINLENGTH: int | None = None
+    MAXLENGTH: int | None = None
+
+
+class DriveUpdateRequest(BaseModel):
+    name: str | None = None
+    description: str | None = None

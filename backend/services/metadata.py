@@ -19,6 +19,11 @@ TMDB_YEAR_REGEX = r"-\d{0,2}-\d{0,2}"
 TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/original"
 
 
+class MetadataConfigError(Exception):
+    """Raised when metadata provider is not configured or returns an auth error."""
+    pass
+
+
 @lru_cache(maxsize=1)
 def _get_api_keys() -> dict[str, str | None]:
     """Read METADATA_PROVIDER and API keys from arm.yaml. Cached at process level."""
@@ -49,6 +54,60 @@ def _http_client() -> httpx.AsyncClient:
 # ---------------------------------------------------------------------------
 
 
+async def test_configured_key() -> dict[str, Any]:
+    """Test the currently configured metadata API key from arm.yaml. Returns {success, message, provider}."""
+    _get_api_keys.cache_clear()
+    keys = _get_api_keys()
+    provider = keys["provider"]
+    key = keys["tmdb_key"] if provider == "tmdb" else keys["omdb_key"]
+    if not key or not key.strip():
+        return {"success": False, "message": f"No API key configured for {provider.upper()}", "provider": provider}
+    key = key.strip()
+    try:
+        if provider == "tmdb":
+            async with _http_client() as client:
+                resp = await client.get(
+                    "https://api.themoviedb.org/3/configuration",
+                    params={"api_key": key},
+                )
+                if resp.status_code in (401, 403):
+                    return {"success": False, "message": "Invalid TMDb API key", "provider": provider}
+                if resp.status_code == 200:
+                    return {"success": True, "message": "TMDb API key is valid", "provider": provider}
+                return {"success": False, "message": f"Unexpected response ({resp.status_code})", "provider": provider}
+        else:
+            async with _http_client() as client:
+                resp = await client.get(
+                    "https://www.omdbapi.com/",
+                    params={"apikey": key, "t": "The Matrix", "r": "json"},
+                )
+                if resp.status_code in (401, 403):
+                    return {"success": False, "message": "Invalid OMDb API key", "provider": provider}
+                try:
+                    data = resp.json()
+                except (ValueError, UnicodeDecodeError):
+                    text = resp.text[:200] if resp.text else "(empty)"
+                    log.warning("OMDb returned non-JSON (%s): %s", resp.status_code, text)
+                    if resp.status_code == 200:
+                        return {"success": False, "message": "OMDb returned an invalid response", "provider": provider}
+                    return {"success": False, "message": f"OMDb returned HTTP {resp.status_code}", "provider": provider}
+                if data.get("Response") == "True":
+                    return {"success": True, "message": f"OMDb key valid \u2014 found \"{data.get('Title', '')}\"", "provider": provider}
+                error_msg = data.get("Error", "")
+                if "Invalid API key" in error_msg:
+                    return {"success": False, "message": "Invalid OMDb API key", "provider": provider}
+                if error_msg:
+                    return {"success": False, "message": f"OMDb: {error_msg}", "provider": provider}
+                return {"success": True, "message": "OMDb API key accepted", "provider": provider}
+    except httpx.TimeoutException:
+        return {"success": False, "message": "Request timed out \u2014 check network connectivity", "provider": provider}
+    except httpx.ConnectError:
+        return {"success": False, "message": "Cannot connect to API \u2014 check network/DNS", "provider": provider}
+    except Exception as exc:
+        log.warning("Metadata key test failed: %s", exc)
+        return {"success": False, "message": f"Test failed: {type(exc).__name__}", "provider": provider}
+
+
 async def search(query: str, year: str | None = None) -> list[dict[str, Any]]:
     """Search for titles. Returns normalized list of SearchResult dicts."""
     keys = _get_api_keys()
@@ -56,8 +115,10 @@ async def search(query: str, year: str | None = None) -> list[dict[str, Any]]:
         return await _tmdb_search(query, year, keys["tmdb_key"])
     if keys["omdb_key"]:
         return await _omdb_search(query, year, keys["omdb_key"])
-    log.warning("No API key configured for provider=%s", keys["provider"])
-    return []
+    raise MetadataConfigError(
+        f"No API key configured for metadata provider '{keys['provider']}'. "
+        "Set OMDB_API_KEY or TMDB_API_KEY in arm.yaml."
+    )
 
 
 async def get_details(imdb_id: str) -> dict[str, Any] | None:
@@ -67,7 +128,10 @@ async def get_details(imdb_id: str) -> dict[str, Any] | None:
         return await _tmdb_find(imdb_id, keys["tmdb_key"])
     if keys["omdb_key"]:
         return await _omdb_details(imdb_id, keys["omdb_key"])
-    return None
+    raise MetadataConfigError(
+        f"No API key configured for metadata provider '{keys['provider']}'. "
+        "Set OMDB_API_KEY or TMDB_API_KEY in arm.yaml."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +145,8 @@ async def _omdb_search(query: str, year: str | None, api_key: str) -> list[dict[
         params["y"] = year
     async with _http_client() as client:
         resp = await client.get("https://www.omdbapi.com/", params=params)
+        if resp.status_code in (401, 403):
+            raise MetadataConfigError("OMDb API key is invalid or expired. Check OMDB_API_KEY in arm.yaml.")
         data = resp.json()
 
     results = []
@@ -95,6 +161,8 @@ async def _omdb_search(query: str, year: str | None, api_key: str) -> list[dict[
         params_t["y"] = year
     async with _http_client() as client:
         resp = await client.get("https://www.omdbapi.com/", params=params_t)
+        if resp.status_code in (401, 403):
+            raise MetadataConfigError("OMDb API key is invalid or expired. Check OMDB_API_KEY in arm.yaml.")
         data = resp.json()
     if data.get("Response") == "True":
         results.append(_normalize_omdb(data))
@@ -123,6 +191,8 @@ async def _omdb_details(imdb_id: str, api_key: str) -> dict[str, Any] | None:
     params = {"i": imdb_id, "plot": "short", "r": "json", "apikey": api_key}
     async with _http_client() as client:
         resp = await client.get("https://www.omdbapi.com/", params=params)
+        if resp.status_code in (401, 403):
+            raise MetadataConfigError("OMDb API key is invalid or expired. Check OMDB_API_KEY in arm.yaml.")
         data = resp.json()
     if data.get("Response") != "True":
         return None
@@ -149,6 +219,8 @@ async def _tmdb_search(query: str, year: str | None, api_key: str) -> list[dict[
         resp = await client.get(
             "https://api.themoviedb.org/3/search/movie", params=params
         )
+        if resp.status_code in (401, 403):
+            raise MetadataConfigError("TMDb API key is invalid or expired. Check TMDB_API_KEY in arm.yaml.")
         data = resp.json()
 
     if data.get("total_results", 0) > 0:
@@ -164,6 +236,8 @@ async def _tmdb_search(query: str, year: str | None, api_key: str) -> list[dict[
         resp = await client.get(
             "https://api.themoviedb.org/3/search/tv", params=params_tv
         )
+        if resp.status_code in (401, 403):
+            raise MetadataConfigError("TMDb API key is invalid or expired. Check TMDB_API_KEY in arm.yaml.")
         data = resp.json()
 
     if data.get("total_results", 0) > 0:
@@ -222,6 +296,8 @@ async def _tmdb_find(imdb_id: str, api_key: str) -> dict[str, Any] | None:
             f"https://api.themoviedb.org/3/find/{imdb_id}",
             params={"api_key": api_key, "external_source": "imdb_id"},
         )
+        if resp.status_code in (401, 403):
+            raise MetadataConfigError("TMDb API key is invalid or expired. Check TMDB_API_KEY in arm.yaml.")
         data = resp.json()
 
     # Check movie results first, then TV

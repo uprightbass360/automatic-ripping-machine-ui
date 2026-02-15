@@ -19,10 +19,12 @@ from backend.routers import (
     transcoder,
 )
 from backend.services import arm_client, transcoder_client
+from backend.services import system_cache
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await system_cache.refresh()
     yield
     await arm_client.close_client()
     await transcoder_client.close_client()
@@ -42,6 +44,7 @@ app.add_middleware(
 app.include_router(dashboard.router)
 app.include_router(jobs.router)
 app.include_router(arm_actions.router)
+app.include_router(arm_actions.system_router)
 app.include_router(transcoder.router)
 app.include_router(drives.router)
 app.include_router(logs.router)
@@ -53,6 +56,11 @@ static_dir = Path(__file__).parent.parent / "frontend" / "build"
 if static_dir.is_dir():
     # Serve _app assets directly
     app.mount("/_app", StaticFiles(directory=str(static_dir / "_app")), name="static")
+
+    # Serve /img assets directly
+    img_dir = static_dir / "img"
+    if img_dir.is_dir():
+        app.mount("/img", StaticFiles(directory=str(img_dir)), name="images")
 
     # SPA catch-all: serve index.html for any non-API route
     @app.get("/{path:path}")

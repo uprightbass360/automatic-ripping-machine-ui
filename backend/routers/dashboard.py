@@ -1,9 +1,25 @@
+import asyncio
+
 from fastapi import APIRouter
 
-from backend.models.schemas import DashboardResponse, JobSchema, SystemInfoSchema
-from backend.services import arm_db, transcoder_client
+from backend.models.schemas import DashboardResponse, HardwareInfoSchema, JobSchema, SystemStatsSchema
+from backend.services import arm_client, arm_db, transcoder_client, system_cache
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
+
+
+async def _fetch_transcoder() -> tuple[bool, dict | None, list]:
+    """Fetch transcoder health, stats, and active jobs concurrently."""
+    health = await transcoder_client.health()
+    if not health:
+        return False, None, []
+
+    stats, jobs_data = await asyncio.gather(
+        transcoder_client.get_stats(),
+        transcoder_client.get_jobs(status="processing"),
+    )
+    active = jobs_data["jobs"] if jobs_data and "jobs" in jobs_data else []
+    return True, stats, active
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
@@ -12,37 +28,42 @@ async def get_dashboard():
 
     # Skip DB queries entirely when database is unavailable
     active_jobs: list = []
-    system_info = None
     drives_online = 0
     notification_count = 0
 
+    ripping_paused = False
+
     if db_available:
         active_jobs = arm_db.get_active_jobs()
-        system_info = arm_db.get_system_info()
         drives = arm_db.get_drives()
         drives_online = len(drives)
         notification_count = arm_db.get_notification_count()
+        ripping_paused = arm_db.get_ripping_paused()
 
-    # Transcoder data (graceful degradation)
-    transcoder_online = False
-    transcoder_stats = None
-    active_transcodes: list = []
+    # Transcoder + ARM system stats in parallel
+    transcoder_task = asyncio.create_task(_fetch_transcoder())
+    stats_task = asyncio.create_task(arm_client.get_system_stats())
 
-    health = await transcoder_client.health()
-    if health:
-        transcoder_online = True
-        transcoder_stats = await transcoder_client.get_stats()
-        jobs_data = await transcoder_client.get_jobs(status="processing")
-        if jobs_data and "jobs" in jobs_data:
-            active_transcodes = jobs_data["jobs"]
+    transcoder_online, transcoder_stats, active_transcodes = await transcoder_task
+
+    system_stats: SystemStatsSchema | None = None
+    stats_data = await stats_task
+    if stats_data:
+        system_stats = SystemStatsSchema(**stats_data)
+
+    arm_hw = system_cache.get_arm_info()
+    transcoder_hw = system_cache.get_transcoder_info()
 
     return DashboardResponse(
         db_available=db_available,
         active_jobs=[JobSchema.model_validate(j) for j in active_jobs],
-        system_info=SystemInfoSchema.model_validate(system_info) if system_info else None,
+        system_info=HardwareInfoSchema(**arm_hw) if arm_hw else None,
         drives_online=drives_online,
         notification_count=notification_count,
+        ripping_enabled=not ripping_paused,
         transcoder_online=transcoder_online,
         transcoder_stats=transcoder_stats,
         active_transcodes=active_transcodes,
+        system_stats=system_stats,
+        transcoder_info=HardwareInfoSchema(**transcoder_hw) if transcoder_hw else None,
     )

@@ -9,6 +9,7 @@ from backend.models.schemas import (
     TrackSchema,
 )
 from backend.services import arm_db, metadata
+from backend.services.metadata import MetadataConfigError
 
 router = APIRouter(prefix="/api", tags=["jobs"])
 
@@ -33,11 +34,10 @@ def list_jobs(
 
 @router.get("/jobs/{job_id}", response_model=JobDetailSchema)
 def get_job(job_id: int):
-    job = arm_db.get_job(job_id)
+    job, config = arm_db.get_job_with_config(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    config = arm_db.get_job_config_safe(job)
     tracks = [TrackSchema.model_validate(t) for t in (job.tracks or [])]
 
     job_data = JobSchema.model_validate(job).model_dump()
@@ -50,13 +50,19 @@ async def search_metadata(
     year: str | None = None,
 ):
     """Search OMDb/TMDb for titles matching the query."""
-    return await metadata.search(q, year)
+    try:
+        return await metadata.search(q, year)
+    except MetadataConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
 
 @router.get("/metadata/{imdb_id}", response_model=MediaDetailSchema)
 async def get_media_detail(imdb_id: str):
     """Fetch full details for a title by IMDb ID."""
-    result = await metadata.get_details(imdb_id)
+    try:
+        result = await metadata.get_details(imdb_id)
+    except MetadataConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
     if not result:
         raise HTTPException(status_code=404, detail="Title not found")
     return result

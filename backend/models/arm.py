@@ -157,6 +157,13 @@ HIDDEN_CONFIG_FIELDS = {
 }
 
 
+class AppState(Base):
+    __tablename__ = "app_state"
+
+    id = Column(Integer, primary_key=True)
+    ripping_paused = Column(Boolean, default=False)
+
+
 class SystemDrives(Base):
     __tablename__ = "system_drives"
 

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from backend.config import settings as app_settings
 from backend.models.schemas import SettingsResponse
-from backend.services import arm_client, arm_db, transcoder_client
+from backend.services import arm_client, arm_db, metadata, transcoder_client
 
 router = APIRouter(prefix="/api", tags=["settings"])
 log = logging.getLogger(__name__)
@@ -87,6 +87,12 @@ async def update_arm_config(body: ArmConfigUpdate):
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "Unknown error"))
     return result
+
+
+@router.get("/settings/test-metadata")
+async def test_metadata_key():
+    """Test the currently saved metadata API key by making a real API call."""
+    return await metadata.test_configured_key()
 
 
 @router.patch("/settings/transcoder")

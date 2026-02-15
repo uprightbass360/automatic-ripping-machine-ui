@@ -20,7 +20,7 @@ def get_client() -> httpx.AsyncClient:
         _client = httpx.AsyncClient(
             base_url=settings.transcoder_url,
             headers=headers,
-            timeout=5.0,
+            timeout=httpx.Timeout(10.0, connect=3.0),
         )
     return _client
 
@@ -36,6 +36,16 @@ async def health() -> dict[str, Any] | None:
     """Check transcoder health. Returns None if offline."""
     try:
         resp = await get_client().get("/health")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None
+
+
+async def get_system_info() -> dict[str, Any] | None:
+    """Fetch static hardware info (CPU, RAM, GPU) from the transcoder."""
+    try:
+        resp = await get_client().get("/system/info")
         resp.raise_for_status()
         return resp.json()
     except (httpx.HTTPError, httpx.ConnectError):

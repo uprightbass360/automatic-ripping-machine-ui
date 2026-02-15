@@ -11,6 +11,7 @@ from sqlalchemy.pool import NullPool
 
 from backend.config import settings
 from backend.models.arm import (
+    AppState,
     Config,
     HIDDEN_CONFIG_FIELDS,
     Job,
@@ -136,16 +137,30 @@ def get_jobs_paginated_response(
 def get_job(job_id: int) -> Job | None:
     try:
         with get_session() as session:
-            return session.get(Job, job_id)
+            stmt = select(Job).where(Job.job_id == job_id)
+            return session.scalars(stmt).unique().first()
     except Exception:
         return None
 
 
-def get_job_config_safe(job: Job) -> dict | None:
-    """Return job config as dict with sensitive fields masked."""
-    if not job.config:
+def get_job_with_config(job_id: int) -> tuple[Job | None, dict | None]:
+    """Load job and its config in a single session to avoid detached access."""
+    try:
+        with get_session() as session:
+            stmt = select(Job).where(Job.job_id == job_id)
+            job = session.scalars(stmt).unique().first()
+            if not job:
+                return None, None
+            config = _extract_config_safe(job.config)
+            return job, config
+    except Exception:
+        return None, None
+
+
+def _extract_config_safe(config: Config | None) -> dict | None:
+    """Extract config as dict with sensitive fields masked. Must be called inside a session."""
+    if not config:
         return None
-    config = job.config
     result = {}
     for col in Config.__table__.columns:
         name = col.name
@@ -157,6 +172,15 @@ def get_job_config_safe(job: Job) -> dict | None:
         else:
             result[name] = value
     return result
+
+
+def get_job_config_safe(job: Job) -> dict | None:
+    """Return job config as dict with sensitive fields masked.
+
+    NOTE: This only works if the job's config relationship was loaded
+    while the session was still open. Prefer get_job_with_config() instead.
+    """
+    return _extract_config_safe(job.config)
 
 
 def get_drives() -> list[SystemDrives]:
@@ -277,3 +301,13 @@ def _read_arm_yaml() -> dict | None:
     except Exception as e:
         log.warning("Failed to read arm.yaml: %s", e)
         return None
+
+
+def get_ripping_paused() -> bool:
+    """Read global ripping-paused flag directly from the ARM database."""
+    try:
+        with get_session() as session:
+            state = session.get(AppState, 1)
+            return bool(state.ripping_paused) if state else False
+    except Exception:
+        return False
