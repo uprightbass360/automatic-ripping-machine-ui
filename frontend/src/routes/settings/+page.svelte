@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchSettings, saveArmConfig, saveTranscoderConfig } from '$lib/api/settings';
+	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey } from '$lib/api/settings';
 	import type { SettingsData } from '$lib/types/arm';
+	import { theme, toggleTheme } from '$lib/stores/theme';
+	import { colorScheme, COLOR_SCHEMES } from '$lib/stores/colorScheme';
 
 	let settings = $state<SettingsData | null>(null);
 	let error = $state<string | null>(null);
@@ -21,7 +23,14 @@
 	let armCollapsed = $state<Record<string, boolean>>({});
 
 	// --- Tab state ---
-	let activeTab = $state<'arm' | 'transcoder'>('arm');
+	let activeTab = $state<'arm' | 'transcoder' | 'appearance'>('arm');
+
+	// --- Search/filter ---
+	let armSearch = $state('');
+
+	// --- Metadata test ---
+	let metadataTestResult = $state<{ success: boolean; message: string } | null>(null);
+	let metadataTesting = $state(false);
 
 	onMount(async () => {
 		try {
@@ -91,6 +100,25 @@
 			clearFeedback(() => (armFeedback = null));
 		}
 	}
+
+	// Any tab dirty — sticky bar persists across tab switches
+	let anyDirty = $derived(armDirty || tcDirty);
+	let anySaving = $derived(armSaving || tcSaving);
+	let anyFeedback = $derived(armFeedback ?? tcFeedback);
+
+	function handleSaveAll() {
+		if (armDirty) handleArmSave();
+		if (tcDirty) handleTcSave();
+	}
+
+	function handleDiscardAll() {
+		if (armDirty) armForm = { ...armOriginal };
+		if (tcDirty) tcForm = { ...tcOriginal };
+	}
+
+	let dirtyTabLabel = $derived(
+		armDirty && tcDirty ? 'ARM & Transcoder' : armDirty ? 'ARM' : 'Transcoder'
+	);
 
 	// Transcoder base paths (read-only, for display in directories panel)
 	let tcPaths = $derived(settings?.transcoder_config?.paths);
@@ -208,11 +236,11 @@
 		const seen = new Set<string>(filePresets);
 
 		// Then custom presets from transcoder (may overlap)
-		const extraCustom = tcCustom.filter((n) => !seen.has(n));
-		extraCustom.forEach((n) => seen.add(n));
+		const extraCustom = tcCustom.filter((n: string) => !seen.has(n));
+		extraCustom.forEach((n: string) => seen.add(n));
 
 		// Then built-in presets
-		const extraBuiltin = builtin.filter((n) => !seen.has(n));
+		const extraBuiltin = builtin.filter((n: string) => !seen.has(n));
 
 		return [...filePresets, ...extraCustom, ...extraBuiltin];
 	});
@@ -231,7 +259,7 @@
 		const isDvd = (n: string) => /dvd|480|576|720p/i.test(n);
 		const preset4k = filePresets.find(is4k);
 		const presetDvd = filePresets.find(isDvd);
-		const presetStd = filePresets.find((n) => !is4k(n) && !isDvd(n)) ?? filePresets[0];
+		const presetStd = filePresets.find((n: string) => !is4k(n) && !isDvd(n)) ?? filePresets[0];
 
 		if (presetStd) tcForm.handbrake_preset = presetStd;
 		if (preset4k) tcForm.handbrake_preset_4k = preset4k;
@@ -381,7 +409,7 @@
 			{ label: 'Post-Rip Behavior', keys: ['ALLOW_DUPLICATES', 'UNIDENTIFIED_EJECT', 'AUTO_EJECT', 'RIP_POSTER'] },
 		]},
 		{ label: 'Transcoding', subpanels: [
-			{ label: 'General', keys: ['SKIP_TRANSCODE', 'DEST_EXT', 'USE_FFMPEG', 'MAX_CONCURRENT_TRANSCODES', 'DELRAWFILES'] },
+			{ label: 'General', keys: ['SKIP_TRANSCODE', 'USE_FFMPEG', 'DEST_EXT', 'MAX_CONCURRENT_TRANSCODES', 'DELRAWFILES'] },
 			{ label: 'HandBrake', keys: ['HB_PRESET_DVD', 'HB_PRESET_BD', 'HANDBRAKE_CLI', 'HANDBRAKE_LOCAL', 'HB_ARGS_DVD', 'HB_ARGS_BD'] },
 			{ label: 'FFmpeg', keys: ['FFMPEG_CLI', 'FFMPEG_LOCAL', 'FFMPEG_PRE_FILE_ARGS', 'FFMPEG_POST_FILE_ARGS'] },
 		]},
@@ -414,6 +442,19 @@
 		]},
 	];
 
+	// Structured sub-sections within HandBrake and FFmpeg subpanels (ARM Transcoding group)
+	const TRANSCODING_SECTIONS: Record<string, { label: string; keys: string[] }[]> = {
+		'HandBrake': [
+			{ label: 'Presets', keys: ['HB_PRESET_DVD', 'HB_PRESET_BD'] },
+			{ label: 'CLI Paths', keys: ['HANDBRAKE_CLI', 'HANDBRAKE_LOCAL'] },
+			{ label: 'Extra Arguments', keys: ['HB_ARGS_DVD', 'HB_ARGS_BD'] },
+		],
+		'FFmpeg': [
+			{ label: 'CLI Paths', keys: ['FFMPEG_CLI', 'FFMPEG_LOCAL'] },
+			{ label: 'Arguments', keys: ['FFMPEG_PRE_FILE_ARGS', 'FFMPEG_POST_FILE_ARGS'] },
+		],
+	};
+
 	const HIDDEN_KEYS = new Set([
 		'OMDB_API_KEY',
 		'EMBY_USERID',
@@ -428,9 +469,43 @@
 		'TMDB_API_KEY',
 	]);
 
+	// Keys hidden based on metadata provider selection
+	const METADATA_API_KEYS = new Set(['OMDB_API_KEY', 'TMDB_API_KEY']);
+
+	function isMetadataKeyHidden(key: string): boolean {
+		if (!METADATA_API_KEYS.has(key)) return false;
+		const provider = (armForm['METADATA_PROVIDER'] ?? 'omdb').toString().toLowerCase();
+		if (key === 'OMDB_API_KEY') return provider !== 'omdb';
+		if (key === 'TMDB_API_KEY') return provider !== 'tmdb';
+		return false;
+	}
+
+	function isMetadataApiKey(key: string): boolean {
+		return METADATA_API_KEYS.has(key);
+	}
+
+	async function handleTestMetadata() {
+		metadataTesting = true;
+		metadataTestResult = null;
+		try {
+			metadataTestResult = await testMetadataKey();
+		} catch {
+			metadataTestResult = { success: false, message: 'Failed to reach test endpoint' };
+		} finally {
+			metadataTesting = false;
+			clearFeedback(() => (metadataTestResult = null));
+		}
+	}
+
 	// HandBrake presets — loaded dynamically from the ARM container at startup.
-	// Falls back to empty (renders as text input) if the init container hasn't run.
+	// Falls back to transcoder presets if the ARM init container hasn't run.
 	let hbPresets = $derived(settings?.arm_handbrake_presets ?? []);
+
+	// Combined preset list: ARM built-in presets, or transcoder custom presets as fallback
+	let armPresets = $derived.by<string[]>(() => {
+		if (hbPresets.length > 0) return hbPresets;
+		return settings?.transcoder_config?.valid_handbrake_presets ?? [];
+	});
 
 	// SELECT_OPTIONS is derived so it picks up dynamic HB presets
 	let SELECT_OPTIONS = $derived<Record<string, string[]>>({
@@ -439,10 +514,24 @@
 		LOGLEVEL: ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
 		METADATA_PROVIDER: ['omdb', 'tmdb'],
 		GET_AUDIO_TITLE: ['none', 'musicbrainz', 'freecddb'],
-		...(hbPresets.length > 0
-			? { HB_PRESET_DVD: hbPresets, HB_PRESET_BD: hbPresets }
+		DEST_EXT: ['mkv', 'mp4', 'm4v'],
+		...(armPresets.length > 0
+			? { HB_PRESET_DVD: ['', ...armPresets], HB_PRESET_BD: ['', ...armPresets] }
 			: {}),
 	});
+
+	// --- Search/filter logic ---
+	function matchesSearch(key: string): boolean {
+		if (!armSearch.trim()) return true;
+		const q = armSearch.toLowerCase();
+		const label = ARM_LABELS[key]?.label ?? key;
+		const desc = ARM_LABELS[key]?.description ?? '';
+		return (
+			key.toLowerCase().includes(q) ||
+			label.toLowerCase().includes(q) ||
+			desc.toLowerCase().includes(q)
+		);
+	}
 
 	function getArmGroups(config: Record<string, string | null>) {
 		const allKeys = new Set(Object.keys(config));
@@ -452,8 +541,8 @@
 		for (const group of ARM_KEY_GROUPS) {
 			const subpanels: { label?: string; keys: string[] }[] = [];
 			for (const sp of group.subpanels) {
-				const present = sp.keys.filter((k) => allKeys.has(k));
-				present.forEach((k) => mapped.add(k));
+				const present = sp.keys.filter((k) => allKeys.has(k) && matchesSearch(k));
+				sp.keys.filter((k) => allKeys.has(k)).forEach((k) => mapped.add(k));
 				if (present.length > 0) {
 					subpanels.push({ label: sp.label, keys: present });
 				}
@@ -464,7 +553,7 @@
 		}
 
 		// Catch-all for any unmapped keys (future-proofing)
-		const unmapped = [...allKeys].filter((k) => !mapped.has(k));
+		const unmapped = [...allKeys].filter((k) => !mapped.has(k) && matchesSearch(k));
 		if (unmapped.length > 0) {
 			groups.push({ label: 'Other', subpanels: [{ keys: unmapped }] });
 		}
@@ -505,13 +594,198 @@
 		// Strip leading # characters and trim
 		return raw.replace(/^#\s*/gm, '').trim();
 	}
+
+	// --- Dirty field check ---
+	function isFieldDirty(key: string): boolean {
+		return JSON.stringify(armForm[key]) !== JSON.stringify(armOriginal[key]);
+	}
+
+	function isTcFieldDirty(key: string): boolean {
+		return JSON.stringify(tcForm[key]) !== JSON.stringify(tcOriginal[key]);
+	}
+
+	// Input class shared across all ARM fields
+	const inputClass = 'w-full rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
 </script>
 
 <svelte:head>
 	<title>Settings - ARM UI</title>
 </svelte:head>
 
-<div class="space-y-6">
+<!-- Reusable snippet for a single ARM config field -->
+{#snippet armField(key: string)}
+	{@const val = armForm[key] ?? ''}
+	{@const comment = getComment(key)}
+	{@const dirty = isFieldDirty(key)}
+	<div class="relative {dirty ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
+		<div class="{dirty ? 'px-3 py-3' : ''}">
+			<div class="mb-1 flex items-center gap-1">
+				<label for="arm-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+					{ARM_LABELS[key]?.label ?? key}
+				</label>
+				{#if dirty}
+					<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
+				{/if}
+				<button
+					type="button"
+					onclick={() => toggleInfo(key)}
+					class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold
+						{armInfoKeys.has(key)
+						? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/40 dark:text-primary-text-dark'
+						: 'bg-primary/10 text-gray-500 dark:bg-primary/15 dark:text-gray-400'}
+						hover:bg-primary/20 dark:hover:bg-primary/20"
+					title={key}
+				>i</button>
+			</div>
+			{#if armInfoKeys.has(key)}
+				<p class="mb-1 text-xs font-mono text-gray-400">{key}</p>
+			{/if}
+
+			{#if SELECT_OPTIONS[key]}
+				{@const opts = SELECT_OPTIONS[key]}
+				{@const curVal = val?.toString() ?? ''}
+				<select
+					id="arm-{key}"
+					class={inputClass}
+					value={curVal}
+					onchange={(e) => {
+						armForm[key] = (e.target as HTMLSelectElement).value;
+						if (key === 'METADATA_PROVIDER') metadataTestResult = null;
+					}}
+				>
+					{#if curVal && !opts.includes(curVal)}
+						<option value={curVal}>{curVal}</option>
+					{/if}
+					{#each opts as opt}
+						<option value={opt}>{opt || '(None)'}</option>
+					{/each}
+				</select>
+			{:else if isBoolStr(val?.toString())}
+				<div class="flex items-center gap-2 mt-1">
+					<button
+						type="button"
+						onclick={() => toggleBool(key)}
+						class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+							{val?.toString().toLowerCase() === 'true'
+							? 'bg-primary'
+							: 'bg-primary/30 dark:bg-primary/20'}"
+						role="switch"
+						aria-checked={val?.toString().toLowerCase() === 'true'}
+						aria-label={key}
+					>
+						<span
+							class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+								{val?.toString().toLowerCase() === 'true'
+								? 'translate-x-5'
+								: 'translate-x-0'}"
+						></span>
+					</button>
+					<span class="text-xs font-medium {val?.toString().toLowerCase() === 'true' ? 'text-primary-text dark:text-primary-text-dark' : 'text-gray-400'}">
+						{val?.toString().toLowerCase() === 'true' ? 'Enabled' : 'Disabled'}
+					</span>
+				</div>
+			{:else if HIDDEN_KEYS.has(key)}
+				<div class="flex gap-1">
+					<input
+						id="arm-{key}"
+						type={armRevealedKeys.has(key) ? 'text' : 'password'}
+						class="flex-1 rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+						value={val?.toString() ?? ''}
+						oninput={(e) => (armForm[key] = (e.target as HTMLInputElement).value)}
+					/>
+					<button
+						type="button"
+						onclick={() => toggleReveal(key)}
+						class="rounded-md border border-primary/25 px-2 py-2 text-xs text-gray-600 hover:bg-primary/10 dark:border-primary/30 dark:text-gray-400 dark:hover:bg-primary/15"
+					>
+						{armRevealedKeys.has(key) ? 'Hide' : 'Show'}
+					</button>
+					{#if isMetadataApiKey(key)}
+						<button
+							type="button"
+							onclick={handleTestMetadata}
+							disabled={metadataTesting}
+							class="rounded-md border border-primary/25 px-2 py-2 text-xs font-medium text-primary-text hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:text-primary-text-dark dark:hover:bg-primary/15"
+						>
+							{metadataTesting ? 'Testing...' : 'Test'}
+						</button>
+					{/if}
+				</div>
+				{#if isMetadataApiKey(key) && metadataTestResult}
+					<p class="mt-1 text-xs font-medium {metadataTestResult.success ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+						{metadataTestResult.message}
+					</p>
+				{/if}
+			{:else if isIntStr(val?.toString())}
+				<input
+					id="arm-{key}"
+					type="number"
+					class={inputClass}
+					value={val?.toString() ?? ''}
+					oninput={(e) => (armForm[key] = (e.target as HTMLInputElement).value)}
+				/>
+			{:else}
+				<input
+					id="arm-{key}"
+					type="text"
+					class={inputClass}
+					value={val?.toString() ?? ''}
+					oninput={(e) => (armForm[key] = (e.target as HTMLInputElement).value)}
+				/>
+			{/if}
+
+			{#if ARM_LABELS[key]?.description}
+				<p class="mt-1 text-xs text-gray-400">{ARM_LABELS[key].description}</p>
+			{:else if comment}
+				<p class="mt-1 text-xs text-gray-400">{comment}</p>
+			{/if}
+		</div>
+	</div>
+{/snippet}
+
+<!-- Reusable snippet for GPU support cards -->
+{#snippet gpuCards(gpu: Record<string, boolean>)}
+	<section>
+		<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+			Hardware Encoding
+		</h2>
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+			{#each HW_GROUPS as group}
+				{@const available = hasAny(gpu, group.keys)}
+				<div
+					class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark"
+				>
+					<div class="mb-3 flex items-center gap-2">
+						<span
+							class="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold {available
+								? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+								: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}"
+							>{available ? '\u2713' : '\u2717'}</span
+						>
+						<h3 class="font-semibold text-gray-900 dark:text-white">{group.label}</h3>
+					</div>
+					<ul class="space-y-1">
+						{#each group.keys as key}
+							<li class="flex items-center gap-2 text-sm">
+								<span
+									class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold {gpu[key]
+										? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+										: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}"
+									>{gpu[key] ? '\u2713' : '\u2717'}</span
+								>
+								<span class="text-gray-600 dark:text-gray-400"
+									>{GPU_LABELS[key] ?? key}</span
+								>
+							</li>
+						{/each}
+					</ul>
+				</div>
+			{/each}
+		</div>
+	</section>
+{/snippet}
+
+<div class="space-y-6 pb-20">
 	<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
 
 	{#if error}
@@ -524,15 +798,15 @@
 		<div class="py-8 text-center text-gray-400">Loading...</div>
 	{:else}
 		<!-- Tab Bar -->
-		<div class="border-b border-gray-200 dark:border-gray-700">
+		<div class="border-b border-primary/20 dark:border-primary/20">
 			<nav class="-mb-px flex gap-4" aria-label="Settings tabs">
 				<button
 					type="button"
 					onclick={() => (activeTab = 'arm')}
 					class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
 						{activeTab === 'arm'
-						? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300'}"
+						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
+						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
 				>
 					ARM Standard Settings
 				</button>
@@ -541,154 +815,109 @@
 					onclick={() => (activeTab = 'transcoder')}
 					class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
 						{activeTab === 'transcoder'
-						? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300'}"
+						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
+						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
 				>
 					Dedicated Transcoder
+				</button>
+				<button
+					type="button"
+					onclick={() => (activeTab = 'appearance')}
+					class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
+						{activeTab === 'appearance'
+						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
+						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
+				>
+					Appearance
 				</button>
 			</nav>
 		</div>
 
 		<!-- Transcoder Tab -->
 		{#if activeTab === 'transcoder'}
-			<div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+			<div class="rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
 				These settings configure the <strong>dedicated transcoder container</strong>, a separate GPU-accelerated service that handles transcoding independently from ARM. Changes here do not affect ARM's built-in HandBrake/FFmpeg transcoding.
 			</div>
 
 			{#if settings.transcoder_gpu_support}
-				{@const gpu = settings.transcoder_gpu_support}
-				<section>
-					<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-						Hardware Encoding
-					</h2>
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-						{#each HW_GROUPS as group}
-							{@const available = hasAny(gpu, group.keys)}
-							<div
-								class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-							>
-								<div class="mb-3 flex items-center gap-2">
-									<span
-										class="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold {available
-											? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
-											: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}"
-										>{available ? '\u2713' : '\u2717'}</span
-									>
-									<h3 class="font-semibold text-gray-900 dark:text-white">{group.label}</h3>
-								</div>
-								<ul class="space-y-1">
-									{#each group.keys as key}
-										<li class="flex items-center gap-2 text-sm">
-											<span
-												class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold {gpu[
-													key
-												]
-													? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
-													: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}"
-												>{gpu[key] ? '\u2713' : '\u2717'}</span
-											>
-											<span class="text-gray-600 dark:text-gray-400"
-												>{GPU_LABELS[key] ?? key}</span
-											>
-										</li>
-									{/each}
-								</ul>
-							</div>
-						{/each}
-					</div>
-				</section>
+				{@render gpuCards(settings.transcoder_gpu_support)}
 			{/if}
 
 			{#if settings.transcoder_config?.config}
 				<section>
-					<div class="mb-3 flex items-center justify-between">
-						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-							Configuration
-						</h2>
-						<div class="flex items-center gap-3">
-							{#if tcFeedback}
-								<span
-									class="text-sm {tcFeedback.type === 'success'
-										? 'text-green-600 dark:text-green-400'
-										: 'text-red-600 dark:text-red-400'}"
-								>
-									{tcFeedback.message}
-								</span>
-							{/if}
-							<button
-								onclick={handleTcSave}
-								disabled={!tcDirty || tcSaving}
-								class="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50
-									{tcDirty
-									? 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
-									: 'bg-gray-400 dark:bg-gray-600'}"
-							>
-								{tcSaving ? 'Saving...' : 'Save'}
-							</button>
-						</div>
-					</div>
+					<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+						Configuration
+					</h2>
 
 					<div
-						class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+						class="space-y-4 rounded-lg border border-primary/20 bg-surface p-4 dark:border-primary/20 dark:bg-surface-dark"
 					>
 						<!-- Encoding sub-panel -->
-						<div class="space-y-4 rounded-md border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/40">
+						<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
 							<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Video Encoding</h3>
 
 							<!-- Video Encoder -->
-							<div>
-								<label
-									for="tc-video_encoder"
-									class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-								>
-									{TC_LABELS['video_encoder'] ?? 'Video Encoder'}
-								</label>
-								<select
-									id="tc-video_encoder"
-									class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-									bind:value={tcForm.video_encoder}
-								>
-									{#each VIDEO_ENCODER_OPTIONS as enc}
-										<option value={enc.value}>{enc.label}</option>
-									{/each}
-								</select>
-								{#if TC_HELP['video_encoder']}
-									<p class="mt-1 text-xs text-gray-400">{TC_HELP['video_encoder']}</p>
-								{/if}
+							<div class="relative {isTcFieldDirty('video_encoder') ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
+								<div class="{isTcFieldDirty('video_encoder') ? 'px-3 py-3' : ''}">
+									<div class="mb-1 flex items-center gap-1">
+										<label for="tc-video_encoder" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+											{TC_LABELS['video_encoder'] ?? 'Video Encoder'}
+										</label>
+										{#if isTcFieldDirty('video_encoder')}
+											<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
+										{/if}
+									</div>
+									<select
+										id="tc-video_encoder"
+										class={inputClass}
+										bind:value={tcForm.video_encoder}
+									>
+										{#each VIDEO_ENCODER_OPTIONS as enc}
+											<option value={enc.value}>{enc.label}</option>
+										{/each}
+									</select>
+									{#if TC_HELP['video_encoder']}
+										<p class="mt-1 text-xs text-gray-400">{TC_HELP['video_encoder']}</p>
+									{/if}
+								</div>
 							</div>
 
 							<!-- Preset dropdowns (3-column row) -->
 							<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 								{#each TC_PRESET_KEYS as key}
 									{@const selectOpts = tcSelectOptions(key)}
-									<div>
-										<label
-											for="tc-{key}"
-											class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-										>
-											{TC_LABELS[key] ?? key}
-										</label>
-										{#if selectOpts}
-											<select
-												id="tc-{key}"
-												class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-												bind:value={tcForm[key]}
-											>
-												{#each selectOpts as opt}
-													<option value={opt}>{opt || '(None)'}</option>
-												{/each}
-											</select>
-										{:else}
-											<input
-												id="tc-{key}"
-												type="text"
-												class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-												bind:value={tcForm[key]}
-											/>
-										{/if}
-										{#if TC_HELP[key]}
-											<p class="mt-1 text-xs text-gray-400">{TC_HELP[key]}</p>
-										{/if}
+									<div class="relative {isTcFieldDirty(key) ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
+										<div class="{isTcFieldDirty(key) ? 'px-3 py-3' : ''}">
+											<div class="mb-1 flex items-center gap-1">
+												<label for="tc-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+													{TC_LABELS[key] ?? key}
+												</label>
+												{#if isTcFieldDirty(key)}
+													<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
+												{/if}
+											</div>
+											{#if selectOpts}
+												<select
+													id="tc-{key}"
+													class={inputClass}
+													bind:value={tcForm[key]}
+												>
+													{#each selectOpts as opt}
+														<option value={opt}>{opt || '(None)'}</option>
+													{/each}
+												</select>
+											{:else}
+												<input
+													id="tc-{key}"
+													type="text"
+													class={inputClass}
+													bind:value={tcForm[key]}
+												/>
+											{/if}
+											{#if TC_HELP[key]}
+												<p class="mt-1 text-xs text-gray-400">{TC_HELP[key]}</p>
+											{/if}
+										</div>
 									</div>
 								{/each}
 							</div>
@@ -696,26 +925,30 @@
 							<!-- Custom Preset File (full width, last) -->
 							{#if tcSelectOptions('handbrake_preset_file')}
 								{@const pfOpts = tcSelectOptions('handbrake_preset_file')}
-								<div>
-									<label
-										for="tc-handbrake_preset_file"
-										class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-									>
-										{TC_LABELS['handbrake_preset_file']}
-									</label>
-									<select
-										id="tc-handbrake_preset_file"
-										class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-										value={tcForm.handbrake_preset_file ?? ''}
-										onchange={(e) => handlePresetFileChange(e.currentTarget.value)}
-									>
-										{#each pfOpts as opt}
-											<option value={opt}>{opt || '(None)'}</option>
-										{/each}
-									</select>
-									{#if TC_HELP['handbrake_preset_file']}
-										<p class="mt-1 text-xs text-gray-400">{TC_HELP['handbrake_preset_file']}</p>
-									{/if}
+								<div class="relative {isTcFieldDirty('handbrake_preset_file') ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
+									<div class="{isTcFieldDirty('handbrake_preset_file') ? 'px-3 py-3' : ''}">
+										<div class="mb-1 flex items-center gap-1">
+											<label for="tc-handbrake_preset_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+												{TC_LABELS['handbrake_preset_file']}
+											</label>
+											{#if isTcFieldDirty('handbrake_preset_file')}
+												<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
+											{/if}
+										</div>
+										<select
+											id="tc-handbrake_preset_file"
+											class={inputClass}
+											value={tcForm.handbrake_preset_file ?? ''}
+											onchange={(e) => handlePresetFileChange(e.currentTarget.value)}
+										>
+											{#each pfOpts as opt}
+												<option value={opt}>{opt || '(None)'}</option>
+											{/each}
+										</select>
+										{#if TC_HELP['handbrake_preset_file']}
+											<p class="mt-1 text-xs text-gray-400">{TC_HELP['handbrake_preset_file']}</p>
+										{/if}
+									</div>
 								</div>
 							{/if}
 
@@ -723,50 +956,54 @@
 							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 								{#each ['audio_encoder', 'subtitle_mode'] as key}
 									{@const selectOpts = tcSelectOptions(key)}
-									<div>
-										<label
-											for="tc-{key}"
-											class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-										>
-											{TC_LABELS[key] ?? key}
-										</label>
-										{#if selectOpts}
-											<select
-												id="tc-{key}"
-												class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-												bind:value={tcForm[key]}
-											>
-												{#each selectOpts as opt}
-													<option value={opt}>{opt}</option>
-												{/each}
-											</select>
-										{:else}
-											<input
-												id="tc-{key}"
-												type="text"
-												class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-												bind:value={tcForm[key]}
-											/>
-										{/if}
+									<div class="relative {isTcFieldDirty(key) ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
+										<div class="{isTcFieldDirty(key) ? 'px-3 py-3' : ''}">
+											<div class="mb-1 flex items-center gap-1">
+												<label for="tc-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+													{TC_LABELS[key] ?? key}
+												</label>
+												{#if isTcFieldDirty(key)}
+													<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
+												{/if}
+											</div>
+											{#if selectOpts}
+												<select
+													id="tc-{key}"
+													class={inputClass}
+													bind:value={tcForm[key]}
+												>
+													{#each selectOpts as opt}
+														<option value={opt}>{opt}</option>
+													{/each}
+												</select>
+											{:else}
+												<input
+													id="tc-{key}"
+													type="text"
+													class={inputClass}
+													bind:value={tcForm[key]}
+												/>
+											{/if}
+										</div>
 									</div>
 								{/each}
 							</div>
 						</div>
 
 						<!-- Directories sub-panel -->
-						<div class="space-y-4 rounded-md border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/40">
+						<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
 							<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Output Directories</h3>
 							{#if tcPaths}
 								<div class="grid grid-cols-1 gap-2 text-xs md:grid-cols-3">
-									<div class="rounded bg-gray-100 px-2 py-1 dark:bg-gray-600/50">
+									<div class="rounded bg-primary/10 px-2 py-1 dark:bg-primary/15">
 										<span class="font-medium text-gray-500 dark:text-gray-400">Raw:</span>
 										<span class="ml-1 font-mono text-gray-700 dark:text-gray-200">{tcPaths.raw_path}</span>
 									</div>
-									<div class="rounded bg-gray-100 px-2 py-1 dark:bg-gray-600/50">
+									<div class="rounded bg-primary/10 px-2 py-1 dark:bg-primary/15">
 										<span class="font-medium text-gray-500 dark:text-gray-400">Completed:</span>
 										<span class="ml-1 font-mono text-gray-700 dark:text-gray-200">{tcPaths.completed_path}</span>
 									</div>
-									<div class="rounded bg-gray-100 px-2 py-1 dark:bg-gray-600/50">
+									<div class="rounded bg-primary/10 px-2 py-1 dark:bg-primary/15">
 										<span class="font-medium text-gray-500 dark:text-gray-400">Work:</span>
 										<span class="ml-1 font-mono text-gray-700 dark:text-gray-200">{tcPaths.work_path}</span>
 									</div>
@@ -774,114 +1011,134 @@
 							{/if}
 							<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 								{#each ['movies_subdir', 'tv_subdir', 'audio_subdir'] as key}
-									<div>
-										<label
-											for="tc-{key}"
-											class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-										>
-											{TC_LABELS[key] ?? key}
-										</label>
-										<input
-											id="tc-{key}"
-											type="text"
-											class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-											bind:value={tcForm[key]}
-										/>
-										{#if tcPaths}
-											<p class="mt-1 text-xs font-mono text-gray-400">
-												{tcPaths.completed_path}/{tcForm[key]}
-											</p>
-										{/if}
+									<div class="relative {isTcFieldDirty(key) ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
+										<div class="{isTcFieldDirty(key) ? 'px-3 py-3' : ''}">
+											<div class="mb-1 flex items-center gap-1">
+												<label for="tc-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+													{TC_LABELS[key] ?? key}
+												</label>
+												{#if isTcFieldDirty(key)}
+													<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
+												{/if}
+											</div>
+											<input
+												id="tc-{key}"
+												type="text"
+												class={inputClass}
+												bind:value={tcForm[key]}
+											/>
+											{#if tcPaths}
+												<p class="mt-1 text-xs font-mono text-gray-400">
+													{tcPaths.completed_path}/{tcForm[key]}
+												</p>
+											{/if}
+										</div>
 									</div>
 								{/each}
 							</div>
-							<div>
-								<label
-									for="tc-delete_source"
-									class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-								>
-									{TC_LABELS['delete_source'] ?? 'Delete Source'}
-								</label>
-								<button
-									type="button"
-									onclick={() => (tcForm.delete_source = !tcForm.delete_source)}
-									class="relative mt-1 inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
-										{tcForm.delete_source ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}"
-									role="switch"
-									aria-checked={!!tcForm.delete_source}
-									aria-label="Delete Source After Transcode"
-								>
-									<span
-										class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-											{tcForm.delete_source ? 'translate-x-5' : 'translate-x-0'}"
-									></span>
-								</button>
+							<div class="relative {isTcFieldDirty('delete_source') ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
+								<div class="{isTcFieldDirty('delete_source') ? 'px-3 py-3' : ''}">
+									<label
+										for="tc-delete_source"
+										class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+									>
+										{TC_LABELS['delete_source'] ?? 'Delete Source'}
+									</label>
+									<div class="flex items-center gap-2 mt-1">
+										<button
+											type="button"
+											onclick={() => (tcForm.delete_source = !tcForm.delete_source)}
+											class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+												{tcForm.delete_source ? 'bg-primary' : 'bg-primary/30 dark:bg-primary/20'}"
+											role="switch"
+											aria-checked={!!tcForm.delete_source}
+											aria-label="Delete Source After Transcode"
+										>
+											<span
+												class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+													{tcForm.delete_source ? 'translate-x-5' : 'translate-x-0'}"
+											></span>
+										</button>
+										<span class="text-xs font-medium {tcForm.delete_source ? 'text-primary-text dark:text-primary-text-dark' : 'text-gray-400'}">
+											{tcForm.delete_source ? 'Enabled' : 'Disabled'}
+										</span>
+									</div>
+								</div>
 							</div>
 						</div>
 
 						<!-- Operational settings -->
 						{#if settings.transcoder_config.updatable_keys.filter((k) => !TC_PRESET_SET.has(k)).length > 0}
-							<div class="space-y-4 rounded-md border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/40">
+							<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
 								<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Operational</h3>
 								<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 									{#each settings.transcoder_config.updatable_keys.filter((k) => !TC_PRESET_SET.has(k)) as key}
 										{@const selectOpts = tcSelectOptions(key)}
-										<div>
-											<label
-												for="tc-{key}"
-												class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-											>
-												{TC_LABELS[key] ?? key}
-											</label>
+										<div class="relative {isTcFieldDirty(key) ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
+											<div class="{isTcFieldDirty(key) ? 'px-3 py-3' : ''}">
+												<div class="mb-1 flex items-center gap-1">
+													<label for="tc-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+														{TC_LABELS[key] ?? key}
+													</label>
+													{#if isTcFieldDirty(key)}
+														<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
+													{/if}
+												</div>
 
-											{#if selectOpts}
-												<select
-													id="tc-{key}"
-													class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-													bind:value={tcForm[key]}
-												>
-													{#each selectOpts as opt}
-														<option value={opt}>{opt}</option>
-													{/each}
-												</select>
-											{:else if TC_BOOL_KEYS.has(key)}
-												<button
-													type="button"
-													onclick={() => (tcForm[key] = !tcForm[key])}
-													class="relative mt-1 inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
-														{tcForm[key] ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}"
-													role="switch"
-													aria-checked={!!tcForm[key]}
-													aria-label={TC_LABELS[key] ?? key}
-												>
-													<span
-														class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-															{tcForm[key] ? 'translate-x-5' : 'translate-x-0'}"
-													></span>
-												</button>
-											{:else if TC_NUMBER_FIELDS[key]}
-												{@const range = TC_NUMBER_FIELDS[key]}
-												<input
-													id="tc-{key}"
-													type="number"
-													min={range[0]}
-													max={range[1]}
-													step={range[2] ?? 1}
-													class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-													bind:value={tcForm[key]}
-												/>
-											{:else}
-												<input
-													id="tc-{key}"
-													type="text"
-													class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-													bind:value={tcForm[key]}
-												/>
-											{/if}
+												{#if selectOpts}
+													<select
+														id="tc-{key}"
+														class={inputClass}
+														bind:value={tcForm[key]}
+													>
+														{#each selectOpts as opt}
+															<option value={opt}>{opt}</option>
+														{/each}
+													</select>
+												{:else if TC_BOOL_KEYS.has(key)}
+													<div class="flex items-center gap-2 mt-1">
+														<button
+															type="button"
+															onclick={() => (tcForm[key] = !tcForm[key])}
+															class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+																{tcForm[key] ? 'bg-primary' : 'bg-primary/30 dark:bg-primary/20'}"
+															role="switch"
+															aria-checked={!!tcForm[key]}
+															aria-label={TC_LABELS[key] ?? key}
+														>
+															<span
+																class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+																	{tcForm[key] ? 'translate-x-5' : 'translate-x-0'}"
+															></span>
+														</button>
+														<span class="text-xs font-medium {tcForm[key] ? 'text-primary-text dark:text-primary-text-dark' : 'text-gray-400'}">
+															{tcForm[key] ? 'Enabled' : 'Disabled'}
+														</span>
+													</div>
+												{:else if TC_NUMBER_FIELDS[key]}
+													{@const range = TC_NUMBER_FIELDS[key]}
+													<input
+														id="tc-{key}"
+														type="number"
+														min={range[0]}
+														max={range[1]}
+														step={range[2] ?? 1}
+														class={inputClass}
+														bind:value={tcForm[key]}
+													/>
+												{:else}
+													<input
+														id="tc-{key}"
+														type="text"
+														class={inputClass}
+														bind:value={tcForm[key]}
+													/>
+												{/if}
 
-											{#if TC_HELP[key]}
-												<p class="mt-1 text-xs text-gray-400">{TC_HELP[key]}</p>
-											{/if}
+												{#if TC_HELP[key]}
+													<p class="mt-1 text-xs text-gray-400">{TC_HELP[key]}</p>
+												{/if}
+											</div>
 										</div>
 									{/each}
 								</div>
@@ -897,72 +1154,32 @@
 		<!-- ARM Tab -->
 		{#if activeTab === 'arm'}
 			{#if settings.arm_gpu_support}
-				{@const gpu = settings.arm_gpu_support}
-				<section>
-					<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-						Hardware Encoding
-					</h2>
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-						{#each HW_GROUPS as group}
-							{@const available = hasAny(gpu, group.keys)}
-							<div
-								class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-							>
-								<div class="mb-3 flex items-center gap-2">
-									<span
-										class="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold {available
-											? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
-											: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}"
-										>{available ? '\u2713' : '\u2717'}</span
-									>
-									<h3 class="font-semibold text-gray-900 dark:text-white">{group.label}</h3>
-								</div>
-								<ul class="space-y-1">
-									{#each group.keys as key}
-										<li class="flex items-center gap-2 text-sm">
-											<span
-												class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold {gpu[
-													key
-												]
-													? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
-													: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}"
-												>{gpu[key] ? '\u2713' : '\u2717'}</span
-											>
-											<span class="text-gray-600 dark:text-gray-400"
-												>{GPU_LABELS[key] ?? key}</span
-											>
-										</li>
-									{/each}
-								</ul>
-							</div>
-						{/each}
-					</div>
-				</section>
+				{@render gpuCards(settings.arm_gpu_support)}
 			{/if}
 
 			<section>
-				<div class="mb-3 flex items-center justify-between">
+				<div class="mb-3 flex items-center justify-between gap-3">
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Configuration</h2>
-					<div class="flex items-center gap-3">
-						{#if armFeedback}
-							<span
-								class="text-sm {armFeedback.type === 'success'
-									? 'text-green-600 dark:text-green-400'
-									: 'text-red-600 dark:text-red-400'}"
-							>
-								{armFeedback.message}
-							</span>
-						{/if}
-						{#if settings.arm_config}
+					<!-- Search input -->
+					<div class="relative">
+						<svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+						</svg>
+						<input
+							type="text"
+							placeholder="Filter settings..."
+							class="w-56 rounded-md border border-primary/25 bg-primary/5 py-1.5 pl-8 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+							bind:value={armSearch}
+						/>
+						{#if armSearch}
 							<button
-								onclick={handleArmSave}
-								disabled={!armDirty || armSaving}
-								class="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50
-									{armDirty
-									? 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
-									: 'bg-gray-400 dark:bg-gray-600'}"
+								type="button"
+								onclick={() => (armSearch = '')}
+								class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
 							>
-								{armSaving ? 'Saving...' : 'Save'}
+								<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
 							</button>
 						{/if}
 					</div>
@@ -970,289 +1187,180 @@
 
 				{#if settings.arm_config}
 					{@const groups = getArmGroups(settings.arm_config)}
-					<div class="space-y-2">
-						{#each groups as group}
-							<div
-								class="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
-							>
-								<button
-									type="button"
-									onclick={() => toggleCollapse(group.label)}
-									class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-700/50"
+					{#if groups.length === 0 && armSearch}
+						<p class="py-4 text-center text-sm text-gray-400">No settings match "{armSearch}"</p>
+					{:else}
+						<div class="space-y-2">
+							{#each groups as group}
+								<div
+									class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark"
 								>
-									<span>{group.label}</span>
-									<svg
-										class="h-4 w-4 transform transition-transform {armCollapsed[group.label]
-											? ''
-											: 'rotate-180'}"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
+									<button
+										type="button"
+										onclick={() => toggleCollapse(group.label)}
+										class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-page dark:text-white dark:hover:bg-primary/10"
 									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M19 9l-7 7-7-7"
-										/>
-									</svg>
-								</button>
+										<span>{group.label}</span>
+										<svg
+											class="h-4 w-4 transform transition-transform {armCollapsed[group.label]
+												? ''
+												: 'rotate-180'}"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M19 9l-7 7-7-7"
+											/>
+										</svg>
+									</button>
 
-								{#if !armCollapsed[group.label]}
-									<div class="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
-										<div class="space-y-4">
-											{#each group.subpanels as subpanel}
-												{#if subpanel.label}
-													<div class="space-y-4 rounded-md border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/40">
-														<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{subpanel.label}</h3>
+									{#if !armCollapsed[group.label] || armSearch}
+										<div class="border-t border-primary/20 px-4 py-3 dark:border-primary/20">
+											<div class="space-y-4">
+												{#each group.subpanels as subpanel}
+													{#if subpanel.label}
+														<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
+															<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{subpanel.label}</h3>
+															{#if TRANSCODING_SECTIONS[subpanel.label]}
+																{#each TRANSCODING_SECTIONS[subpanel.label] as section}
+																	{@const sectionKeys = section.keys.filter(k => subpanel.keys.includes(k))}
+																	{#if sectionKeys.length > 0}
+																		<p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{section.label}</p>
+																		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+																			{#each sectionKeys as key}
+																				{@render armField(key)}
+																			{/each}
+																		</div>
+																	{/if}
+																{/each}
+															{:else}
+																<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+																	{#each subpanel.keys as key}
+																		{#if !isMetadataKeyHidden(key)}
+																			{@render armField(key)}
+																		{/if}
+																	{/each}
+																</div>
+															{/if}
+														</div>
+													{:else}
 														<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 															{#each subpanel.keys as key}
-															{@const val = armForm[key] ?? ''}
-															{@const comment = getComment(key)}
-															<div>
-																<div class="mb-1 flex items-center gap-1">
-																	<label for="arm-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-																		{ARM_LABELS[key]?.label ?? key}
-																	</label>
-																	<button
-																		type="button"
-																		onclick={() => toggleInfo(key)}
-																		class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold
-																			{armInfoKeys.has(key)
-																			? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
-																			: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}
-																			hover:bg-blue-200 dark:hover:bg-blue-800/40"
-																		title={key}
-																	>i</button>
-																</div>
-																{#if armInfoKeys.has(key)}
-																	<p class="mb-1 text-xs font-mono text-gray-400">{key}</p>
+																{#if !isMetadataKeyHidden(key)}
+																	{@render armField(key)}
 																{/if}
-															
-																{#if SELECT_OPTIONS[key]}
-																	{@const opts = SELECT_OPTIONS[key]}
-																	{@const curVal = val?.toString() ?? ''}
-																	<select
-																		id="arm-{key}"
-																		class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-																		value={curVal}
-																		onchange={(e) =>
-																			(armForm[key] = (
-																				e.target as HTMLSelectElement
-																			).value)}
-																	>
-																		{#if curVal && !opts.includes(curVal)}
-																			<option value={curVal}>{curVal}</option>
-																		{/if}
-																		{#each opts as opt}
-																			<option value={opt}>{opt}</option>
-																		{/each}
-																	</select>
-																{:else if isBoolStr(val?.toString())}
-																	<button
-																		type="button"
-																		onclick={() => toggleBool(key)}
-																		class="relative mt-1 inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
-																			{val?.toString().toLowerCase() === 'true'
-																			? 'bg-blue-600'
-																			: 'bg-gray-300 dark:bg-gray-600'}"
-																		role="switch"
-																		aria-checked={val?.toString().toLowerCase() ===
-																			'true'}
-																		aria-label={key}
-																	>
-																		<span
-																			class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-																				{val?.toString().toLowerCase() === 'true'
-																				? 'translate-x-5'
-																				: 'translate-x-0'}"
-																		></span>
-																	</button>
-																{:else if HIDDEN_KEYS.has(key)}
-																	<div class="flex gap-1">
-																		<input
-																			id="arm-{key}"
-																			type={armRevealedKeys.has(key)
-																				? 'text'
-																				: 'password'}
-																			class="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-																			value={val?.toString() ?? ''}
-																			oninput={(e) =>
-																				(armForm[key] = (
-																					e.target as HTMLInputElement
-																				).value)}
-																		/>
-																		<button
-																			type="button"
-																			onclick={() => toggleReveal(key)}
-																			class="rounded-md border border-gray-300 px-2 py-2 text-xs text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
-																		>
-																			{armRevealedKeys.has(key) ? 'Hide' : 'Show'}
-																		</button>
-																	</div>
-																{:else if isIntStr(val?.toString())}
-																	<input
-																		id="arm-{key}"
-																		type="number"
-																		class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-																		value={val?.toString() ?? ''}
-																		oninput={(e) =>
-																			(armForm[key] = (
-																				e.target as HTMLInputElement
-																			).value)}
-																	/>
-																{:else}
-																	<input
-																		id="arm-{key}"
-																		type="text"
-																		class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-																		value={val?.toString() ?? ''}
-																		oninput={(e) =>
-																			(armForm[key] = (
-																				e.target as HTMLInputElement
-																			).value)}
-																	/>
-																{/if}
-															
-																{#if ARM_LABELS[key]?.description}
-																	<p class="mt-1 text-xs text-gray-400">{ARM_LABELS[key].description}</p>
-																{:else if comment}
-																	<p class="mt-1 text-xs text-gray-400">{comment}</p>
-																{/if}
-															</div>
 															{/each}
 														</div>
-													</div>
-												{:else}
-													<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-														{#each subpanel.keys as key}
-														{@const val = armForm[key] ?? ''}
-														{@const comment = getComment(key)}
-														<div>
-															<div class="mb-1 flex items-center gap-1">
-																<label for="arm-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-																	{ARM_LABELS[key]?.label ?? key}
-																</label>
-																<button
-																	type="button"
-																	onclick={() => toggleInfo(key)}
-																	class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold
-																		{armInfoKeys.has(key)
-																		? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
-																		: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}
-																		hover:bg-blue-200 dark:hover:bg-blue-800/40"
-																	title={key}
-																>i</button>
-															</div>
-															{#if armInfoKeys.has(key)}
-																<p class="mb-1 text-xs font-mono text-gray-400">{key}</p>
-															{/if}
-														
-															{#if SELECT_OPTIONS[key]}
-																{@const opts = SELECT_OPTIONS[key]}
-																{@const curVal = val?.toString() ?? ''}
-																<select
-																	id="arm-{key}"
-																	class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-																	value={curVal}
-																	onchange={(e) =>
-																		(armForm[key] = (
-																			e.target as HTMLSelectElement
-																		).value)}
-																>
-																	{#if curVal && !opts.includes(curVal)}
-																		<option value={curVal}>{curVal}</option>
-																	{/if}
-																	{#each opts as opt}
-																		<option value={opt}>{opt}</option>
-																	{/each}
-																</select>
-															{:else if isBoolStr(val?.toString())}
-																<button
-																	type="button"
-																	onclick={() => toggleBool(key)}
-																	class="relative mt-1 inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
-																		{val?.toString().toLowerCase() === 'true'
-																		? 'bg-blue-600'
-																		: 'bg-gray-300 dark:bg-gray-600'}"
-																	role="switch"
-																	aria-checked={val?.toString().toLowerCase() ===
-																		'true'}
-																	aria-label={key}
-																>
-																	<span
-																		class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-																			{val?.toString().toLowerCase() === 'true'
-																			? 'translate-x-5'
-																			: 'translate-x-0'}"
-																	></span>
-																</button>
-															{:else if HIDDEN_KEYS.has(key)}
-																<div class="flex gap-1">
-																	<input
-																		id="arm-{key}"
-																		type={armRevealedKeys.has(key)
-																			? 'text'
-																			: 'password'}
-																		class="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-																		value={val?.toString() ?? ''}
-																		oninput={(e) =>
-																			(armForm[key] = (
-																				e.target as HTMLInputElement
-																			).value)}
-																	/>
-																	<button
-																		type="button"
-																		onclick={() => toggleReveal(key)}
-																		class="rounded-md border border-gray-300 px-2 py-2 text-xs text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
-																	>
-																		{armRevealedKeys.has(key) ? 'Hide' : 'Show'}
-																	</button>
-																</div>
-															{:else if isIntStr(val?.toString())}
-																<input
-																	id="arm-{key}"
-																	type="number"
-																	class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-																	value={val?.toString() ?? ''}
-																	oninput={(e) =>
-																		(armForm[key] = (
-																			e.target as HTMLInputElement
-																		).value)}
-																/>
-															{:else}
-																<input
-																	id="arm-{key}"
-																	type="text"
-																	class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-																	value={val?.toString() ?? ''}
-																	oninput={(e) =>
-																		(armForm[key] = (
-																			e.target as HTMLInputElement
-																		).value)}
-																/>
-															{/if}
-														
-															{#if ARM_LABELS[key]?.description}
-																<p class="mt-1 text-xs text-gray-400">{ARM_LABELS[key].description}</p>
-															{:else if comment}
-																<p class="mt-1 text-xs text-gray-400">{comment}</p>
-															{/if}
-														</div>
-														{/each}
-													</div>
-												{/if}
-											{/each}
+													{/if}
+												{/each}
+											</div>
 										</div>
-									</div>
-								{/if}
-							</div>
-						{/each}
-					</div>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					{/if}
 				{:else}
 					<p class="text-sm text-gray-400">No ARM configuration found.</p>
 				{/if}
 			</section>
 		{/if}
+
+		<!-- Appearance Tab -->
+		{#if activeTab === 'appearance'}
+			<section class="space-y-6">
+				<!-- Color Scheme -->
+				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+					<h2 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Color Scheme</h2>
+					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Choose an accent color for buttons, links, and highlights throughout the UI.</p>
+					<div class="flex flex-wrap gap-3">
+						{#each COLOR_SCHEMES as scheme}
+							<button
+								type="button"
+								onclick={() => ($colorScheme = scheme.id)}
+								class="flex flex-col items-center gap-1.5 rounded-lg border-2 px-4 py-3 transition-colors
+									{$colorScheme === scheme.id
+									? 'border-primary bg-primary-light-bg dark:border-primary-text-dark dark:bg-primary-light-bg-dark/20'
+									: 'border-primary/15 hover:border-primary/30 dark:border-primary/15 dark:hover:border-primary/30'}"
+							>
+								<span class="h-8 w-8 rounded-full {scheme.swatch}"></span>
+								<span class="text-xs font-medium text-gray-700 dark:text-gray-300">{scheme.label}</span>
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<!-- Dark Mode -->
+				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+					<div class="flex items-center justify-between">
+						<div>
+							<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Dark Mode</h2>
+							<p class="text-sm text-gray-500 dark:text-gray-400">Toggle between light and dark mode.</p>
+						</div>
+						<div class="flex items-center gap-2">
+							<button
+								type="button"
+								onclick={toggleTheme}
+								class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+									{$theme === 'dark' ? 'bg-primary' : 'bg-primary/30 dark:bg-primary/20'}"
+								role="switch"
+								aria-checked={$theme === 'dark'}
+								aria-label="Dark mode"
+							>
+								<span
+									class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+										{$theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}"
+								></span>
+							</button>
+							<span class="text-xs font-medium {$theme === 'dark' ? 'text-primary-text dark:text-primary-text-dark' : 'text-gray-400'}">
+								{$theme === 'dark' ? 'On' : 'Off'}
+							</span>
+						</div>
+					</div>
+				</div>
+			</section>
+		{/if}
 	{/if}
 </div>
+
+<!-- Sticky save bar -->
+{#if anyDirty}
+	<div class="fixed bottom-0 left-0 right-0 z-50 border-t border-primary/30 bg-surface/95 shadow-lg backdrop-blur-sm dark:border-primary/30 dark:bg-surface-dark/95">
+		<div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
+			<div class="flex items-center gap-3">
+				<span class="h-2 w-2 flex-shrink-0 rounded-full bg-primary animate-pulse"></span>
+				<span class="text-sm font-bold text-gray-700 dark:text-gray-300">Unsaved {dirtyTabLabel} changes</span>
+				{#if anyFeedback}
+					<span
+						class="text-sm {anyFeedback.type === 'success'
+							? 'text-green-600 dark:text-green-400'
+							: 'text-red-600 dark:text-red-400'}"
+					>
+						{anyFeedback.message}
+					</span>
+				{/if}
+			</div>
+			<div class="flex items-center gap-2">
+				<button
+					type="button"
+					onclick={handleDiscardAll}
+					class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 ring-1 ring-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:ring-gray-600 dark:hover:bg-gray-800"
+				>
+					Discard
+				</button>
+				<button
+					type="button"
+					onclick={handleSaveAll}
+					disabled={anySaving}
+					class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+				>
+					{anySaving ? 'Saving...' : 'Save Changes'}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
