@@ -8,6 +8,11 @@ RUN npm run build
 
 # Stage 2: Python runtime
 FROM python:3.12-slim
+
+LABEL org.opencontainers.image.source="https://github.com/uprightbass360/automatic-ripping-machine-ui"
+LABEL org.opencontainers.image.license="MIT"
+LABEL org.opencontainers.image.description="Replacement dashboard for ARM (SvelteKit + FastAPI)"
+
 WORKDIR /app
 
 COPY requirements.txt .

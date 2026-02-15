@@ -216,6 +216,7 @@ class SettingsResponse(BaseModel):
     transcoder_config: dict[str, Any] | None = None
     arm_gpu_support: dict[str, Any] | None = None
     transcoder_gpu_support: dict[str, Any] | None = None
+    transcoder_auth_status: dict[str, Any] | None = None
     # Deprecated — kept for backward compat; mirrors transcoder_gpu_support
     gpu_support: dict[str, Any] | None = None
 

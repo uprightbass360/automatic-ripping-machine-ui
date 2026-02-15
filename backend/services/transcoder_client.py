@@ -42,6 +42,92 @@ async def health() -> dict[str, Any] | None:
         return None
 
 
+async def test_connection() -> dict[str, Any]:
+    """Two-step probe: check reachability via /health, then auth via /config."""
+    result: dict[str, Any] = {
+        "reachable": False,
+        "auth_ok": False,
+        "auth_required": False,
+        "gpu_support": None,
+        "worker_running": False,
+        "queue_size": 0,
+        "error": None,
+    }
+    try:
+        resp = await get_client().get("/health")
+        resp.raise_for_status()
+        data = resp.json()
+        result["reachable"] = True
+        result["gpu_support"] = data.get("gpu_support")
+        result["worker_running"] = data.get("worker_running", False)
+        result["queue_size"] = data.get("queue_size", 0)
+        result["auth_required"] = data.get("require_api_auth", False)
+    except (httpx.ConnectError, httpx.TimeoutException) as e:
+        result["error"] = f"Connection failed: {e}"
+        return result
+    except httpx.HTTPError as e:
+        result["error"] = f"Health check failed: {e}"
+        return result
+
+    # Step 2: verify API key by hitting an authenticated endpoint
+    try:
+        config_resp = await get_client().get("/config")
+        if config_resp.status_code in (401, 403):
+            result["auth_ok"] = False
+        else:
+            config_resp.raise_for_status()
+            result["auth_ok"] = True
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code in (401, 403):
+            result["auth_ok"] = False
+        else:
+            result["error"] = f"Config check failed: {e}"
+    except (httpx.ConnectError, httpx.TimeoutException):
+        # Reachability already confirmed via /health; this is unexpected
+        result["error"] = "Lost connection during auth check"
+
+    return result
+
+
+async def test_webhook(webhook_secret: str) -> dict[str, Any]:
+    """Send a test webhook payload to verify the webhook secret."""
+    result: dict[str, Any] = {
+        "reachable": False,
+        "secret_ok": False,
+        "secret_required": False,
+        "error": None,
+    }
+    headers: dict[str, str] = {}
+    if webhook_secret:
+        headers["X-Webhook-Secret"] = webhook_secret
+
+    try:
+        # Use a fresh client without the shared X-API-Key header
+        async with httpx.AsyncClient(
+            base_url=settings.transcoder_url,
+            timeout=httpx.Timeout(10.0, connect=3.0),
+        ) as client:
+            resp = await client.post(
+                "/webhook/arm",
+                json={"title": "ARM UI connection test", "body": "test", "type": "info"},
+                headers=headers,
+            )
+        result["reachable"] = True
+        if resp.status_code in (401, 403):
+            result["secret_ok"] = False
+            result["secret_required"] = True
+        else:
+            # Any non-auth error (400, 200 "ignored") means the secret was accepted
+            result["secret_ok"] = True
+    except (httpx.ConnectError, httpx.TimeoutException) as e:
+        result["error"] = f"Connection failed: {e}"
+    except httpx.HTTPError as e:
+        result["reachable"] = True
+        result["error"] = f"Webhook test failed: {e}"
+
+    return result
+
+
 async def get_system_info() -> dict[str, Any] | None:
     """Fetch static hardware info (CPU, RAM, GPU) from the transcoder."""
     try:

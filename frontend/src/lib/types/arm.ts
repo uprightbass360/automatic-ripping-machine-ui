@@ -202,6 +202,11 @@ export interface TranscoderConfig {
 	presets_by_file?: Record<string, string[]>;
 }
 
+export interface TranscoderAuthStatus {
+	require_api_auth: boolean;
+	webhook_secret_configured: boolean;
+}
+
 export interface SettingsData {
 	arm_config: Record<string, string | null> | null;
 	arm_metadata: Record<string, string> | null;
@@ -209,6 +214,7 @@ export interface SettingsData {
 	transcoder_config: TranscoderConfig | null;
 	arm_gpu_support: Record<string, boolean> | null;
 	transcoder_gpu_support: Record<string, boolean> | null;
+	transcoder_auth_status: TranscoderAuthStatus | null;
 	/** @deprecated Use transcoder_gpu_support instead */
 	gpu_support: Record<string, boolean> | null;
 }

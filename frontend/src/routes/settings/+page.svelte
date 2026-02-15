@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey } from '$lib/api/settings';
+	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchBashScript, saveBashScript } from '$lib/api/settings';
+	import type { ConnectionTestResult, WebhookTestResult, BashScriptInfo } from '$lib/api/settings';
 	import type { SettingsData } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES } from '$lib/stores/colorScheme';
@@ -31,6 +32,25 @@
 	// --- Metadata test ---
 	let metadataTestResult = $state<{ success: boolean; message: string } | null>(null);
 	let metadataTesting = $state(false);
+
+	// --- Transcoder connection test ---
+	let connTesting = $state(false);
+	let connResult = $state<ConnectionTestResult | null>(null);
+
+	// --- Transcoder webhook test ---
+	let webhookTesting = $state(false);
+	let webhookResult = $state<WebhookTestResult | null>(null);
+	let webhookSecret = $state('');
+
+	// --- Notification script state ---
+	let scriptInfo = $state<BashScriptInfo | null>(null);
+	let scriptLoading = $state(false);
+	let scriptSaving = $state(false);
+	let scriptFeedback = $state<{type: 'success' | 'error'; message: string} | null>(null);
+	let scriptForm = $state({transcoder_url: '', webhook_secret: '', local_raw_path: '', shared_raw_path: ''});
+	let showAdvanced = $state(false);
+	let showScriptPreview = $state(false);
+	let scriptLoaded = false;
 
 	onMount(async () => {
 		try {
@@ -496,6 +516,83 @@
 		}
 	}
 
+	// --- Cross-service derived state ---
+	let skipTranscode = $derived(
+		(armForm['SKIP_TRANSCODE'] ?? '').toString().toLowerCase() === 'true'
+	);
+
+	async function handleTestConnection() {
+		connTesting = true;
+		connResult = null;
+		try {
+			connResult = await testTranscoderConnection();
+		} catch {
+			connResult = { reachable: false, auth_ok: false, auth_required: false, gpu_support: null, worker_running: false, queue_size: 0, error: 'Failed to reach test endpoint' };
+		} finally {
+			connTesting = false;
+		}
+	}
+
+	async function handleTestWebhook() {
+		webhookTesting = true;
+		webhookResult = null;
+		try {
+			webhookResult = await testTranscoderWebhook(webhookSecret);
+		} catch {
+			webhookResult = { reachable: false, secret_ok: false, secret_required: false, error: 'Failed to reach test endpoint' };
+		} finally {
+			webhookTesting = false;
+		}
+	}
+
+	// --- Notification script ---
+	async function loadScriptInfo() {
+		if (scriptLoaded || scriptLoading) return;
+		scriptLoading = true;
+		try {
+			scriptInfo = await fetchBashScript();
+			if (scriptInfo.variables) {
+				scriptForm = { ...scriptInfo.variables };
+			} else {
+				scriptForm.transcoder_url = scriptInfo.default_transcoder_url;
+			}
+			scriptLoaded = true;
+		} catch {
+			// silently fail — section will show loading state
+		} finally {
+			scriptLoading = false;
+		}
+	}
+
+	$effect(() => {
+		if (activeTab === 'transcoder') {
+			loadScriptInfo();
+		}
+	});
+
+	async function handleSaveScript() {
+		scriptSaving = true;
+		scriptFeedback = null;
+		try {
+			const result = await saveBashScript(scriptForm);
+			if (result.success) {
+				// Auto-fill BASH_SCRIPT in ARM config if empty or different
+				const currentBashScript = armForm['BASH_SCRIPT'] ?? '';
+				if (currentBashScript !== result.arm_path) {
+					armForm['BASH_SCRIPT'] = result.arm_path;
+				}
+				scriptFeedback = { type: 'success', message: 'Script saved. Save ARM settings to apply BASH_SCRIPT path.' };
+				// Refresh script info for preview
+				scriptInfo = await fetchBashScript();
+			}
+		} catch (e) {
+			scriptFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to save script' };
+		} finally {
+			scriptSaving = false;
+			clearFeedback(() => (scriptFeedback = null));
+		}
+	}
+
 	// HandBrake presets — loaded dynamically from the ARM container at startup.
 	// Falls back to transcoder presets if the ARM init container hasn't run.
 	let hbPresets = $derived(settings?.arm_handbrake_presets ?? []);
@@ -837,6 +934,261 @@
 			<div class="rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
 				These settings configure the <strong>dedicated transcoder container</strong>, a separate GPU-accelerated service that handles transcoding independently from ARM. Changes here do not affect ARM's built-in HandBrake/FFmpeg transcoding.
 			</div>
+
+			<!-- Cross-service awareness banner -->
+			{#if skipTranscode}
+				<div class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm dark:border-green-800 dark:bg-green-900/20">
+					<span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700 dark:bg-green-900/40 dark:text-green-400">&#10003;</span>
+					<span class="font-medium text-green-700 dark:text-green-400">Active</span>
+					<span class="text-gray-600 dark:text-gray-400">&mdash; ARM's SKIP_TRANSCODE is enabled. Ripped media is ready for this transcoder.</span>
+				</div>
+			{:else}
+				<div class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm dark:border-amber-800 dark:bg-amber-900/20">
+					<span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">!</span>
+					<span class="font-medium text-amber-700 dark:text-amber-400">ARM using built-in transcoding</span>
+					<span class="text-gray-600 dark:text-gray-400">&mdash; Enable SKIP_TRANSCODE on the </span>
+					<button type="button" onclick={() => { activeTab = 'arm'; window.scrollTo(0, 0); }} class="font-medium text-primary-text underline hover:text-primary-dark dark:text-primary-text-dark">ARM tab</button>
+					<span class="text-gray-600 dark:text-gray-400"> to offload to this service.</span>
+				</div>
+			{/if}
+
+			<!-- Service Status -->
+			<section>
+				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Status</h2>
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<!-- Connection card -->
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+						<h3 class="mb-3 font-semibold text-gray-900 dark:text-white">Connection</h3>
+						<button
+							type="button"
+							onclick={handleTestConnection}
+							disabled={connTesting}
+							class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+						>
+							{connTesting ? 'Testing...' : 'Test Connection'}
+						</button>
+						{#if connResult}
+							<ul class="mt-3 space-y-1.5">
+								<li class="flex items-center gap-2 text-sm">
+									<span class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold {connResult.reachable ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}">{connResult.reachable ? '\u2713' : '\u2717'}</span>
+									<span class="text-gray-600 dark:text-gray-400">Reachable</span>
+								</li>
+								{#if connResult.reachable}
+									<li class="flex items-center gap-2 text-sm">
+										<span class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold {connResult.auth_ok ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : connResult.auth_required ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}">{connResult.auth_ok ? '\u2713' : connResult.auth_required ? '\u2717' : '\u2014'}</span>
+										<span class="text-gray-600 dark:text-gray-400">API key {connResult.auth_ok ? 'valid' : connResult.auth_required ? 'invalid or missing' : 'not required'}</span>
+									</li>
+									<li class="flex items-center gap-2 text-sm">
+										<span class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold {connResult.worker_running ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'}">{connResult.worker_running ? '\u2713' : '!'}</span>
+										<span class="text-gray-600 dark:text-gray-400">Worker {connResult.worker_running ? 'running' : 'stopped'} &middot; {connResult.queue_size} queued</span>
+									</li>
+								{/if}
+								{#if connResult.error}
+									<li class="text-xs text-red-600 dark:text-red-400">{connResult.error}</li>
+								{/if}
+							</ul>
+						{/if}
+					</div>
+
+					<!-- Webhook card -->
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+						<h3 class="mb-3 font-semibold text-gray-900 dark:text-white">Webhook</h3>
+						<div class="mb-3">
+							<label for="webhook-secret" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook Secret</label>
+							<input
+								id="webhook-secret"
+								type="password"
+								class={inputClass}
+								placeholder="Enter secret to test..."
+								bind:value={webhookSecret}
+							/>
+							<p class="mt-1 text-xs text-gray-400">Not saved &mdash; used only for this test.</p>
+						</div>
+						<button
+							type="button"
+							onclick={handleTestWebhook}
+							disabled={webhookTesting}
+							class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+						>
+							{webhookTesting ? 'Testing...' : 'Test Webhook'}
+						</button>
+						{#if webhookResult}
+							<ul class="mt-3 space-y-1.5">
+								<li class="flex items-center gap-2 text-sm">
+									<span class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold {webhookResult.reachable ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}">{webhookResult.reachable ? '\u2713' : '\u2717'}</span>
+									<span class="text-gray-600 dark:text-gray-400">Reachable</span>
+								</li>
+								{#if webhookResult.reachable}
+									<li class="flex items-center gap-2 text-sm">
+										<span class="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold {webhookResult.secret_ok ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}">{webhookResult.secret_ok ? '\u2713' : '\u2717'}</span>
+										<span class="text-gray-600 dark:text-gray-400">Secret {webhookResult.secret_ok ? 'accepted' : webhookResult.secret_required ? 'rejected' : 'invalid'}</span>
+									</li>
+								{/if}
+								{#if webhookResult.error}
+									<li class="text-xs text-red-600 dark:text-red-400">{webhookResult.error}</li>
+								{/if}
+							</ul>
+						{/if}
+					</div>
+
+					<!-- Authentication info card (full width) -->
+					{#if settings.transcoder_auth_status}
+						<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm md:col-span-2 dark:border-primary/20 dark:bg-surface-dark">
+							<h3 class="mb-3 font-semibold text-gray-900 dark:text-white">Authentication</h3>
+							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+								<div class="flex items-center gap-2 text-sm">
+									<span class="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold {settings.transcoder_auth_status.require_api_auth ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}">{settings.transcoder_auth_status.require_api_auth ? '\u2713' : '\u2014'}</span>
+									<span class="text-gray-700 dark:text-gray-300">API authentication {settings.transcoder_auth_status.require_api_auth ? 'enabled' : 'disabled'}</span>
+								</div>
+								<div class="flex items-center gap-2 text-sm">
+									<span class="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold {settings.transcoder_auth_status.webhook_secret_configured ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}">{settings.transcoder_auth_status.webhook_secret_configured ? '\u2713' : '\u2014'}</span>
+									<span class="text-gray-700 dark:text-gray-300">Webhook secret {settings.transcoder_auth_status.webhook_secret_configured ? 'configured' : 'not configured'}</span>
+								</div>
+							</div>
+							<p class="mt-3 text-xs text-gray-400">Authentication is configured via Docker environment variables (REQUIRE_API_AUTH, API_KEY, WEBHOOK_SECRET) on the transcoder container.</p>
+						</div>
+					{/if}
+				</div>
+			</section>
+
+			<!-- Notification Script -->
+			<section>
+				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Notification Script</h2>
+				<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+					<p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+						Generates a script that ARM executes to notify the transcoder when a rip completes.
+					</p>
+
+					{#if scriptLoading}
+						<p class="text-sm text-gray-400">Loading...</p>
+					{:else}
+						<div class="space-y-4">
+							<!-- Transcoder Webhook URL -->
+							<div>
+								<label for="script-url" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+									Transcoder Webhook URL
+								</label>
+								<input
+									id="script-url"
+									type="text"
+									class={inputClass}
+									placeholder="http://arm-transcoder:5000/webhook/arm"
+									bind:value={scriptForm.transcoder_url}
+								/>
+								<p class="mt-1 text-xs text-gray-400">The full URL ARM uses to reach the transcoder webhook endpoint.</p>
+							</div>
+
+							<!-- Webhook Secret -->
+							<div>
+								<label for="script-secret" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+									Webhook Secret
+								</label>
+								<input
+									id="script-secret"
+									type="password"
+									class={inputClass}
+									placeholder="Leave empty if webhook auth is disabled"
+									bind:value={scriptForm.webhook_secret}
+								/>
+								<p class="mt-1 text-xs text-gray-400">Must match WEBHOOK_SECRET on the transcoder. Leave empty if webhook auth is disabled.</p>
+							</div>
+
+							<!-- Advanced toggle -->
+							<div>
+								<button
+									type="button"
+									onclick={() => (showAdvanced = !showAdvanced)}
+									class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+								>
+									<svg
+										class="h-3.5 w-3.5 transform transition-transform {showAdvanced ? 'rotate-90' : ''}"
+										fill="none" stroke="currentColor" viewBox="0 0 24 24"
+									>
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+									</svg>
+									Advanced
+								</button>
+
+								{#if showAdvanced}
+									<div class="mt-3 space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
+										<p class="text-xs text-gray-500 dark:text-gray-400">
+											When both paths are set, the script moves ripped files from local scratch storage
+											to a shared location before notifying the transcoder.
+										</p>
+										<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+											<div>
+												<label for="script-local-raw" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+													LOCAL_RAW_PATH
+												</label>
+												<input
+													id="script-local-raw"
+													type="text"
+													class={inputClass}
+													placeholder="e.g. /home/arm/media/raw"
+													bind:value={scriptForm.local_raw_path}
+												/>
+												<p class="mt-1 text-xs text-gray-400">Local disk where ARM rips to.</p>
+											</div>
+											<div>
+												<label for="script-shared-raw" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+													SHARED_RAW_PATH
+												</label>
+												<input
+													id="script-shared-raw"
+													type="text"
+													class={inputClass}
+													placeholder="e.g. /mnt/media/raw"
+													bind:value={scriptForm.shared_raw_path}
+												/>
+												<p class="mt-1 text-xs text-gray-400">Shared storage handoff directory.</p>
+											</div>
+										</div>
+									</div>
+								{/if}
+							</div>
+
+							<!-- Generate & Save button -->
+							<div class="flex items-center gap-3">
+								<button
+									type="button"
+									onclick={handleSaveScript}
+									disabled={scriptSaving || !scriptForm.transcoder_url}
+									class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+								>
+									{scriptSaving ? 'Saving...' : 'Generate & Save'}
+								</button>
+								{#if scriptFeedback}
+									<span class="text-sm {scriptFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+										{scriptFeedback.message}
+									</span>
+								{/if}
+							</div>
+
+							<!-- Script preview toggle -->
+							{#if scriptInfo?.content}
+								<div>
+									<button
+										type="button"
+										onclick={() => (showScriptPreview = !showScriptPreview)}
+										class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+									>
+										<svg
+											class="h-3.5 w-3.5 transform transition-transform {showScriptPreview ? 'rotate-90' : ''}"
+											fill="none" stroke="currentColor" viewBox="0 0 24 24"
+										>
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+										</svg>
+										Preview Script
+									</button>
+									{#if showScriptPreview}
+										<pre class="mt-2 max-h-80 overflow-auto rounded-md border border-primary/15 bg-page p-3 text-xs text-gray-700 dark:border-primary/20 dark:bg-primary/5 dark:text-gray-300">{scriptInfo.content}</pre>
+									{/if}
+								</div>
+							{/if}
+						</div>
+					{/if}
+				</div>
+			</section>
 
 			{#if settings.transcoder_gpu_support}
 				{@render gpuCards(settings.transcoder_gpu_support)}
@@ -1219,7 +1571,14 @@
 
 									{#if !armCollapsed[group.label] || armSearch}
 										<div class="border-t border-primary/20 px-4 py-3 dark:border-primary/20">
-											<div class="space-y-4">
+											{#if group.label === 'Transcoding' && skipTranscode}
+												<div class="mb-4 rounded-lg border border-primary/20 bg-primary-light-bg px-4 py-3 text-sm dark:border-primary/30 dark:bg-primary-light-bg-dark/20">
+													<span class="font-medium text-primary-dark dark:text-primary-text-dark">Transcoding is offloaded</span>
+													<span class="text-gray-600 dark:text-gray-400"> &mdash; ARM's built-in transcoding is skipped. Configure the dedicated service on the </span>
+													<button type="button" onclick={() => { activeTab = 'transcoder'; window.scrollTo(0, 0); }} class="font-medium text-primary-text underline hover:text-primary-dark dark:text-primary-text-dark dark:hover:text-primary-text-dark/80">Transcoder tab</button>.
+												</div>
+											{/if}
+											<div class="space-y-4 {group.label === 'Transcoding' && skipTranscode ? 'opacity-50' : ''}">
 												{#each group.subpanels as subpanel}
 													{#if subpanel.label}
 														<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">

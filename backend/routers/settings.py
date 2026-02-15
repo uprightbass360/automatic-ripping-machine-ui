@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from backend.config import settings as app_settings
 from backend.models.schemas import SettingsResponse
-from backend.services import arm_client, arm_db, metadata, transcoder_client
+from backend.services import arm_client, arm_db, bash_script, metadata, transcoder_client
 
 router = APIRouter(prefix="/api", tags=["settings"])
 log = logging.getLogger(__name__)
@@ -55,8 +55,13 @@ async def get_settings():
         transcoder_config = tc_config_resp
 
     health = await transcoder_client.health()
+    transcoder_auth_status = None
     if health:
         transcoder_gpu_support = health.get("gpu_support")
+        transcoder_auth_status = {
+            "require_api_auth": health.get("require_api_auth", False),
+            "webhook_secret_configured": health.get("webhook_secret_configured", False),
+        }
         # If the dedicated /config endpoint was offline, use health fallback
         if not transcoder_config:
             transcoder_config = {
@@ -71,6 +76,7 @@ async def get_settings():
         transcoder_config=transcoder_config,
         arm_gpu_support=arm_gpu_support,
         transcoder_gpu_support=transcoder_gpu_support,
+        transcoder_auth_status=transcoder_auth_status,
         gpu_support=transcoder_gpu_support,
     )
 
@@ -102,4 +108,45 @@ async def update_transcoder_config(body: dict):
         raise HTTPException(status_code=502, detail="Transcoder service unreachable")
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("detail", "Unknown error"))
+    return result
+
+
+@router.post("/settings/transcoder/test-connection")
+async def test_transcoder_connection():
+    return await transcoder_client.test_connection()
+
+
+class WebhookTestRequest(BaseModel):
+    webhook_secret: str = ""
+
+
+@router.post("/settings/transcoder/test-webhook")
+async def test_transcoder_webhook(body: WebhookTestRequest):
+    return await transcoder_client.test_webhook(body.webhook_secret)
+
+
+@router.get("/settings/bash-script")
+async def get_bash_script():
+    info = bash_script.read_script()
+    info["default_transcoder_url"] = app_settings.transcoder_url.rstrip("/") + "/webhook/arm"
+    return info
+
+
+class BashScriptRequest(BaseModel):
+    transcoder_url: str
+    webhook_secret: str = ""
+    local_raw_path: str = ""
+    shared_raw_path: str = ""
+
+
+@router.put("/settings/bash-script")
+async def put_bash_script(body: BashScriptRequest):
+    result = bash_script.write_script(
+        transcoder_url=body.transcoder_url,
+        webhook_secret=body.webhook_secret,
+        local_raw_path=body.local_raw_path,
+        shared_raw_path=body.shared_raw_path,
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error", "Failed to write script"))
     return result
