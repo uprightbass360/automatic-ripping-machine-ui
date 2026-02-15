@@ -16,7 +16,7 @@
 <div class="space-y-4">
 	<div class="flex flex-wrap items-center justify-between gap-4">
 		<div class="flex items-center gap-3">
-			<a href="/logs" class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400">
+			<a href="/logs" class="inline-flex items-center gap-1 text-sm text-primary-text hover:underline dark:text-primary-text-dark">
 				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 				</svg>
@@ -30,11 +30,11 @@
 		<div class="flex gap-2">
 			<button
 				onclick={() => mode = 'tail'}
-				class="rounded-lg px-3 py-1.5 text-sm {mode === 'tail' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}"
+				class="rounded-lg px-3 py-1.5 text-sm {mode === 'tail' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
 			>Tail</button>
 			<button
 				onclick={() => mode = 'full'}
-				class="rounded-lg px-3 py-1.5 text-sm {mode === 'full' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}"
+				class="rounded-lg px-3 py-1.5 text-sm {mode === 'full' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
 			>Full</button>
 		</div>
 	</div>

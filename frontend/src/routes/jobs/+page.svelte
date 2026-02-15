@@ -20,7 +20,7 @@
 	let searchTimeout: ReturnType<typeof setTimeout>;
 
 	async function load() {
-		loading = true;
+		if (!data) loading = true;
 		error = null;
 		try {
 			data = await fetchJobs({
@@ -74,11 +74,11 @@
 		<div class="flex gap-2">
 			<button
 				onclick={() => viewMode = 'table'}
-				class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}"
+				class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'table' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
 			>Table</button>
 			<button
 				onclick={() => viewMode = 'card'}
-				class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'card' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}"
+				class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'card' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
 			>Cards</button>
 		</div>
 	</div>
@@ -89,12 +89,12 @@
 			type="text"
 			placeholder="Search titles..."
 			oninput={onSearch}
-			class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+			class="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 		/>
 		<select
 			value={statusFilter}
 			onchange={(e) => setFilter('status', (e.target as HTMLSelectElement).value)}
-			class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+			class="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 		>
 			<option value="">All Statuses</option>
 			<option value="active">Active</option>
@@ -106,7 +106,7 @@
 		<select
 			value={videoTypeFilter}
 			onchange={(e) => setFilter('videoType', (e.target as HTMLSelectElement).value)}
-			class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+			class="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 		>
 			<option value="">All Types</option>
 			<option value="movie">Movie</option>
@@ -123,9 +123,9 @@
 		<div class="py-8 text-center text-gray-400">Loading...</div>
 	{:else if data}
 		{#if viewMode === 'table'}
-			<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+			<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 				<table class="w-full text-left text-sm">
-					<thead class="bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+					<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 						<tr>
 							<th class="px-4 py-3 font-medium">Title</th>
 							<th class="px-4 py-3 font-medium">Year</th>
@@ -162,13 +162,13 @@
 					<button
 						disabled={data.page <= 1}
 						onclick={() => goPage(data!.page - 1)}
-						class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+						class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
 					>Prev</button>
 					{#each Array.from({ length: data.pages }, (_, i) => i + 1) as p}
 						{#if p === data.page || p === 1 || p === data.pages || Math.abs(p - data.page) <= 1}
 							<button
 								onclick={() => goPage(p)}
-								class="rounded px-3 py-1 text-sm {p === data.page ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-300'}"
+								class="rounded px-3 py-1 text-sm {p === data.page ? 'bg-primary text-on-primary' : 'bg-primary/15 dark:bg-primary/15 dark:text-gray-300'}"
 							>{p}</button>
 						{:else if Math.abs(p - data.page) === 2}
 							<span class="px-1 text-gray-400">...</span>
@@ -177,7 +177,7 @@
 					<button
 						disabled={data.page >= data.pages}
 						onclick={() => goPage(data!.page + 1)}
-						class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+						class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
 					>Next</button>
 				</div>
 			</div>

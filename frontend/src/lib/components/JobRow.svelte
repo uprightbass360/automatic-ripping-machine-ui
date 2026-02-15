@@ -21,7 +21,7 @@
 	);
 </script>
 
-<tr class="border-b border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+<tr class="border-b border-primary/20 hover:bg-page dark:border-primary/20 dark:hover:bg-primary/5">
 	<!-- Title -->
 	<td class="px-4 py-3">
 		<div class="flex items-center gap-2">
@@ -29,7 +29,7 @@
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={typeConfig.iconPath} />
 			</svg>
 			<div class="min-w-0">
-				<a href="/jobs/{job.job_id}" class="font-medium text-blue-600 hover:underline dark:text-blue-400">
+				<a href="/jobs/{job.job_id}" class="font-medium text-primary-text hover:underline dark:text-primary-text-dark">
 					{job.title || job.label || 'Untitled'}
 				</a>
 				{#if discLabelDiffers}

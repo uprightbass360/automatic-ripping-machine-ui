@@ -94,7 +94,7 @@
 
 	<!-- Offline banner -->
 	{#if !$stats.online}
-		<div class="flex items-center gap-3 rounded-lg border border-gray-300 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800">
+		<div class="flex items-center gap-3 rounded-lg border border-primary/25 bg-page p-4 dark:border-primary/25 dark:bg-page-dark">
 			<div class="h-3 w-3 flex-shrink-0 rounded-full bg-gray-400"></div>
 			<div>
 				<p class="font-medium text-gray-700 dark:text-gray-300">Transcoder Offline</p>
@@ -115,23 +115,23 @@
 			</span>
 		</div>
 		<div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
-			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Pending</p>
-				<p class="mt-1 text-3xl font-bold text-blue-600 dark:text-blue-400">{s.pending}</p>
+				<p class="mt-1 text-3xl font-bold text-primary-text dark:text-primary-text-dark">{s.pending}</p>
 			</div>
-			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Processing</p>
 				<p class="mt-1 text-3xl font-bold text-indigo-600 dark:text-indigo-400">{s.processing}</p>
 			</div>
-			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
 				<p class="mt-1 text-3xl font-bold text-green-600 dark:text-green-400">{s.completed}</p>
 			</div>
-			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Failed</p>
 				<p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">{s.failed}</p>
 			</div>
-			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
 				<p class="text-sm text-gray-500 dark:text-gray-400">Cancelled</p>
 				<p class="mt-1 text-3xl font-bold text-gray-500 dark:text-gray-400">{s.cancelled}</p>
 			</div>
@@ -143,13 +143,13 @@
 		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcode Jobs</h2>
 
 		<!-- Tabs -->
-		<div class="flex gap-1 border-b border-gray-200 dark:border-gray-700">
+		<div class="flex gap-1 border-b border-primary/20 dark:border-primary/20">
 			{#each tabs as tab}
 				<button
 					onclick={() => switchTab(tab)}
 					class="border-b-2 px-4 py-2 text-sm font-medium capitalize transition-colors
 						{activeTab === tab
-							? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+							? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
 							: 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
 				>
 					{tab}
@@ -169,7 +169,7 @@
 		{:else}
 			<div class="space-y-3">
 				{#each jobs.jobs as job}
-					<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
 						<!-- Top row: title, status, actions -->
 						<div class="flex items-start justify-between gap-4">
 							<div class="min-w-0 flex-1">
@@ -189,7 +189,7 @@
 								{#if job.status === 'failed'}
 									<button
 										onclick={() => handleRetry(job.id)}
-										class="rounded bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700"
+										class="rounded bg-primary px-2.5 py-1 text-xs font-medium text-on-primary hover:bg-primary-hover"
 									>Retry</button>
 								{/if}
 								<button

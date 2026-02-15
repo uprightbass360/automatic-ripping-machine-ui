@@ -45,15 +45,15 @@
 	<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Log Files</h1>
 
 	<!-- Tab Bar -->
-	<div class="border-b border-gray-200 dark:border-gray-700">
+	<div class="border-b border-primary/20 dark:border-primary/20">
 		<nav class="-mb-px flex gap-4" aria-label="Log tabs">
 			<button
 				type="button"
 				onclick={() => switchTab('arm')}
 				class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
 					{activeTab === 'arm'
-					? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-					: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300'}"
+					? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
+					: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
 			>
 				ARM Ripper
 			</button>
@@ -62,8 +62,8 @@
 				onclick={() => switchTab('transcoder')}
 				class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
 					{activeTab === 'transcoder'
-					? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-					: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300'}"
+					? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
+					: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
 			>
 				Transcoder
 			</button>
@@ -78,9 +78,9 @@
 		{:else if armLogs.length === 0}
 			<p class="py-8 text-center text-gray-400">No log files found.</p>
 		{:else}
-			<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+			<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 				<table class="w-full text-left text-sm">
-					<thead class="bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+					<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 						<tr>
 							<th class="px-4 py-3 font-medium">Filename</th>
 							<th class="px-4 py-3 font-medium">Size</th>
@@ -89,9 +89,9 @@
 					</thead>
 					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 						{#each armLogs as log}
-							<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+							<tr class="hover:bg-page dark:hover:bg-gray-800/50">
 								<td class="px-4 py-3">
-									<a href="/logs/{log.filename}" class="text-blue-600 hover:underline dark:text-blue-400">
+									<a href="/logs/{log.filename}" class="text-primary-text hover:underline dark:text-primary-text-dark">
 										{log.filename}
 									</a>
 								</td>
@@ -119,9 +119,9 @@
 		{:else if transcoderLogs.length === 0}
 			<p class="py-8 text-center text-gray-400">Transcoder offline or no logs available.</p>
 		{:else}
-			<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+			<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 				<table class="w-full text-left text-sm">
-					<thead class="bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+					<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 						<tr>
 							<th class="px-4 py-3 font-medium">Filename</th>
 							<th class="px-4 py-3 font-medium">Size</th>
@@ -130,9 +130,9 @@
 					</thead>
 					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 						{#each transcoderLogs as log}
-							<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+							<tr class="hover:bg-page dark:hover:bg-gray-800/50">
 								<td class="px-4 py-3">
-									<a href="/logs/transcoder/{log.filename}" class="text-blue-600 hover:underline dark:text-blue-400">
+									<a href="/logs/transcoder/{log.filename}" class="text-primary-text hover:underline dark:text-primary-text-dark">
 										{log.filename}
 									</a>
 								</td>

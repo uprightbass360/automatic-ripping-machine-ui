@@ -29,7 +29,7 @@
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each $drives as drive (drive.drive_id)}
-				<DriveCard {drive} />
+				<DriveCard {drive} onupdate={() => drives.refresh()} />
 			{/each}
 		</div>
 	{/if}

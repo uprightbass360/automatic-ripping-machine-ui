@@ -11,7 +11,7 @@
 </script>
 
 <div class="flex items-center gap-2">
-	<div class="h-2.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700">
+	<div class="h-2.5 flex-1 rounded-full bg-primary/15 dark:bg-primary/15">
 		<div
 			class="h-2.5 rounded-full transition-all duration-500 {color}"
 			style="width: {pct}%"

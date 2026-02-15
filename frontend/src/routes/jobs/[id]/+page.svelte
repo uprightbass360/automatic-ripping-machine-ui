@@ -7,14 +7,20 @@
 	import JobActions from '$lib/components/JobActions.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TitleSearch from '$lib/components/TitleSearch.svelte';
+	import RipSettings from '$lib/components/RipSettings.svelte';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
 
 	let job = $state<JobDetail | null>(null);
 	let error = $state<string | null>(null);
 	let showTitleSearch = $state(false);
+	let showRipSettings = $state(false);
 
 	let isVideoDisc = $derived(
 		job?.disctype === 'dvd' || job?.disctype === 'bluray'
+	);
+
+	let isMusicDisc = $derived(
+		job?.disctype === 'music' || job?.video_type === 'music'
 	);
 
 	let hasAutoManualDiff = $derived(
@@ -42,6 +48,11 @@
 		loadJob();
 	}
 
+	function handleConfigSaved() {
+		showRipSettings = false;
+		loadJob();
+	}
+
 	onMount(() => {
 		loadJob();
 	});
@@ -60,7 +71,7 @@
 {:else}
 	<div class="space-y-6">
 		<!-- Back link -->
-		<a href="/jobs" class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400">
+		<a href="/jobs" class="inline-flex items-center gap-1 text-sm text-primary-text hover:underline dark:text-primary-text-dark">
 			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 			</svg>
@@ -89,7 +100,7 @@
 
 				<JobActions {job} onaction={loadJob} />
 
-				{#if job.imdb_id}
+				{#if job.imdb_id && !isMusicDisc}
 					<a
 						href="https://www.imdb.com/title/{job.imdb_id}"
 						target="_blank"
@@ -109,20 +120,22 @@
 						<dt class="text-gray-500 dark:text-gray-400">Stage</dt>
 						<dd class="font-medium text-gray-900 dark:text-white">{job.stage ?? 'N/A'}</dd>
 					</div>
-					<div>
-						<dt class="text-gray-500 dark:text-gray-400">Video Type</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{job.video_type ?? 'N/A'}</dd>
-					</div>
+					{#if !isMusicDisc}
+						<div>
+							<dt class="text-gray-500 dark:text-gray-400">Video Type</dt>
+							<dd class="font-medium text-gray-900 dark:text-white">{job.video_type ?? 'N/A'}</dd>
+						</div>
+					{/if}
 					<div>
 						<dt class="text-gray-500 dark:text-gray-400">Disc Type</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{job.disctype ?? 'N/A'}</dd>
+						<dd class="font-medium capitalize text-gray-900 dark:text-white">{job.disctype ?? 'N/A'}</dd>
 					</div>
 					<div>
 						<dt class="text-gray-500 dark:text-gray-400">Device</dt>
 						<dd class="font-medium text-gray-900 dark:text-white">{job.devpath ?? 'N/A'}</dd>
 					</div>
 					<div>
-						<dt class="text-gray-500 dark:text-gray-400">Titles</dt>
+						<dt class="text-gray-500 dark:text-gray-400">{isMusicDisc ? 'Tracks' : 'Titles'}</dt>
 						<dd class="font-medium text-gray-900 dark:text-white">{job.no_of_titles ?? 'N/A'}</dd>
 					</div>
 					<div>
@@ -142,7 +155,7 @@
 				{#if job.logfile}
 					<a
 						href="/logs/{job.logfile}"
-						class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400"
+						class="inline-flex items-center gap-1 text-sm text-primary-text hover:underline dark:text-primary-text-dark"
 					>
 						View Log
 					</a>
@@ -178,7 +191,7 @@
 					Search / Edit Title
 				</button>
 			{:else}
-				<section class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+				<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
 					<div class="mb-3 flex items-center justify-between">
 						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Search / Edit Title</h2>
 						<button
@@ -195,33 +208,73 @@
 			{/if}
 		{/if}
 
+		<!-- Rip Settings -->
+		{#if job.config}
+			{#if !showRipSettings}
+				<button
+					onclick={() => (showRipSettings = true)}
+					class="rounded-lg px-3 py-1.5 text-sm font-medium bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15 transition-colors"
+				>
+					Rip Settings
+				</button>
+			{:else}
+				<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
+					<div class="mb-3 flex items-center justify-between">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Rip Settings</h2>
+						<button
+							onclick={() => (showRipSettings = false)}
+							class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+							aria-label="Close rip settings"
+						>
+							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+					<RipSettings {job} config={job.config} onsaved={handleConfigSaved} />
+				</section>
+			{/if}
+		{/if}
+
 		<!-- Tracks -->
 		{#if job.tracks.length > 0}
 			<section>
 				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Tracks ({job.tracks.length})</h2>
-				<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 					<table class="w-full text-left text-sm">
-						<thead class="bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+						<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 							<tr>
 								<th class="px-4 py-3 font-medium">#</th>
-								<th class="px-4 py-3 font-medium">Filename</th>
-								<th class="px-4 py-3 font-medium">Length</th>
-								<th class="px-4 py-3 font-medium">Aspect</th>
-								<th class="px-4 py-3 font-medium">FPS</th>
-								<th class="px-4 py-3 font-medium">Main</th>
+								<th class="px-4 py-3 font-medium">{isMusicDisc ? 'Title' : 'Filename'}</th>
+								<th class="px-4 py-3 font-medium">{isMusicDisc ? 'Duration' : 'Length'}</th>
+								{#if isMusicDisc}
+									<th class="px-4 py-3 font-medium">Format</th>
+								{:else}
+									<th class="px-4 py-3 font-medium">Aspect</th>
+									<th class="px-4 py-3 font-medium">FPS</th>
+									<th class="px-4 py-3 font-medium">Main</th>
+								{/if}
 								<th class="px-4 py-3 font-medium">Ripped</th>
 								<th class="px-4 py-3 font-medium">Status</th>
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each job.tracks as track}
-								<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
 									<td class="px-4 py-3">{track.track_number ?? ''}</td>
-									<td class="max-w-[200px] truncate px-4 py-3 font-mono text-xs">{track.filename ?? track.basename ?? ''}</td>
-									<td class="px-4 py-3">{track.length != null ? `${Math.floor(track.length / 60)}m ${track.length % 60}s` : ''}</td>
-									<td class="px-4 py-3">{track.aspect_ratio ?? ''}</td>
-									<td class="px-4 py-3">{track.fps ?? ''}</td>
-									<td class="px-4 py-3">{track.main_feature ? 'Yes' : ''}</td>
+									{#if isMusicDisc}
+										<td class="max-w-[300px] truncate px-4 py-3">{(track.basename ?? track.filename ?? '').replace(/^\d+-/, '').replace(/\.\w+$/, '').replace(/_/g, ' ')}</td>
+									{:else}
+										<td class="max-w-[200px] truncate px-4 py-3 font-mono text-xs">{track.filename ?? track.basename ?? ''}</td>
+									{/if}
+									<td class="px-4 py-3">{track.length != null ? `${Math.floor(track.length / 60)}:${String(track.length % 60).padStart(2, '0')}` : ''}</td>
+									{#if isMusicDisc}
+										<td class="px-4 py-3 uppercase text-xs">{track.source ?? ''}</td>
+									{:else}
+										<td class="px-4 py-3">{track.aspect_ratio ?? ''}</td>
+										<td class="px-4 py-3">{track.fps ?? ''}</td>
+										<td class="px-4 py-3">{track.main_feature ? 'Yes' : ''}</td>
+									{/if}
 									<td class="px-4 py-3">{track.ripped ? 'Yes' : 'No'}</td>
 									<td class="px-4 py-3"><StatusBadge status={track.status} /></td>
 								</tr>
@@ -236,11 +289,11 @@
 		{#if job.config}
 			<section>
 				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Configuration</h2>
-				<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 					<table class="w-full text-left text-sm">
 						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each Object.entries(job.config) as [key, value]}
-								<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
 									<td class="px-4 py-2 font-mono text-xs font-medium text-gray-500 dark:text-gray-400">{key}</td>
 									<td class="px-4 py-2 text-gray-900 dark:text-white">{value ?? ''}</td>
 								</tr>
