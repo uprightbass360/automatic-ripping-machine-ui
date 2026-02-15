@@ -341,7 +341,6 @@
 		TMDB_API_KEY: { label: 'TMDb API Key', description: 'API key for The Movie Database' },
 		// General
 		ARM_NAME: { label: 'Machine Name', description: 'Friendly name for this ARM instance, used in notifications' },
-		ARM_CHILDREN: { label: 'Child Servers', description: 'Comma-separated URLs of child ARM instances to show on the dashboard' },
 		DISABLE_LOGIN: { label: 'Disable Login', description: 'Skip authentication — leave all pages open' },
 		DATE_FORMAT: { label: 'Date Format', description: 'strftime format string for timestamps' },
 		ARM_API_KEY: { label: 'ARM API Key', description: 'API key for the ARM disc CRC lookup service' },
@@ -420,7 +419,7 @@
 			{ keys: ['METADATA_PROVIDER', 'OMDB_API_KEY', 'TMDB_API_KEY'] },
 		]},
 		{ label: 'General', subpanels: [
-			{ keys: ['ARM_NAME', 'ARM_CHILDREN', 'DISABLE_LOGIN', 'DATE_FORMAT', 'ARM_API_KEY'] },
+			{ keys: ['ARM_NAME', 'DISABLE_LOGIN', 'DATE_FORMAT', 'ARM_API_KEY'] },
 		]},
 		{ label: 'Web Server', subpanels: [
 			{ keys: ['WEBSERVER_IP', 'WEBSERVER_PORT', 'UI_BASE_URL'] },
