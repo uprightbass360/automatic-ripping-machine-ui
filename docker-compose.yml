@@ -3,12 +3,18 @@ services:
     build: .
     network_mode: host
     environment:
-      - ARM_UI_ARM_DB_PATH=/data/arm.db
+      - ARM_UI_ARM_DB_PATH=/data/db/arm.db
       - ARM_UI_ARM_LOG_PATH=/data/logs
+      - ARM_UI_ARM_CONFIG_PATH=/data/config/arm.yaml
       - ARM_UI_ARM_URL=http://localhost:8080
       - ARM_UI_TRANSCODER_URL=http://localhost:5000
       - ARM_UI_TRANSCODER_API_KEY=
     volumes:
-      - /home/upb/local-storage/arm/db/arm.db:/data/arm.db:ro
-      - /nfs/files/Containers/arm/logs:/data/logs:ro
+      - automatic-ripping-machine-neu_arm-db:/data/db:ro
+      - /home/upb/src/automatic-ripping-machine-neu/dev-data/logs:/data/logs:ro
+      - /home/upb/src/automatic-ripping-machine-neu/dev-data/config:/data/config:ro
     restart: unless-stopped
+
+volumes:
+  automatic-ripping-machine-neu_arm-db:
+    external: true
