@@ -74,6 +74,11 @@ export interface SystemInfo {
 	mem_total: number | null;
 }
 
+export interface HardwareInfo {
+	cpu: string | null;
+	memory_total_gb: number | null;
+}
+
 export interface Drive {
 	drive_id: number;
 	name: string | null;
@@ -106,15 +111,41 @@ export interface Notification {
 	cleared: boolean;
 }
 
+export interface MemoryInfo {
+	total_gb: number;
+	used_gb: number;
+	free_gb: number;
+	percent: number;
+}
+
+export interface StoragePath {
+	name: string;
+	path: string;
+	total_gb: number;
+	used_gb: number;
+	free_gb: number;
+	percent: number;
+}
+
+export interface SystemStats {
+	cpu_percent: number;
+	cpu_temp: number;
+	memory: MemoryInfo | null;
+	storage: StoragePath[];
+}
+
 export interface DashboardData {
 	db_available: boolean;
 	active_jobs: Job[];
-	system_info: SystemInfo | null;
+	system_info: HardwareInfo | null;
 	drives_online: number;
 	notification_count: number;
+	ripping_enabled: boolean;
 	transcoder_online: boolean;
 	transcoder_stats: Record<string, unknown> | null;
 	active_transcodes: TranscoderJob[];
+	system_stats: SystemStats | null;
+	transcoder_info: HardwareInfo | null;
 }
 
 export interface LogFile {
@@ -148,6 +179,14 @@ export interface TitleUpdate {
 	video_type?: string;
 	imdb_id?: string;
 	poster_url?: string;
+}
+
+export interface JobConfigUpdate {
+	RIPMETHOD?: 'mkv' | 'backup';
+	DISCTYPE?: 'dvd' | 'bluray' | 'music' | 'data';
+	MAINFEATURE?: boolean;
+	MINLENGTH?: number;
+	MAXLENGTH?: number;
 }
 
 export interface TranscoderConfig {

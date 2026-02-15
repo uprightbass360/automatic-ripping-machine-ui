@@ -8,9 +8,12 @@ const emptyDashboard: DashboardData = {
 	system_info: null,
 	drives_online: 0,
 	notification_count: 0,
+	ripping_enabled: true,
 	transcoder_online: false,
 	transcoder_stats: null,
-	active_transcodes: []
+	active_transcodes: [],
+	system_stats: null,
+	transcoder_info: null
 };
 
 /** Singleton dashboard store — survives page navigations, retains last-known data. */

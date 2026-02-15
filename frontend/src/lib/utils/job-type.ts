@@ -38,7 +38,7 @@ const FALLBACK_CONFIG: VideoTypeConfig = {
 	label: 'Disc',
 	iconPath: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
 	badgeClasses: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-	placeholderClasses: 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-500',
+	placeholderClasses: 'bg-primary/10 text-gray-400 dark:bg-primary/15 dark:text-gray-500',
 	accentBorder: 'border-l-gray-400',
 	iconColor: 'text-gray-500 dark:text-gray-400',
 };

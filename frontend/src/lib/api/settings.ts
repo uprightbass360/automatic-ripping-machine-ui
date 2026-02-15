@@ -18,3 +18,7 @@ export function saveTranscoderConfig(config: Record<string, unknown>): Promise<{
 		body: JSON.stringify(config)
 	});
 }
+
+export function testMetadataKey(): Promise<{ success: boolean; message: string; provider: string }> {
+	return apiFetch('/api/settings/test-metadata');
+}

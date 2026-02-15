@@ -9,7 +9,12 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
 		}
 	});
 	if (!res.ok) {
-		throw new Error(`API ${res.status}: ${res.statusText}`);
+		let message = `API ${res.status}: ${res.statusText}`;
+		try {
+			const body = await res.json();
+			if (body.detail) message = body.detail;
+		} catch { /* use default message */ }
+		throw new Error(message);
 	}
 	return res.json();
 }

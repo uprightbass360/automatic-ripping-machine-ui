@@ -1,4 +1,4 @@
-import type { JobDetail, JobListResponse, MediaDetail, SearchResult, TitleUpdate } from '$lib/types/arm';
+import type { JobConfigUpdate, JobDetail, JobListResponse, MediaDetail, SearchResult, TitleUpdate } from '$lib/types/arm';
 import { apiFetch } from './client';
 
 export function fetchJobs(params?: {
@@ -26,6 +26,14 @@ export function abandonJob(id: number): Promise<unknown> {
 	return apiFetch(`/api/jobs/${id}/abandon`, { method: 'POST' });
 }
 
+export function cancelWaitingJob(id: number): Promise<unknown> {
+	return apiFetch(`/api/jobs/${id}/cancel`, { method: 'POST' });
+}
+
+export function startWaitingJob(id: number): Promise<unknown> {
+	return apiFetch(`/api/jobs/${id}/start`, { method: 'POST' });
+}
+
 export function deleteJob(id: number): Promise<unknown> {
 	return apiFetch(`/api/jobs/${id}`, { method: 'DELETE' });
 }
@@ -47,6 +55,13 @@ export function fetchMediaDetail(imdbId: string): Promise<MediaDetail> {
 export function updateJobTitle(jobId: number, data: Partial<TitleUpdate>): Promise<unknown> {
 	return apiFetch(`/api/jobs/${jobId}/title`, {
 		method: 'PUT',
+		body: JSON.stringify(data)
+	});
+}
+
+export function updateJobConfig(jobId: number, data: Partial<JobConfigUpdate>): Promise<unknown> {
+	return apiFetch(`/api/jobs/${jobId}/config`, {
+		method: 'PATCH',
 		body: JSON.stringify(data)
 	});
 }
