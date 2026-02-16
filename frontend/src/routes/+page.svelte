@@ -20,7 +20,8 @@
 		transcoder_online: false,
 		transcoder_stats: null,
 		active_transcodes: [],
-		system_stats: null
+		system_stats: null,
+		transcoder_info: null
 	});
 	let togglingPause = $state(false);
 

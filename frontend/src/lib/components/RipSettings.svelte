@@ -13,7 +13,7 @@
 	let ripmethod = $state(String(config.RIPMETHOD ?? 'mkv').toLowerCase());
 	let disctype = $state(String(config.DISCTYPE ?? job.disctype ?? 'dvd').toLowerCase());
 	let mainfeature = $state(
-		config.MAINFEATURE === 1 || config.MAINFEATURE === '1' || String(config.MAINFEATURE ?? '').toLowerCase() === 'true'
+		config.MAINFEATURE === '1' || String(config.MAINFEATURE ?? '').toLowerCase() === 'true'
 	);
 	let minlength = $state(Number(config.MINLENGTH) || 120);
 	let maxlength = $state(Number(config.MAXLENGTH) || 99999);

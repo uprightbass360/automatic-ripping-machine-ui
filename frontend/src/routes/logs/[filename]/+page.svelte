@@ -5,7 +5,7 @@
 	let mode = $state<'tail' | 'full'>('tail');
 	let lines = $state(200);
 
-	const filename = $derived($page.params.filename);
+	const filename = $derived($page.params.filename ?? '');
 </script>
 
 <svelte:head>
