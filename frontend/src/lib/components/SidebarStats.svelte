@@ -89,8 +89,8 @@
 				{/if}
 			</div>
 
-			<!-- Storage (ripper only) -->
-			{#if activePanel === 'ripper' && activeStats.storage?.length}
+			<!-- Storage -->
+			{#if activeStats.storage?.length}
 				<div class="mt-3 space-y-2">
 					<p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Storage</p>
 					{#each activeStats.storage as sp}
