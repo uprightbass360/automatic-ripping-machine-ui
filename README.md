@@ -38,7 +38,20 @@ The backend reads ARM's SQLite database directly (read-only) for job data, calls
 
 **Backend:** FastAPI, SQLAlchemy 2 (read-only), httpx, Pydantic Settings, Uvicorn
 
-## Quick Start
+## Docker Images
+
+Pre-built multi-platform images (`amd64`, `arm64`) are published to Docker Hub on every release:
+
+```bash
+docker pull uprightbass360/arm-ui:latest
+docker pull uprightbass360/arm-ui:0.2.0
+```
+
+For the full ecosystem quick start (ARM + UI + Transcoder), see the [ARM-neu README](https://github.com/uprightbass360/automatic-ripping-machine-neu#quick-start).
+
+## Standalone Quick Start
+
+If running the UI separately (outside the ARM-neu docker-compose):
 
 ```bash
 git clone https://github.com/uprightbass360/automatic-ripping-machine-ui.git
