@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.2.0...v0.3.0) (2026-02-16)
+
+
+### Features
+
+* display transcoder live stats (CPU, temp, memory) in sidebar ([2b6ff34](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2b6ff3491c216fe8b48cfa486611ac2bf1a070b8))
+
+
+### Bug Fixes
+
+* add missing transcoder_system_stats to +page.svelte default ([d431bdf](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d431bdffea151c288bd6309c3bca0a783681ebb2))
+* add spacing between CPU percent and temperature display ([549e173](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/549e173e31dc54b387a22481a28c65b53a083621))
+* pin frontend build stage to native platform for multi-arch builds ([407e856](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/407e8562990772c085c62ca4567d57fe0e32082f))
+* resolve 6 TypeScript errors in frontend type checking ([e4d9ceb](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e4d9ceb9226e6b1a50fbe903c2c66b3ec475b5b5))
+* resolve flake8 lint errors ([a141cee](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a141cee18e0ee44d452a90f6707a939bdae71ca7))
+* show storage section on transcoder tab ([17cb5b5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/17cb5b54f5e422a5841daa8a6bec12dabff27a55))
+* use DOCKERHUB_USERNAME secret for image name ([7d14038](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7d140384de6b65a7dae86b270df04bddd8e5e502))
+* use non-breaking space for CPU temp separator ([48c8cc4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/48c8cc45f9c91e5518f3843bdc357393c502ec51))
+
 ## [0.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.1.0...v0.2.0) (2026-02-15)
 
 
