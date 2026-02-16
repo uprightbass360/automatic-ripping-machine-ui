@@ -57,3 +57,17 @@ jobs:
             ${{ env.GHCR_IMAGE }}:${{ steps.version.outputs.version }}
           labels: |
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
+
+  notify-parent:
+    needs: publish
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - name: Update submodule in ARM-neu
+        env:
+          GH_TOKEN: ${{ secrets.ARM_NEU_PAT }}
+        run: |
+          gh api repos/uprightbass360/automatic-ripping-machine-neu/dispatches \
+            --method POST --input - <<'EOF'
+          {"event_type":"component-release","client_payload":{"component":"ui"}}
+          EOF
