@@ -19,6 +19,7 @@
 		ripping_enabled: true,
 		transcoder_online: false,
 		transcoder_stats: null,
+		transcoder_system_stats: null,
 		active_transcodes: [],
 		system_stats: null,
 		transcoder_info: null
