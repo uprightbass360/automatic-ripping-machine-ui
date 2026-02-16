@@ -143,6 +143,7 @@ export interface DashboardData {
 	ripping_enabled: boolean;
 	transcoder_online: boolean;
 	transcoder_stats: Record<string, unknown> | null;
+	transcoder_system_stats: SystemStats | null;
 	active_transcodes: TranscoderJob[];
 	system_stats: SystemStats | null;
 	transcoder_info: HardwareInfo | null;

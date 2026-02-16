@@ -173,6 +173,7 @@ class DashboardResponse(BaseModel):
     ripping_enabled: bool = True
     transcoder_online: bool = False
     transcoder_stats: dict[str, Any] | None = None
+    transcoder_system_stats: SystemStatsSchema | None = None
     active_transcodes: list[dict[str, Any]] = []
     system_stats: SystemStatsSchema | None = None
     transcoder_info: HardwareInfoSchema | None = None

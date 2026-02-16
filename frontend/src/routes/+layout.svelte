@@ -56,7 +56,7 @@
 					</a>
 				{/each}
 				</nav>
-			<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} />
+			<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} />
 		</div>
 	</aside>
 
@@ -114,7 +114,7 @@
 							</a>
 						{/each}
 						</nav>
-					<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} />
+					<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} />
 				</aside>
 			</div>
 		{/if}

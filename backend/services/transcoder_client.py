@@ -138,6 +138,16 @@ async def get_system_info() -> dict[str, Any] | None:
         return None
 
 
+async def get_system_stats() -> dict[str, Any] | None:
+    """Fetch live system metrics (CPU%, temp, memory) from the transcoder."""
+    try:
+        resp = await get_client().get("/system/stats")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None
+
+
 async def get_config() -> dict[str, Any] | None:
     """Fetch transcoder config with valid option lists. Returns None if offline."""
     try:

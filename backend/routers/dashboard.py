@@ -43,6 +43,7 @@ async def get_dashboard():
     # Transcoder + ARM system stats in parallel
     transcoder_task = asyncio.create_task(_fetch_transcoder())
     stats_task = asyncio.create_task(arm_client.get_system_stats())
+    transcoder_stats_task = asyncio.create_task(transcoder_client.get_system_stats())
 
     transcoder_online, transcoder_stats, active_transcodes = await transcoder_task
 
@@ -50,6 +51,11 @@ async def get_dashboard():
     stats_data = await stats_task
     if stats_data:
         system_stats = SystemStatsSchema(**stats_data)
+
+    transcoder_system_stats: SystemStatsSchema | None = None
+    transcoder_stats_data = await transcoder_stats_task
+    if transcoder_stats_data:
+        transcoder_system_stats = SystemStatsSchema(**transcoder_stats_data)
 
     arm_hw = system_cache.get_arm_info()
     transcoder_hw = system_cache.get_transcoder_info()
@@ -63,6 +69,7 @@ async def get_dashboard():
         ripping_enabled=not ripping_paused,
         transcoder_online=transcoder_online,
         transcoder_stats=transcoder_stats,
+        transcoder_system_stats=transcoder_system_stats,
         active_transcodes=active_transcodes,
         system_stats=system_stats,
         transcoder_info=HardwareInfoSchema(**transcoder_hw) if transcoder_hw else None,

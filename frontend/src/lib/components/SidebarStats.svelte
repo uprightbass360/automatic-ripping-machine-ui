@@ -6,9 +6,10 @@
 		systemInfo: HardwareInfo | null;
 		systemStats: SystemStats | null;
 		transcoderInfo?: HardwareInfo | null;
+		transcoderStats?: SystemStats | null;
 	}
 
-	let { systemInfo, systemStats, transcoderInfo = null }: Props = $props();
+	let { systemInfo, systemStats, transcoderInfo = null, transcoderStats = null }: Props = $props();
 
 	const hasTranscoder = $derived(transcoderInfo?.cpu != null);
 
@@ -16,6 +17,7 @@
 	let activePanel = $state<Panel>('ripper');
 
 	const activeHw = $derived(activePanel === 'ripper' ? systemInfo : transcoderInfo);
+	const activeStats = $derived(activePanel === 'ripper' ? systemStats : transcoderStats);
 </script>
 
 <div class="border-t border-primary/20 px-3 py-3 dark:border-primary/20">
@@ -53,45 +55,45 @@
 		{/if}
 
 		<!-- CPU & Memory -->
-		{#if systemStats}
+		{#if activeStats}
 			<div class="space-y-2">
 				<div>
 					<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
 						<span>CPU</span>
 						<span class="whitespace-nowrap">
-							{systemStats.cpu_percent}%
-							{#if systemStats.cpu_temp > 0}
-								<span class="text-orange-500">&nbsp;{systemStats.cpu_temp.toFixed(0)}&deg;C</span>
+							{activeStats.cpu_percent}%
+							{#if activeStats.cpu_temp > 0}
+								<span class="text-orange-500">&nbsp;{activeStats.cpu_temp.toFixed(0)}&deg;C</span>
 							{/if}
 						</span>
 					</div>
 					<ProgressBar
-						value={systemStats.cpu_percent}
-						color={systemStats.cpu_percent >= 90 ? 'bg-red-500' : systemStats.cpu_percent >= 70 ? 'bg-yellow-500' : 'bg-cyan-500'}
+						value={activeStats.cpu_percent}
+						color={activeStats.cpu_percent >= 90 ? 'bg-red-500' : activeStats.cpu_percent >= 70 ? 'bg-yellow-500' : 'bg-cyan-500'}
 						showLabel={false}
 					/>
 				</div>
 
-				{#if systemStats.memory}
+				{#if activeStats.memory}
 					<div>
 						<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
 							<span>Mem</span>
-							<span>{systemStats.memory.used_gb} / {systemStats.memory.total_gb} GB</span>
+							<span>{activeStats.memory.used_gb} / {activeStats.memory.total_gb} GB</span>
 						</div>
 						<ProgressBar
-							value={systemStats.memory.percent}
-							color={systemStats.memory.percent >= 90 ? 'bg-red-500' : systemStats.memory.percent >= 70 ? 'bg-yellow-500' : 'bg-violet-500'}
+							value={activeStats.memory.percent}
+							color={activeStats.memory.percent >= 90 ? 'bg-red-500' : activeStats.memory.percent >= 70 ? 'bg-yellow-500' : 'bg-violet-500'}
 							showLabel={false}
 						/>
 					</div>
 				{/if}
 			</div>
 
-			<!-- Storage -->
-			{#if systemStats.storage?.length}
+			<!-- Storage (ripper only) -->
+			{#if activePanel === 'ripper' && activeStats.storage?.length}
 				<div class="mt-3 space-y-2">
 					<p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Storage</p>
-					{#each systemStats.storage as sp}
+					{#each activeStats.storage as sp}
 						<div>
 							<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
 								<span>{sp.name}</span>
