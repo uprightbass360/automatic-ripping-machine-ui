@@ -65,7 +65,7 @@ jobs:
     steps:
       - name: Update submodule in ARM-neu
         env:
-          GH_TOKEN: ${{ secrets.ARM_NEU_PAT }}
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: |
           gh api repos/uprightbass360/automatic-ripping-machine-neu/dispatches \
             --method POST --input - <<'EOF'
