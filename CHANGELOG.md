@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.4.0...v0.4.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* configure release-please to update VERSION file ([d453a07](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d453a07a50950e3057953b1ab83cb293f6c92209))
+
 ## [0.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.3.0...v0.4.0) (2026-02-16)
 
 
