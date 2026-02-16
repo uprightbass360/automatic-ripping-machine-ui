@@ -8,6 +8,7 @@ services:
       - ARM_UI_ARM_CONFIG_PATH=/data/config/arm.yaml
       - ARM_UI_ARM_URL=http://localhost:8080
       - ARM_UI_TRANSCODER_URL=http://localhost:5000
+      - ARM_UI_ARM_HB_PRESETS_PATH=/data/hb-presets/presets.json
       - ARM_UI_TRANSCODER_API_KEY=
     volumes:
       - automatic-ripping-machine-neu_arm-db:/data/db:ro
