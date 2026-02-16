@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.3.0...v0.4.0) (2026-02-16)
+
+
+### Features
+
+* notify ARM-neu to update submodule on release ([b1bdd35](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b1bdd3572d555adf23b506457491fc7db0327885))
+
+
+### Bug Fixes
+
+* use PAT for release-please so releases trigger publish workflow ([53e4128](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/53e41281d6a917493255b1814c5fcaebcadbba07))
+* use RELEASE_PAT for parent repo dispatch ([713c21a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/713c21af09d0e84c8dd79a950bcbed7aca4fbb06))
+
 ## [0.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.2.0...v0.3.0) (2026-02-16)
 
 
