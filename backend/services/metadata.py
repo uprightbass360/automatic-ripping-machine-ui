@@ -54,7 +54,7 @@ def _http_client() -> httpx.AsyncClient:
 # ---------------------------------------------------------------------------
 
 
-async def test_configured_key() -> dict[str, Any]:
+async def test_configured_key() -> dict[str, Any]:  # noqa: C901
     """Test the currently configured metadata API key from arm.yaml. Returns {success, message, provider}."""
     _get_api_keys.cache_clear()
     keys = _get_api_keys()
@@ -92,7 +92,12 @@ async def test_configured_key() -> dict[str, Any]:
                         return {"success": False, "message": "OMDb returned an invalid response", "provider": provider}
                     return {"success": False, "message": f"OMDb returned HTTP {resp.status_code}", "provider": provider}
                 if data.get("Response") == "True":
-                    return {"success": True, "message": f"OMDb key valid \u2014 found \"{data.get('Title', '')}\"", "provider": provider}
+                    found = data.get('Title', '')
+                    return {
+                        "success": True,
+                        "message": f"OMDb key valid \u2014 found \"{found}\"",
+                        "provider": provider,
+                    }
                 error_msg = data.get("Error", "")
                 if "Invalid API key" in error_msg:
                     return {"success": False, "message": "Invalid OMDb API key", "provider": provider}
@@ -100,7 +105,11 @@ async def test_configured_key() -> dict[str, Any]:
                     return {"success": False, "message": f"OMDb: {error_msg}", "provider": provider}
                 return {"success": True, "message": "OMDb API key accepted", "provider": provider}
     except httpx.TimeoutException:
-        return {"success": False, "message": "Request timed out \u2014 check network connectivity", "provider": provider}
+        return {
+            "success": False,
+            "message": "Request timed out \u2014 check network connectivity",
+            "provider": provider,
+        }
     except httpx.ConnectError:
         return {"success": False, "message": "Cannot connect to API \u2014 check network/DNS", "provider": provider}
     except Exception as exc:

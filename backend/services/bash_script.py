@@ -89,7 +89,8 @@ json_escape() {
 # The transcoder expects a directory name only (no slashes) and prepends its own RAW_PATH.
 if [ -n "$RAW_PATH" ]; then
     PATH_BASENAME="$(basename "$RAW_PATH")"
-    JSON_PAYLOAD="{\"title\": $(json_escape "$TITLE"), \"body\": $(json_escape "$BODY"), \"path\": $(json_escape "$PATH_BASENAME"), \"type\": \"info\"}"
+    JSON_PAYLOAD="{\"title\": $(json_escape "$TITLE"), \"body\": $(json_escape "$BODY"), "
+    JSON_PAYLOAD+="\"path\": $(json_escape "$PATH_BASENAME"), \"type\": \"info\"}"
 else
     JSON_PAYLOAD="{\"title\": $(json_escape "$TITLE"), \"body\": $(json_escape "$BODY"), \"type\": \"info\"}"
 fi

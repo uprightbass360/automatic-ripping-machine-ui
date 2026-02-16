@@ -23,9 +23,18 @@ async def test_dashboard_full(app_client):
         patch("backend.routers.dashboard.arm_db.get_drives", return_value=[drive]),
         patch("backend.routers.dashboard.arm_db.get_notification_count", return_value=3),
         patch("backend.routers.dashboard.arm_db.get_ripping_paused", return_value=False),
-        patch("backend.routers.dashboard.transcoder_client.health", new_callable=AsyncMock, return_value={"status": "ok"}),
-        patch("backend.routers.dashboard.transcoder_client.get_stats", new_callable=AsyncMock, return_value={"active": 1}),
-        patch("backend.routers.dashboard.transcoder_client.get_jobs", new_callable=AsyncMock, return_value={"jobs": []}),
+        patch(
+            "backend.routers.dashboard.transcoder_client.health",
+            new_callable=AsyncMock, return_value={"status": "ok"},
+        ),
+        patch(
+            "backend.routers.dashboard.transcoder_client.get_stats",
+            new_callable=AsyncMock, return_value={"active": 1},
+        ),
+        patch(
+            "backend.routers.dashboard.transcoder_client.get_jobs",
+            new_callable=AsyncMock, return_value={"jobs": []},
+        ),
         patch("backend.routers.dashboard.arm_client.get_system_stats", new_callable=AsyncMock, return_value=stats),
         patch("backend.routers.dashboard.system_cache.get_arm_info", return_value=arm_hw),
         patch("backend.routers.dashboard.system_cache.get_transcoder_info", return_value=None),

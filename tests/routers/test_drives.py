@@ -47,7 +47,10 @@ async def test_list_drives(app_client):
 
 async def test_update_drive_success(app_client):
     """PATCH /api/drives/{id} returns result from ARM."""
-    with patch("backend.routers.drives.arm_client.update_drive", new_callable=AsyncMock, return_value={"success": True}):
+    with patch(
+        "backend.routers.drives.arm_client.update_drive",
+        new_callable=AsyncMock, return_value={"success": True},
+    ):
         resp = await app_client.patch("/api/drives/1", json={"name": "New Name"})
     assert resp.status_code == 200
     assert resp.json()["success"] is True

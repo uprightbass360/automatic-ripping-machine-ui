@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
-from tests.factories import make_config, make_job, make_track
+from tests.factories import make_job, make_track
 
 
 # --- GET /api/jobs ---
@@ -81,6 +81,9 @@ async def test_metadata_search_503_on_config_error(app_client):
     """GET /api/metadata/search returns 503 when no API key configured."""
     from backend.services.metadata import MetadataConfigError
 
-    with patch("backend.routers.jobs.metadata.search", new_callable=AsyncMock, side_effect=MetadataConfigError("No key")):
+    with patch(
+        "backend.routers.jobs.metadata.search",
+        new_callable=AsyncMock, side_effect=MetadataConfigError("No key"),
+    ):
         resp = await app_client.get("/api/metadata/search?q=test")
     assert resp.status_code == 503

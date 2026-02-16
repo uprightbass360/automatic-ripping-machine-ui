@@ -15,7 +15,10 @@ from backend.services.metadata import MetadataConfigError
 
 def test_normalize_omdb_movie():
     """Movie type is normalized correctly."""
-    item = {"Title": "The Matrix", "Year": "1999", "imdbID": "tt0133093", "Type": "movie", "Poster": "https://poster.jpg"}
+    item = {
+        "Title": "The Matrix", "Year": "1999", "imdbID": "tt0133093",
+        "Type": "movie", "Poster": "https://poster.jpg",
+    }
     result = metadata._normalize_omdb(item)
     assert result["title"] == "The Matrix"
     assert result["year"] == "1999"
@@ -95,7 +98,11 @@ async def test_search_raises_on_no_key():
 async def test_get_details_routes_to_omdb():
     """get_details() calls _omdb_details when provider=omdb."""
     keys = {"provider": "omdb", "omdb_key": "key", "tmdb_key": None}
-    detail = {"title": "Matrix", "year": "1999", "imdb_id": "tt0133093", "media_type": "movie", "poster_url": None, "plot": "A hacker...", "background_url": None}
+    detail = {
+        "title": "Matrix", "year": "1999", "imdb_id": "tt0133093",
+        "media_type": "movie", "poster_url": None,
+        "plot": "A hacker...", "background_url": None,
+    }
     with (
         patch.object(metadata, "_get_api_keys", return_value=keys),
         patch.object(metadata, "_omdb_details", new_callable=AsyncMock, return_value=detail) as mock_det,

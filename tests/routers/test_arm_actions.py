@@ -63,7 +63,10 @@ def test_check_result_dict_without_success_key():
 
 async def test_abandon_job_endpoint(app_client):
     """POST /api/jobs/{id}/abandon proxies to arm_client."""
-    with patch("backend.routers.arm_actions.arm_client.abandon_job", new_callable=AsyncMock, return_value={"success": True}):
+    with patch(
+        "backend.routers.arm_actions.arm_client.abandon_job",
+        new_callable=AsyncMock, return_value={"success": True},
+    ):
         resp = await app_client.post("/api/jobs/1/abandon")
     assert resp.status_code == 200
     assert resp.json()["success"] is True
@@ -71,27 +74,41 @@ async def test_abandon_job_endpoint(app_client):
 
 async def test_abandon_job_503_when_unreachable(app_client):
     """POST /api/jobs/{id}/abandon returns 503 when ARM is down."""
-    with patch("backend.routers.arm_actions.arm_client.abandon_job", new_callable=AsyncMock, return_value=None):
+    with patch(
+        "backend.routers.arm_actions.arm_client.abandon_job",
+        new_callable=AsyncMock, return_value=None,
+    ):
         resp = await app_client.post("/api/jobs/1/abandon")
     assert resp.status_code == 503
 
 
 async def test_delete_job_endpoint(app_client):
     """DELETE /api/jobs/{id} proxies to arm_client."""
-    with patch("backend.routers.arm_actions.arm_client.delete_job", new_callable=AsyncMock, return_value={"success": True}):
+    with patch(
+        "backend.routers.arm_actions.arm_client.delete_job",
+        new_callable=AsyncMock, return_value={"success": True},
+    ):
         resp = await app_client.delete("/api/jobs/1")
     assert resp.status_code == 200
 
 
 async def test_set_ripping_enabled_endpoint(app_client):
     """POST /api/system/ripping-enabled toggles ripping."""
-    with patch("backend.routers.arm_actions.arm_client.set_ripping_enabled", new_callable=AsyncMock, return_value={"success": True}):
-        resp = await app_client.post("/api/system/ripping-enabled", json={"enabled": True})
+    with patch(
+        "backend.routers.arm_actions.arm_client.set_ripping_enabled",
+        new_callable=AsyncMock, return_value={"success": True},
+    ):
+        resp = await app_client.post(
+            "/api/system/ripping-enabled", json={"enabled": True},
+        )
     assert resp.status_code == 200
 
 
 async def test_start_waiting_job_endpoint(app_client):
     """POST /api/jobs/{id}/start proxies to arm_client."""
-    with patch("backend.routers.arm_actions.arm_client.start_waiting_job", new_callable=AsyncMock, return_value={"success": True}):
+    with patch(
+        "backend.routers.arm_actions.arm_client.start_waiting_job",
+        new_callable=AsyncMock, return_value={"success": True},
+    ):
         resp = await app_client.post("/api/jobs/1/start")
     assert resp.status_code == 200
