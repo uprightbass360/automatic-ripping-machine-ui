@@ -59,8 +59,9 @@
 					<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
 						<span>CPU</span>
 						<span class="whitespace-nowrap">
-							{systemStats.cpu_percent}%{#if systemStats.cpu_temp > 0}
-								<span class="ml-1 text-orange-500">{systemStats.cpu_temp.toFixed(0)}&deg;C</span>
+							{systemStats.cpu_percent}%
+							{#if systemStats.cpu_temp > 0}
+								<span class="text-orange-500">&nbsp;{systemStats.cpu_temp.toFixed(0)}&deg;C</span>
 							{/if}
 						</span>
 					</div>
