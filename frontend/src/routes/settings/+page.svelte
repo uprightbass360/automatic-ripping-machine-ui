@@ -333,7 +333,6 @@
 		MAKEMKV_PERMA_KEY: { label: 'MakeMKV License Key', description: 'Permanent or beta registration key for MakeMKV' },
 		DATA_RIP_PARAMETERS: { label: 'Data Rip Parameters', description: 'Extra parameters for data disc ripping' },
 		MAX_CONCURRENT_MAKEMKVINFO: { label: 'Max Concurrent Disc Scans', description: 'Limit parallel makemkvinfo processes (0 = unlimited)' },
-		UNIDENTIFIED_EJECT: { label: 'Eject Unidentified Discs', description: 'Auto-eject discs that cannot be identified' },
 		AUTO_EJECT: { label: 'Auto-Eject After Rip', description: 'Eject the disc when ripping completes' },
 		RIP_POSTER: { label: 'Download Poster', description: 'Save movie poster artwork during ripping' },
 		// Transcoding
@@ -425,7 +424,7 @@
 			{ label: 'Track Selection', keys: ['MINLENGTH', 'MAXLENGTH', 'MAINFEATURE', 'PREVENT_99'] },
 			{ label: 'Rip Method', keys: ['RIPMETHOD', 'RIPMETHOD_DVD', 'RIPMETHOD_BR', 'MKV_ARGS', 'DATA_RIP_PARAMETERS'] },
 			{ label: 'MakeMKV', keys: ['MAKEMKV_PERMA_KEY', 'MAX_CONCURRENT_MAKEMKVINFO'] },
-			{ label: 'Post-Rip Behavior', keys: ['ALLOW_DUPLICATES', 'UNIDENTIFIED_EJECT', 'AUTO_EJECT', 'RIP_POSTER'] },
+			{ label: 'Post-Rip Behavior', keys: ['ALLOW_DUPLICATES', 'AUTO_EJECT', 'RIP_POSTER'] },
 		]},
 		{ label: 'Transcoding', subpanels: [
 			{ label: 'General', keys: ['SKIP_TRANSCODE', 'USE_FFMPEG', 'DEST_EXT', 'MAX_CONCURRENT_TRANSCODES', 'DELRAWFILES'] },
