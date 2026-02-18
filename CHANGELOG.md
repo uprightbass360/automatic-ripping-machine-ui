@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.4.1...v0.4.2) (2026-02-18)
+
+
+### Bug Fixes
+
+* remove UNIDENTIFIED_EJECT from settings page ([4ad9835](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4ad98352117d68356422e8a18a47db32c5625fd0))
+
 ## [0.4.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.4.0...v0.4.1) (2026-02-16)
 
 
