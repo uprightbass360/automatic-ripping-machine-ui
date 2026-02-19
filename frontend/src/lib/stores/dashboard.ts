@@ -7,6 +7,7 @@ const emptyDashboard: DashboardData = {
 	active_jobs: [],
 	system_info: null,
 	drives_online: 0,
+	drive_names: {},
 	notification_count: 0,
 	ripping_enabled: true,
 	transcoder_online: false,
