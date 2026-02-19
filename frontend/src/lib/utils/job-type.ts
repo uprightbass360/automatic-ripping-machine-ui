@@ -63,6 +63,19 @@ const ACTIVE_STATUSES = new Set([
 	'waiting',
 ]);
 
+const DISC_TYPE_LABELS: Record<string, string> = {
+	dvd: 'DVD',
+	bluray: 'Blu-ray',
+	bluray4k: '4K UHD',
+	music: 'Music CD',
+	data: 'Data',
+};
+
+export function discTypeLabel(disctype: string | null | undefined): string {
+	if (!disctype) return 'Unknown';
+	return DISC_TYPE_LABELS[disctype.toLowerCase()] ?? disctype;
+}
+
 export function isJobActive(status: string | null): boolean {
 	if (!status) return false;
 	return ACTIVE_STATUSES.has(status.toLowerCase());

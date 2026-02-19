@@ -9,6 +9,7 @@
 	import TitleSearch from '$lib/components/TitleSearch.svelte';
 	import RipSettings from '$lib/components/RipSettings.svelte';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
+	import { discTypeLabel } from '$lib/utils/job-type';
 
 	let job = $state<JobDetail | null>(null);
 	let error = $state<string | null>(null);
@@ -128,7 +129,7 @@
 					{/if}
 					<div>
 						<dt class="text-gray-500 dark:text-gray-400">Disc Type</dt>
-						<dd class="font-medium capitalize text-gray-900 dark:text-white">{job.disctype ?? 'N/A'}</dd>
+						<dd class="font-medium text-gray-900 dark:text-white">{discTypeLabel(job.disctype)}</dd>
 					</div>
 					<div>
 						<dt class="text-gray-500 dark:text-gray-400">Device</dt>

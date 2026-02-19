@@ -4,7 +4,7 @@
 	import StatusBadge from './StatusBadge.svelte';
 	import TimeAgo from './TimeAgo.svelte';
 	import { elapsedTime } from '$lib/utils/format';
-	import { getVideoTypeConfig, isJobActive } from '$lib/utils/job-type';
+	import { getVideoTypeConfig, isJobActive, discTypeLabel } from '$lib/utils/job-type';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 
 	interface Props {
@@ -87,7 +87,7 @@
 		{#if job.disctype}
 			<span class="inline-flex items-center gap-1">
 				<DiscTypeIcon disctype={job.disctype} size="h-4 w-4" />
-				{job.disctype}
+				{discTypeLabel(job.disctype)}
 			</span>
 		{/if}
 	</td>

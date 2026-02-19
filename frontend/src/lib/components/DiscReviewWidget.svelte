@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { Job, JobDetail } from '$lib/types/arm';
 	import { cancelWaitingJob, startWaitingJob, fetchJob, updateJobTitle } from '$lib/api/jobs';
-	import { getVideoTypeConfig } from '$lib/utils/job-type';
+	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
 	import RipSettings from './RipSettings.svelte';
@@ -211,7 +211,7 @@
 					<span>{driveName ?? job.devpath}</span>
 				{/if}
 				{#if job.disctype}
-					<span class="rounded bg-primary/10 px-1.5 py-0.5 capitalize dark:bg-primary/15">{job.disctype}</span>
+					<span class="rounded bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">{discTypeLabel(job.disctype)}</span>
 				{/if}
 			</div>
 		</div>
@@ -333,7 +333,7 @@
 							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Disc Type</span>
 							<p class="flex items-center gap-1.5 text-gray-900 dark:text-white">
 								<DiscTypeIcon disctype={job.disctype} size="h-5 w-5" />
-								<span class="capitalize">{job.disctype || '--'}</span>
+								<span>{discTypeLabel(job.disctype) || '--'}</span>
 							</p>
 						</div>
 						<div>
