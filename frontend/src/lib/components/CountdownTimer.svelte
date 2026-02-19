@@ -10,10 +10,12 @@
 	let { startTime, waitSeconds, paused = false, inverted = false }: Props = $props();
 
 	let localPaused = $state(false);
+	let localResumed = $state(false);
 	let frozenAt = $state<number | null>(null);
 	let offset = $state(0);
 
-	let effectivePaused = $derived(paused || localPaused);
+	// Local resume overrides global pause; local pause always applies
+	let effectivePaused = $derived(localPaused || (paused && !localResumed));
 
 	let now = $state(Date.now());
 	let deadline = $derived(new Date(startTime).getTime() + waitSeconds * 1000 + offset);
@@ -26,17 +28,19 @@
 	let expired = $derived(remaining <= 0);
 
 	function togglePause() {
-		if (localPaused) {
+		if (effectivePaused) {
 			// Resuming: shift deadline forward by how long we were paused
 			if (frozenAt !== null) {
 				offset += Date.now() - frozenAt;
 			}
 			frozenAt = null;
 			localPaused = false;
+			localResumed = true;
 		} else {
 			// Pausing: freeze the current time
 			frozenAt = Date.now();
 			localPaused = true;
+			localResumed = false;
 		}
 	}
 

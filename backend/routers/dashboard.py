@@ -29,6 +29,7 @@ async def get_dashboard():
     # Skip DB queries entirely when database is unavailable
     active_jobs: list = []
     drives_online = 0
+    drive_names: dict[str, str] = {}
     notification_count = 0
 
     ripping_paused = False
@@ -37,6 +38,14 @@ async def get_dashboard():
         active_jobs = arm_db.get_active_jobs()
         drives = arm_db.get_drives()
         drives_online = len(drives)
+        # Normalize mount paths — drives store /mnt/dev/sr0, jobs store /dev/sr0
+        drive_names = {}
+        for d in drives:
+            if d.mount and d.name:
+                drive_names[d.mount] = d.name
+                # Also map the bare /dev/srX form
+                basename = d.mount.rsplit("/", 1)[-1]
+                drive_names[f"/dev/{basename}"] = d.name
         notification_count = arm_db.get_notification_count()
         ripping_paused = arm_db.get_ripping_paused()
 
@@ -65,6 +74,7 @@ async def get_dashboard():
         active_jobs=[JobSchema.model_validate(j) for j in active_jobs],
         system_info=HardwareInfoSchema(**arm_hw) if arm_hw else None,
         drives_online=drives_online,
+        drive_names=drive_names,
         notification_count=notification_count,
         ripping_enabled=not ripping_paused,
         transcoder_online=transcoder_online,

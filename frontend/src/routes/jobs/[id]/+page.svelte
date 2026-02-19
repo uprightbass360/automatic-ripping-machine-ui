@@ -16,7 +16,7 @@
 	let showRipSettings = $state(false);
 
 	let isVideoDisc = $derived(
-		job?.disctype === 'dvd' || job?.disctype === 'bluray'
+		job?.disctype === 'dvd' || job?.disctype === 'bluray' || job?.disctype === 'bluray4k'
 	);
 
 	let isMusicDisc = $derived(
@@ -59,7 +59,7 @@
 </script>
 
 <svelte:head>
-	<title>{job?.title || 'Job Detail'} - ARM UI</title>
+	<title>ARM - {job?.title || 'Job Detail'}</title>
 </svelte:head>
 
 {#if error}

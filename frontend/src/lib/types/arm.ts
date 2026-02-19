@@ -139,6 +139,7 @@ export interface DashboardData {
 	active_jobs: Job[];
 	system_info: HardwareInfo | null;
 	drives_online: number;
+	drive_names: Record<string, string>;
 	notification_count: number;
 	ripping_enabled: boolean;
 	transcoder_online: boolean;
@@ -180,11 +181,12 @@ export interface TitleUpdate {
 	video_type?: string;
 	imdb_id?: string;
 	poster_url?: string;
+	path?: string;
 }
 
 export interface JobConfigUpdate {
 	RIPMETHOD?: 'mkv' | 'backup';
-	DISCTYPE?: 'dvd' | 'bluray' | 'music' | 'data';
+	DISCTYPE?: 'dvd' | 'bluray' | 'bluray4k' | 'music' | 'data';
 	MAINFEATURE?: boolean;
 	MINLENGTH?: number;
 	MAXLENGTH?: number;

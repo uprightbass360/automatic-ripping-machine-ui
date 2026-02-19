@@ -1,20 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Job, JobDetail } from '$lib/types/arm';
-	import { cancelWaitingJob, startWaitingJob, fetchJob } from '$lib/api/jobs';
+	import { cancelWaitingJob, startWaitingJob, fetchJob, updateJobTitle } from '$lib/api/jobs';
 	import { getVideoTypeConfig } from '$lib/utils/job-type';
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
 	import RipSettings from './RipSettings.svelte';
+	import DiscTypeIcon from './DiscTypeIcon.svelte';
 
 	interface Props {
 		job: Job;
+		driveNames?: Record<string, string>;
 		paused?: boolean;
 		onrefresh?: () => void;
 		ondismiss?: () => void;
 	}
 
-	let { job, paused = false, onrefresh, ondismiss }: Props = $props();
+	let { job, driveNames = {}, paused = false, onrefresh, ondismiss }: Props = $props();
+	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
 
 	let detail = $state<JobDetail | null>(null);
 	let initialLoading = $state(true);
@@ -24,10 +27,50 @@
 	let cancelling = $state(false);
 	let starting = $state(false);
 
+	// Editable metadata in Disc Info panel
+	let infoTitle = $state(job.title || '');
+	let infoYear = $state(job.year || '');
+	let infoType = $state(job.video_type || '');
+	let infoImdbId = $state(job.imdb_id || '');
+	let infoPosterUrl = $state(job.poster_url || '');
+	let infoPath = $state(job.path || '');
+	let infoSaving = $state(false);
+	let infoFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	let infoDirty = $derived(
+		infoTitle !== (job.title || '') ||
+		infoYear !== (job.year || '') ||
+		infoType !== (job.video_type || '') ||
+		infoImdbId !== (job.imdb_id || '') ||
+		infoPosterUrl !== (job.poster_url || '') ||
+		infoPath !== (job.path || '')
+	);
+
+	async function saveInfo() {
+		infoSaving = true;
+		infoFeedback = null;
+		try {
+			await updateJobTitle(job.job_id, {
+				title: infoTitle.trim() || undefined,
+				year: infoYear.trim() || undefined,
+				video_type: infoType || undefined,
+				imdb_id: infoImdbId.trim() || undefined,
+				poster_url: infoPosterUrl.trim() || undefined,
+				path: infoPath.trim() || undefined,
+			});
+			infoFeedback = { type: 'success', message: 'Saved' };
+			onrefresh?.();
+		} catch (e) {
+			infoFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Save failed' };
+		} finally {
+			infoSaving = false;
+		}
+	}
+
 	let waitTime = $derived(Number(detail?.config?.MANUAL_WAIT_TIME) || 60);
 	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
 	let isVideo = $derived(
-		job.disctype === 'dvd' || job.disctype === 'bluray' || job.video_type === 'movie' || job.video_type === 'series'
+		job.disctype === 'dvd' || job.disctype === 'bluray' || job.disctype === 'bluray4k' || job.video_type === 'movie' || job.video_type === 'series'
 	);
 	let discLabelDiffers = $derived(
 		!!job.label && !!job.title && job.label.toLowerCase() !== job.title.toLowerCase()
@@ -142,12 +185,22 @@
 
 		<!-- Info -->
 		<div class="min-w-0 flex-1">
-			<h3 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
-				{job.title || job.label || 'Untitled'}
-				{#if job.year}
-					<span class="font-normal text-gray-500 dark:text-gray-400">({job.year})</span>
+			<div class="flex flex-wrap items-center gap-2">
+				<h3 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
+					{job.title || job.label || 'Untitled'}
+					{#if job.year}
+						<span class="font-normal text-gray-500 dark:text-gray-400">({job.year})</span>
+					{/if}
+				</h3>
+				{#if job.imdb_id}
+					<a
+						href="https://www.imdb.com/title/{job.imdb_id}/"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex items-center rounded bg-yellow-400 px-1.5 py-0.5 text-xs font-bold text-black hover:bg-yellow-300"
+					>IMDb</a>
 				{/if}
-			</h3>
+			</div>
 			{#if discLabelDiffers}
 				<p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
 					Auto-detected: <span class="font-mono text-xs">{job.label}</span>
@@ -155,7 +208,7 @@
 			{/if}
 			<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
 				{#if job.devpath}
-					<span>{job.devpath}</span>
+					<span>{driveName ?? job.devpath}</span>
 				{/if}
 				{#if job.disctype}
 					<span class="rounded bg-primary/10 px-1.5 py-0.5 capitalize dark:bg-primary/15">{job.disctype}</span>
@@ -215,37 +268,81 @@
 				<p class="text-sm text-gray-400">Loading...</p>
 			{:else}
 				<div class="space-y-4">
-					<!-- Title metadata -->
-					<div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+					<!-- Auto-detection context -->
+					{#if job.title_auto}
+						<div class="flex items-center gap-2 rounded-md bg-primary/5 px-3 py-2 text-xs dark:bg-primary/10">
+							<span class="text-gray-500 dark:text-gray-400">Auto-detected:</span>
+							<span class="font-medium text-gray-700 dark:text-gray-300">{job.title_auto}{#if job.year_auto} ({job.year_auto}){/if}</span>
+							{#if job.hasnicetitle}
+								<span class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">confident</span>
+							{:else}
+								<span class="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">best guess</span>
+							{/if}
+						</div>
+					{/if}
+
+					<!-- Editable metadata -->
+					<div class="space-y-2">
 						<div>
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
-							<p class="text-gray-900 dark:text-white">{job.title || '--'}</p>
+							<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+							<input type="text" bind:value={infoTitle} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+						</div>
+						<div class="grid grid-cols-3 gap-3">
+							<div>
+								<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</label>
+								<input type="text" bind:value={infoYear} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+							</div>
+							<div>
+								<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
+								<select bind:value={infoType} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white">
+									<option value="movie">Movie</option>
+									<option value="series">Series</option>
+								</select>
+							</div>
+							<div>
+								<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</label>
+								<input type="text" bind:value={infoImdbId} placeholder="tt..." class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+							</div>
 						</div>
 						<div>
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
-							<p class="text-gray-900 dark:text-white">{job.year || '--'}</p>
+							<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Poster URL</label>
+							<input type="text" bind:value={infoPosterUrl} placeholder="https://..." class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 						</div>
-						<div>
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Type</span>
-							<p class="capitalize text-gray-900 dark:text-white">{job.video_type || '--'}</p>
+					</div>
+
+					{#if infoDirty}
+						<div class="flex items-center gap-2">
+							<button
+								onclick={saveInfo}
+								disabled={infoSaving}
+								class="{btnBase} bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-50"
+							>
+								{infoSaving ? 'Saving...' : 'Save'}
+							</button>
+							{#if infoFeedback}
+								<span class="text-xs {infoFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+									{infoFeedback.message}
+								</span>
+							{/if}
 						</div>
+					{/if}
+
+					<!-- Read-only disc details -->
+					<div class="grid grid-cols-5 gap-3 text-sm">
 						<div>
 							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Disc Type</span>
-							<p class="capitalize text-gray-900 dark:text-white">{job.disctype || '--'}</p>
+							<p class="flex items-center gap-1.5 text-gray-900 dark:text-white">
+								<DiscTypeIcon disctype={job.disctype} size="h-5 w-5" />
+								<span class="capitalize">{job.disctype || '--'}</span>
+							</p>
 						</div>
 						<div>
 							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Disc Label</span>
 							<p class="font-mono text-xs text-gray-900 dark:text-white">{job.label || '--'}</p>
 						</div>
-						{#if job.imdb_id}
-							<div>
-								<span class="text-xs font-medium text-gray-500 dark:text-gray-400">IMDb</span>
-								<p><a href="https://www.imdb.com/title/{job.imdb_id}" target="_blank" rel="noopener" class="text-primary-text hover:underline dark:text-primary-text-dark">{job.imdb_id}</a></p>
-							</div>
-						{/if}
 						<div>
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Device</span>
-							<p class="font-mono text-xs text-gray-900 dark:text-white">{job.devpath || '--'}</p>
+							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Drive</span>
+							<p class="text-gray-900 dark:text-white">{driveName ?? job.devpath ?? '--'}</p>
 						</div>
 						<div>
 							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">CRC</span>
@@ -295,12 +392,10 @@
 					{/if}
 
 					<!-- Output path -->
-					{#if job.path}
-						<div class="text-sm">
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Output Path</span>
-							<p class="font-mono text-xs text-gray-700 dark:text-gray-300">{job.path}</p>
-						</div>
-					{/if}
+					<div class="text-sm">
+						<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Output Path</label>
+						<input type="text" bind:value={infoPath} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+					</div>
 				</div>
 			{/if}
 		</div>

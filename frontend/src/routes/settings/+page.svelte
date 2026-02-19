@@ -704,7 +704,7 @@
 </script>
 
 <svelte:head>
-	<title>Settings - ARM UI</title>
+	<title>ARM - Settings</title>
 </svelte:head>
 
 <!-- Reusable snippet for a single ARM config field -->

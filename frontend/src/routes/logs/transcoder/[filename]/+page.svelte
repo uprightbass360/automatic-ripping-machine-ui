@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>{filename} - Transcoder Logs - ARM UI</title>
+	<title>ARM - {filename}</title>
 </svelte:head>
 
 <div class="space-y-4">

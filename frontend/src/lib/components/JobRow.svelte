@@ -5,13 +5,16 @@
 	import TimeAgo from './TimeAgo.svelte';
 	import { elapsedTime } from '$lib/utils/format';
 	import { getVideoTypeConfig, isJobActive } from '$lib/utils/job-type';
+	import DiscTypeIcon from './DiscTypeIcon.svelte';
 
 	interface Props {
 		job: Job;
+		driveNames?: Record<string, string>;
 		onaction?: () => void;
 	}
 
-	let { job, onaction }: Props = $props();
+	let { job, driveNames = {}, onaction }: Props = $props();
+	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
 
 	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
 	let active = $derived(isJobActive(job.status));
@@ -80,10 +83,17 @@
 	</td>
 
 	<!-- Disc -->
-	<td class="px-4 py-3 text-sm">{job.disctype ?? ''}</td>
+	<td class="px-4 py-3 text-sm">
+		{#if job.disctype}
+			<span class="inline-flex items-center gap-1">
+				<DiscTypeIcon disctype={job.disctype} size="h-4 w-4" />
+				{job.disctype}
+			</span>
+		{/if}
+	</td>
 
 	<!-- Device -->
-	<td class="px-4 py-3 text-sm">{job.devpath ?? ''}</td>
+	<td class="px-4 py-3 text-sm">{driveName ?? job.devpath ?? ''}</td>
 
 	<!-- Started + elapsed/duration sub-text -->
 	<td class="px-4 py-3 text-sm">

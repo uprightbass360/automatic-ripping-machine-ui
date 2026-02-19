@@ -65,7 +65,7 @@
 </script>
 
 <svelte:head>
-	<title>Jobs - ARM UI</title>
+	<title>ARM - Jobs</title>
 </svelte:head>
 
 <div class="space-y-4">

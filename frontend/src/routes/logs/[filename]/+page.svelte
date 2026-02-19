@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>{filename} - Logs - ARM UI</title>
+	<title>ARM - {filename}</title>
 </svelte:head>
 
 <div class="space-y-4">

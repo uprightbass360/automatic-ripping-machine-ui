@@ -79,7 +79,7 @@
 </script>
 
 <svelte:head>
-	<title>Transcoder - ARM UI</title>
+	<title>ARM - Transcoder</title>
 </svelte:head>
 
 <div class="space-y-6">

@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>Drives - ARM UI</title>
+	<title>ARM - Drives</title>
 </svelte:head>
 
 <div class="space-y-6">

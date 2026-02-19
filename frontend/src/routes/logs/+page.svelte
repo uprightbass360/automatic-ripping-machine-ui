@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<title>Logs - ARM UI</title>
+	<title>ARM - Logs</title>
 </svelte:head>
 
 <div class="space-y-4">

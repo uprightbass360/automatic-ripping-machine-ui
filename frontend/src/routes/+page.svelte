@@ -15,6 +15,7 @@
 		active_jobs: [],
 		system_info: null,
 		drives_online: 0,
+		drive_names: {},
 		notification_count: 0,
 		ripping_enabled: true,
 		transcoder_online: false,
@@ -131,7 +132,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard - ARM UI</title>
+	<title>ARM - Dashboard</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -319,7 +320,7 @@
 			<h2 class="mb-3 text-lg font-semibold text-primary-text dark:text-primary-text-dark">New Disc Detected &mdash; Review Before Ripping</h2>
 			<div class="grid gap-4">
 				{#each waitingJobs as job (job.job_id)}
-					<DiscReviewWidget {job} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
+					<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
 				{/each}
 			</div>
 		</section>
@@ -331,7 +332,7 @@
 			<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Active Rips</h2>
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 				{#each nonWaitingActiveJobs as job (job.job_id)}
-					<JobCard {job} />
+					<JobCard {job} driveNames={dash.drive_names} />
 				{/each}
 			</div>
 		</section>
@@ -414,14 +415,14 @@
 									<th class="px-4 py-3 font-medium">Status</th>
 									<th class="px-4 py-3 font-medium">Type</th>
 									<th class="px-4 py-3 font-medium">Disc</th>
-									<th class="px-4 py-3 font-medium">Device</th>
+									<th class="px-4 py-3 font-medium">Drive</th>
 									<th class="px-4 py-3 font-medium">Started</th>
 									<th class="px-4 py-3 font-medium">Actions</th>
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 								{#each jobsData.jobs as job (job.job_id)}
-									<JobRow {job} onaction={loadJobs} />
+									<JobRow {job} driveNames={dash.drive_names} onaction={loadJobs} />
 								{/each}
 							</tbody>
 						</table>
@@ -429,7 +430,7 @@
 				{:else}
 					<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{#each jobsData.jobs as job (job.job_id)}
-							<JobCard {job} />
+							<JobCard {job} driveNames={dash.drive_names} />
 						{/each}
 					</div>
 				{/if}

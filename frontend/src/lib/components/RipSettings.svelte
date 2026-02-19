@@ -27,7 +27,7 @@
 		try {
 			const data: Partial<JobConfigUpdate> = {
 				RIPMETHOD: ripmethod as 'mkv' | 'backup',
-				DISCTYPE: disctype as 'dvd' | 'bluray' | 'music' | 'data',
+				DISCTYPE: disctype as 'dvd' | 'bluray' | 'bluray4k' | 'music' | 'data',
 				MAINFEATURE: mainfeature,
 				MINLENGTH: minlength,
 				MAXLENGTH: maxlength
@@ -64,6 +64,7 @@
 			<select bind:value={disctype} class="{inputClass} w-full">
 				<option value="dvd">DVD</option>
 				<option value="bluray">Blu-ray</option>
+				<option value="bluray4k">4K UHD</option>
 				<option value="music">Music</option>
 				<option value="data">Data</option>
 			</select>

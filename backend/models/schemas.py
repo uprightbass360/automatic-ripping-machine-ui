@@ -169,6 +169,7 @@ class DashboardResponse(BaseModel):
     active_jobs: list[JobSchema] = []
     system_info: HardwareInfoSchema | None = None
     drives_online: int = 0
+    drive_names: dict[str, str] = {}
     notification_count: int = 0
     ripping_enabled: bool = True
     transcoder_online: bool = False
@@ -245,6 +246,7 @@ class TitleUpdateRequest(BaseModel):
     video_type: str | None = None
     imdb_id: str | None = None
     poster_url: str | None = None
+    path: str | None = None
 
 
 class JobConfigUpdateRequest(BaseModel):
