@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/uprightbass360/automatic-ripping-machine-ui/graph/badge.svg)](https://codecov.io/gh/uprightbass360/automatic-ripping-machine-ui)
+
 # ARM UI
 
 Part of the [Automatic Ripping Machine ecosystem](#related-projects). A modern replacement dashboard for the original ARM Flask/Jinja2 web interface.
