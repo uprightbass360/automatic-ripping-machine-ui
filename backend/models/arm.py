@@ -98,8 +98,8 @@ class Config(Base):
     MAXLENGTH = Column(String(10))
     MANUAL_WAIT = Column(String(10))
     MANUAL_WAIT_TIME = Column(String(10))
-    RAW_PATH = Column(String(256))
     TRANSCODE_PATH = Column(String(256))
+    RAW_PATH = Column(String(256))
     COMPLETED_PATH = Column(String(256))
     EXTRAS_SUB = Column(String(256))
     INSTALLPATH = Column(String(256))
@@ -128,18 +128,28 @@ class Config(Base):
     EMBY_REFRESH = Column(String(10))
     EMBY_SERVER = Column(String(256))
     EMBY_PORT = Column(String(10))
-    NOTIFY_RIP = Column(String(10))
-    NOTIFY_TRANSCODE = Column(String(10))
-    MAX_CONCURRENT_TRANSCODES = Column(String(10))
+    EMBY_CLIENT = Column(String(256))
+    EMBY_DEVICE = Column(String(256))
+    EMBY_DEVICEID = Column(String(256))
+    EMBY_USERNAME = Column(String(256))
+    EMBY_USERID = Column(String(256))
+    EMBY_PASSWORD = Column(String(256))
     # Sensitive fields tracked for filtering
     EMBY_API_KEY = Column(String(256))
-    IFTTT_KEY = Column(String(256))
+    NOTIFY_RIP = Column(String(10))
+    NOTIFY_TRANSCODE = Column(String(10))
     PB_KEY = Column(String(256))
-    OMDB_API_KEY = Column(String(256))
-    TMDB_API_KEY = Column(String(256))
+    IFTTT_KEY = Column(String(256))
+    IFTTT_EVENT = Column(String(256))
     PO_USER_KEY = Column(String(256))
     PO_APP_KEY = Column(String(256))
-    APPRISE = Column(String(1024))
+    OMDB_API_KEY = Column(String(256))
+    UI_BASE_URL = Column(String(256))
+    FFMPEG_CLI = Column(String(256))
+    FFMPEG_LOCAL = Column(String(10))
+    USE_FFMPEG = Column(String(10))
+    FFMPEG_PRE_FILE_ARGS = Column(String(256))
+    FFMPEG_POST_FILE_ARGS = Column(String(256))
 
     job = relationship("Job", back_populates="config")
 
@@ -147,13 +157,12 @@ class Config(Base):
 # Sensitive fields to mask in API responses
 HIDDEN_CONFIG_FIELDS = {
     "EMBY_API_KEY",
+    "EMBY_PASSWORD",
     "IFTTT_KEY",
     "PB_KEY",
     "OMDB_API_KEY",
-    "TMDB_API_KEY",
     "PO_USER_KEY",
     "PO_APP_KEY",
-    "APPRISE",
 }
 
 
