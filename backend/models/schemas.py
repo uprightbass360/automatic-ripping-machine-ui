@@ -64,6 +64,8 @@ class JobSchema(BaseModel):
     transcode_path: str | None = None
     ejected: bool | None = None
     pid: int | None = None
+    tracks_total: int | None = None
+    tracks_ripped: int | None = None
 
     model_config = {"from_attributes": True}
 

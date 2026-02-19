@@ -59,6 +59,48 @@ def make_job(**overrides) -> MagicMock:
     return mock
 
 
+def make_job_dict(**overrides) -> dict:
+    """Return a plain dict matching what get_active_jobs() returns (Job columns + track counts)."""
+    defaults = {
+        "job_id": 1,
+        "arm_version": "2.8.0",
+        "crc_id": "abc123",
+        "logfile": "job_1.log",
+        "start_time": datetime(2024, 1, 15, 10, 0, 0, tzinfo=timezone.utc),
+        "stop_time": None,
+        "job_length": "01:30:00",
+        "status": "active",
+        "stage": "rip",
+        "no_of_titles": 5,
+        "title": "Test Movie",
+        "title_auto": "Test Movie",
+        "title_manual": None,
+        "year": "2024",
+        "year_auto": "2024",
+        "year_manual": None,
+        "video_type": "movie",
+        "video_type_auto": "movie",
+        "video_type_manual": None,
+        "imdb_id": "tt1234567",
+        "poster_url": "https://example.com/poster.jpg",
+        "devpath": "/dev/sr0",
+        "mountpoint": "/mnt/dev/sr0",
+        "hasnicetitle": True,
+        "errors": None,
+        "disctype": "dvd",
+        "label": "TEST_MOVIE",
+        "path": "/home/arm/media/Test Movie (2024)",
+        "raw_path": "/home/arm/raw/Test Movie (2024)",
+        "transcode_path": "/home/arm/transcode",
+        "ejected": False,
+        "pid": 12345,
+        "tracks_total": 5,
+        "tracks_ripped": 0,
+    }
+    defaults.update(overrides)
+    return defaults
+
+
 def make_track(**overrides) -> MagicMock:
     """Return a MagicMock(spec=Track) with realistic defaults."""
     defaults = {
@@ -133,10 +175,10 @@ def make_config(**overrides) -> Config:
         "MAX_CONCURRENT_TRANSCODES": "1",
         # Sensitive fields
         "EMBY_API_KEY": "secret_emby_key",
+        "EMBY_PASSWORD": "secret_emby_pw",
         "IFTTT_KEY": "secret_ifttt",
         "PB_KEY": "secret_pb",
         "OMDB_API_KEY": "secret_omdb",
-        "TMDB_API_KEY": "secret_tmdb",
         "PO_USER_KEY": "secret_po_user",
         "PO_APP_KEY": "secret_po_app",
         "APPRISE": "tgram://secret_token",

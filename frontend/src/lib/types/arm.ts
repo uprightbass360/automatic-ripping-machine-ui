@@ -51,6 +51,8 @@ export interface Job {
 	transcode_path: string | null;
 	ejected: boolean | null;
 	pid: number | null;
+	tracks_total: number | null;
+	tracks_ripped: number | null;
 }
 
 export interface JobDetail extends Job {

@@ -26,11 +26,11 @@ def test_extract_config_safe_masks_sensitive_fields():
 
 def test_extract_config_safe_none_sensitive_stays_none():
     """Sensitive fields that are None remain None (not masked)."""
-    config = make_config(OMDB_API_KEY=None, TMDB_API_KEY=None)
+    config = make_config(OMDB_API_KEY=None, PB_KEY=None)
     result = arm_db._extract_config_safe(config)
     assert result is not None
     assert result["OMDB_API_KEY"] is None
-    assert result["TMDB_API_KEY"] is None
+    assert result["PB_KEY"] is None
 
 
 def test_extract_config_safe_excludes_config_id_and_job_id():

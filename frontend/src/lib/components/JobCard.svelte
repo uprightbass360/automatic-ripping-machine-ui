@@ -73,7 +73,11 @@
 					{#if job.stage}
 						<span class="rounded bg-primary-light-bg px-1.5 py-0.5 font-medium text-primary-text dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">{job.stage}</span>
 					{/if}
-					{#if job.no_of_titles != null}
+					{#if job.status === 'info'}
+						<span>Scanning{job.no_of_titles ? `... ${job.no_of_titles} titles` : '...'}</span>
+					{:else if job.tracks_total != null && job.tracks_total > 0}
+						<span>{job.tracks_ripped ?? 0} / {job.tracks_total} titles</span>
+					{:else if job.no_of_titles != null}
 						<span>{job.no_of_titles} title{job.no_of_titles === 1 ? '' : 's'}</span>
 					{/if}
 					{#if job.start_time}

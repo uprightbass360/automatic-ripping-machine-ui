@@ -68,13 +68,22 @@ def is_available() -> bool:
 ACTIVE_STATUSES = {"active", "ripping", "transcoding", "waiting", "info", "waiting_transcode"}
 
 
-def get_active_jobs() -> list[Job]:
+def get_active_jobs() -> list[dict]:
+    """Return active jobs as dicts enriched with track progress counts."""
     try:
         with get_session() as session:
             stmt = select(Job).where(
                 func.lower(Job.status).in_(ACTIVE_STATUSES)
             ).order_by(Job.start_time.desc())
-            return list(session.scalars(stmt).unique().all())
+            jobs = list(session.scalars(stmt).unique().all())
+            result = []
+            for job in jobs:
+                job_dict = {col.name: getattr(job, col.name) for col in Job.__table__.columns}
+                tracks = list(job.tracks) if job.tracks else []
+                job_dict["tracks_total"] = len(tracks)
+                job_dict["tracks_ripped"] = sum(1 for t in tracks if t.ripped)
+                result.append(job_dict)
+            return result
     except Exception:
         return []
 

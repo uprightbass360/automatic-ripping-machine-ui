@@ -71,7 +71,7 @@ async def get_dashboard():
 
     return DashboardResponse(
         db_available=db_available,
-        active_jobs=[JobSchema.model_validate(j) for j in active_jobs],
+        active_jobs=[JobSchema(**j) for j in active_jobs],
         system_info=HardwareInfoSchema(**arm_hw) if arm_hw else None,
         drives_online=drives_online,
         drive_names=drive_names,

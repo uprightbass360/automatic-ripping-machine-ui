@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
-from tests.factories import make_drive, make_job
+from tests.factories import make_drive, make_job_dict
 
 
 # --- GET /api/dashboard ---
@@ -12,7 +12,7 @@ from tests.factories import make_drive, make_job
 
 async def test_dashboard_full(app_client):
     """Dashboard returns all fields when DB and services are available."""
-    job = make_job(job_id=1, status="ripping")
+    job = make_job_dict(job_id=1, status="ripping")
     drive = make_drive()
     arm_hw = {"cpu": "AMD Ryzen 7", "memory_total_gb": 32.0}
     stats = {"cpu_percent": 45.0, "cpu_temp": 55.0, "memory": None, "storage": []}

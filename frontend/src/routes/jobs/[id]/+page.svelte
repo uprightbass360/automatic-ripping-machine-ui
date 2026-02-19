@@ -9,7 +9,7 @@
 	import TitleSearch from '$lib/components/TitleSearch.svelte';
 	import RipSettings from '$lib/components/RipSettings.svelte';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
-	import { discTypeLabel } from '$lib/utils/job-type';
+	import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
 
 	let job = $state<JobDetail | null>(null);
 	let error = $state<string | null>(null);
@@ -55,7 +55,21 @@
 	}
 
 	onMount(() => {
-		loadJob();
+		let stopped = false;
+		async function poll() {
+			while (!stopped) {
+				await new Promise((r) => setTimeout(r, 5000));
+				if (job && isJobActive(job.status)) {
+					await loadJob();
+				} else {
+					break;
+				}
+			}
+		}
+		loadJob().then(poll);
+		return () => {
+			stopped = true;
+		};
 	});
 </script>
 
