@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.5.0...v0.6.0) (2026-02-19)
+
+
+### Features
+
+* add disc type icon to review widget and minor cleanup ([48ac784](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/48ac784b7952072e7893927570a7613799157594))
+* add test coverage reporting with Codecov ([58891f4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/58891f4a6465700427bb3bb9b33189b932901dbe))
+* add UHD capable toggle for Blu-ray drives ([5d1363d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5d1363d64630214b969acaa8aafcee7b414e4dfd))
+
+
+### Bug Fixes
+
+* display friendly disc type labels instead of raw values ([ea7bf8b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ea7bf8b79e399013c988684e2095a15de46c3f0b))
+
 ## [0.5.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.4.2...v0.5.0) (2026-02-19)
 
 
