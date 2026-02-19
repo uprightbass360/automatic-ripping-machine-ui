@@ -119,6 +119,7 @@ class DriveSchema(BaseModel):
     stale: bool | None = None
     mdisc: int | None = None
     serial_id: str | None = None
+    uhd_capable: bool | None = None
     current_job: JobSchema | None = None
 
     model_config = {"from_attributes": True}
@@ -260,3 +261,4 @@ class JobConfigUpdateRequest(BaseModel):
 class DriveUpdateRequest(BaseModel):
     name: str | None = None
     description: str | None = None
+    uhd_capable: bool | None = None

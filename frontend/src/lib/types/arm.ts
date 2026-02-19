@@ -99,6 +99,7 @@ export interface Drive {
 	stale: boolean | null;
 	mdisc: number | null;
 	serial_id: string | null;
+	uhd_capable: boolean | null;
 	current_job: Job | null;
 }
 

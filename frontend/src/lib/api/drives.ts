@@ -7,7 +7,7 @@ export function fetchDrives(): Promise<Drive[]> {
 
 export function updateDrive(
 	driveId: number,
-	data: { name?: string; description?: string }
+	data: { name?: string; description?: string; uhd_capable?: boolean }
 ): Promise<{ success: boolean; drive_id: number }> {
 	return apiFetch(`/api/drives/${driveId}`, {
 		method: 'PATCH',

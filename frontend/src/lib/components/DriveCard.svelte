@@ -2,6 +2,7 @@
 	import type { Drive } from '$lib/types/arm';
 	import { updateDrive } from '$lib/api/drives';
 	import StatusBadge from './StatusBadge.svelte';
+	import DiscTypeIcon from './DiscTypeIcon.svelte';
 
 	interface Props {
 		drive: Drive;
@@ -13,6 +14,7 @@
 	let editing = $state(false);
 	let editName = $state('');
 	let saving = $state(false);
+	let togglingUhd = $state(false);
 
 	function startEdit() {
 		editName = drive.name || '';
@@ -33,6 +35,18 @@
 			// keep edit mode open on failure
 		} finally {
 			saving = false;
+		}
+	}
+
+	async function toggleUhd() {
+		togglingUhd = true;
+		try {
+			await updateDrive(drive.drive_id, { uhd_capable: !drive.uhd_capable });
+			onupdate?.();
+		} catch {
+			// ignore
+		} finally {
+			togglingUhd = false;
 		}
 	}
 
@@ -98,13 +112,29 @@
 
 	<div class="mt-3 flex flex-wrap gap-1.5">
 		{#if drive.read_cd}
-			<span class="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">CD</span>
+			<span class="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
+				<DiscTypeIcon disctype="music" size="h-3.5 w-3.5" />CD
+			</span>
 		{/if}
 		{#if drive.read_dvd}
-			<span class="rounded bg-primary-light-bg px-1.5 py-0.5 text-xs text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark">DVD</span>
+			<span class="inline-flex items-center gap-1 rounded bg-primary-light-bg px-1.5 py-0.5 text-xs text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark">
+				<DiscTypeIcon disctype="dvd" size="h-3.5 w-3.5" />DVD
+			</span>
 		{/if}
 		{#if drive.read_bd}
-			<span class="rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Blu-ray</span>
+			<span class="inline-flex items-center gap-1 rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+				<DiscTypeIcon disctype="bluray" size="h-3.5 w-3.5" />Blu-ray
+			</span>
+			<label class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+				<input
+					type="checkbox"
+					checked={drive.uhd_capable ?? false}
+					disabled={togglingUhd}
+					onchange={toggleUhd}
+					class="h-3.5 w-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700"
+				/>
+				UHD Capable
+			</label>
 		{/if}
 	</div>
 

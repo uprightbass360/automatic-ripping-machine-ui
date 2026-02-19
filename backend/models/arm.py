@@ -186,6 +186,7 @@ class SystemDrives(Base):
     stale = Column(Boolean)
     mdisc = Column(Integer)
     serial_id = Column(String(100))
+    uhd_capable = Column(Boolean)
 
 
 class SystemInfo(Base):
