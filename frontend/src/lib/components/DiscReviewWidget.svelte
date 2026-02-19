@@ -208,10 +208,13 @@
 			{/if}
 			<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
 				{#if job.devpath}
-					<span>{driveName ?? job.devpath}</span>
+					<span class="rounded bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">{driveName ?? job.devpath}</span>
 				{/if}
 				{#if job.disctype}
-					<span class="rounded bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">{discTypeLabel(job.disctype)}</span>
+					<span class="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">
+						<DiscTypeIcon disctype={job.disctype} size="h-3.5 w-3.5" />
+						{discTypeLabel(job.disctype)}
+					</span>
 				{/if}
 			</div>
 		</div>
