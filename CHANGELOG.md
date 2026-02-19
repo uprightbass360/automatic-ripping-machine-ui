@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.4.2...v0.5.0) (2026-02-19)
+
+
+### Features
+
+* dashboard improvements — drive names, disc icons, editable metadata, 4K UHD support, favicon, page titles ([ed497d3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ed497d3a295330e7417ccd589bf1e5cdf453ea79))
+
+
+### Bug Fixes
+
+* add missing drive_names to emptyDashboard in store ([9d7ef4d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9d7ef4de970fee9e5db65d011bd175294e8d7e0d))
+* resolve all svelte-check warnings ([4526227](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4526227d3d0180032e6c59ddcdbd778795454e08))
+
 ## [0.4.2](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.4.1...v0.4.2) (2026-02-18)
 
 
