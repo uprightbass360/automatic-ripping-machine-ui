@@ -283,31 +283,31 @@
 
 					<!-- Editable metadata -->
 					<div class="space-y-2">
-						<div>
-							<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+						<label class="block">
+							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
 							<input type="text" bind:value={infoTitle} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
-						</div>
+						</label>
 						<div class="grid grid-cols-3 gap-3">
-							<div>
-								<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</label>
+							<label>
+								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
 								<input type="text" bind:value={infoYear} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
-							</div>
-							<div>
-								<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
+							</label>
+							<label>
+								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</span>
 								<select bind:value={infoType} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white">
 									<option value="movie">Movie</option>
 									<option value="series">Series</option>
 								</select>
-							</div>
-							<div>
-								<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</label>
+							</label>
+							<label>
+								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
 								<input type="text" bind:value={infoImdbId} placeholder="tt..." class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
-							</div>
+							</label>
 						</div>
-						<div>
-							<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Poster URL</label>
+						<label class="block">
+							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Poster URL</span>
 							<input type="text" bind:value={infoPosterUrl} placeholder="https://..." class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
-						</div>
+						</label>
 					</div>
 
 					{#if infoDirty}
@@ -392,10 +392,10 @@
 					{/if}
 
 					<!-- Output path -->
-					<div class="text-sm">
-						<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Output Path</label>
+					<label class="block text-sm">
+						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Output Path</span>
 						<input type="text" bind:value={infoPath} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
-					</div>
+					</label>
 				</div>
 			{/if}
 		</div>

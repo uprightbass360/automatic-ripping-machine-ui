@@ -66,6 +66,7 @@
 		<header class="flex h-16 items-center justify-between border-b border-primary/20 bg-surface px-4 dark:border-primary/20 dark:bg-surface-dark lg:px-6">
 			<button
 				onclick={() => sidebarOpen = !sidebarOpen}
+				aria-label="Toggle sidebar"
 				class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-400 dark:hover:bg-primary/15 lg:hidden"
 			>
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +96,7 @@
 		<!-- Mobile sidebar overlay -->
 		{#if sidebarOpen}
 			<div class="fixed inset-0 z-40 lg:hidden">
-				<button class="absolute inset-0 bg-black/50" onclick={() => sidebarOpen = false}></button>
+				<button class="absolute inset-0 bg-black/50" aria-label="Close sidebar" onclick={() => sidebarOpen = false}></button>
 				<aside class="relative z-50 flex h-full w-64 flex-col bg-surface shadow-xl dark:bg-surface-dark">
 					<nav class="flex-1 space-y-1 px-3 py-4">
 						{#each navItems as item}

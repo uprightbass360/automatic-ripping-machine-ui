@@ -261,29 +261,29 @@
 				{/if}
 				<!-- Editable fields -->
 				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-					<div class="sm:col-span-2">
-						<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+					<label class="sm:col-span-2">
+						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
 						<input type="text" bind:value={editTitle} class="w-full {inputBase}" />
-					</div>
-					<div>
-						<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</label>
+					</label>
+					<label>
+						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
 						<input type="text" bind:value={editYear} class="w-full {inputBase}" />
-					</div>
-					<div>
-						<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
+					</label>
+					<label>
+						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</span>
 						<select bind:value={editType} class="w-full {inputBase}">
 							<option value="movie">Movie</option>
 							<option value="series">Series</option>
 						</select>
-					</div>
-					<div>
-						<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</label>
+					</label>
+					<label>
+						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
 						<input type="text" bind:value={editImdbId} placeholder="tt..." class="w-full {inputBase}" />
-					</div>
-					<div>
-						<label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Poster URL</label>
+					</label>
+					<label>
+						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Poster URL</span>
 						<input type="text" bind:value={editPosterUrl} placeholder="https://..." class="w-full {inputBase}" />
-					</div>
+					</label>
 				</div>
 				{#if detail.plot}
 					<p class="text-sm text-gray-700 dark:text-gray-300">{detail.plot}</p>

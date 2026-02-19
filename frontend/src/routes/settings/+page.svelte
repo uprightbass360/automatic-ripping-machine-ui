@@ -1525,6 +1525,7 @@
 							<button
 								type="button"
 								onclick={() => (armSearch = '')}
+								aria-label="Clear search"
 								class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
 							>
 								<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

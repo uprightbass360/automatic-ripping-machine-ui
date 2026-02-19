@@ -16,16 +16,17 @@
 	let content = $state('');
 	let error = $state<string | null>(null);
 	let loading = $state(true);
-	let container: HTMLPreElement;
+	let container = $state<HTMLPreElement | undefined>(undefined);
 
 	async function load() {
 		try {
 			const data = await fetchFn(filename, mode, lines);
 			content = data.content;
 			error = null;
-			if (mode === 'tail' && container) {
+			const el = container;
+			if (mode === 'tail' && el) {
 				requestAnimationFrame(() => {
-					container.scrollTop = container.scrollHeight;
+					el.scrollTop = el.scrollHeight;
 				});
 			}
 		} catch (e) {

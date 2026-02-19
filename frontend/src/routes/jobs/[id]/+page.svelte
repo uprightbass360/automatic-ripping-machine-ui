@@ -196,6 +196,7 @@
 						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Search / Edit Title</h2>
 						<button
 							onclick={() => (showTitleSearch = false)}
+							aria-label="Close title search"
 							class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
 						>
 							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

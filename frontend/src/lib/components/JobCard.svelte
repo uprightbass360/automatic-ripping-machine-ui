@@ -57,13 +57,10 @@
 					<span>{job.year}</span>
 				{/if}
 				{#if job.imdb_id}
-					<a
-						href="https://www.imdb.com/title/{job.imdb_id}/"
-						target="_blank"
-						rel="noopener noreferrer"
-						onclick={(e) => e.stopPropagation()}
+					<button
+						onclick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`https://www.imdb.com/title/${job.imdb_id}/`, '_blank', 'noopener,noreferrer'); }}
 						class="inline-flex items-center rounded bg-yellow-400 px-1.5 py-0.5 text-xs font-bold text-black hover:bg-yellow-300"
-					>IMDb</a>
+					>IMDb</button>
 				{/if}
 				{#if discLabelDiffers}
 					<span class="truncate font-mono text-xs text-gray-400 dark:text-gray-500">{job.label}</span>
