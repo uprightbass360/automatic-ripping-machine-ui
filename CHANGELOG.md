@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.7.0...v0.8.0) (2026-02-20)
+
+
+### Features
+
+* expose imdb_id and poster_url auto/manual variants in API schema ([26a51fe](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/26a51fe73dfa172755dc7086ad920abf6612ee6c))
+
 ## [0.7.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.6.0...v0.7.0) (2026-02-20)
 
 
