@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.6.0...v0.7.0) (2026-02-20)
+
+
+### Features
+
+* track progress on dashboard cards + auto-refresh job detail ([acca233](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/acca233fa896b3c373b89ec41563a601e90d66d3))
+
+
+### Bug Fixes
+
+* sync Config model with actual ARM database schema ([5306dab](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5306dabbb5f10f006e8e471ff1330afe25bcbc4e))
+* sync Config model with ARM DB schema and add missing active statuses ([fe950c1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fe950c191df8086deac9ca4fd7af6d6a4f6f6668))
+
 ## [0.6.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.5.0...v0.6.0) (2026-02-19)
 
 
