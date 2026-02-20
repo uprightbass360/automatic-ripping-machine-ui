@@ -52,7 +52,11 @@ class JobSchema(BaseModel):
     video_type_auto: str | None = None
     video_type_manual: str | None = None
     imdb_id: str | None = None
+    imdb_id_auto: str | None = None
+    imdb_id_manual: str | None = None
     poster_url: str | None = None
+    poster_url_auto: str | None = None
+    poster_url_manual: str | None = None
     devpath: str | None = None
     mountpoint: str | None = None
     hasnicetitle: bool | None = None

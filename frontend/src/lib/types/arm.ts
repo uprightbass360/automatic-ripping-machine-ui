@@ -39,7 +39,11 @@ export interface Job {
 	video_type_auto: string | null;
 	video_type_manual: string | null;
 	imdb_id: string | null;
+	imdb_id_auto: string | null;
+	imdb_id_manual: string | null;
 	poster_url: string | null;
+	poster_url_auto: string | null;
+	poster_url_manual: string | null;
 	devpath: string | null;
 	mountpoint: string | null;
 	hasnicetitle: boolean | null;
