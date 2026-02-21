@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -36,4 +38,1687 @@
 		background-color: rgb(var(--color-surface-dark));
 		color: #fff;
 	}
+}
+
+/* ── Glass theme ───────────────────────────────────────── */
+
+/* Gradient background visible through the glass */
+[data-scheme="glass"] body {
+	background: linear-gradient(45deg, #0f172a, #1e1b4b, #581c87) !important;
+	background-attachment: fixed !important;
+}
+
+/* Sidebar: frosted glass */
+[data-scheme="glass"] aside {
+	background: rgba(255, 255, 255, 0.05) !important;
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border-color: rgba(255, 255, 255, 0.1) !important;
+	box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Header: frosted glass */
+[data-scheme="glass"] header {
+	background: rgba(255, 255, 255, 0.03) !important;
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Main content area: transparent so gradient shows through */
+[data-scheme="glass"] main {
+	background: transparent;
+}
+
+/* Logo glow */
+[data-scheme="glass"] aside [data-logo] {
+	text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Nav items: pill-shaped, glass hover */
+[data-scheme="glass"] aside nav a {
+	border-radius: 9999px;
+	border: 1px solid transparent;
+}
+
+[data-scheme="glass"] aside nav a:hover {
+	background: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-scheme="glass"] aside nav a[data-active="true"] {
+	background: rgba(255, 255, 255, 0.15) !important;
+	border-color: rgba(255, 255, 255, 0.2);
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Stats panel: dark glass card */
+[data-scheme="glass"] aside [data-stats] {
+	background: rgba(0, 0, 0, 0.2);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 1rem;
+	margin: 0.5rem;
+	padding: 1rem;
+}
+
+/* Progress bars: gradient fill with glow */
+[data-scheme="glass"] [data-progress-fill] {
+	background: linear-gradient(90deg, #38bdf8, #818cf8) !important;
+	box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+}
+
+[data-scheme="glass"] [data-progress-track] {
+	background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Cards on pages: glass panels */
+[data-scheme="glass"] main .bg-surface,
+[data-scheme="glass"] main .dark\:bg-surface-dark {
+	background: rgba(255, 255, 255, 0.05) !important;
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ── Cinema theme ──────────────────────────────────────── */
+
+[data-scheme="cinema"] {
+	font-family: 'Garamond', 'Times New Roman', Georgia, serif;
+}
+
+/* Sidebar: muted gold border */
+[data-scheme="cinema"] aside {
+	border-color: #8a6d3b !important;
+}
+
+/* Nav links: uppercase, wide letter-spacing, gold left-border active */
+[data-scheme="cinema"] aside nav a {
+	text-transform: uppercase;
+	letter-spacing: 0.15em;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 0.75rem;
+	border-radius: 0;
+	border-left: 2px solid transparent;
+}
+
+[data-scheme="cinema"] aside nav a:hover {
+	color: #d4af37 !important;
+	background: linear-gradient(90deg, rgba(212, 175, 55, 0.05), transparent) !important;
+}
+
+[data-scheme="cinema"] aside nav a[data-active="true"] {
+	color: #d4af37 !important;
+	border-left: 2px solid #d4af37;
+	background: transparent !important;
+}
+
+/* Hide SVG icons — clean minimal look */
+[data-scheme="cinema"] aside nav a svg {
+	display: none;
+}
+
+/* Logo: gold tint */
+[data-scheme="cinema"] aside [data-logo] img {
+	filter: sepia(1) saturate(2) brightness(0.9) hue-rotate(5deg);
+}
+
+/* Hr: thin gold */
+[data-scheme="cinema"] aside hr {
+	border-color: #8a6d3b;
+}
+
+/* Stats: fade-to-black gradient */
+[data-scheme="cinema"] aside [data-stats] {
+	background: linear-gradient(to top, #000, transparent);
+	border-color: transparent;
+}
+
+/* Progress bars: thin gold line with glow */
+[data-scheme="cinema"] [data-progress-track] {
+	background: #222 !important;
+	height: 2px !important;
+	border-radius: 0 !important;
+}
+
+[data-scheme="cinema"] [data-progress-fill] {
+	background: #d4af37 !important;
+	box-shadow: 0 0 8px #d4af37;
+	border-radius: 0 !important;
+}
+
+/* Sidebar text: muted gold for specs, light gray for labels */
+[data-scheme="cinema"] aside .text-gray-400,
+[data-scheme="cinema"] aside .text-gray-500,
+[data-scheme="cinema"] aside .text-gray-600,
+[data-scheme="cinema"] aside .dark\:text-gray-300,
+[data-scheme="cinema"] aside .dark\:text-gray-400,
+[data-scheme="cinema"] aside .dark\:text-gray-500 {
+	color: #a0a0a0 !important;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 0.7rem;
+}
+
+/* CPU info: italic muted gold */
+[data-scheme="cinema"] aside [data-stats] p.truncate {
+	color: #8a6d3b !important;
+	font-style: italic;
+}
+
+/* Header: muted gold border */
+[data-scheme="cinema"] header {
+	border-color: #8a6d3b !important;
+}
+
+/* ── Gaming theme ──────────────────────────────────────── */
+
+[data-scheme="gaming"] {
+	font-family: 'Rajdhani', sans-serif;
+}
+
+/* Accent line across the top of the sidebar */
+[data-scheme="gaming"] aside::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 4px;
+	background: linear-gradient(90deg, #bc13fe, #00d2ff);
+	box-shadow: 0 0 15px #bc13fe;
+	z-index: 10;
+}
+
+[data-scheme="gaming"] aside {
+	position: relative;
+	border-color: #1b1b2f !important;
+	box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Logo: neon glow */
+[data-scheme="gaming"] aside [data-logo] img {
+	filter: drop-shadow(0 0 10px #00d2ff) drop-shadow(0 0 2px #bc13fe);
+	transition: transform 0.3s ease;
+}
+
+[data-scheme="gaming"] aside [data-logo] img:hover {
+	transform: scale(1.1) rotate(5deg);
+}
+
+/* Nav links: skewed clip-path, uppercase, bold */
+[data-scheme="gaming"] aside nav a {
+	text-transform: uppercase;
+	font-weight: 700;
+	font-size: 0.95rem;
+	letter-spacing: 0.1em;
+	border-radius: 0;
+	color: #8b8ba9;
+	clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%);
+	border-left: 0px solid transparent;
+	transition: all 0.2s ease-in-out;
+}
+
+[data-scheme="gaming"] aside nav a:hover {
+	background: rgba(188, 19, 254, 0.1) !important;
+	color: #fff !important;
+	border-left: 4px solid #bc13fe !important;
+	padding-left: 1.5rem;
+}
+
+[data-scheme="gaming"] aside nav a[data-active="true"] {
+	background: rgba(0, 210, 255, 0.15) !important;
+	border-left: 4px solid #00d2ff !important;
+	color: #00d2ff !important;
+	text-shadow: 0 0 10px #00d2ff;
+	animation: gaming-breathe 3s infinite ease-in-out;
+}
+
+@keyframes gaming-breathe {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.7; }
+}
+
+/* Stats panel: darker inset */
+[data-scheme="gaming"] aside [data-stats] {
+	border-color: #1b1b2f;
+	background: #08080e;
+}
+
+/* Progress bars: gradient with scanning light effect */
+[data-scheme="gaming"] [data-progress-fill] {
+	background: linear-gradient(90deg, #bc13fe, #00d2ff) !important;
+	box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+	border-radius: 2px !important;
+	position: relative;
+	overflow: hidden;
+}
+
+[data-scheme="gaming"] [data-progress-fill]::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: -100px;
+	width: 50px;
+	height: 100%;
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+	animation: gaming-scan 2s infinite linear;
+}
+
+@keyframes gaming-scan {
+	0% { left: -100px; }
+	100% { left: 100%; }
+}
+
+[data-scheme="gaming"] [data-progress-track] {
+	background: #11111d !important;
+	border-radius: 2px !important;
+}
+
+/* Sidebar hr: faded gradient */
+[data-scheme="gaming"] aside hr {
+	border: none;
+	height: 1px;
+	background: linear-gradient(90deg, transparent, #bc13fe, #00d2ff, transparent);
+	opacity: 0.6;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+/* Header */
+[data-scheme="gaming"] header {
+	border-color: #1b1b2f !important;
+}
+
+/* Sidebar label text */
+[data-scheme="gaming"] aside .text-gray-400,
+[data-scheme="gaming"] aside .text-gray-500,
+[data-scheme="gaming"] aside .text-gray-600,
+[data-scheme="gaming"] aside .dark\:text-gray-300,
+[data-scheme="gaming"] aside .dark\:text-gray-400,
+[data-scheme="gaming"] aside .dark\:text-gray-500 {
+	color: #6a6a8a !important;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-weight: 700;
+}
+
+/* CPU temp in neon purple */
+[data-scheme="gaming"] aside .text-orange-500 {
+	color: #bc13fe !important;
+	font-weight: bold;
+}
+
+/* ── Royale theme ──────────────────────────────────────── */
+
+[data-scheme="royale"] {
+	font-family: 'Arial Black', 'Arial Bold', Impact, sans-serif;
+	text-transform: uppercase;
+}
+
+/* Sidebar: heavy blue border */
+[data-scheme="royale"] aside {
+	border-right-width: 4px;
+	border-color: #112a5e !important;
+}
+
+/* Logo: skewed with blue text-shadow */
+[data-scheme="royale"] aside [data-logo] {
+	transform: skew(-10deg);
+}
+
+[data-scheme="royale"] aside [data-logo] img {
+	filter: drop-shadow(3px 3px 0px #007bff);
+}
+
+/* Nav links: bold italic, item-shop style cards */
+[data-scheme="royale"] aside nav a {
+	font-style: italic;
+	font-weight: 900;
+	letter-spacing: 0.05em;
+	border-radius: 0;
+	background: #0b1a3d;
+	clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%);
+	border-bottom: 3px solid rgba(0, 0, 0, 0.3);
+	margin: 2px 0;
+	padding: 0.85rem 1.25rem;
+	transition: all 0.1s;
+}
+
+[data-scheme="royale"] aside nav a:hover {
+	background: #007bff !important;
+	transform: scale(1.05) skew(-2deg);
+	color: #fff !important;
+}
+
+[data-scheme="royale"] aside nav a[data-active="true"] {
+	background: #f8fb11 !important;
+	color: #000 !important;
+	box-shadow: 0 0 20px rgba(248, 251, 17, 0.4);
+	text-shadow: none;
+}
+
+/* Hr: thick blue */
+[data-scheme="royale"] aside hr {
+	border: none;
+	height: 4px;
+	background: #112a5e;
+}
+
+/* Stats panel: dark overlay */
+[data-scheme="royale"] aside [data-stats] {
+	background: rgba(0, 0, 0, 0.4);
+	border-color: #112a5e;
+}
+
+/* Progress bars: skewed, taller, rarity-colored per level */
+[data-scheme="royale"] [data-progress-track] {
+	background: #111 !important;
+	height: 14px !important;
+	border-radius: 0 !important;
+	clip-path: polygon(1.5% 0%, 100% 0%, 98.5% 100%, 0% 100%);
+	border: 1px solid #333;
+}
+
+[data-scheme="royale"] [data-progress-fill] {
+	background: #007bff !important;
+	border-radius: 0 !important;
+}
+
+/* Stats text */
+[data-scheme="royale"] aside .text-gray-400,
+[data-scheme="royale"] aside .text-gray-500,
+[data-scheme="royale"] aside .text-gray-600,
+[data-scheme="royale"] aside .dark\:text-gray-300,
+[data-scheme="royale"] aside .dark\:text-gray-400,
+[data-scheme="royale"] aside .dark\:text-gray-500 {
+	color: #aaa !important;
+	font-size: 0.65rem;
+	letter-spacing: 0.05em;
+}
+
+/* Temp: yellow */
+[data-scheme="royale"] aside .text-orange-500 {
+	color: #f8fb11 !important;
+}
+
+/* Header */
+[data-scheme="royale"] header {
+	border-color: #112a5e !important;
+	border-bottom-width: 4px;
+}
+
+/* ── Tactical theme ────────────────────────────────────── */
+
+/* Sidebar: dark navy with teal border, blur */
+[data-scheme="tactical"] aside {
+	border-color: rgba(100, 255, 218, 0.2) !important;
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+}
+
+/* Scan line above logo */
+[data-scheme="tactical"] aside [data-logo]::before {
+	content: '';
+	display: block;
+	height: 1px;
+	width: 100%;
+	background: linear-gradient(90deg, transparent, #64ffda, transparent);
+	box-shadow: 0 0 10px #64ffda;
+	margin-bottom: 1rem;
+}
+
+/* Logo: light glow, column layout so scan line stacks above */
+[data-scheme="tactical"] aside [data-logo] {
+	flex-direction: column;
+	text-shadow: 0 0 15px rgba(100, 255, 218, 0.8);
+}
+
+[data-scheme="tactical"] aside [data-logo] img {
+	filter: drop-shadow(0 0 10px rgba(100, 255, 218, 0.6));
+}
+
+/* Hr: teal scan line */
+[data-scheme="tactical"] aside hr {
+	border: none;
+	height: 1px;
+	background: linear-gradient(90deg, transparent, #64ffda, transparent);
+	box-shadow: 0 0 8px rgba(100, 255, 218, 0.4);
+}
+
+/* Nav links: minimal, left-border, uppercase, wide spacing */
+[data-scheme="tactical"] aside nav a {
+	text-transform: uppercase;
+	font-size: 0.7rem;
+	letter-spacing: 0.2em;
+	border-radius: 0;
+	border-left: 1px solid rgba(100, 255, 218, 0.3);
+	color: #64ffda;
+	transition: all 0.3s;
+}
+
+/* Hide SVG icons */
+[data-scheme="tactical"] aside nav a svg {
+	display: none;
+}
+
+[data-scheme="tactical"] aside nav a:hover {
+	background: rgba(100, 255, 218, 0.05) !important;
+	border-left: 1px solid #64ffda;
+	padding-left: 1.5rem;
+}
+
+[data-scheme="tactical"] aside nav a[data-active="true"] {
+	background: rgba(100, 255, 218, 0.1) !important;
+	border-left: 3px solid #64ffda;
+	color: #fff !important;
+}
+
+/* Stats panel: bordered, transparent */
+[data-scheme="tactical"] aside [data-stats] {
+	border: 1px solid rgba(100, 255, 218, 0.2);
+	background: transparent;
+	margin: 0.5rem;
+}
+
+/* Progress bars: thin holo lines with glow */
+[data-scheme="tactical"] [data-progress-track] {
+	background: rgba(100, 255, 218, 0.1) !important;
+	height: 2px !important;
+	border-radius: 0 !important;
+}
+
+[data-scheme="tactical"] [data-progress-fill] {
+	background: #64ffda !important;
+	box-shadow: 0 0 10px #64ffda;
+	border-radius: 0 !important;
+}
+
+/* Stats text: teal, small, tracked */
+[data-scheme="tactical"] aside .text-gray-400,
+[data-scheme="tactical"] aside .text-gray-500,
+[data-scheme="tactical"] aside .text-gray-600,
+[data-scheme="tactical"] aside .dark\:text-gray-300,
+[data-scheme="tactical"] aside .dark\:text-gray-400,
+[data-scheme="tactical"] aside .dark\:text-gray-500 {
+	color: #64ffda !important;
+	font-size: 0.6rem;
+	letter-spacing: 0.15em;
+	text-transform: uppercase;
+}
+
+/* Temp */
+[data-scheme="tactical"] aside .text-orange-500 {
+	color: #64ffda !important;
+}
+
+/* Header */
+[data-scheme="tactical"] header {
+	border-color: rgba(100, 255, 218, 0.2) !important;
+}
+
+/* Radial gradient on body */
+[data-scheme="tactical"] body {
+	background: radial-gradient(circle at 20% 50%, #0a192f 0%, #020617 100%) !important;
+}
+
+/* ── LCARS theme ───────────────────────────────────────── */
+
+@keyframes lcars-scan {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.7; }
+}
+
+[data-scheme="lcars"] {
+	font-family: 'Arial Narrow', 'Arial', Helvetica, sans-serif;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+/* Sidebar: wider for LCARS frame, pure black, no default border */
+[data-scheme="lcars"] .w-64 {
+	width: 22rem;
+}
+
+[data-scheme="lcars"] aside {
+	position: relative;
+	border-color: transparent !important;
+	padding: 15px;
+	overflow: hidden;
+}
+
+/* ── Top elbow: purple with split-bar pattern ── */
+[data-scheme="lcars"] aside::before {
+	content: '';
+	position: absolute;
+	top: 15px;
+	left: 15px;
+	right: 15px;
+	height: 60px;
+	z-index: 10;
+	border-radius: 40px 0 0 0;
+	background: linear-gradient(to right, #c9c 0, #c9c 100px, transparent 100px, transparent 115px, #c9c 115px);
+}
+
+/* Logo: small, positioned inside the top elbow curve */
+[data-scheme="lcars"] aside [data-logo] {
+	display: flex !important;
+	position: absolute;
+	top: 12px;
+	left: 14px;
+	z-index: 15;
+	padding: 0;
+	width: auto;
+	height: auto;
+	align-items: center;
+	justify-content: center;
+}
+
+[data-scheme="lcars"] aside [data-logo] img {
+	height: 32px !important;
+	width: 32px !important;
+}
+
+/* ── Vertical pill stack (left side) ── */
+[data-scheme="lcars"] aside::after {
+	content: '';
+	position: absolute;
+	top: 79px;
+	left: 15px;
+	bottom: 79px;
+	width: 100px;
+	z-index: 10;
+	background:
+		linear-gradient(to bottom,
+			#c9c 0, #c9c 15px,
+			transparent 15px, transparent 20px,
+			#f90 20px, #f90 120px,
+			transparent 120px, transparent 125px,
+			#fca 125px, #fca 180px,
+			transparent 180px, transparent 185px,
+			#99f 185px, #99f 300px,
+			transparent 300px, transparent 305px,
+			#fc3 305px
+		);
+}
+
+/* ── Bottom elbow: gold with split-bar pattern ── */
+[data-scheme="lcars"] aside > div::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 60px;
+	z-index: 10;
+	border-radius: 0 0 0 40px;
+	background: linear-gradient(to right, #fc3 0, #fc3 100px, transparent 100px, transparent 115px, #fc3 115px);
+}
+
+/* Offset content to the right of the pill stack */
+[data-scheme="lcars"] aside > div {
+	position: relative;
+	z-index: 11;
+	padding-left: 105px;
+	padding-top: 70px;
+	padding-bottom: 70px;
+}
+
+/* Hr: hide — LCARS uses structural bars instead */
+[data-scheme="lcars"] aside hr {
+	display: none;
+}
+
+/* ── Nav links: LCARS pill buttons (fully rounded) ── */
+/* [href] boosts specificity above the aside gray-text overrides */
+[data-scheme="lcars"] aside nav a[href] {
+	background: #99f;
+	color: #000 !important;
+	font-weight: bold;
+	font-size: 0.85rem;
+	letter-spacing: 0.1em;
+	border-radius: 20px;
+	text-align: right;
+	justify-content: flex-end;
+	padding: 0.5rem 1rem;
+	margin: 3px 0;
+	transition: all 0.2s;
+}
+
+/* Hide SVG icons */
+[data-scheme="lcars"] aside nav a[href] svg {
+	display: none;
+}
+
+[data-scheme="lcars"] aside nav a[href]:hover {
+	background: #fff !important;
+	color: #000 !important;
+	transform: translateX(5px);
+}
+
+[data-scheme="lcars"] aside nav a[href][data-active="true"] {
+	background: #fca !important;
+	color: #000 !important;
+}
+
+/* Alternate nav button colors */
+[data-scheme="lcars"] aside nav a[href]:nth-child(2) {
+	background: #fca;
+}
+
+[data-scheme="lcars"] aside nav a[href]:nth-child(3) {
+	background: #f90;
+}
+
+[data-scheme="lcars"] aside nav a[href]:nth-child(4) {
+	background: #c9c;
+}
+
+/* ── Stats panel ── */
+[data-scheme="lcars"] aside [data-stats] {
+	border-top: 4px solid #f90 !important;
+	border-left: none !important;
+	border-right: none !important;
+	border-bottom: none !important;
+	background: transparent;
+	padding-top: 0.75rem;
+}
+
+/* Ripper/Transcoder panel toggle — LCARS pill bar */
+[data-scheme="lcars"] aside [data-stats] .flex.rounded {
+	background: #222 !important;
+	border-radius: 20px !important;
+	padding: 3px !important;
+	gap: 3px;
+}
+
+[data-scheme="lcars"] aside [data-stats] .flex.rounded > button {
+	border-radius: 20px !important;
+	color: #000 !important;
+	background: #666 !important;
+	font-weight: bold !important;
+	padding: 0.25rem 0.75rem !important;
+}
+
+/* Active panel button */
+[data-scheme="lcars"] aside [data-stats] .flex.rounded > button.bg-primary\/20,
+[data-scheme="lcars"] aside [data-stats] .flex.rounded > button.dark\:bg-primary\/25 {
+	background: #f90 !important;
+	color: #000 !important;
+}
+
+/* Progress bars: LCARS data bars, right-rounded, scanning animation */
+[data-scheme="lcars"] [data-progress-track] {
+	background: #222 !important;
+	border-radius: 0 6px 6px 0 !important;
+	height: 12px !important;
+}
+
+[data-scheme="lcars"] [data-progress-fill] {
+	border-radius: 0 !important;
+	background: #f90 !important;
+	animation: lcars-scan 2s infinite ease-in-out;
+}
+
+/* CPU: orange, Memory: blue, Storage: purple */
+[data-scheme="lcars"] [data-stats] .space-y-2 > div:nth-child(1) [data-progress-fill] {
+	background: #f90 !important;
+}
+
+[data-scheme="lcars"] [data-stats] .space-y-2 > div:nth-child(2) [data-progress-fill] {
+	background: #99f !important;
+}
+
+[data-scheme="lcars"] [data-stats] .mt-3 [data-progress-fill] {
+	background: #c9c !important;
+}
+
+/* Stats text */
+[data-scheme="lcars"] aside .text-gray-400,
+[data-scheme="lcars"] aside .text-gray-500,
+[data-scheme="lcars"] aside .text-gray-600,
+[data-scheme="lcars"] aside .dark\:text-gray-300,
+[data-scheme="lcars"] aside .dark\:text-gray-400,
+[data-scheme="lcars"] aside .dark\:text-gray-500 {
+	color: #fca !important;
+	letter-spacing: 0.1em;
+	font-weight: bold;
+}
+
+/* Temp: red alert */
+[data-scheme="lcars"] aside .text-orange-500 {
+	color: #c33 !important;
+}
+
+/* ── LCARS main content ── */
+
+/* Body: pure black, white text default */
+[data-scheme="lcars"] body {
+	background: #000 !important;
+	color: #fff !important;
+}
+
+/* Right column: top padding to match sidebar's 15px padding */
+[data-scheme="lcars"] .flex.h-screen > div.flex-1 {
+	padding-top: 15px;
+}
+
+/* Header bar: purple, aligned with sidebar top elbow (15px offset, 60px height) */
+[data-scheme="lcars"] header {
+	background: #c9c !important;
+	border-color: #c9c !important;
+	border-bottom: none !important;
+	height: 60px !important;
+	min-height: 60px !important;
+}
+
+[data-scheme="lcars"] header button {
+	color: #000 !important;
+}
+
+[data-scheme="lcars"] header button:hover {
+	background: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Main content: tight left padding (adjacent to sidebar), generous right, custom scrollbar */
+[data-scheme="lcars"] main {
+	padding-left: 10px !important;
+	padding-right: 40px !important;
+	scrollbar-width: thin;
+	scrollbar-color: #c9c #000;
+}
+
+/* ── Global LCARS overrides: flatten all rounded corners and shadows ── */
+[data-scheme="lcars"] main .rounded-lg,
+[data-scheme="lcars"] main .rounded-md,
+[data-scheme="lcars"] main .rounded {
+	border-radius: 0 !important;
+}
+
+[data-scheme="lcars"] main .shadow-sm,
+[data-scheme="lcars"] main .shadow-md,
+[data-scheme="lcars"] main .hover\:shadow-md:hover {
+	box-shadow: none !important;
+}
+
+/* Page title (h1) — gold, large, purple underline */
+[data-scheme="lcars"] main h1 {
+	color: #fc3 !important;
+	font-size: 2.5rem !important;
+	border-bottom: 4px solid #c9c;
+	padding-bottom: 5px;
+	margin-bottom: 25px;
+}
+
+/* Section headings (h2) — tan */
+[data-scheme="lcars"] main h2 {
+	color: #fca !important;
+	font-size: 1.2rem !important;
+	margin-bottom: 15px;
+}
+
+/* Sub headings (h3) — white */
+[data-scheme="lcars"] main h3 {
+	color: #fff !important;
+}
+
+/* Paragraph text */
+[data-scheme="lcars"] main p {
+	color: #fca;
+}
+
+/* ── Stat cards: LCARS left-border panels ── */
+[data-scheme="lcars"] main .bg-surface,
+[data-scheme="lcars"] main .dark\:bg-surface-dark {
+	background: rgba(153, 153, 255, 0.05) !important;
+	border-radius: 0 !important;
+	border: none !important;
+	border-left: 10px solid #99f !important;
+	box-shadow: none !important;
+}
+
+/* Alternate card accent colors for the 3-up dashboard row */
+[data-scheme="lcars"] main .grid-cols-3 > :nth-child(2) .bg-surface,
+[data-scheme="lcars"] main .grid-cols-3 > :nth-child(2) .dark\:bg-surface-dark {
+	border-left-color: #c9c !important;
+}
+[data-scheme="lcars"] main .grid-cols-3 > :nth-child(3) .bg-surface,
+[data-scheme="lcars"] main .grid-cols-3 > :nth-child(3) .dark\:bg-surface-dark {
+	border-left-color: #fca !important;
+}
+
+/* Card icon containers: flatten to LCARS style */
+[data-scheme="lcars"] main .h-10.w-10.bg-primary-light-bg,
+[data-scheme="lcars"] main .h-10.w-10.dark\:bg-primary-light-bg-dark\/30,
+[data-scheme="lcars"] main .bg-indigo-100,
+[data-scheme="lcars"] main .dark\:bg-indigo-900\/30,
+[data-scheme="lcars"] main .bg-emerald-100,
+[data-scheme="lcars"] main .dark\:bg-emerald-900\/30 {
+	background: transparent !important;
+	border-radius: 0 !important;
+}
+
+/* Card stat values — gold, bold */
+[data-scheme="lcars"] main .text-2xl.font-bold,
+[data-scheme="lcars"] main .text-3xl.font-bold {
+	color: #fc3 !important;
+}
+
+/* Card labels — tan */
+[data-scheme="lcars"] main .text-sm.text-gray-500,
+[data-scheme="lcars"] main .dark\:text-gray-400 {
+	color: #fca !important;
+}
+
+/* All gray body text → white or tan */
+[data-scheme="lcars"] main .text-gray-900,
+[data-scheme="lcars"] main .dark\:text-white,
+[data-scheme="lcars"] main .text-white {
+	color: #fff !important;
+}
+[data-scheme="lcars"] main .text-gray-300,
+[data-scheme="lcars"] main .text-gray-400,
+[data-scheme="lcars"] main .text-gray-500,
+[data-scheme="lcars"] main .text-gray-600,
+[data-scheme="lcars"] main .text-gray-700,
+[data-scheme="lcars"] main .dark\:text-gray-300,
+[data-scheme="lcars"] main .dark\:text-gray-400,
+[data-scheme="lcars"] main .dark\:text-gray-500 {
+	color: #fca !important;
+}
+
+/* Specific color overrides for status text in tables */
+[data-scheme="lcars"] main .text-blue-700,
+[data-scheme="lcars"] main .dark\:text-blue-400 {
+	color: #99f !important;
+}
+[data-scheme="lcars"] main .text-green-700,
+[data-scheme="lcars"] main .dark\:text-green-400 {
+	color: #0c3 !important;
+}
+[data-scheme="lcars"] main .text-purple-700,
+[data-scheme="lcars"] main .dark\:text-purple-400 {
+	color: #c9c !important;
+}
+[data-scheme="lcars"] main .text-indigo-700,
+[data-scheme="lcars"] main .dark\:text-indigo-400 {
+	color: #c9c !important;
+}
+
+/* Type badge backgrounds → LCARS palette */
+[data-scheme="lcars"] main .bg-blue-100,
+[data-scheme="lcars"] main .dark\:bg-blue-900\/30 {
+	background: rgba(153, 153, 255, 0.2) !important;
+	color: #99f !important;
+}
+[data-scheme="lcars"] main .bg-green-100,
+[data-scheme="lcars"] main .dark\:bg-green-900\/30 {
+	background: rgba(0, 204, 51, 0.15) !important;
+	color: #0c3 !important;
+}
+[data-scheme="lcars"] main .bg-purple-100,
+[data-scheme="lcars"] main .dark\:bg-purple-900\/30 {
+	background: rgba(204, 153, 204, 0.2) !important;
+	color: #c9c !important;
+}
+[data-scheme="lcars"] main .bg-amber-100,
+[data-scheme="lcars"] main .dark\:bg-amber-900\/30 {
+	background: rgba(255, 153, 0, 0.15) !important;
+	color: #f90 !important;
+}
+[data-scheme="lcars"] main .text-amber-700,
+[data-scheme="lcars"] main .dark\:text-amber-400 {
+	color: #f90 !important;
+}
+
+/* ── Tables: purple header, dark transparent rows ── */
+[data-scheme="lcars"] main table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 4px;
+}
+
+[data-scheme="lcars"] main thead,
+[data-scheme="lcars"] main thead tr {
+	background: #c9c !important;
+}
+
+[data-scheme="lcars"] main th {
+	text-align: left;
+	color: #000 !important;
+	background: #c9c !important;
+	font-weight: bold;
+	padding: 10px !important;
+}
+
+[data-scheme="lcars"] main td {
+	background: rgba(255, 255, 255, 0.05) !important;
+	color: #fca !important;
+	padding: 12px 10px !important;
+}
+
+/* Table bg-page header override — scoped to thead only */
+[data-scheme="lcars"] main thead .bg-page,
+[data-scheme="lcars"] main thead.bg-page {
+	background: #c9c !important;
+}
+
+/* bg-page in non-table contexts → dark (used for subpanel backgrounds) */
+[data-scheme="lcars"] main div.bg-page,
+[data-scheme="lcars"] main .dark\:bg-primary\/5 {
+	background: rgba(153, 153, 255, 0.05) !important;
+}
+
+/* Table wrapper: no border, no rounding */
+[data-scheme="lcars"] main .overflow-x-auto {
+	border-radius: 0 !important;
+	border-color: transparent !important;
+}
+
+/* Table body dividers: remove — LCARS uses border-spacing gaps instead */
+[data-scheme="lcars"] main tbody.divide-y > tr,
+[data-scheme="lcars"] main .divide-y > * {
+	border-color: transparent !important;
+}
+
+/* Table row hover */
+[data-scheme="lcars"] main tr:hover td {
+	background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ── Buttons: LCARS pills ── */
+[data-scheme="lcars"] main button,
+[data-scheme="lcars"] main a[class*="rounded-lg"][class*="px-3"] {
+	border-radius: 20px !important;
+	font-weight: bold;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+/* Primary action buttons → LCARS blue */
+[data-scheme="lcars"] main .bg-primary {
+	background: #99f !important;
+	color: #000 !important;
+}
+[data-scheme="lcars"] main .bg-primary:hover {
+	background: #bbf !important;
+}
+
+/* Toggle-style green buttons → LCARS gold */
+[data-scheme="lcars"] main .bg-emerald-100,
+[data-scheme="lcars"] main .dark\:bg-emerald-900\/30 {
+	background: #fc3 !important;
+	color: #000 !important;
+}
+
+/* Destructive/red buttons → LCARS red */
+[data-scheme="lcars"] main .bg-red-600 {
+	background: #c33 !important;
+	color: #fff !important;
+}
+
+/* Secondary/ghost buttons */
+[data-scheme="lcars"] main .bg-primary\/15,
+[data-scheme="lcars"] main .dark\:bg-primary\/15 {
+	background: rgba(153, 153, 255, 0.15) !important;
+	color: #99f !important;
+}
+
+/* ── Inputs & selects ── */
+[data-scheme="lcars"] main input,
+[data-scheme="lcars"] main select {
+	background: #111 !important;
+	border: 1px solid #99f !important;
+	border-radius: 0 10px 10px 0 !important;
+	color: #fca !important;
+}
+
+[data-scheme="lcars"] main input::placeholder {
+	color: #666 !important;
+}
+
+/* ── Alert banners: LCARS-colored borders ── */
+[data-scheme="lcars"] main [class*="border-amber"] {
+	border-color: #f90 !important;
+	background: rgba(255, 153, 0, 0.05) !important;
+	border-radius: 0 !important;
+	border-left-width: 10px !important;
+}
+
+[data-scheme="lcars"] main [class*="border-red"] {
+	border-color: #c33 !important;
+	background: rgba(204, 51, 51, 0.05) !important;
+	border-radius: 0 !important;
+	border-left-width: 10px !important;
+}
+
+[data-scheme="lcars"] main [class*="border-yellow"] {
+	border-color: #fc3 !important;
+	background: rgba(255, 204, 51, 0.05) !important;
+	border-radius: 0 !important;
+	border-left-width: 10px !important;
+}
+
+/* Alert text colors */
+[data-scheme="lcars"] main .text-amber-800,
+[data-scheme="lcars"] main .dark\:text-amber-300,
+[data-scheme="lcars"] main .text-amber-700,
+[data-scheme="lcars"] main .dark\:text-amber-400 {
+	color: #f90 !important;
+}
+
+[data-scheme="lcars"] main .text-red-700,
+[data-scheme="lcars"] main .dark\:text-red-400 {
+	color: #c33 !important;
+}
+
+[data-scheme="lcars"] main .text-yellow-800,
+[data-scheme="lcars"] main .dark\:text-yellow-300 {
+	color: #fc3 !important;
+}
+
+/* ── Status indicators ── */
+/* Ripping / active → orange */
+[data-scheme="lcars"] main .bg-green-500 {
+	background: #0c3 !important;
+}
+[data-scheme="lcars"] main .bg-yellow-500 {
+	background: #f90 !important;
+}
+
+/* Colored stat values (transcoder section) */
+[data-scheme="lcars"] main .text-yellow-600,
+[data-scheme="lcars"] main .dark\:text-yellow-400 {
+	color: #f90 !important;
+}
+[data-scheme="lcars"] main .text-blue-600,
+[data-scheme="lcars"] main .dark\:text-blue-400 {
+	color: #99f !important;
+}
+[data-scheme="lcars"] main .text-green-600,
+[data-scheme="lcars"] main .dark\:text-green-400 {
+	color: #0c3 !important;
+}
+[data-scheme="lcars"] main .text-red-600,
+[data-scheme="lcars"] main .dark\:text-red-400 {
+	color: #c33 !important;
+}
+
+/* ── Settings page tabs (legacy underline — now overridden by pill buttons below) ── */
+
+/* ── Pagination ── */
+[data-scheme="lcars"] main .bg-primary.text-on-primary {
+	background: #fc3 !important;
+	color: #000 !important;
+	border-radius: 20px !important;
+}
+
+/* ── Job/Drive cards: left accent border ── */
+[data-scheme="lcars"] main [class*="border-l-4"] {
+	border-left-width: 10px !important;
+}
+[data-scheme="lcars"] main .border-l-blue-500 { border-left-color: #99f !important; }
+[data-scheme="lcars"] main .border-l-indigo-500 { border-left-color: #c9c !important; }
+
+/* Links: blue */
+[data-scheme="lcars"] main a.text-primary-text,
+[data-scheme="lcars"] main a.dark\:text-primary-text-dark {
+	color: #99f !important;
+}
+
+/* SVG icons in main content → tan */
+[data-scheme="lcars"] main svg {
+	color: #fca !important;
+}
+
+/* Card SVG icons keep their LCARS color mapping */
+[data-scheme="lcars"] main .text-primary svg,
+[data-scheme="lcars"] main .dark\:text-primary-text-dark svg { color: #99f !important; }
+[data-scheme="lcars"] main .text-indigo-600 svg,
+[data-scheme="lcars"] main .dark\:text-indigo-400 svg { color: #c9c !important; }
+[data-scheme="lcars"] main .text-emerald-600 svg,
+[data-scheme="lcars"] main .dark\:text-emerald-400 svg { color: #0c3 !important; }
+[data-scheme="lcars"] main .text-yellow-500 svg { color: #f90 !important; }
+[data-scheme="lcars"] main .text-blue-500 svg { color: #99f !important; }
+[data-scheme="lcars"] main .text-green-500 svg { color: #0c3 !important; }
+[data-scheme="lcars"] main .text-red-500 svg { color: #c33 !important; }
+[data-scheme="lcars"] main .text-gray-400 svg { color: #666 !important; }
+
+/* ── DiscReviewWidget: LCARS review panel ── */
+/* Status bar → LCARS red */
+[data-scheme="lcars"] main .bg-primary.dark\:bg-primary-dark {
+	background: #c33 !important;
+	border-radius: 0 !important;
+}
+
+/* Review widget outer border */
+[data-scheme="lcars"] main .border-2.border-primary {
+	border-color: #f90 !important;
+	border-radius: 0 !important;
+	border-left-width: 15px !important;
+}
+
+/* Action bar in review widget */
+[data-scheme="lcars"] main .bg-primary-light-bg\/50,
+[data-scheme="lcars"] main .dark\:bg-primary-light-bg-dark\/10 {
+	background: rgba(255, 153, 0, 0.05) !important;
+}
+
+/* Start ripping → LCARS gold */
+[data-scheme="lcars"] main .bg-emerald-600,
+[data-scheme="lcars"] main .dark\:bg-emerald-700 {
+	background: #fc3 !important;
+	color: #000 !important;
+	border-radius: 20px !important;
+}
+
+/* Cancel button → LCARS red */
+[data-scheme="lcars"] main .text-red-600[class*="ring-1"],
+[data-scheme="lcars"] main .dark\:text-red-400[class*="ring-1"] {
+	background: #c33 !important;
+	color: #fff !important;
+	border-radius: 20px !important;
+	box-shadow: none !important;
+	ring: none !important;
+}
+
+/* Ghost buttons with rings → LCARS blue outline pill */
+[data-scheme="lcars"] main button[class*="ring-primary"] {
+	border-radius: 20px !important;
+	background: rgba(153, 153, 255, 0.1) !important;
+	color: #99f !important;
+}
+
+/* ── StatusBadge: LCARS palette ── */
+[data-scheme="lcars"] main .bg-blue-500 { background: #99f !important; color: #000 !important; }
+[data-scheme="lcars"] main .bg-indigo-500 { background: #c9c !important; color: #000 !important; }
+[data-scheme="lcars"] main .bg-green-500 { background: #0c3 !important; }
+[data-scheme="lcars"] main .bg-red-500 { background: #c33 !important; }
+[data-scheme="lcars"] main .bg-yellow-500 { background: #f90 !important; color: #000 !important; }
+[data-scheme="lcars"] main .bg-gray-500 { background: #666 !important; }
+
+/* StatusBadge pill shape */
+[data-scheme="lcars"] main .rounded-full.text-xs.font-medium {
+	border-radius: 20px !important;
+}
+
+/* ── Poster images: LCARS orange border ── */
+[data-scheme="lcars"] main img[alt*="Poster"],
+[data-scheme="lcars"] main img.object-cover {
+	border: 2px solid #f90 !important;
+	border-radius: 0 !important;
+}
+
+/* ── JobCard indeterminate progress → LCARS orange with scan ── */
+[data-scheme="lcars"] main .animate-indeterminate {
+	background: #f90 !important;
+	border-radius: 0 !important;
+	animation: lcars-scan 2s infinite ease-in-out, indeterminate 1.5s infinite ease-in-out !important;
+}
+[data-scheme="lcars"] main .bg-primary\/15 .animate-indeterminate {
+	background: #f90 !important;
+}
+
+/* ── Badges: type and disc badges ── */
+[data-scheme="lcars"] main .bg-primary\/10,
+[data-scheme="lcars"] main .dark\:bg-primary\/15 {
+	background: rgba(153, 153, 255, 0.15) !important;
+	color: #99f !important;
+}
+
+[data-scheme="lcars"] main .text-primary-text,
+[data-scheme="lcars"] main .dark\:text-primary-text-dark {
+	color: #99f !important;
+}
+
+/* IMDb badge stays gold */
+[data-scheme="lcars"] main .bg-yellow-400 {
+	background: #fc3 !important;
+	color: #000 !important;
+}
+
+/* ── Font: mono text stays LCARS tan ── */
+[data-scheme="lcars"] main .font-mono {
+	color: #fca !important;
+}
+
+/* ── Select option backgrounds ── */
+[data-scheme="lcars"] select option {
+	background-color: #111 !important;
+	color: #fca !important;
+}
+
+/* on-primary text (used in active buttons) */
+[data-scheme="lcars"] main .text-on-primary {
+	color: #000 !important;
+}
+
+/* Focus rings → LCARS blue */
+[data-scheme="lcars"] main input:focus,
+[data-scheme="lcars"] main select:focus {
+	border-color: #fc3 !important;
+	outline: none !important;
+	box-shadow: 0 0 0 1px #fc3 !important;
+}
+
+/* Border color overrides for remaining border-primary usages */
+[data-scheme="lcars"] main .border-primary\/20,
+[data-scheme="lcars"] main .dark\:border-primary\/20,
+[data-scheme="lcars"] main .border-primary\/25,
+[data-scheme="lcars"] main .dark\:border-primary\/30 {
+	border-color: rgba(153, 153, 255, 0.2) !important;
+}
+
+/* Settings page and other sections with bordered containers */
+[data-scheme="lcars"] main section {
+	border-radius: 0 !important;
+}
+
+/* ── Settings tab bar: LCARS pills ── */
+[data-scheme="lcars"] main .border-b.border-primary\/20 {
+	border-bottom: none !important;
+}
+
+[data-scheme="lcars"] main nav[aria-label="Settings tabs"] {
+	display: flex;
+	gap: 6px;
+	margin-bottom: 0;
+	border-bottom: none !important;
+}
+
+/* [type="button"] boosts specificity above .dark\:text-gray-400.text-sm override */
+[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"] {
+	flex: 1;
+	border: none !important;
+	border-bottom: none !important;
+	border-radius: 20px !important;
+	padding: 0.6rem 1.25rem !important;
+	font-weight: bold !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.1em !important;
+	text-align: center !important;
+	color: #000 !important;
+	background: #99f !important;
+	transition: all 0.2s;
+}
+
+[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"]:nth-child(2) {
+	background: #fca !important;
+}
+
+[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"]:nth-child(3) {
+	background: #c9c !important;
+}
+
+[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"]:hover {
+	background: #fff !important;
+	color: #000 !important;
+}
+
+/* Active tab: gold highlight */
+[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"].border-primary {
+	background: #fc3 !important;
+	color: #000 !important;
+}
+
+/* ── Logs page tab bar: LCARS pills (same style as Settings tabs) ── */
+[data-scheme="lcars"] main nav[aria-label="Log tabs"] {
+	display: flex;
+	gap: 6px;
+	margin-bottom: 0;
+	border-bottom: none !important;
+}
+
+[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"] {
+	flex: 1;
+	border: none !important;
+	border-bottom: none !important;
+	border-radius: 20px !important;
+	padding: 0.6rem 1.25rem !important;
+	font-weight: bold !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.1em !important;
+	text-align: center !important;
+	color: #000 !important;
+	background: #99f !important;
+	transition: all 0.2s;
+}
+
+[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"]:nth-child(2) {
+	background: #fca !important;
+}
+
+[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"]:hover {
+	background: #fff !important;
+	color: #000 !important;
+}
+
+/* Active log tab: gold highlight */
+[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"].border-primary {
+	background: #fc3 !important;
+	color: #000 !important;
+}
+
+/* ── Settings panels: dark backgrounds, readable text ── */
+
+/* Info banners (bg-primary-light-bg is bright blue in LCARS tokens) → dark panel */
+[data-scheme="lcars"] main .bg-primary-light-bg {
+	background: rgba(153, 153, 255, 0.08) !important;
+	border-left: 10px solid #99f !important;
+	border-color: #99f !important;
+}
+[data-scheme="lcars"] main .dark\:bg-primary-light-bg-dark\/20 {
+	background: rgba(153, 153, 255, 0.08) !important;
+}
+/* Info banner text: white for readability (was nearly-black text-primary-dark) */
+[data-scheme="lcars"] main .text-primary-dark {
+	color: #fff !important;
+}
+
+/* Strong tags inside info banners → gold for emphasis */
+[data-scheme="lcars"] main .bg-primary-light-bg strong,
+[data-scheme="lcars"] main [class*="bg-primary-light-bg"] strong {
+	color: #fc3 !important;
+}
+
+/* Labels in settings forms → white for readability */
+[data-scheme="lcars"] main label {
+	color: #fff !important;
+}
+
+/* Description text below form fields → lighter gray, not tan */
+[data-scheme="lcars"] main p.text-xs.text-gray-400,
+[data-scheme="lcars"] main .mt-1.text-xs.text-gray-400 {
+	color: #999 !important;
+}
+
+/* Settings panel body text — white not tan */
+[data-scheme="lcars"] main .text-sm.text-gray-600,
+[data-scheme="lcars"] main .dark\:text-gray-400.text-sm {
+	color: #ccc !important;
+}
+
+/* Status check items (reachable, auth, etc.) → white */
+[data-scheme="lcars"] main li .text-gray-600,
+[data-scheme="lcars"] main li .dark\:text-gray-400 {
+	color: #ccc !important;
+}
+
+/* Enabled/Disabled toggle labels */
+[data-scheme="lcars"] main span.text-xs.font-medium.text-gray-400 {
+	color: #999 !important;
+}
+
+/* Section headings (h2 inside settings) — gold, with bottom border like homepage */
+[data-scheme="lcars"] main section h2 {
+	color: #fc3 !important;
+	border-bottom: 2px solid #f90;
+	padding-bottom: 4px;
+}
+
+/* Toggle switch off-state */
+[data-scheme="lcars"] main .bg-primary\/30,
+[data-scheme="lcars"] main .dark\:bg-primary\/20 {
+	background: rgba(153, 153, 255, 0.2) !important;
+}
+
+/* Tabs: LCARS orange underline (non-settings tabs) */
+[data-scheme="lcars"] main .border-b:not(.border-primary\/20) {
+	border-color: #f90 !important;
+}
+
+[data-scheme="lcars"] main .border-b-2 {
+	border-color: #fc3 !important;
+}
+
+/* ── Homepage cards: LCARS pill rounding ── */
+/* Stat cards: right-side pill shape */
+[data-scheme="lcars"] main .grid-cols-3 > div {
+	border-radius: 0 20px 20px 0 !important;
+}
+
+/* Job cards, drive cards, general surface cards: right-side pill */
+[data-scheme="lcars"] main .bg-surface[class*="rounded-lg"],
+[data-scheme="lcars"] main .dark\:bg-surface-dark[class*="rounded-lg"] {
+	border-radius: 0 20px 20px 0 !important;
+}
+
+/* Alert banners: right-side pill */
+[data-scheme="lcars"] main [class*="border-amber"][class*="rounded-lg"],
+[data-scheme="lcars"] main [class*="border-red"][class*="rounded-lg"],
+[data-scheme="lcars"] main [class*="border-yellow"][class*="rounded-lg"],
+[data-scheme="lcars"] main [class*="border-primary\/25"][class*="rounded-lg"] {
+	border-radius: 0 20px 20px 0 !important;
+}
+
+/* ── Craft theme ───────────────────────────────────────── */
+
+[data-scheme="craft"] {
+	font-family: 'Courier New', Courier, monospace;
+	image-rendering: pixelated;
+}
+
+/* Sidebar: stone background, thick black border */
+[data-scheme="craft"] aside {
+	border-right-width: 4px;
+	border-color: #000 !important;
+	padding: 4px;
+}
+
+/* Logo: green pixel text */
+[data-scheme="craft"] aside [data-logo] {
+	color: #38ff38;
+	text-shadow: 2px 2px #000;
+}
+
+[data-scheme="craft"] aside [data-logo] img {
+	filter: brightness(1.2) saturate(0.8);
+	image-rendering: pixelated;
+}
+
+/* Hr: black border style */
+[data-scheme="craft"] aside hr {
+	border: none;
+	height: 2px;
+	background: #000;
+	margin: 2px 4px;
+}
+
+/* Nav links: MC button style with beveled 3D borders */
+[data-scheme="craft"] aside nav a {
+	background: #707070;
+	border: 2px solid #000;
+	border-top-color: #aaa;
+	border-left-color: #aaa;
+	border-radius: 0;
+	color: #e0e0e0;
+	text-align: center;
+	font-weight: bold;
+	text-shadow: 2px 2px #333;
+	justify-content: center;
+	padding: 0.7rem;
+	margin: 2px 0;
+}
+
+/* Hide SVG icons — text-only buttons */
+[data-scheme="craft"] aside nav a svg {
+	display: none;
+}
+
+[data-scheme="craft"] aside nav a:hover {
+	background: #8080ff !important;
+	border-top-color: #9999ff;
+	border-left-color: #9999ff;
+	color: #ffffa0 !important;
+}
+
+[data-scheme="craft"] aside nav a[data-active="true"] {
+	background: #4a4a4a !important;
+	border-top-color: #222;
+	border-left-color: #222;
+	color: #38ff38 !important;
+	text-shadow: 2px 2px #000;
+}
+
+/* Stats panel: dark inset with black border */
+[data-scheme="craft"] aside [data-stats] {
+	background: #222;
+	border: 2px solid #000;
+	margin: 4px;
+}
+
+/* Progress bars: XP bar style with inner bevel */
+[data-scheme="craft"] [data-progress-track] {
+	background: #000 !important;
+	border: 1px solid #555;
+	border-radius: 0 !important;
+	height: 10px !important;
+}
+
+[data-scheme="craft"] [data-progress-fill] {
+	background: #38ff38 !important;
+	box-shadow: inset 0 2px #7fff7f, inset 0 -2px #00aa00;
+	border-radius: 0 !important;
+}
+
+/* Stats text: white, pixel font */
+[data-scheme="craft"] aside .text-gray-400,
+[data-scheme="craft"] aside .text-gray-500,
+[data-scheme="craft"] aside .text-gray-600,
+[data-scheme="craft"] aside .dark\:text-gray-300,
+[data-scheme="craft"] aside .dark\:text-gray-400,
+[data-scheme="craft"] aside .dark\:text-gray-500 {
+	color: #fff !important;
+	font-size: 0.7rem;
+}
+
+/* Temp: red like hearts */
+[data-scheme="craft"] aside .text-orange-500 {
+	color: #ff5555 !important;
+}
+
+/* Header: thick black border */
+[data-scheme="craft"] header {
+	border-color: #000 !important;
+	border-bottom-width: 4px;
+	background: #313131 !important;
+}
+
+/* ── Terminal theme ────────────────────────────────────── */
+
+[data-scheme="terminal"] {
+	font-family: 'Courier New', Courier, monospace;
+	cursor: crosshair;
+}
+
+/* CRT scanline overlay on sidebar */
+[data-scheme="terminal"] aside::before {
+	content: "";
+	display: block;
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.12) 50%),
+		linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+	background-size: 100% 3px, 2px 100%;
+	pointer-events: none;
+	z-index: 10;
+	animation: crt-flicker 0.15s infinite;
+}
+
+@keyframes crt-flicker {
+	0%   { opacity: 0.95; }
+	50%  { opacity: 1; }
+	100% { opacity: 0.98; }
+}
+
+/* Glow on sidebar text */
+[data-scheme="terminal"] aside {
+	position: relative;
+	text-shadow: 0 0 5px rgb(57 255 20 / 0.4);
+	box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5), inset -2px 0 10px rgb(57 255 20 / 0.15);
+}
+
+/* Nav links: uppercase, letter-spacing, > prefix */
+[data-scheme="terminal"] aside nav a {
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	border-radius: 0;
+	font-size: 0.8rem;
+}
+
+[data-scheme="terminal"] aside nav a::before {
+	content: "> ";
+	flex-shrink: 0;
+}
+
+/* Hide SVG icons in terminal mode — the > prefix replaces them */
+[data-scheme="terminal"] aside nav a svg {
+	display: none;
+}
+
+/* Active nav: bordered, dark-green bg, glow */
+[data-scheme="terminal"] aside nav a[data-active="true"] {
+	border: 1px solid rgb(57 255 20);
+	background: rgb(10 26 5) !important;
+	text-shadow: 0 0 8px rgb(57 255 20 / 0.6);
+}
+
+/* Hover: inverse (green bg, black text) */
+[data-scheme="terminal"] aside nav a:hover {
+	background: rgb(57 255 20) !important;
+	color: rgb(5 5 5) !important;
+	text-shadow: none;
+	box-shadow: 0 0 15px rgb(57 255 20 / 0.5);
+}
+
+/* Logo container: bordered box with glow */
+[data-scheme="terminal"] aside [data-logo] {
+	border: 1px solid rgb(57 255 20);
+	text-shadow: 0 0 5px rgb(57 255 20 / 0.4);
+	margin-left: 0.75rem;
+	margin-right: 0.75rem;
+	padding: 0.5rem;
+}
+
+/* Stats panel: bordered, tinted bg */
+[data-scheme="terminal"] aside [data-stats] {
+	border: 1px solid rgb(57 255 20);
+	background: rgb(57 255 20 / 0.05);
+}
+
+/* Progress bars: segmented block style */
+[data-scheme="terminal"] [data-progress-fill] {
+	background: repeating-linear-gradient(
+		90deg,
+		rgb(57 255 20),
+		rgb(57 255 20) 6px,
+		rgb(5 5 5) 6px,
+		rgb(5 5 5) 9px
+	) !important;
+	box-shadow: 0 0 10px rgb(57 255 20 / 0.4);
+	border-radius: 0 !important;
+}
+
+[data-scheme="terminal"] [data-progress-track] {
+	border: 1px solid rgb(57 255 20);
+	border-radius: 0 !important;
+	background: rgb(0 0 0) !important;
+}
+
+/* Header bar */
+[data-scheme="terminal"] header {
+	border-color: rgb(57 255 20) !important;
+}
+
+/* All text in terminal → green */
+[data-scheme="terminal"] .text-gray-400,
+[data-scheme="terminal"] .text-gray-500,
+[data-scheme="terminal"] .text-gray-600,
+[data-scheme="terminal"] .text-gray-700,
+[data-scheme="terminal"] .dark\:text-gray-300,
+[data-scheme="terminal"] .dark\:text-gray-400,
+[data-scheme="terminal"] .dark\:text-gray-500 {
+	color: rgb(57 255 20) !important;
+}
+
+[data-scheme="terminal"] .text-orange-500 {
+	color: rgb(57 255 20) !important;
 }

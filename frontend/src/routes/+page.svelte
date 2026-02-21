@@ -118,15 +118,22 @@
 	onMount(() => {
 		let stopped = false;
 
-		async function poll() {
+		async function pollDashboard() {
 			while (!stopped) {
 				await refreshDashboard();
 				await new Promise((r) => setTimeout(r, 5000));
 			}
 		}
 
-		poll();
-		loadJobs();
+		async function pollJobs() {
+			while (!stopped) {
+				await loadJobs();
+				await new Promise((r) => setTimeout(r, 10000));
+			}
+		}
+
+		pollDashboard();
+		pollJobs();
 		return () => { stopped = true; };
 	});
 </script>

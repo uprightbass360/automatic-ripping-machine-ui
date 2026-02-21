@@ -36,14 +36,16 @@
 	<!-- Sidebar -->
 	<aside class="hidden w-64 flex-shrink-0 border-r border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark lg:block">
 		<div class="flex h-full flex-col">
-			<div class="mx-3 mt-4 mb-2 flex items-center justify-center rounded-lg border border-primary/20 py-3">
-				<img src="/img/arm-logo-black.png" alt="ARM" class="h-16 w-16 dark:hidden" />
-				<img src="/img/arm-logo-white.png" alt="ARM" class="hidden h-16 w-16 dark:block" />
+			<div data-logo class="flex items-center justify-center py-6">
+				<img src="/img/arm-logo-black.png" alt="ARM" class="h-24 w-24 dark:hidden" />
+				<img src="/img/arm-logo-white.png" alt="ARM" class="hidden h-24 w-24 dark:block" />
 			</div>
+			<hr class="border-primary/20 dark:border-primary/20" />
 			<nav class="flex-1 space-y-1 px-3 py-4">
 				{#each navItems as item}
 					<a
 						href={item.href}
+						data-active={isActive(item.href, $page.url.pathname) || undefined}
 						class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
 							{isActive(item.href, $page.url.pathname)
 								? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark'
@@ -55,7 +57,8 @@
 						{item.label}
 					</a>
 				{/each}
-				</nav>
+			</nav>
+			<hr class="border-primary/20 dark:border-primary/20" />
 			<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} />
 		</div>
 	</aside>
@@ -98,11 +101,17 @@
 			<div class="fixed inset-0 z-40 lg:hidden">
 				<button class="absolute inset-0 bg-black/50" aria-label="Close sidebar" onclick={() => sidebarOpen = false}></button>
 				<aside class="relative z-50 flex h-full w-64 flex-col bg-surface shadow-xl dark:bg-surface-dark">
+					<div data-logo class="flex items-center justify-center py-6">
+						<img src="/img/arm-logo-black.png" alt="ARM" class="h-24 w-24 dark:hidden" />
+						<img src="/img/arm-logo-white.png" alt="ARM" class="hidden h-24 w-24 dark:block" />
+					</div>
+					<hr class="border-primary/20 dark:border-primary/20" />
 					<nav class="flex-1 space-y-1 px-3 py-4">
 						{#each navItems as item}
 							<a
 								href={item.href}
 								onclick={() => sidebarOpen = false}
+								data-active={isActive(item.href, $page.url.pathname) || undefined}
 								class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
 									{isActive(item.href, $page.url.pathname)
 										? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark'
@@ -114,7 +123,8 @@
 								{item.label}
 							</a>
 						{/each}
-						</nav>
+					</nav>
+					<hr class="border-primary/20 dark:border-primary/20" />
 					<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} />
 				</aside>
 			</div>

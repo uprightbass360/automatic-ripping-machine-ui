@@ -6,6 +6,8 @@ export interface ColorScheme {
 	label: string;
 	/** Tailwind color name for the swatch preview */
 	swatch: string;
+	/** Force dark mode when this scheme is active */
+	forceDark?: boolean;
 	tokens: Record<string, string>;
 }
 
@@ -133,6 +135,174 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-surface': '247 243 255',        // purple-tinted surface
 			'--color-surface-dark': '48 22 92'       // grape dark
 		}
+	},
+	{
+		id: 'glass',
+		label: 'Glass',
+		swatch: 'bg-indigo-400',
+		forceDark: true,
+		tokens: {
+			'--color-primary': '129 140 248',        // indigo-400
+			'--color-primary-hover': '99 102 241',   // indigo-500
+			'--color-primary-dark': '67 56 202',     // indigo-700
+			'--color-primary-light-bg': '49 46 129', // indigo-900
+			'--color-primary-light-bg-dark': '49 46 129', // indigo-900
+			'--color-primary-text': '165 180 252',   // indigo-300
+			'--color-primary-text-dark': '165 180 252', // indigo-300
+			'--color-primary-border': '129 140 248', // indigo-400
+			'--color-on-primary': '255 255 255',     // white
+			'--color-page-bg': '15 23 42',           // slate-900
+			'--color-page-bg-dark': '15 23 42',      // slate-900
+			'--color-surface': '30 27 75',           // indigo-950
+			'--color-surface-dark': '30 27 75'       // indigo-950
+		}
+	},
+	{
+		id: 'cinema',
+		label: 'Cinema',
+		swatch: 'bg-yellow-600',
+		forceDark: true,
+		tokens: {
+			'--color-primary': '212 175 55',          // gold
+			'--color-primary-hover': '188 155 40',    // darker gold
+			'--color-primary-dark': '138 109 59',     // muted gold
+			'--color-primary-light-bg': '30 25 10',   // dark gold tint
+			'--color-primary-light-bg-dark': '30 25 10', // dark gold tint
+			'--color-primary-text': '212 175 55',     // gold
+			'--color-primary-text-dark': '212 175 55', // gold
+			'--color-primary-border': '138 109 59',   // muted gold
+			'--color-on-primary': '13 13 13',         // cinema black
+			'--color-page-bg': '26 26 26',            // dark gray
+			'--color-page-bg-dark': '26 26 26',       // dark gray
+			'--color-surface': '13 13 13',            // cinema black
+			'--color-surface-dark': '13 13 13'        // cinema black
+		}
+	},
+	{
+		id: 'gaming',
+		label: 'Gaming',
+		swatch: 'bg-fuchsia-500',
+		forceDark: true,
+		tokens: {
+			'--color-primary': '0 210 255',            // neon blue
+			'--color-primary-hover': '188 19 254',     // neon purple
+			'--color-primary-dark': '27 27 47',        // border dark
+			'--color-primary-light-bg': '0 210 255',   // blue (unused in dark)
+			'--color-primary-light-bg-dark': '0 30 50', // dark blue tint
+			'--color-primary-text': '0 210 255',       // neon blue
+			'--color-primary-text-dark': '0 210 255',  // neon blue
+			'--color-primary-border': '0 210 255',     // neon blue
+			'--color-on-primary': '5 5 10',            // bg dark
+			'--color-page-bg': '5 5 10',               // bg dark
+			'--color-page-bg-dark': '5 5 10',          // bg dark
+			'--color-surface': '12 12 18',             // surface
+			'--color-surface-dark': '12 12 18'         // surface
+		}
+	},
+	{
+		id: 'royale',
+		label: 'Royale',
+		swatch: 'bg-yellow-400',
+		forceDark: true,
+		tokens: {
+			'--color-primary': '0 123 255',            // fortnite blue
+			'--color-primary-hover': '248 251 17',     // fortnite yellow
+			'--color-primary-dark': '17 42 94',        // deep blue border
+			'--color-primary-light-bg': '11 26 61',    // item bg
+			'--color-primary-light-bg-dark': '11 26 61', // item bg
+			'--color-primary-text': '248 251 17',      // yellow
+			'--color-primary-text-dark': '248 251 17', // yellow
+			'--color-primary-border': '17 42 94',      // deep blue
+			'--color-on-primary': '0 0 0',             // black
+			'--color-page-bg': '5 5 5',                // near-black
+			'--color-page-bg-dark': '5 5 5',           // near-black
+			'--color-surface': '2 11 36',              // dark blue
+			'--color-surface-dark': '2 11 36'          // dark blue
+		}
+	},
+	{
+		id: 'lcars',
+		label: 'LCARS',
+		swatch: 'bg-orange-400',
+		forceDark: true,
+		tokens: {
+			'--color-primary': '255 153 0',            // lcars orange
+			'--color-primary-hover': '255 204 51',     // lcars yellow
+			'--color-primary-dark': '40 30 0',         // dark orange
+			'--color-primary-light-bg': '153 153 255', // lcars blue
+			'--color-primary-light-bg-dark': '30 30 60', // dark blue
+			'--color-primary-text': '255 204 51',      // yellow
+			'--color-primary-text-dark': '255 153 0',  // orange
+			'--color-primary-border': '255 153 0',     // orange
+			'--color-on-primary': '0 0 0',             // black
+			'--color-page-bg': '0 0 0',                // pure black
+			'--color-page-bg-dark': '0 0 0',
+			'--color-surface': '0 0 0',                // pure black
+			'--color-surface-dark': '0 0 0'
+		}
+	},
+	{
+		id: 'tactical',
+		label: 'Tactical',
+		swatch: 'bg-teal-400',
+		forceDark: true,
+		tokens: {
+			'--color-primary': '100 255 218',          // tactical teal
+			'--color-primary-hover': '80 200 175',     // dimmer teal
+			'--color-primary-dark': '10 25 47',        // navy
+			'--color-primary-light-bg': '10 25 47',    // navy
+			'--color-primary-light-bg-dark': '10 25 47',
+			'--color-primary-text': '100 255 218',     // teal
+			'--color-primary-text-dark': '100 255 218',
+			'--color-primary-border': '100 255 218',   // teal
+			'--color-on-primary': '2 6 23',            // deep navy
+			'--color-page-bg': '2 6 23',               // deep navy
+			'--color-page-bg-dark': '2 6 23',
+			'--color-surface': '10 25 47',             // navy
+			'--color-surface-dark': '10 25 47'
+		}
+	},
+	{
+		id: 'craft',
+		label: 'Craft',
+		swatch: 'bg-green-500',
+		forceDark: true,
+		tokens: {
+			'--color-primary': '56 255 56',            // MC green
+			'--color-primary-hover': '128 128 255',    // MC hover blue
+			'--color-primary-dark': '34 34 34',        // dark stone
+			'--color-primary-light-bg': '74 74 74',    // pressed button
+			'--color-primary-light-bg-dark': '74 74 74',
+			'--color-primary-text': '56 255 56',       // MC green
+			'--color-primary-text-dark': '56 255 56',
+			'--color-primary-border': '0 0 0',         // black
+			'--color-on-primary': '224 224 224',       // light gray
+			'--color-page-bg': '30 30 30',             // dark bg
+			'--color-page-bg-dark': '30 30 30',
+			'--color-surface': '49 49 49',             // stone
+			'--color-surface-dark': '49 49 49'
+		}
+	},
+	{
+		id: 'terminal',
+		label: 'Terminal',
+		swatch: 'bg-green-400',
+		forceDark: true,
+		tokens: {
+			'--color-primary': '57 255 20',          // terminal green
+			'--color-primary-hover': '45 200 16',    // dimmer green
+			'--color-primary-dark': '10 26 5',       // dark green
+			'--color-primary-light-bg': '10 26 5',   // dark green (light bg unused)
+			'--color-primary-light-bg-dark': '10 26 5', // dark green
+			'--color-primary-text': '57 255 20',     // terminal green
+			'--color-primary-text-dark': '57 255 20', // terminal green
+			'--color-primary-border': '57 255 20',   // terminal green
+			'--color-on-primary': '5 5 5',           // near-black
+			'--color-page-bg': '5 5 5',              // CRT black
+			'--color-page-bg-dark': '5 5 5',         // CRT black
+			'--color-surface': '8 8 8',              // barely-off-black
+			'--color-surface-dark': '8 8 8'          // barely-off-black
+		}
 	}
 ];
 
@@ -149,6 +319,10 @@ function applyScheme(id: string) {
 	const root = document.documentElement;
 	for (const [prop, value] of Object.entries(scheme.tokens)) {
 		root.style.setProperty(prop, value);
+	}
+	root.setAttribute('data-scheme', scheme.id);
+	if (scheme.forceDark) {
+		root.classList.add('dark');
 	}
 }
 

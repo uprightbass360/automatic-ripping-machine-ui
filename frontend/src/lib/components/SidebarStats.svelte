@@ -20,7 +20,7 @@
 	const activeStats = $derived(activePanel === 'ripper' ? systemStats : transcoderStats);
 </script>
 
-<div class="border-t border-primary/20 px-3 py-3 dark:border-primary/20">
+<div data-stats class="border-t border-primary/20 px-3 py-3 dark:border-primary/20">
 	{#if !systemInfo && !systemStats}
 		<p class="text-xs text-gray-400 dark:text-gray-500">Loading system info...</p>
 	{:else}
