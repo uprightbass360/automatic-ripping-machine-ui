@@ -8,7 +8,7 @@ Built with SvelteKit 2 and FastAPI, providing a unified view of ARM ripping jobs
 
 ## Related Projects
 
-This UI is part of a suite of projects that extend and improve the Automatic Ripping Machine:
+Part of the Automatic Ripping Machine ecosystem:
 
 | Project | Description |
 |---------|-------------|
@@ -44,7 +44,7 @@ The backend reads ARM's SQLite database directly (read-only) for job data, calls
 - Drive status monitoring
 - Notification history
 - Settings overview
-- Dark mode with responsive layout
+- 14 color schemes (including themed dark modes) with responsive layout
 
 ## Tech Stack
 
@@ -102,52 +102,6 @@ The UI is available at `http://localhost:8888`.
 | `ARM_UI_TRANSCODER_API_KEY` | *(empty)* | Optional transcoder API key |
 | `ARM_UI_PORT` | `8888` | Server port |
 
-## Directory Structure
-
-```
-automatic-ripping-machine-ui/
-├── docker-compose.yml
-├── Dockerfile
-├── requirements.txt          # Python backend dependencies
-├── .env.example              # Environment template
-├── backend/
-│   ├── main.py               # FastAPI app, SPA serving, CORS
-│   ├── config.py             # Pydantic settings
-│   ├── dependencies.py       # Shared dependencies
-│   ├── models/
-│   │   ├── arm.py            # SQLAlchemy models (ARM database)
-│   │   └── schemas.py        # Pydantic response schemas
-│   ├── routers/
-│   │   ├── arm_actions.py    # ARM job actions (abandon, delete, fixperms)
-│   │   ├── dashboard.py      # Dashboard summary endpoint
-│   │   ├── drives.py         # Drive status
-│   │   ├── jobs.py           # Job listing and detail
-│   │   ├── logs.py           # Log file viewer
-│   │   ├── notifications.py  # Notification history
-│   │   ├── settings.py       # Settings overview
-│   │   └── transcoder.py     # Transcoder proxy endpoints
-│   └── services/
-│       ├── arm_client.py     # HTTP client for ARM JSON API
-│       ├── arm_db.py         # Read-only ARM database queries
-│       ├── log_reader.py     # Log file access
-│       └── transcoder_client.py  # HTTP client for transcoder API
-└── frontend/
-    ├── package.json
-    ├── svelte.config.js
-    ├── tailwind.config.js
-    ├── vite.config.ts
-    └── src/
-        ├── app.html
-        ├── app.css
-        ├── lib/
-        │   ├── api/          # API client modules
-        │   ├── components/   # Svelte components
-        │   ├── stores/       # Polling and theme stores
-        │   ├── types/        # TypeScript type definitions
-        │   └── utils/        # Formatting and helpers
-        └── routes/           # SvelteKit pages
-```
-
 ## License
 
-MIT License
+[MIT License](LICENSE)
