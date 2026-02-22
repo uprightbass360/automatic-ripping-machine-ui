@@ -6,6 +6,18 @@ Part of the [Automatic Ripping Machine ecosystem](#related-projects). A modern r
 
 Built with SvelteKit 2 and FastAPI, providing a unified view of ARM ripping jobs and GPU transcoding status in a responsive, dark-mode interface.
 
+## Related Projects
+
+This UI is part of a suite of projects that extend and improve the Automatic Ripping Machine:
+
+| Project | Description |
+|---------|-------------|
+| [automatic-ripping-machine-neu](https://github.com/uprightbass360/automatic-ripping-machine-neu) | Fork of the original ARM with bug fixes and improvements |
+| **automatic-ripping-machine-ui** | Modern replacement dashboard (this project) |
+| [automatic-ripping-machine-transcoder](https://github.com/uprightbass360/automatic-ripping-machine-transcoder) | GPU-accelerated transcoding service |
+
+The original upstream project: [automatic-ripping-machine/automatic-ripping-machine](https://github.com/automatic-ripping-machine/automatic-ripping-machine)
+
 ## Architecture
 
 ```mermaid
@@ -46,7 +58,6 @@ Pre-built multi-platform images (`amd64`, `arm64`) are published to Docker Hub o
 
 ```bash
 docker pull uprightbass360/arm-ui:latest
-docker pull uprightbass360/arm-ui:0.2.0
 ```
 
 For the full ecosystem quick start (ARM + UI + Transcoder), see the [ARM-neu README](https://github.com/uprightbass360/automatic-ripping-machine-neu#quick-start).
@@ -84,6 +95,8 @@ The UI is available at `http://localhost:8888`.
 |----------|---------|-------------|
 | `ARM_UI_ARM_DB_PATH` | `/home/arm/db/arm.db` | Path to ARM's SQLite database (read-only) |
 | `ARM_UI_ARM_LOG_PATH` | `/home/arm/logs` | Path to ARM's log directory |
+| `ARM_UI_ARM_CONFIG_PATH` | *(empty)* | Path to ARM's `arm.yaml` config file |
+| `ARM_UI_ARM_HB_PRESETS_PATH` | *(empty)* | Path to HandBrake presets JSON file |
 | `ARM_UI_ARM_URL` | `http://localhost:8080` | ARM web UI base URL (for job actions) |
 | `ARM_UI_TRANSCODER_URL` | `http://localhost:5000` | Transcoder API base URL |
 | `ARM_UI_TRANSCODER_API_KEY` | *(empty)* | Optional transcoder API key |
@@ -134,18 +147,6 @@ automatic-ripping-machine-ui/
         │   └── utils/        # Formatting and helpers
         └── routes/           # SvelteKit pages
 ```
-
-## Related Projects
-
-This UI is part of a suite of projects that extend and improve the Automatic Ripping Machine:
-
-| Project | Description |
-|---------|-------------|
-| [automatic-ripping-machine-neu](https://github.com/uprightbass360/automatic-ripping-machine-neu) | Fork of the original ARM with bug fixes and improvements |
-| **automatic-ripping-machine-ui** | Modern replacement dashboard (this project) |
-| [automatic-ripping-machine-transcoder](https://github.com/uprightbass360/automatic-ripping-machine-transcoder) | GPU-accelerated transcoding service |
-
-The original upstream project: [automatic-ripping-machine/automatic-ripping-machine](https://github.com/automatic-ripping-machine/automatic-ripping-machine)
 
 ## License
 
