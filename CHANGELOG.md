@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.8.0...v0.9.0) (2026-02-22)
+
+
+### Features
+
+* add 14 color scheme themes with LCARS styling and sidebar layout refinements ([bf05167](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bf051673ba6866e61c1948b85ebfba17367f5b9f))
+* LCARS theme panel redesign with structural frames and pill inputs ([c048b08](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c048b080d683750d96468cd30bdef7f42013993b))
+
 ## [0.8.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.7.0...v0.8.0) (2026-02-20)
 
 
