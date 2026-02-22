@@ -8,6 +8,7 @@
 	import JobRow from '$lib/components/JobRow.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
+	import LcarsFrame from '$lib/components/LcarsFrame.svelte';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -327,7 +328,9 @@
 			<h2 class="mb-3 text-lg font-semibold text-primary-text dark:text-primary-text-dark">New Disc Detected &mdash; Review Before Ripping</h2>
 			<div class="grid gap-4">
 				{#each waitingJobs as job (job.job_id)}
-					<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
+					<LcarsFrame variant="full" accent="#f90" label="WAITING FOR REVIEW — {(job.title || job.label || 'UNKNOWN').toUpperCase()}">
+						<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
+					</LcarsFrame>
 				{/each}
 			</div>
 		</section>
@@ -337,11 +340,13 @@
 	{#if nonWaitingActiveJobs.length > 0}
 		<section>
 			<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Active Rips</h2>
-			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-				{#each nonWaitingActiveJobs as job (job.job_id)}
-					<JobCard {job} driveNames={dash.drive_names} />
-				{/each}
-			</div>
+			<LcarsFrame variant="full" accent="#99f" label="ACTIVE RIPS — {nonWaitingActiveJobs.length} IN PROGRESS">
+				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+					{#each nonWaitingActiveJobs as job (job.job_id)}
+						<JobCard {job} driveNames={dash.drive_names} />
+					{/each}
+				</div>
+			</LcarsFrame>
 		</section>
 	{/if}
 
@@ -349,11 +354,13 @@
 	{#if dash.active_transcodes.length > 0}
 		<section>
 			<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Active Transcodes</h2>
-			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-				{#each dash.active_transcodes as tc}
-					<TranscodeCard job={tc} />
-				{/each}
-			</div>
+			<LcarsFrame variant="full" accent="#c9c" label="TRANSCODING — {dash.active_transcodes.length} ACTIVE">
+				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+					{#each dash.active_transcodes as tc}
+						<TranscodeCard job={tc} />
+					{/each}
+				</div>
+			</LcarsFrame>
 		</section>
 	{/if}
 
@@ -379,12 +386,12 @@
 					type="text"
 					placeholder="Search titles..."
 					oninput={onSearch}
-					class="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 				/>
 				<select
 					value={statusFilter}
 					onchange={(e) => setFilter('status', (e.target as HTMLSelectElement).value)}
-					class="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 				>
 					<option value="">All Statuses</option>
 					<option value="active">Active</option>
@@ -396,7 +403,7 @@
 				<select
 					value={videoTypeFilter}
 					onchange={(e) => setFilter('videoType', (e.target as HTMLSelectElement).value)}
-					class="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 				>
 					<option value="">All Types</option>
 					<option value="movie">Movie</option>

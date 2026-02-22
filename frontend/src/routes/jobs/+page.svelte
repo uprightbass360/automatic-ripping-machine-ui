@@ -89,12 +89,12 @@
 			type="text"
 			placeholder="Search titles..."
 			oninput={onSearch}
-			class="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+			class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 		/>
 		<select
 			value={statusFilter}
 			onchange={(e) => setFilter('status', (e.target as HTMLSelectElement).value)}
-			class="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+			class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 		>
 			<option value="">All Statuses</option>
 			<option value="active">Active</option>
@@ -106,7 +106,7 @@
 		<select
 			value={videoTypeFilter}
 			onchange={(e) => setFilter('videoType', (e.target as HTMLSelectElement).value)}
-			class="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+			class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 		>
 			<option value="">All Types</option>
 			<option value="movie">Movie</option>

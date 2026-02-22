@@ -784,7 +784,7 @@
 
 /* Temp: red alert */
 [data-scheme="lcars"] aside .text-orange-500 {
-	color: #c33 !important;
+	color: #ff8b8b !important;
 }
 
 /* ── LCARS main content ── */
@@ -825,33 +825,88 @@
 	scrollbar-color: #c9c #000;
 }
 
-/* ── Global LCARS overrides: flatten all rounded corners and shadows ── */
-[data-scheme="lcars"] main .rounded-lg,
-[data-scheme="lcars"] main .rounded-md,
-[data-scheme="lcars"] main .rounded {
-	border-radius: 0 !important;
-}
-
+/* ── Global LCARS overrides: flatten shadows ── */
 [data-scheme="lcars"] main .shadow-sm,
 [data-scheme="lcars"] main .shadow-md,
 [data-scheme="lcars"] main .hover\:shadow-md:hover {
 	box-shadow: none !important;
 }
 
-/* Page title (h1) — gold, large, purple underline */
-[data-scheme="lcars"] main h1 {
-	color: #fc3 !important;
-	font-size: 2.5rem !important;
-	border-bottom: 4px solid #c9c;
-	padding-bottom: 5px;
-	margin-bottom: 25px;
+/* Page title bar — LCARS header pill */
+[data-scheme="lcars"] main > .space-y-6 > .flex.items-center.justify-between {
+	background: #fca;
+	border-radius: 21px;
+	padding: 0.5rem 1.5rem;
+	margin-bottom: 1rem;
 }
 
-/* Section headings (h2) — tan */
+[data-scheme="lcars"] main h1 {
+	color: #000 !important;
+	font-size: 1.8rem !important;
+	font-weight: 700 !important;
+	border-bottom: none !important;
+	padding-bottom: 0;
+	margin-bottom: 0;
+}
+
+[data-scheme="lcars"] main h1.text-2xl.font-bold {
+	color: #000 !important;
+}
+
+/* Toggle button inside title bar */
+[data-scheme="lcars"] main > .space-y-6 > .flex.items-center.justify-between button {
+	background: rgba(0, 0, 0, 0.2) !important;
+	color: #000 !important;
+	border-radius: 21px !important;
+}
+
+/* Pages without toggle — standalone h1 */
+[data-scheme="lcars"] main > .space-y-6 > h1:first-child,
+[data-scheme="lcars"] main > div > h1:first-child {
+	display: inline-block;
+	background: #fca;
+	color: #000 !important;
+	font-size: 1.8rem !important;
+	padding: 0.5rem 1.5rem;
+	border-radius: 21px;
+	border-bottom: none;
+	margin-bottom: 1rem;
+}
+
+/* Section headings (h2) — LCARS label pill */
 [data-scheme="lcars"] main h2 {
-	color: #fca !important;
+	display: inline-block;
+	background: #fca;
+	color: #000 !important;
 	font-size: 1.2rem !important;
+	padding: 4px 20px;
+	border-radius: 20px;
 	margin-bottom: 15px;
+}
+
+/* Boost h2 color specificity to beat .dark\:text-white / .text-primary-text overrides */
+[data-scheme="lcars"] main h2[class] {
+	color: #000 !important;
+}
+
+/* Transcoder heading row: extend pill to cover status text */
+[data-scheme="lcars"] main section > .mb-3.flex.items-center {
+	display: inline-flex;
+	background: #fca;
+	padding: 4px 20px;
+	border-radius: 20px;
+	margin-bottom: 15px;
+}
+
+[data-scheme="lcars"] main section > .mb-3.flex.items-center h2 {
+	background: transparent;
+	padding: 0;
+	margin: 0;
+	border-radius: 0;
+}
+
+[data-scheme="lcars"] main section > .mb-3.flex.items-center span {
+	color: #000 !important;
 }
 
 /* Sub headings (h3) — white */
@@ -864,24 +919,52 @@
 	color: #fca;
 }
 
-/* ── Stat cards: LCARS left-border panels ── */
+/* ── LCARS panels: rounded cards with left accent stripe ── */
 [data-scheme="lcars"] main .bg-surface,
 [data-scheme="lcars"] main .dark\:bg-surface-dark {
-	background: rgba(153, 153, 255, 0.05) !important;
-	border-radius: 0 !important;
+	--lcars-accent: #99f;
+	background: rgba(153, 153, 255, 0.15) !important;
+	border-radius: 21px !important;
 	border: none !important;
-	border-left: 10px solid #99f !important;
 	box-shadow: none !important;
 }
 
-/* Alternate card accent colors for the 3-up dashboard row */
-[data-scheme="lcars"] main .grid-cols-3 > :nth-child(2) .bg-surface,
-[data-scheme="lcars"] main .grid-cols-3 > :nth-child(2) .dark\:bg-surface-dark {
-	border-left-color: #c9c !important;
+/* ── 3-col stat card accent colors ── */
+[data-scheme="lcars"] main .grid-cols-3 > :nth-child(2) { --lcars-accent: #c9c; }
+[data-scheme="lcars"] main .grid-cols-3 > :nth-child(3) { --lcars-accent: #fca; }
+
+/* ── 5-col transcoder stat card accent colors ── */
+[data-scheme="lcars"] main .lg\:grid-cols-5 > :nth-child(1) { --lcars-accent: #f90; }
+/* Processing: blue (default) */
+[data-scheme="lcars"] main .lg\:grid-cols-5 > :nth-child(3) { --lcars-accent: #8bd3c2; }
+[data-scheme="lcars"] main .lg\:grid-cols-5 > :nth-child(4) { --lcars-accent: #ff8b8b; }
+[data-scheme="lcars"] main .lg\:grid-cols-5 > :nth-child(5) { --lcars-accent: #666; }
+
+/* ── Stat cards: solid colored blocks, black text ── */
+[data-scheme="lcars"] main .grid-cols-3 > .bg-surface,
+[data-scheme="lcars"] main .grid-cols-3 > .dark\:bg-surface-dark,
+[data-scheme="lcars"] main .lg\:grid-cols-5 > .bg-surface,
+[data-scheme="lcars"] main .lg\:grid-cols-5 > .dark\:bg-surface-dark {
+	background: var(--lcars-accent, #99f) !important;
+	box-shadow: none !important;
+	padding-bottom: 0.75em !important;
+	padding-left: 2rem !important;
 }
-[data-scheme="lcars"] main .grid-cols-3 > :nth-child(3) .bg-surface,
-[data-scheme="lcars"] main .grid-cols-3 > :nth-child(3) .dark\:bg-surface-dark {
-	border-left-color: #fca !important;
+
+[data-scheme="lcars"] main .grid-cols-3 > .bg-surface::before,
+[data-scheme="lcars"] main .grid-cols-3 > .bg-surface::after,
+[data-scheme="lcars"] main .lg\:grid-cols-5 > .bg-surface::before,
+[data-scheme="lcars"] main .lg\:grid-cols-5 > .bg-surface::after {
+	display: none !important;
+}
+
+[data-scheme="lcars"] main .grid-cols-3 > .bg-surface p,
+[data-scheme="lcars"] main .grid-cols-3 > .bg-surface span,
+[data-scheme="lcars"] main .grid-cols-3 > .bg-surface svg,
+[data-scheme="lcars"] main .lg\:grid-cols-5 > .bg-surface p,
+[data-scheme="lcars"] main .lg\:grid-cols-5 > .bg-surface span,
+[data-scheme="lcars"] main .lg\:grid-cols-5 > .bg-surface svg {
+	color: #000 !important;
 }
 
 /* Card icon containers: flatten to LCARS style */
@@ -895,10 +978,12 @@
 	border-radius: 0 !important;
 }
 
-/* Card stat values — gold, bold */
-[data-scheme="lcars"] main .text-2xl.font-bold,
-[data-scheme="lcars"] main .text-3xl.font-bold {
-	color: #fc3 !important;
+/* Card stat values — black on solid colored stat cards */
+[data-scheme="lcars"] main p.text-2xl.font-bold,
+[data-scheme="lcars"] main p.text-3xl.font-bold,
+[data-scheme="lcars"] main span.text-2xl.font-bold,
+[data-scheme="lcars"] main span.text-3xl.font-bold {
+	color: #000 !important;
 }
 
 /* Card labels — tan */
@@ -931,7 +1016,7 @@
 }
 [data-scheme="lcars"] main .text-green-700,
 [data-scheme="lcars"] main .dark\:text-green-400 {
-	color: #0c3 !important;
+	color: #8bd3c2 !important;
 }
 [data-scheme="lcars"] main .text-purple-700,
 [data-scheme="lcars"] main .dark\:text-purple-400 {
@@ -951,7 +1036,7 @@
 [data-scheme="lcars"] main .bg-green-100,
 [data-scheme="lcars"] main .dark\:bg-green-900\/30 {
 	background: rgba(0, 204, 51, 0.15) !important;
-	color: #0c3 !important;
+	color: #8bd3c2 !important;
 }
 [data-scheme="lcars"] main .bg-purple-100,
 [data-scheme="lcars"] main .dark\:bg-purple-900\/30 {
@@ -971,8 +1056,7 @@
 /* ── Tables: purple header, dark transparent rows ── */
 [data-scheme="lcars"] main table {
 	width: 100%;
-	border-collapse: separate;
-	border-spacing: 0 4px;
+	border-collapse: collapse;
 }
 
 [data-scheme="lcars"] main thead,
@@ -992,6 +1076,7 @@
 	background: rgba(255, 255, 255, 0.05) !important;
 	color: #fca !important;
 	padding: 12px 10px !important;
+	border-bottom: 4px solid #000 !important;
 }
 
 /* Table bg-page header override — scoped to thead only */
@@ -1004,12 +1089,43 @@
 [data-scheme="lcars"] main div.bg-page,
 [data-scheme="lcars"] main .dark\:bg-primary\/5 {
 	background: rgba(153, 153, 255, 0.05) !important;
+	border: none !important;
+	border-radius: 21px !important;
+	padding: 1.5rem 2rem !important;
 }
 
-/* Table wrapper: no border, no rounding */
-[data-scheme="lcars"] main .overflow-x-auto {
-	border-radius: 0 !important;
+/* Collapsible accordion headers inside panels */
+[data-scheme="lcars"] main .bg-surface button.hover\:bg-page,
+[data-scheme="lcars"] main .bg-surface button.dark\:hover\:bg-primary\/15 {
+	background: transparent !important;
+	padding-left: 2.5rem !important;
+	padding-right: 2.5rem !important;
+}
+
+[data-scheme="lcars"] main .bg-surface button.hover\:bg-page:hover,
+[data-scheme="lcars"] main .bg-surface button.dark\:hover\:bg-primary\/15:hover {
+	background: transparent !important;
+}
+
+/* Expanded collapsible content */
+[data-scheme="lcars"] main .bg-surface > .border-t.px-4.py-3 {
+	padding-left: 2.5rem !important;
+	padding-right: 2.5rem !important;
+	padding-bottom: 2rem !important;
+}
+
+/* Inner dividers (border-t, hr) inside LCARS panels */
+[data-scheme="lcars"] main .bg-surface .border-t,
+[data-scheme="lcars"] main .bg-surface .border-b,
+[data-scheme="lcars"] main .bg-surface hr {
 	border-color: transparent !important;
+}
+
+/* Table wrapper: left-side elbow rounding, clip thead to shape */
+[data-scheme="lcars"] main .overflow-x-auto {
+	border-radius: 20px !important;
+	border-color: transparent !important;
+	overflow: hidden !important;
 }
 
 /* Table body dividers: remove — LCARS uses border-spacing gaps instead */
@@ -1050,7 +1166,7 @@
 
 /* Destructive/red buttons → LCARS red */
 [data-scheme="lcars"] main .bg-red-600 {
-	background: #c33 !important;
+	background: #ff8b8b !important;
 	color: #fff !important;
 }
 
@@ -1061,39 +1177,35 @@
 	color: #99f !important;
 }
 
-/* ── Inputs & selects ── */
-[data-scheme="lcars"] main input,
-[data-scheme="lcars"] main select {
-	background: #111 !important;
-	border: 1px solid #99f !important;
-	border-radius: 0 10px 10px 0 !important;
-	color: #fca !important;
-}
 
-[data-scheme="lcars"] main input::placeholder {
-	color: #666 !important;
-}
-
-/* ── Alert banners: LCARS-colored borders ── */
+/* ── Alert banners: LCARS rounded panels ── */
 [data-scheme="lcars"] main [class*="border-amber"] {
-	border-color: #f90 !important;
-	background: rgba(255, 153, 0, 0.05) !important;
-	border-radius: 0 !important;
-	border-left-width: 10px !important;
+	background: rgba(255, 153, 0, 0.08) !important;
+	border: none !important;
+	border-radius: 63px !important;
+	box-shadow: inset 6px 0 0 0 #f90 !important;
 }
 
 [data-scheme="lcars"] main [class*="border-red"] {
-	border-color: #c33 !important;
-	background: rgba(204, 51, 51, 0.05) !important;
-	border-radius: 0 !important;
-	border-left-width: 10px !important;
+	background: rgba(204, 51, 51, 0.08) !important;
+	border: none !important;
+	border-radius: 63px !important;
+	box-shadow: inset 6px 0 0 0 #ff8b8b !important;
 }
 
 [data-scheme="lcars"] main [class*="border-yellow"] {
-	border-color: #fc3 !important;
-	background: rgba(255, 204, 51, 0.05) !important;
-	border-radius: 0 !important;
-	border-left-width: 10px !important;
+	background: rgba(255, 204, 51, 0.08) !important;
+	border: none !important;
+	border-radius: 63px !important;
+	box-shadow: inset 6px 0 0 0 #fc3 !important;
+}
+
+/* Transcoder offline banner */
+[data-scheme="lcars"] main div[class*="border-primary\/25"][class*="rounded-lg"] {
+	background: rgba(102, 102, 102, 0.08) !important;
+	border: none !important;
+	border-radius: 63px !important;
+	box-shadow: inset 6px 0 0 0 #666 !important;
 }
 
 /* Alert text colors */
@@ -1106,7 +1218,7 @@
 
 [data-scheme="lcars"] main .text-red-700,
 [data-scheme="lcars"] main .dark\:text-red-400 {
-	color: #c33 !important;
+	color: #ff8b8b !important;
 }
 
 [data-scheme="lcars"] main .text-yellow-800,
@@ -1117,7 +1229,7 @@
 /* ── Status indicators ── */
 /* Ripping / active → orange */
 [data-scheme="lcars"] main .bg-green-500 {
-	background: #0c3 !important;
+	background: #8bd3c2 !important;
 }
 [data-scheme="lcars"] main .bg-yellow-500 {
 	background: #f90 !important;
@@ -1134,11 +1246,11 @@
 }
 [data-scheme="lcars"] main .text-green-600,
 [data-scheme="lcars"] main .dark\:text-green-400 {
-	color: #0c3 !important;
+	color: #8bd3c2 !important;
 }
 [data-scheme="lcars"] main .text-red-600,
 [data-scheme="lcars"] main .dark\:text-red-400 {
-	color: #c33 !important;
+	color: #ff8b8b !important;
 }
 
 /* ── Settings page tabs (legacy underline — now overridden by pill buttons below) ── */
@@ -1150,12 +1262,12 @@
 	border-radius: 20px !important;
 }
 
-/* ── Job/Drive cards: left accent border ── */
+/* ── Job/Drive cards: elbow-frame accent per type ── */
 [data-scheme="lcars"] main [class*="border-l-4"] {
-	border-left-width: 10px !important;
+	border-left: none !important;
 }
-[data-scheme="lcars"] main .border-l-blue-500 { border-left-color: #99f !important; }
-[data-scheme="lcars"] main .border-l-indigo-500 { border-left-color: #c9c !important; }
+/* Series cards: purple accent */
+[data-scheme="lcars"] main .border-l-indigo-500 { --lcars-accent: #c9c; }
 
 /* Links: blue */
 [data-scheme="lcars"] main a.text-primary-text,
@@ -1174,25 +1286,26 @@
 [data-scheme="lcars"] main .text-indigo-600 svg,
 [data-scheme="lcars"] main .dark\:text-indigo-400 svg { color: #c9c !important; }
 [data-scheme="lcars"] main .text-emerald-600 svg,
-[data-scheme="lcars"] main .dark\:text-emerald-400 svg { color: #0c3 !important; }
+[data-scheme="lcars"] main .dark\:text-emerald-400 svg { color: #8bd3c2 !important; }
 [data-scheme="lcars"] main .text-yellow-500 svg { color: #f90 !important; }
 [data-scheme="lcars"] main .text-blue-500 svg { color: #99f !important; }
-[data-scheme="lcars"] main .text-green-500 svg { color: #0c3 !important; }
-[data-scheme="lcars"] main .text-red-500 svg { color: #c33 !important; }
+[data-scheme="lcars"] main .text-green-500 svg { color: #8bd3c2 !important; }
+[data-scheme="lcars"] main .text-red-500 svg { color: #ff8b8b !important; }
 [data-scheme="lcars"] main .text-gray-400 svg { color: #666 !important; }
 
 /* ── DiscReviewWidget: LCARS review panel ── */
-/* Status bar → LCARS red */
+/* Status bar → LCARS red (serves as header bar) */
 [data-scheme="lcars"] main .bg-primary.dark\:bg-primary-dark {
-	background: #c33 !important;
+	background: #ff8b8b !important;
 	border-radius: 0 !important;
 }
 
-/* Review widget outer border */
+/* Review widget outer: elbow frame, clip status bar to shape */
 [data-scheme="lcars"] main .border-2.border-primary {
 	border-color: #f90 !important;
-	border-radius: 0 !important;
-	border-left-width: 15px !important;
+	border-radius: 63px !important;
+	border-width: 2px !important;
+	overflow: hidden;
 }
 
 /* Action bar in review widget */
@@ -1212,7 +1325,7 @@
 /* Cancel button → LCARS red */
 [data-scheme="lcars"] main .text-red-600[class*="ring-1"],
 [data-scheme="lcars"] main .dark\:text-red-400[class*="ring-1"] {
-	background: #c33 !important;
+	background: #ff8b8b !important;
 	color: #fff !important;
 	border-radius: 20px !important;
 	box-shadow: none !important;
@@ -1229,8 +1342,8 @@
 /* ── StatusBadge: LCARS palette ── */
 [data-scheme="lcars"] main .bg-blue-500 { background: #99f !important; color: #000 !important; }
 [data-scheme="lcars"] main .bg-indigo-500 { background: #c9c !important; color: #000 !important; }
-[data-scheme="lcars"] main .bg-green-500 { background: #0c3 !important; }
-[data-scheme="lcars"] main .bg-red-500 { background: #c33 !important; }
+[data-scheme="lcars"] main .bg-green-500 { background: #8bd3c2 !important; }
+[data-scheme="lcars"] main .bg-red-500 { background: #ff8b8b !important; }
 [data-scheme="lcars"] main .bg-yellow-500 { background: #f90 !important; color: #000 !important; }
 [data-scheme="lcars"] main .bg-gray-500 { background: #666 !important; }
 
@@ -1279,24 +1392,11 @@
 	color: #fca !important;
 }
 
-/* ── Select option backgrounds ── */
-[data-scheme="lcars"] select option {
-	background-color: #111 !important;
-	color: #fca !important;
-}
-
 /* on-primary text (used in active buttons) */
 [data-scheme="lcars"] main .text-on-primary {
 	color: #000 !important;
 }
 
-/* Focus rings → LCARS blue */
-[data-scheme="lcars"] main input:focus,
-[data-scheme="lcars"] main select:focus {
-	border-color: #fc3 !important;
-	outline: none !important;
-	box-shadow: 0 0 0 1px #fc3 !important;
-}
 
 /* Border color overrides for remaining border-primary usages */
 [data-scheme="lcars"] main .border-primary\/20,
@@ -1304,6 +1404,142 @@
 [data-scheme="lcars"] main .border-primary\/25,
 [data-scheme="lcars"] main .dark\:border-primary\/30 {
 	border-color: rgba(153, 153, 255, 0.2) !important;
+}
+
+/* ── LCARS tactical frame (structural wrapper component) ── */
+
+/* Global defaults: frame decorations completely hidden in ALL themes.
+   These rules have NO [data-scheme] prefix — they apply universally,
+   ensuring zero layout/visual impact in default, dark, tactical, craft, etc. */
+.lcars-bar,
+.lcars-sidebar {
+	display: none;
+}
+
+/* LCARS theme: activate the frame structure */
+[data-scheme="lcars"] .lcars-frame {
+	position: relative;
+}
+
+[data-scheme="lcars"] .lcars-frame[data-lcars-variant="full"] {
+	padding-left: 110px;
+}
+
+/* Header bar: top-left elbow curve */
+[data-scheme="lcars"] .lcars-bar-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 40px;
+	background: var(--lcars-accent, #99f);
+	border-radius: 40px 0 0 0;
+	padding: 0 20px;
+	color: #000;
+	font-weight: 900;
+	font-size: 0.85rem;
+	letter-spacing: 0.1em;
+}
+
+[data-scheme="lcars"] .lcars-frame[data-lcars-variant="full"] .lcars-bar-top {
+	margin-left: -110px;
+}
+
+/* Footer bar: bottom-left elbow curve */
+[data-scheme="lcars"] .lcars-bar-bottom {
+	display: block;
+	height: 20px;
+	background: var(--lcars-accent, #99f);
+	border-radius: 0 0 0 40px;
+	margin-top: 5px;
+}
+
+[data-scheme="lcars"] .lcars-frame[data-lcars-variant="full"] .lcars-bar-bottom {
+	width: calc(100% + 110px);
+	margin-left: -110px;
+}
+
+/* Sidebar blocks: absolute-positioned left column */
+[data-scheme="lcars"] .lcars-sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	position: absolute;
+	left: 0;
+	top: 45px;
+	bottom: 25px;
+	width: 100px;
+	overflow: hidden;
+}
+
+[data-scheme="lcars"] .lcars-block-a {
+	background: var(--lcars-accent, #f90);
+	height: 60px;
+	flex: none;
+}
+
+[data-scheme="lcars"] .lcars-block-b {
+	background: #fca;
+	flex: 1;
+	min-height: 10px;
+}
+
+[data-scheme="lcars"] .lcars-block-c {
+	background: #99f;
+	height: 80px;
+	flex: none;
+}
+
+/* Body: 5px gap from header bar (black shows through as gap) */
+[data-scheme="lcars"] .lcars-body {
+	margin-top: 5px;
+}
+
+/* Compact variant: smaller proportions, no sidebar */
+[data-scheme="lcars"] .lcars-frame[data-lcars-variant="compact"] .lcars-bar-top {
+	height: 16px;
+	font-size: 0;
+	padding: 0;
+	border-radius: 20px 0 0 0;
+}
+
+[data-scheme="lcars"] .lcars-frame[data-lcars-variant="compact"] .lcars-bar-bottom {
+	height: 8px;
+	margin-top: 3px;
+	border-radius: 0 0 0 20px;
+}
+
+[data-scheme="lcars"] .lcars-frame[data-lcars-variant="compact"] .lcars-body {
+	margin-top: 3px;
+}
+
+/* ── Override inner card framing inside LCARS frames ── */
+/* Cards inside frames are flat — the frame itself provides the visual container.
+   Specificity (0,3,0) beats the global bg-surface rules (0,2,1). */
+[data-scheme="lcars"] .lcars-body .bg-surface,
+[data-scheme="lcars"] .lcars-body .dark\:bg-surface-dark {
+	border-radius: 0 !important;
+	box-shadow: none !important;
+	padding-top: 1rem !important;
+	overflow: visible !important;
+}
+
+/* Remove pseudo-element bars — the frame header/footer replaces them */
+[data-scheme="lcars"] .lcars-body .bg-surface::before,
+[data-scheme="lcars"] .lcars-body .bg-surface::after,
+[data-scheme="lcars"] .lcars-body .dark\:bg-surface-dark::before,
+[data-scheme="lcars"] .lcars-body .dark\:bg-surface-dark::after {
+	display: none !important;
+}
+
+/* DiscReviewWidget inside frame: remove its own border/rounding */
+[data-scheme="lcars"] .lcars-body .border-2.border-primary {
+	border: none !important;
+	border-radius: 0 !important;
+}
+
+/* DiscReviewWidget status bar: hidden in LCARS (merged into frame header bar) */
+[data-scheme="lcars"] .lcars-body .border-2 > .bg-primary {
+	display: none;
 }
 
 /* Settings page and other sections with bordered containers */
@@ -1446,11 +1682,11 @@
 	color: #999 !important;
 }
 
-/* Section headings (h2 inside settings) — gold, with bottom border like homepage */
+/* Section headings (h2 inside settings) — gold pill variant */
 [data-scheme="lcars"] main section h2 {
-	color: #fc3 !important;
-	border-bottom: 2px solid #f90;
-	padding-bottom: 4px;
+	background: #fc3;
+	color: #000 !important;
+	border-bottom: none;
 }
 
 /* Toggle switch off-state */
@@ -1468,25 +1704,7 @@
 	border-color: #fc3 !important;
 }
 
-/* ── Homepage cards: LCARS pill rounding ── */
-/* Stat cards: right-side pill shape */
-[data-scheme="lcars"] main .grid-cols-3 > div {
-	border-radius: 0 20px 20px 0 !important;
-}
-
-/* Job cards, drive cards, general surface cards: right-side pill */
-[data-scheme="lcars"] main .bg-surface[class*="rounded-lg"],
-[data-scheme="lcars"] main .dark\:bg-surface-dark[class*="rounded-lg"] {
-	border-radius: 0 20px 20px 0 !important;
-}
-
-/* Alert banners: right-side pill */
-[data-scheme="lcars"] main [class*="border-amber"][class*="rounded-lg"],
-[data-scheme="lcars"] main [class*="border-red"][class*="rounded-lg"],
-[data-scheme="lcars"] main [class*="border-yellow"][class*="rounded-lg"],
-[data-scheme="lcars"] main [class*="border-primary\/25"][class*="rounded-lg"] {
-	border-radius: 0 20px 20px 0 !important;
-}
+/* (Elbow rounding now handled by bg-surface + alert banner rules above) */
 
 /* ── Craft theme ───────────────────────────────────────── */
 
@@ -1721,4 +1939,43 @@
 
 [data-scheme="terminal"] .text-orange-500 {
 	color: rgb(57 255 20) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   LCARS inputs & selects — MUST be last to beat attribute selectors
+   ══════════════════════════════════════════════════════════════════ */
+[data-scheme="lcars"] .lcars-input,
+[data-scheme="lcars"] main input[type="text"],
+[data-scheme="lcars"] main input[type="number"],
+[data-scheme="lcars"] main input[type="password"],
+[data-scheme="lcars"] main select {
+	background: #99f !important;
+	border: none !important;
+	border-radius: 20px !important;
+	color: #fff !important;
+	padding: 0.5rem 2.25rem !important;
+	font-weight: bold !important;
+}
+
+[data-scheme="lcars"] .lcars-input::placeholder,
+[data-scheme="lcars"] main input::placeholder {
+	color: rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-scheme="lcars"] .lcars-input:focus,
+[data-scheme="lcars"] main input[type="text"]:focus,
+[data-scheme="lcars"] main input[type="number"]:focus,
+[data-scheme="lcars"] main input[type="password"]:focus,
+[data-scheme="lcars"] main select:focus {
+	background: #fff !important;
+	color: #000 !important;
+	outline: none !important;
+	box-shadow: 0 0 0 1px #fc3 !important;
+	border-color: #fc3 !important;
+}
+
+/* Select option dropdown (stays dark) */
+[data-scheme="lcars"] select option {
+	background-color: #111 !important;
+	color: #fca !important;
 }
