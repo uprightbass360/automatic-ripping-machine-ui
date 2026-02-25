@@ -1,5 +1,52 @@
 # Changelog
 
+## [10.1.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v10.0.0-alpha.1...v10.1.0-alpha.1) (2026-02-25)
+
+
+### Features
+
+* add 14 color scheme themes with LCARS styling and sidebar layout refinements ([bf05167](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bf051673ba6866e61c1948b85ebfba17367f5b9f))
+* add disc type icon to review widget and minor cleanup ([48ac784](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/48ac784b7952072e7893927570a7613799157594))
+* Add settings page, transcoder management, and log viewer ([7f82eb4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7f82eb4cffe76cadb3c30a955016759b37cf9e6c))
+* add test coverage reporting with Codecov ([58891f4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/58891f4a6465700427bb3bb9b33189b932901dbe))
+* Add title search and metadata matching to job detail page ([85e4487](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/85e4487193634655dff3ed204abbe0e3f8f64437))
+* add UHD capable toggle for Blu-ray drives ([5d1363d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5d1363d64630214b969acaa8aafcee7b414e4dfd))
+* **api:** add frontend API layer and types for new backend features ([ec201a5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ec201a5d7f82ddbd94a6cc6e57d4b643384102e5))
+* **backend:** add system monitoring, job control, and metadata testing ([ed51a3b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ed51a3b922486d44288db7e77c0b36cbc8622982))
+* **components:** add system stats, disc review, and rip settings components ([d83efca](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d83efca113991207ed45b3773a469663baf31ff0))
+* dashboard improvements — drive names, disc icons, editable metadata, 4K UHD support, favicon, page titles ([ed497d3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ed497d3a295330e7417ccd589bf1e5cdf453ea79))
+* display transcoder live stats (CPU, temp, memory) in sidebar ([2b6ff34](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2b6ff3491c216fe8b48cfa486611ac2bf1a070b8))
+* expose imdb_id and poster_url auto/manual variants in API schema ([26a51fe](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/26a51fe73dfa172755dc7086ad920abf6612ee6c))
+* LCARS theme panel redesign with structural frames and pill inputs ([c048b08](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c048b080d683750d96468cd30bdef7f42013993b))
+* notify ARM-neu to update submodule on release ([b1bdd35](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b1bdd3572d555adf23b506457491fc7db0327885))
+* **settings:** overhaul settings with search, metadata testing, and appearance ([076f2d0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/076f2d02229d5a45094370df25203c26ba333511))
+* **theme:** add customizable color scheme system ([81371b2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/81371b2253bafbfded7af846a779a6ba62b9e81d))
+* track progress on dashboard cards + auto-refresh job detail ([acca233](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/acca233fa896b3c373b89ec41563a601e90d66d3))
+* **ui:** integrate theme system and enhance dashboard, drives, and jobs ([d10e45c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d10e45c1446e07d5c756b9387e3a80d21aa5107f))
+
+
+### Bug Fixes
+
+* add missing drive_names to emptyDashboard in store ([9d7ef4d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9d7ef4de970fee9e5db65d011bd175294e8d7e0d))
+* add missing transcoder_system_stats to +page.svelte default ([d431bdf](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d431bdffea151c288bd6309c3bca0a783681ebb2))
+* add null guard for settings in armSettingsSection snippet ([fc334f9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fc334f9d545043ba836dadee6b31556dc850e252))
+* add spacing between CPU percent and temperature display ([549e173](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/549e173e31dc54b387a22481a28c65b53a083621))
+* configure release-please to update VERSION file ([d453a07](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d453a07a50950e3057953b1ab83cb293f6c92209))
+* display friendly disc type labels instead of raw values ([ea7bf8b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ea7bf8b79e399013c988684e2095a15de46c3f0b))
+* pin frontend build stage to native platform for multi-arch builds ([407e856](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/407e8562990772c085c62ca4567d57fe0e32082f))
+* remove UNIDENTIFIED_EJECT from settings page ([4ad9835](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4ad98352117d68356422e8a18a47db32c5625fd0))
+* resolve 6 TypeScript errors in frontend type checking ([e4d9ceb](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e4d9ceb9226e6b1a50fbe903c2c66b3ec475b5b5))
+* resolve all svelte-check warnings ([4526227](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4526227d3d0180032e6c59ddcdbd778795454e08))
+* Resolve dashboard transcoder section flickering ([7d3add6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7d3add64c9617e9f05adab3a4584b2c832d2ddd3))
+* resolve flake8 lint errors ([a141cee](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a141cee18e0ee44d452a90f6707a939bdae71ca7))
+* show storage section on transcoder tab ([17cb5b5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/17cb5b54f5e422a5841daa8a6bec12dabff27a55))
+* sync Config model with actual ARM database schema ([5306dab](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5306dabbb5f10f006e8e471ff1330afe25bcbc4e))
+* sync Config model with ARM DB schema and add missing active statuses ([fe950c1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fe950c191df8086deac9ca4fd7af6d6a4f6f6668))
+* use DOCKERHUB_USERNAME secret for image name ([7d14038](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7d140384de6b65a7dae86b270df04bddd8e5e502))
+* use non-breaking space for CPU temp separator ([48c8cc4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/48c8cc45f9c91e5518f3843bdc357393c502ec51))
+* use PAT for release-please so releases trigger publish workflow ([53e4128](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/53e41281d6a917493255b1814c5fcaebcadbba07))
+* use RELEASE_PAT for parent repo dispatch ([713c21a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/713c21af09d0e84c8dd79a950bcbed7aca4fbb06))
+
 ## [0.9.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v0.8.0...v0.9.0) (2026-02-22)
 
 
