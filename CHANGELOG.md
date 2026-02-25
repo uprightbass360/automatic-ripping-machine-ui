@@ -1,5 +1,16 @@
 # Changelog
 
+## [11.0.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v10.1.0-alpha.1...v11.0.0-alpha.1) (2026-02-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* /api/settings/bash-script endpoints removed.
+
+### Features
+
+* replace bash script notification with ARM config fields ([be3e548](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/be3e54898ff3b451b5720d24381385607af16664))
+
 ## [10.1.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v10.0.0-alpha.1...v10.1.0-alpha.1) (2026-02-25)
 
 
