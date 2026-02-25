@@ -222,7 +222,6 @@ export interface SettingsData {
 	arm_metadata: Record<string, string> | null;
 	arm_handbrake_presets: string[] | null;
 	transcoder_config: TranscoderConfig | null;
-	arm_gpu_support: Record<string, boolean> | null;
 	transcoder_gpu_support: Record<string, boolean> | null;
 	transcoder_auth_status: TranscoderAuthStatus | null;
 	/** @deprecated Use transcoder_gpu_support instead */

@@ -8,7 +8,7 @@ from backend.models.schemas import (
     SearchResultSchema,
     TrackSchema,
 )
-from backend.services import arm_db, metadata
+from backend.services import arm_db, metadata, progress, transcoder_client
 from backend.services.metadata import MetadataConfigError
 
 router = APIRouter(prefix="/api", tags=["jobs"])
@@ -44,6 +44,14 @@ def get_job(job_id: int):
     return JobDetailSchema(**job_data, tracks=tracks, config=config)
 
 
+@router.get("/jobs/{job_id}/progress")
+def get_job_progress(job_id: int):
+    job = arm_db.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return progress.get_rip_progress(job.logfile)
+
+
 @router.get("/metadata/search", response_model=list[SearchResultSchema])
 async def search_metadata(
     q: str = Query(..., min_length=1),
@@ -66,3 +74,15 @@ async def get_media_detail(imdb_id: str):
     if not result:
         raise HTTPException(status_code=404, detail="Title not found")
     return result
+
+
+@router.post("/jobs/{job_id}/retranscode")
+async def retranscode_job(job_id: int):
+    """Re-send a completed ARM job to the transcoder."""
+    payload = arm_db.get_job_retranscode_info(job_id)
+    if not payload:
+        raise HTTPException(status_code=404, detail="Job not found or not a video disc")
+    result = await transcoder_client.send_webhook(payload)
+    if not result.get("success"):
+        raise HTTPException(status_code=503, detail=result.get("error", "Transcoder unavailable"))
+    return {"status": "ok", "message": "Transcode job queued"}

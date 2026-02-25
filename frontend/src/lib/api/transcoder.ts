@@ -25,3 +25,7 @@ export function retryTranscoderJob(id: number): Promise<unknown> {
 export function deleteTranscoderJob(id: number): Promise<unknown> {
 	return apiFetch(`/api/transcoder/jobs/${id}`, { method: 'DELETE' });
 }
+
+export function retranscodeTranscoderJob(id: number): Promise<{ status: string; message: string }> {
+	return apiFetch(`/api/transcoder/jobs/${id}/retranscode`, { method: 'POST' });
+}

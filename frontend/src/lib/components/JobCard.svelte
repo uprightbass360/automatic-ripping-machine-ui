@@ -9,9 +9,11 @@
 	interface Props {
 		job: Job;
 		driveNames?: Record<string, string>;
+		progress?: number | null;
+		progressStage?: string | null;
 	}
 
-	let { job, driveNames = {} }: Props = $props();
+	let { job, driveNames = {}, progress = null, progressStage = null }: Props = $props();
 	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
 
 	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
@@ -121,9 +123,21 @@
 	</div>
 	{#if active}
 		<div class="mt-3">
-			<div class="h-1.5 overflow-hidden rounded-full bg-primary/15 dark:bg-primary/15">
-				<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
-			</div>
+			{#if progress != null && progress > 0}
+				<div class="flex items-center gap-2">
+					<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-primary/15 dark:bg-primary/15">
+						<div class="h-full rounded-full bg-primary transition-all duration-500" style="width: {Math.min(progress, 100)}%"></div>
+					</div>
+					<span class="flex-shrink-0 text-xs font-medium text-primary-text dark:text-primary-text-dark">{progress.toFixed(1)}%</span>
+				</div>
+				{#if progressStage}
+					<p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{progressStage}</p>
+				{/if}
+			{:else}
+				<div class="h-1.5 overflow-hidden rounded-full bg-primary/15 dark:bg-primary/15">
+					<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
+				</div>
+			{/if}
 		</div>
 	{/if}
 </a>

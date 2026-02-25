@@ -18,6 +18,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY VERSION .
 COPY backend/ backend/
 
 # Copy built frontend into place for static serving

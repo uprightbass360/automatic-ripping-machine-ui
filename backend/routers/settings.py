@@ -43,9 +43,6 @@ async def get_settings():
     # HandBrake presets from init container
     arm_handbrake_presets = _read_hb_presets()
 
-    # ARM GPU support
-    arm_gpu_support = await arm_client.get_gpu_support()
-
     # Transcoder config + GPU support
     transcoder_config = None
     transcoder_gpu_support = None
@@ -74,7 +71,6 @@ async def get_settings():
         arm_metadata=arm_metadata,
         arm_handbrake_presets=arm_handbrake_presets,
         transcoder_config=transcoder_config,
-        arm_gpu_support=arm_gpu_support,
         transcoder_gpu_support=transcoder_gpu_support,
         transcoder_auth_status=transcoder_auth_status,
         gpu_support=transcoder_gpu_support,
@@ -150,3 +146,67 @@ async def put_bash_script(body: BashScriptRequest):
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("error", "Failed to write script"))
     return result
+
+
+@router.get("/settings/system-info")
+async def get_system_info():
+    """Gather system info: versions, paths, database, drives."""
+    # Versions
+    arm_versions = await arm_client.get_version()
+
+    tc_health = await transcoder_client.health()
+    transcoder_version = None
+    if tc_health:
+        transcoder_version = tc_health.get("version")
+
+    # UI version from local VERSION file
+    ui_version = "unknown"
+    ui_version_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "VERSION")
+    try:
+        with open(ui_version_file) as f:
+            ui_version = f.read().strip()
+    except OSError:
+        pass
+
+    versions = {
+        "arm": arm_versions.get("arm_version", "unknown") if arm_versions else "offline",
+        "makemkv": arm_versions.get("makemkv_version", "unknown") if arm_versions else "offline",
+        "transcoder": transcoder_version or ("offline" if not tc_health else "unknown"),
+        "ui": ui_version,
+    }
+
+    # Paths — delegate to ARM container (paths only exist there)
+    paths = await arm_client.get_paths() or []
+
+    # Database
+    db_path = app_settings.arm_db_path
+    db_info = {
+        "path": db_path,
+        "size_bytes": os.path.getsize(db_path) if os.path.isfile(db_path) else None,
+        "available": arm_db.is_available(),
+    }
+
+    # Drives
+    drives = arm_db.get_drives()
+    drive_list = []
+    for d in drives:
+        caps = []
+        if getattr(d, 'read_cd', False): caps.append('CD')
+        if getattr(d, 'read_dvd', False): caps.append('DVD')
+        if getattr(d, 'read_bd', False): caps.append('BD')
+        if getattr(d, 'uhd_capable', False): caps.append('UHD')
+        drive_list.append({
+            "name": d.name,
+            "mount": d.mount,
+            "maker": d.maker,
+            "model": d.model,
+            "capabilities": caps,
+            "firmware": d.firmware,
+        })
+
+    return {
+        "versions": versions,
+        "paths": paths,
+        "database": db_info,
+        "drives": drive_list,
+    }

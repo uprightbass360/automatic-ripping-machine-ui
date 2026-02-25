@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { createPollingStore } from '$lib/stores/polling';
-	import { fetchTranscoderStats, fetchTranscoderJobs, retryTranscoderJob, deleteTranscoderJob } from '$lib/api/transcoder';
+	import { fetchTranscoderStats, fetchTranscoderJobs, retryTranscoderJob, deleteTranscoderJob, retranscodeTranscoderJob } from '$lib/api/transcoder';
 	import type { TranscoderStats, TranscoderJobListResponse } from '$lib/types/transcoder';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
@@ -59,6 +59,11 @@
 
 	async function handleRetry(id: number) {
 		await retryTranscoderJob(id);
+		loadJobs();
+	}
+
+	async function handleRetranscode(id: number) {
+		await retranscodeTranscoderJob(id);
 		loadJobs();
 	}
 
@@ -186,6 +191,12 @@
 								{/if}
 							</div>
 							<div class="flex flex-shrink-0 gap-2">
+								{#if job.status === 'completed' || job.status === 'failed'}
+									<button
+										onclick={() => handleRetranscode(job.id)}
+										class="rounded bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700"
+									>Re-transcode</button>
+								{/if}
 								{#if job.status === 'failed'}
 									<button
 										onclick={() => handleRetry(job.id)}

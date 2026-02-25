@@ -100,16 +100,6 @@ async def get_system_stats() -> dict[str, Any] | None:
         return None
 
 
-async def get_gpu_support() -> dict[str, Any] | None:
-    """Fetch GPU encoder support from the ARM container."""
-    try:
-        resp = await get_client().get("/api/v1/system/gpu")
-        resp.raise_for_status()
-        return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
-        return None
-
-
 async def fix_permissions(job_id: int) -> dict[str, Any] | None:
     """Fix file permissions for a job. Returns None if ARM is unreachable."""
     try:
@@ -157,6 +147,26 @@ async def set_ripping_enabled(enabled: bool) -> dict[str, Any] | None:
             "/api/v1/system/ripping-enabled",
             json={"enabled": enabled},
         )
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None
+
+
+async def get_version() -> dict[str, str] | None:
+    """Fetch ARM and MakeMKV version info."""
+    try:
+        resp = await get_client().get("/api/v1/system/version")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None
+
+
+async def get_paths() -> list[dict[str, Any]] | None:
+    """Fetch path existence/writability checks from the ARM container."""
+    try:
+        resp = await get_client().get("/api/v1/system/paths")
         resp.raise_for_status()
         return resp.json()
     except (httpx.HTTPError, httpx.ConnectError):

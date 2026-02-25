@@ -146,7 +146,6 @@ async def test_settings_includes_auth_status(app_client):
     with (
         patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.arm_db.get_all_config_safe", return_value={"RIPMETHOD": "mkv"}),
-        patch("backend.routers.settings.arm_client.get_gpu_support", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=health),
         patch("backend.routers.settings._read_hb_presets", return_value=None),

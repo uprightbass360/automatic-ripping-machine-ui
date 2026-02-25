@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { fetchDashboard, setRippingEnabled } from '$lib/api/dashboard';
 	import { fetchJobs } from '$lib/api/jobs';
+	import { fetchJobProgress } from '$lib/api/jobs';
+	import type { RipProgress } from '$lib/api/jobs';
 	import type { DashboardData, JobListResponse } from '$lib/types/arm';
 	import DiscReviewWidget from '$lib/components/DiscReviewWidget.svelte';
 	import JobCard from '$lib/components/JobCard.svelte';
@@ -48,6 +50,8 @@
 	);
 	let nonWaitingActiveJobs = $derived(dash.active_jobs.filter(j => j.status?.toLowerCase() !== 'waiting'));
 
+	let progressMap = $state<Record<number, RipProgress>>({});
+
 	function dismissJob(jobId: number) {
 		dismissedJobIds = new Set([...dismissedJobIds, jobId]);
 	}
@@ -60,6 +64,27 @@
 		} catch (e) {
 			dashError = e instanceof Error ? e.message : 'Unknown error';
 		}
+	}
+
+	async function pollProgress() {
+		const rippingJobs = dash.active_jobs.filter(j => j.status?.toLowerCase() === 'ripping');
+		if (rippingJobs.length === 0) {
+			progressMap = {};
+			return;
+		}
+		const entries = await Promise.allSettled(
+			rippingJobs.map(async (j) => {
+				const prog = await fetchJobProgress(j.job_id);
+				return [j.job_id, prog] as const;
+			})
+		);
+		const newMap: Record<number, RipProgress> = {};
+		for (const entry of entries) {
+			if (entry.status === 'fulfilled') {
+				newMap[entry.value[0]] = entry.value[1];
+			}
+		}
+		progressMap = newMap;
 	}
 
 	// --- Jobs section state ---
@@ -133,8 +158,16 @@
 			}
 		}
 
+		async function pollProgressLoop() {
+			while (!stopped) {
+				await pollProgress();
+				await new Promise((r) => setTimeout(r, 3000));
+			}
+		}
+
 		pollDashboard();
 		pollJobs();
+		pollProgressLoop();
 		return () => { stopped = true; };
 	});
 </script>
@@ -343,7 +376,7 @@
 			<LcarsFrame variant="full" accent="#99f" label="ACTIVE RIPS — {nonWaitingActiveJobs.length} IN PROGRESS">
 				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 					{#each nonWaitingActiveJobs as job (job.job_id)}
-						<JobCard {job} driveNames={dash.drive_names} />
+						<JobCard {job} driveNames={dash.drive_names} progress={progressMap[job.job_id]?.progress} progressStage={progressMap[job.job_id]?.stage} />
 					{/each}
 				</div>
 			</LcarsFrame>
@@ -444,7 +477,7 @@
 				{:else}
 					<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{#each jobsData.jobs as job (job.job_id)}
-							<JobCard {job} driveNames={dash.drive_names} />
+							<JobCard {job} driveNames={dash.drive_names} progress={progressMap[job.job_id]?.progress} progressStage={progressMap[job.job_id]?.stage} />
 						{/each}
 					</div>
 				{/if}

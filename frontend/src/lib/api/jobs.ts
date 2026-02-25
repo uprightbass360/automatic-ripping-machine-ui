@@ -65,3 +65,16 @@ export function updateJobConfig(jobId: number, data: Partial<JobConfigUpdate>): 
 		body: JSON.stringify(data)
 	});
 }
+
+export interface RipProgress {
+	progress: number | null;
+	stage: string | null;
+}
+
+export function fetchJobProgress(id: number): Promise<RipProgress> {
+	return apiFetch<RipProgress>(`/api/jobs/${id}/progress`);
+}
+
+export function retranscodeJob(id: number): Promise<{ status: string; message: string }> {
+	return apiFetch(`/api/jobs/${id}/retranscode`, { method: 'POST' });
+}

@@ -83,3 +83,30 @@ export function saveBashScript(req: BashScriptSaveRequest): Promise<{ success: b
 		body: JSON.stringify(req)
 	});
 }
+
+export interface SystemInfoData {
+	versions: Record<string, string>;
+	paths: Array<{
+		setting: string;
+		path: string;
+		exists: boolean;
+		writable: boolean;
+	}>;
+	database: {
+		path: string;
+		size_bytes: number | null;
+		available: boolean;
+	};
+	drives: Array<{
+		name: string | null;
+		mount: string | null;
+		maker: string | null;
+		model: string | null;
+		capabilities: string[];
+		firmware: string | null;
+	}>;
+}
+
+export function fetchSystemInfo(): Promise<SystemInfoData> {
+	return apiFetch<SystemInfoData>('/api/settings/system-info');
+}

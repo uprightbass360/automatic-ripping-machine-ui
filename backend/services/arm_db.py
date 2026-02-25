@@ -320,3 +320,35 @@ def get_ripping_paused() -> bool:
             return bool(state.ripping_paused) if state else False
     except Exception:
         return False
+
+
+def get_job_retranscode_info(job_id: int) -> dict | None:
+    """Build a webhook-shaped payload for re-transcoding an ARM job.
+
+    Returns None if the job doesn't exist or isn't a video disc.
+    """
+    try:
+        with get_session() as session:
+            stmt = select(Job).where(Job.job_id == job_id)
+            job = session.scalars(stmt).unique().first()
+            if not job:
+                return None
+            if job.disctype not in ("dvd", "bluray", "bluray4k"):
+                return None
+
+            title = job.title or job.title_auto or job.label or "Unknown"
+            year = job.year or job.year_auto or ""
+
+            return {
+                "title": f"ARM rip complete: {title}",
+                "body": f"{title} ({year})" if year else title,
+                "path": job.raw_path or job.path or "",
+                "job_id": job.job_id,
+                "status": "success",
+                "video_type": job.video_type or job.video_type_auto or "movie",
+                "year": year,
+                "disctype": job.disctype,
+            }
+    except Exception:
+        log.exception("Failed to get retranscode info for job %s", job_id)
+        return None

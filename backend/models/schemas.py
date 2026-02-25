@@ -223,7 +223,6 @@ class SettingsResponse(BaseModel):
     arm_metadata: dict[str, Any] | None = None
     arm_handbrake_presets: list[str] | None = None
     transcoder_config: dict[str, Any] | None = None
-    arm_gpu_support: dict[str, Any] | None = None
     transcoder_gpu_support: dict[str, Any] | None = None
     transcoder_auth_status: dict[str, Any] | None = None
     # Deprecated — kept for backward compat; mirrors transcoder_gpu_support

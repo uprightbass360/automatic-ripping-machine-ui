@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchBashScript, saveBashScript } from '$lib/api/settings';
-	import type { ConnectionTestResult, WebhookTestResult, BashScriptInfo } from '$lib/api/settings';
+	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchBashScript, saveBashScript, fetchSystemInfo } from '$lib/api/settings';
+	import type { ConnectionTestResult, WebhookTestResult, BashScriptInfo, SystemInfoData } from '$lib/api/settings';
 	import type { SettingsData } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES } from '$lib/stores/colorScheme';
@@ -24,7 +24,7 @@
 	let armCollapsed = $state<Record<string, boolean>>({});
 
 	// --- Tab state ---
-	let activeTab = $state<'arm' | 'transcoder' | 'appearance'>('arm');
+	let activeTab = $state<'ripping' | 'transcoding' | 'notifications' | 'appearance' | 'system'>('ripping');
 
 	// --- Search/filter ---
 	let armSearch = $state('');
@@ -52,6 +52,24 @@
 	let showScriptPreview = $state(false);
 	let scriptLoaded = false;
 
+	// --- System Info state ---
+	let systemInfo = $state<SystemInfoData | null>(null);
+	let systemInfoLoading = $state(false);
+	let systemInfoLoaded = $state(false);
+
+	async function loadSystemInfo() {
+		if (systemInfoLoaded) return;
+		systemInfoLoading = true;
+		try {
+			systemInfo = await fetchSystemInfo();
+			systemInfoLoaded = true;
+		} catch (e) {
+			// silently fail, will show empty state
+		} finally {
+			systemInfoLoading = false;
+		}
+	}
+
 	onMount(async () => {
 		try {
 			settings = await fetchSettings();
@@ -63,6 +81,8 @@
 				armForm = { ...settings.arm_config };
 				armOriginal = { ...settings.arm_config };
 			}
+			// Collapse Emby Integration by default
+			armCollapsed['Emby Integration'] = true;
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load settings';
 		}
@@ -137,15 +157,14 @@
 	}
 
 	let dirtyTabLabel = $derived(
-		armDirty && tcDirty ? 'ARM & Transcoder' : armDirty ? 'ARM' : 'Transcoder'
+		armDirty && tcDirty ? 'ARM & Transcoder' : armDirty ? 'ARM settings' : 'Transcoder'
 	);
 
 	// Transcoder base paths (read-only, for display in directories panel)
 	let tcPaths = $derived(settings?.transcoder_config?.paths);
 
-	// --- GPU support labels ---
+	// --- GPU support labels (transcoder only) ---
 	const GPU_LABELS: Record<string, string> = {
-		handbrake_nvenc: 'HandBrake NVENC',
 		ffmpeg_nvenc_h265: 'FFmpeg NVENC H.265',
 		ffmpeg_nvenc_h264: 'FFmpeg NVENC H.264',
 		ffmpeg_vaapi_h265: 'FFmpeg VAAPI H.265',
@@ -158,7 +177,7 @@
 	};
 
 	const HW_GROUPS = [
-		{ label: 'Nvidia NVENC', keys: ['handbrake_nvenc', 'ffmpeg_nvenc_h265', 'ffmpeg_nvenc_h264'] },
+		{ label: 'Nvidia NVENC', keys: ['ffmpeg_nvenc_h265', 'ffmpeg_nvenc_h264'] },
 		{ label: 'Intel QuickSync', keys: ['ffmpeg_qsv_h265', 'ffmpeg_qsv_h264'] },
 		{ label: 'AMD VCN', keys: ['ffmpeg_amf_h265', 'ffmpeg_amf_h264'] },
 		{ label: 'VAAPI (AMD/Intel)', keys: ['ffmpeg_vaapi_h265', 'ffmpeg_vaapi_h264', 'vaapi_device'] },
@@ -335,22 +354,9 @@
 		MAX_CONCURRENT_MAKEMKVINFO: { label: 'Max Concurrent Disc Scans', description: 'Limit parallel makemkvinfo processes (0 = unlimited)' },
 		AUTO_EJECT: { label: 'Auto-Eject After Rip', description: 'Eject the disc when ripping completes' },
 		RIP_POSTER: { label: 'Download Poster', description: 'Save movie poster artwork during ripping' },
-		// Transcoding
-		SKIP_TRANSCODE: { label: 'Skip Transcoding', description: 'Keep original MakeMKV files without transcoding' },
-		HB_PRESET_DVD: { label: 'HandBrake Preset (DVD)', description: 'HandBrake preset for DVD sources' },
-		HB_PRESET_BD: { label: 'HandBrake Preset (Blu-ray)', description: 'HandBrake preset for Blu-ray sources' },
-		DEST_EXT: { label: 'Output Extension', description: 'File extension for transcoded files (e.g. mkv, mp4)' },
-		HANDBRAKE_CLI: { label: 'HandBrake CLI Path', description: 'Path to the HandBrakeCLI binary' },
-		HANDBRAKE_LOCAL: { label: 'HandBrake Local Path', description: 'Path to a local HandBrake binary override' },
-		HB_ARGS_DVD: { label: 'HandBrake Args (DVD)', description: 'Extra HandBrake arguments for DVD transcoding' },
-		HB_ARGS_BD: { label: 'HandBrake Args (Blu-ray)', description: 'Extra HandBrake arguments for Blu-ray transcoding' },
-		FFMPEG_CLI: { label: 'FFmpeg CLI Path', description: 'Path to the ffmpeg binary' },
-		FFMPEG_LOCAL: { label: 'FFmpeg Local Path', description: 'Path to a local FFmpeg binary override' },
-		FFMPEG_PRE_FILE_ARGS: { label: 'FFmpeg Pre-File Args', description: 'FFmpeg arguments inserted before the input file' },
-		FFMPEG_POST_FILE_ARGS: { label: 'FFmpeg Post-File Args', description: 'FFmpeg arguments inserted after the input file' },
-		USE_FFMPEG: { label: 'Use FFmpeg', description: 'Use FFmpeg instead of HandBrake for transcoding' },
-		MAX_CONCURRENT_TRANSCODES: { label: 'Max Concurrent Transcodes', description: 'Limit parallel transcode processes (0 = unlimited)' },
-		DELRAWFILES: { label: 'Delete Raw Files', description: 'Remove raw MakeMKV output after successful transcode' },
+		MAKEMKV_COMMUNITY_KEYDB: { label: 'Community Key Database', description: 'Download community keydb.cfg at container startup' },
+		ARM_CHILDREN: { label: 'ARM Child Servers', description: 'Comma-delimited list of child ARM server URLs' },
+		DELRAWFILES: { label: 'Delete Raw Files', description: 'Remove raw MakeMKV output after processing' },
 		// Music Ripping
 		GET_AUDIO_TITLE: { label: 'Audio Metadata Source', description: 'none, musicbrainz, or freecddb for CD track info' },
 		ABCDE_CONFIG_FILE: { label: 'abcde Config File', description: 'Path to the abcde configuration file for CD ripping' },
@@ -417,61 +423,79 @@
 		armInfoKeys = next;
 	}
 
-	// --- ARM config groups (explicit key-to-group mapping with sub-panels) ---
-	const ARM_KEY_GROUPS: { label: string; subpanels: { label?: string; keys: string[] }[] }[] = [
-		{ label: 'Video Ripping', subpanels: [
-			{ label: 'Disc Identification', keys: ['VIDEOTYPE', 'GET_VIDEO_TITLE', 'ARM_CHECK_UDF', 'MANUAL_WAIT', 'MANUAL_WAIT_TIME'] },
-			{ label: 'Track Selection', keys: ['MINLENGTH', 'MAXLENGTH', 'MAINFEATURE', 'PREVENT_99'] },
-			{ label: 'Rip Method', keys: ['RIPMETHOD', 'RIPMETHOD_DVD', 'RIPMETHOD_BR', 'MKV_ARGS', 'DATA_RIP_PARAMETERS'] },
-			{ label: 'MakeMKV', keys: ['MAKEMKV_PERMA_KEY', 'MAX_CONCURRENT_MAKEMKVINFO'] },
-			{ label: 'Post-Rip Behavior', keys: ['ALLOW_DUPLICATES', 'AUTO_EJECT', 'RIP_POSTER'] },
-		]},
-		{ label: 'Transcoding', subpanels: [
-			{ label: 'General', keys: ['SKIP_TRANSCODE', 'USE_FFMPEG', 'DEST_EXT', 'MAX_CONCURRENT_TRANSCODES', 'DELRAWFILES'] },
-			{ label: 'HandBrake', keys: ['HB_PRESET_DVD', 'HB_PRESET_BD', 'HANDBRAKE_CLI', 'HANDBRAKE_LOCAL', 'HB_ARGS_DVD', 'HB_ARGS_BD'] },
-			{ label: 'FFmpeg', keys: ['FFMPEG_CLI', 'FFMPEG_LOCAL', 'FFMPEG_PRE_FILE_ARGS', 'FFMPEG_POST_FILE_ARGS'] },
-		]},
-		{ label: 'Music Ripping', subpanels: [
-			{ keys: ['GET_AUDIO_TITLE', 'ABCDE_CONFIG_FILE'] },
-		]},
-		{ label: 'Metadata', subpanels: [
-			{ keys: ['METADATA_PROVIDER', 'OMDB_API_KEY', 'TMDB_API_KEY'] },
-		]},
-		{ label: 'General', subpanels: [
-			{ keys: ['ARM_NAME', 'DISABLE_LOGIN', 'DATE_FORMAT', 'ARM_API_KEY'] },
-		]},
-		{ label: 'Web Server', subpanels: [
-			{ keys: ['WEBSERVER_IP', 'WEBSERVER_PORT', 'UI_BASE_URL'] },
-		]},
-		{ label: 'Paths & Storage', subpanels: [
-			{ label: 'Media Directories', keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'EXTRAS_SUB'] },
-			{ label: 'System Paths', keys: ['INSTALLPATH', 'LOGPATH', 'DBFILE', 'LOGLEVEL', 'LOGLIFE'] },
-			{ label: 'File Permissions', keys: ['UMASK', 'SET_MEDIA_PERMISSIONS', 'CHMOD_VALUE', 'SET_MEDIA_OWNER', 'CHOWN_USER', 'CHOWN_GROUP'] },
-		]},
-		{ label: 'Emby', subpanels: [
-			{ label: 'Connection', keys: ['EMBY_REFRESH', 'EMBY_SERVER', 'EMBY_PORT'] },
-			{ label: 'Authentication', keys: ['EMBY_USERNAME', 'EMBY_USERID', 'EMBY_PASSWORD', 'EMBY_API_KEY'] },
-			{ label: 'Client Identity', keys: ['EMBY_CLIENT', 'EMBY_DEVICE', 'EMBY_DEVICEID'] },
-		]},
-		{ label: 'Notifications', subpanels: [
-			{ label: 'Triggers', keys: ['NOTIFY_RIP', 'NOTIFY_TRANSCODE', 'NOTIFY_JOBID'] },
-			{ label: 'Services', keys: ['PB_KEY', 'IFTTT_KEY', 'IFTTT_EVENT', 'PO_USER_KEY', 'PO_APP_KEY'] },
-			{ label: 'Custom / Apprise', keys: ['BASH_SCRIPT', 'JSON_URL', 'APPRISE'] },
-		]},
-	];
+	// --- ARM config groups, organized by tab ---
+	type ArmGroup = { label: string; subpanels: { label?: string; keys: string[] }[] };
 
-	// Structured sub-sections within HandBrake and FFmpeg subpanels (ARM Transcoding group)
-	const TRANSCODING_SECTIONS: Record<string, { label: string; keys: string[] }[]> = {
-		'HandBrake': [
-			{ label: 'Presets', keys: ['HB_PRESET_DVD', 'HB_PRESET_BD'] },
-			{ label: 'CLI Paths', keys: ['HANDBRAKE_CLI', 'HANDBRAKE_LOCAL'] },
-			{ label: 'Extra Arguments', keys: ['HB_ARGS_DVD', 'HB_ARGS_BD'] },
+	const TAB_ARM_GROUPS: Record<string, ArmGroup[]> = {
+		ripping: [
+			{ label: 'Disc Identification', subpanels: [
+				{ keys: ['VIDEOTYPE', 'GET_VIDEO_TITLE', 'ARM_CHECK_UDF', 'MANUAL_WAIT', 'MANUAL_WAIT_TIME', 'ARM_CHILDREN'] },
+			]},
+			{ label: 'Track Selection', subpanels: [
+				{ keys: ['MINLENGTH', 'MAXLENGTH', 'MAINFEATURE', 'PREVENT_99', 'ALLOW_DUPLICATES'] },
+			]},
+			{ label: 'Rip Method', subpanels: [
+				{ keys: ['RIPMETHOD', 'RIPMETHOD_DVD', 'RIPMETHOD_BR', 'MKV_ARGS', 'DATA_RIP_PARAMETERS'] },
+			]},
+			{ label: 'MakeMKV', subpanels: [
+				{ keys: ['MAKEMKV_PERMA_KEY', 'MAKEMKV_COMMUNITY_KEYDB', 'MAX_CONCURRENT_MAKEMKVINFO'] },
+			]},
+			{ label: 'Post-Rip', subpanels: [
+				{ keys: ['AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER'] },
+			]},
+			{ label: 'Music', subpanels: [
+				{ keys: ['GET_AUDIO_TITLE', 'ABCDE_CONFIG_FILE'] },
+			]},
+			{ label: 'Metadata', subpanels: [
+				{ keys: ['METADATA_PROVIDER', 'OMDB_API_KEY', 'TMDB_API_KEY', 'ARM_API_KEY'] },
+			]},
 		],
-		'FFmpeg': [
-			{ label: 'CLI Paths', keys: ['FFMPEG_CLI', 'FFMPEG_LOCAL'] },
-			{ label: 'Arguments', keys: ['FFMPEG_PRE_FILE_ARGS', 'FFMPEG_POST_FILE_ARGS'] },
+		notifications: [
+			{ label: 'Triggers', subpanels: [
+				{ keys: ['NOTIFY_RIP', 'NOTIFY_TRANSCODE', 'NOTIFY_JOBID'] },
+			]},
+			{ label: 'Apprise', subpanels: [
+				{ keys: ['JSON_URL', 'APPRISE'] },
+			]},
+			{ label: 'Pushbullet', subpanels: [
+				{ keys: ['PB_KEY'] },
+			]},
+			{ label: 'Pushover', subpanels: [
+				{ keys: ['PO_USER_KEY', 'PO_APP_KEY'] },
+			]},
+			{ label: 'IFTTT', subpanels: [
+				{ keys: ['IFTTT_KEY', 'IFTTT_EVENT'] },
+			]},
+			{ label: 'Custom Script', subpanels: [
+				{ keys: ['BASH_SCRIPT'] },
+			]},
+			{ label: 'Emby Integration', subpanels: [
+				{ label: 'Connection', keys: ['EMBY_REFRESH', 'EMBY_SERVER', 'EMBY_PORT'] },
+				{ label: 'Authentication', keys: ['EMBY_USERNAME', 'EMBY_USERID', 'EMBY_PASSWORD', 'EMBY_API_KEY'] },
+				{ label: 'Client Identity', keys: ['EMBY_CLIENT', 'EMBY_DEVICE', 'EMBY_DEVICEID'] },
+			]},
+		],
+		system: [
+			{ label: 'Identity', subpanels: [
+				{ keys: ['ARM_NAME', 'DISABLE_LOGIN', 'DATE_FORMAT'] },
+			]},
+			{ label: 'Media Directories', subpanels: [
+				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'EXTRAS_SUB'] },
+			]},
+			{ label: 'System Paths', subpanels: [
+				{ keys: ['INSTALLPATH', 'LOGPATH', 'DBFILE', 'LOGLEVEL', 'LOGLIFE'] },
+			]},
+			{ label: 'Web Server', subpanels: [
+				{ keys: ['WEBSERVER_IP', 'WEBSERVER_PORT', 'UI_BASE_URL'] },
+			]},
+			{ label: 'File Permissions', subpanels: [
+				{ keys: ['UMASK', 'SET_MEDIA_PERMISSIONS', 'CHMOD_VALUE', 'SET_MEDIA_OWNER', 'CHOWN_USER', 'CHOWN_GROUP'] },
+			]},
 		],
 	};
+
+	// All ARM groups flattened (for unmapped key detection)
+	const ALL_ARM_GROUPS = Object.values(TAB_ARM_GROUPS).flat();
 
 	const HIDDEN_KEYS = new Set([
 		'OMDB_API_KEY',
@@ -514,11 +538,6 @@
 			clearFeedback(() => (metadataTestResult = null));
 		}
 	}
-
-	// --- Cross-service derived state ---
-	let skipTranscode = $derived(
-		(armForm['SKIP_TRANSCODE'] ?? '').toString().toLowerCase() === 'true'
-	);
 
 	async function handleTestConnection() {
 		connTesting = true;
@@ -564,7 +583,7 @@
 	}
 
 	$effect(() => {
-		if (activeTab === 'transcoder') {
+		if (activeTab === 'transcoding') {
 			loadScriptInfo();
 		}
 	});
@@ -592,28 +611,13 @@
 		}
 	}
 
-	// HandBrake presets — loaded dynamically from the ARM container at startup.
-	// Falls back to transcoder presets if the ARM init container hasn't run.
-	let hbPresets = $derived(settings?.arm_handbrake_presets ?? []);
-
-	// Combined preset list: ARM built-in presets, or transcoder custom presets as fallback
-	let armPresets = $derived.by<string[]>(() => {
-		if (hbPresets.length > 0) return hbPresets;
-		return settings?.transcoder_config?.valid_handbrake_presets ?? [];
-	});
-
-	// SELECT_OPTIONS is derived so it picks up dynamic HB presets
-	let SELECT_OPTIONS = $derived<Record<string, string[]>>({
+	const SELECT_OPTIONS: Record<string, string[]> = {
 		VIDEOTYPE: ['auto', 'series', 'movie'],
 		RIPMETHOD: ['mkv', 'backup', 'backup_dvd'],
 		LOGLEVEL: ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
 		METADATA_PROVIDER: ['omdb', 'tmdb'],
 		GET_AUDIO_TITLE: ['none', 'musicbrainz', 'freecddb'],
-		DEST_EXT: ['mkv', 'mp4', 'm4v'],
-		...(armPresets.length > 0
-			? { HB_PRESET_DVD: ['', ...armPresets], HB_PRESET_BD: ['', ...armPresets] }
-			: {}),
-	});
+	};
 
 	// --- Search/filter logic ---
 	function matchesSearch(key: string): boolean {
@@ -628,12 +632,12 @@
 		);
 	}
 
-	function getArmGroups(config: Record<string, string | null>) {
+	function getArmGroups(config: Record<string, string | null>, tabGroups: ArmGroup[], includeUnmapped = false) {
 		const allKeys = new Set(Object.keys(config));
 		const mapped = new Set<string>();
-		const groups: { label: string; subpanels: { label?: string; keys: string[] }[] }[] = [];
+		const groups: ArmGroup[] = [];
 
-		for (const group of ARM_KEY_GROUPS) {
+		for (const group of tabGroups) {
 			const subpanels: { label?: string; keys: string[] }[] = [];
 			for (const sp of group.subpanels) {
 				const present = sp.keys.filter((k) => allKeys.has(k) && matchesSearch(k));
@@ -647,10 +651,18 @@
 			}
 		}
 
-		// Catch-all for any unmapped keys (future-proofing)
-		const unmapped = [...allKeys].filter((k) => !mapped.has(k) && matchesSearch(k));
-		if (unmapped.length > 0) {
-			groups.push({ label: 'Other', subpanels: [{ keys: unmapped }] });
+		if (includeUnmapped) {
+			// Track all keys mapped across ALL tabs (not just this one)
+			const allMapped = new Set<string>();
+			for (const g of ALL_ARM_GROUPS) {
+				for (const sp of g.subpanels) {
+					sp.keys.forEach((k) => allMapped.add(k));
+				}
+			}
+			const unmapped = [...allKeys].filter((k) => !allMapped.has(k) && matchesSearch(k));
+			if (unmapped.length > 0) {
+				groups.push({ label: 'Other', subpanels: [{ keys: unmapped }] });
+			}
 		}
 
 		return groups;
@@ -697,6 +709,13 @@
 
 	function isTcFieldDirty(key: string): boolean {
 		return JSON.stringify(tcForm[key]) !== JSON.stringify(tcOriginal[key]);
+	}
+
+	function formatBytes(bytes: number): string {
+		if (bytes < 1024) return `${bytes} B`;
+		if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+		if (bytes < 1073741824) return `${(bytes / 1048576).toFixed(1)} MB`;
+		return `${(bytes / 1073741824).toFixed(1)} GB`;
 	}
 
 	// Input class shared across all ARM fields
@@ -893,63 +912,22 @@
 		<div class="py-8 text-center text-gray-400">Loading...</div>
 	{:else}
 		<!-- Tab Bar -->
+		{@const tabClass = (tab: string) => `whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors ${activeTab === tab ? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark' : 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}`}
 		<div class="border-b border-primary/20 dark:border-primary/20">
 			<nav class="-mb-px flex gap-4" aria-label="Settings tabs">
-				<button
-					type="button"
-					onclick={() => (activeTab = 'arm')}
-					class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
-						{activeTab === 'arm'
-						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
-						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
-				>
-					ARM Standard Settings
-				</button>
-				<button
-					type="button"
-					onclick={() => (activeTab = 'transcoder')}
-					class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
-						{activeTab === 'transcoder'
-						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
-						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
-				>
-					Dedicated Transcoder
-				</button>
-				<button
-					type="button"
-					onclick={() => (activeTab = 'appearance')}
-					class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
-						{activeTab === 'appearance'
-						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
-						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
-				>
-					Appearance
-				</button>
+				<button type="button" onclick={() => (activeTab = 'ripping')} class={tabClass('ripping')}>Ripping</button>
+				<button type="button" onclick={() => (activeTab = 'transcoding')} class={tabClass('transcoding')}>Transcoding</button>
+				<button type="button" onclick={() => (activeTab = 'notifications')} class={tabClass('notifications')}>Notifications</button>
+				<button type="button" onclick={() => (activeTab = 'appearance')} class={tabClass('appearance')}>Appearance</button>
+				<button type="button" onclick={() => { activeTab = 'system'; loadSystemInfo(); }} class={tabClass('system')}>System</button>
 			</nav>
 		</div>
 
-		<!-- Transcoder Tab -->
-		{#if activeTab === 'transcoder'}
+		<!-- Transcoding Tab -->
+		{#if activeTab === 'transcoding'}
 			<div class="rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
-				These settings configure the <strong>dedicated transcoder container</strong>, a separate GPU-accelerated service that handles transcoding independently from ARM. Changes here do not affect ARM's built-in HandBrake/FFmpeg transcoding.
+				These settings configure the <strong>dedicated transcoder service</strong>, a separate GPU-accelerated container that handles all transcoding. ARM rips discs and notifies this service to transcode.
 			</div>
-
-			<!-- Cross-service awareness banner -->
-			{#if skipTranscode}
-				<div class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm dark:border-green-800 dark:bg-green-900/20">
-					<span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700 dark:bg-green-900/40 dark:text-green-400">&#10003;</span>
-					<span class="font-medium text-green-700 dark:text-green-400">Active</span>
-					<span class="text-gray-600 dark:text-gray-400">&mdash; ARM's SKIP_TRANSCODE is enabled. Ripped media is ready for this transcoder.</span>
-				</div>
-			{:else}
-				<div class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm dark:border-amber-800 dark:bg-amber-900/20">
-					<span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">!</span>
-					<span class="font-medium text-amber-700 dark:text-amber-400">ARM using built-in transcoding</span>
-					<span class="text-gray-600 dark:text-gray-400">&mdash; Enable SKIP_TRANSCODE on the </span>
-					<button type="button" onclick={() => { activeTab = 'arm'; window.scrollTo(0, 0); }} class="font-medium text-primary-text underline hover:text-primary-dark dark:text-primary-text-dark">ARM tab</button>
-					<span class="text-gray-600 dark:text-gray-400"> to offload to this service.</span>
-				</div>
-			{/if}
 
 			<!-- Service Status -->
 			<section>
@@ -1501,111 +1479,36 @@
 			{/if}
 		{/if}
 
-		<!-- ARM Tab -->
-		{#if activeTab === 'arm'}
-			{#if settings.arm_gpu_support}
-				{@render gpuCards(settings.arm_gpu_support)}
-			{/if}
-
-			<section>
-				<div class="mb-3 flex items-center justify-between gap-3">
-					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Configuration</h2>
-					<!-- Search input -->
-					<div class="relative">
-						<svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-						</svg>
-						<input
-							type="text"
-							placeholder="Filter settings..."
-							class="w-56 rounded-md border border-primary/25 bg-primary/5 py-1.5 pl-8 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
-							bind:value={armSearch}
-						/>
-						{#if armSearch}
-							<button
-								type="button"
-								onclick={() => (armSearch = '')}
-								aria-label="Clear search"
-								class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-							>
-								<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</button>
-						{/if}
-					</div>
-				</div>
-
-				{#if settings.arm_config}
-					{@const groups = getArmGroups(settings.arm_config)}
-					{#if groups.length === 0 && armSearch}
-						<p class="py-4 text-center text-sm text-gray-400">No settings match "{armSearch}"</p>
-					{:else}
-						<div class="space-y-2">
-							{#each groups as group}
-								<div
-									class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark"
+		<!-- Reusable ARM settings renderer -->
+		{#snippet armSettingsSection(tabKey: string, includeUnmapped?: boolean)}
+			{#if settings.arm_config}
+				{@const groups = getArmGroups(settings.arm_config, TAB_ARM_GROUPS[tabKey] ?? [], includeUnmapped ?? false)}
+				{#if groups.length === 0 && armSearch}
+					<p class="py-4 text-center text-sm text-gray-400">No settings match "{armSearch}"</p>
+				{:else}
+					<div class="space-y-2">
+						{#each groups as group}
+							<div class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
+								<button
+									type="button"
+									onclick={() => toggleCollapse(group.label)}
+									class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-page dark:text-white dark:hover:bg-primary/10"
 								>
-									<button
-										type="button"
-										onclick={() => toggleCollapse(group.label)}
-										class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-page dark:text-white dark:hover:bg-primary/10"
+									<span>{group.label}</span>
+									<svg
+										class="h-4 w-4 transform transition-transform {armCollapsed[group.label] ? '' : 'rotate-180'}"
+										fill="none" stroke="currentColor" viewBox="0 0 24 24"
 									>
-										<span>{group.label}</span>
-										<svg
-											class="h-4 w-4 transform transition-transform {armCollapsed[group.label]
-												? ''
-												: 'rotate-180'}"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M19 9l-7 7-7-7"
-											/>
-										</svg>
-									</button>
-
-									{#if !armCollapsed[group.label] || armSearch}
-										<div class="border-t border-primary/20 px-4 py-3 dark:border-primary/20">
-											{#if group.label === 'Transcoding' && skipTranscode}
-												<div class="mb-4 rounded-lg border border-primary/20 bg-primary-light-bg px-4 py-3 text-sm dark:border-primary/30 dark:bg-primary-light-bg-dark/20">
-													<span class="font-medium text-primary-dark dark:text-primary-text-dark">Transcoding is offloaded</span>
-													<span class="text-gray-600 dark:text-gray-400"> &mdash; ARM's built-in transcoding is skipped. Configure the dedicated service on the </span>
-													<button type="button" onclick={() => { activeTab = 'transcoder'; window.scrollTo(0, 0); }} class="font-medium text-primary-text underline hover:text-primary-dark dark:text-primary-text-dark dark:hover:text-primary-text-dark/80">Transcoder tab</button>.
-												</div>
-											{/if}
-											<div class="space-y-4 {group.label === 'Transcoding' && skipTranscode ? 'opacity-50' : ''}">
-												{#each group.subpanels as subpanel}
-													{#if subpanel.label}
-														<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
-															<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{subpanel.label}</h3>
-															{#if TRANSCODING_SECTIONS[subpanel.label]}
-																{#each TRANSCODING_SECTIONS[subpanel.label] as section}
-																	{@const sectionKeys = section.keys.filter(k => subpanel.keys.includes(k))}
-																	{#if sectionKeys.length > 0}
-																		<p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{section.label}</p>
-																		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-																			{#each sectionKeys as key}
-																				{@render armField(key)}
-																			{/each}
-																		</div>
-																	{/if}
-																{/each}
-															{:else}
-																<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-																	{#each subpanel.keys as key}
-																		{#if !isMetadataKeyHidden(key)}
-																			{@render armField(key)}
-																		{/if}
-																	{/each}
-																</div>
-															{/if}
-														</div>
-													{:else}
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									</svg>
+								</button>
+								{#if !armCollapsed[group.label] || armSearch}
+									<div class="border-t border-primary/20 px-4 py-3 dark:border-primary/20">
+										<div class="space-y-4">
+											{#each group.subpanels as subpanel}
+												{#if subpanel.label}
+													<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
+														<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{subpanel.label}</h3>
 														<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 															{#each subpanel.keys as key}
 																{#if !isMetadataKeyHidden(key)}
@@ -1613,18 +1516,218 @@
 																{/if}
 															{/each}
 														</div>
-													{/if}
-												{/each}
-											</div>
+													</div>
+												{:else}
+													<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+														{#each subpanel.keys as key}
+															{#if !isMetadataKeyHidden(key)}
+																{@render armField(key)}
+															{/if}
+														{/each}
+													</div>
+												{/if}
+											{/each}
 										</div>
-									{/if}
+									</div>
+								{/if}
+							</div>
+						{/each}
+					</div>
+				{/if}
+			{:else}
+				<p class="text-sm text-gray-400">No ARM configuration found.</p>
+			{/if}
+		{/snippet}
+
+		<!-- Search bar snippet (shared across ARM-backed tabs) -->
+		{#snippet armSearchBar()}
+			<div class="relative">
+				<svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+				</svg>
+				<input
+					type="text"
+					placeholder="Filter settings..."
+					class="w-56 rounded-md border border-primary/25 bg-primary/5 py-1.5 pl-8 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+					bind:value={armSearch}
+				/>
+				{#if armSearch}
+					<button
+						type="button"
+						onclick={() => (armSearch = '')}
+						aria-label="Clear search"
+						class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+					>
+						<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+						</svg>
+					</button>
+				{/if}
+			</div>
+		{/snippet}
+
+		<!-- Ripping Tab -->
+		{#if activeTab === 'ripping'}
+			<section>
+				<div class="mb-3 flex items-center justify-between gap-3">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Ripping</h2>
+					{@render armSearchBar()}
+				</div>
+				{@render armSettingsSection('ripping')}
+			</section>
+		{/if}
+
+		<!-- Notifications Tab -->
+		{#if activeTab === 'notifications'}
+			<section>
+				<div class="mb-3 flex items-center justify-between gap-3">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
+					{@render armSearchBar()}
+				</div>
+				{@render armSettingsSection('notifications')}
+			</section>
+		{/if}
+
+		<!-- System Info Tab -->
+		{#if activeTab === 'system'}
+			{#if systemInfoLoading}
+				<div class="py-8 text-center text-gray-400">Loading system info...</div>
+			{:else if systemInfo}
+				<div class="space-y-6">
+					<!-- Versions -->
+					<section>
+						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
+						<div class="grid grid-cols-2 gap-4 md:grid-cols-5">
+							{#each Object.entries(systemInfo.versions) as [name, version]}
+								<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+									<p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{name}</p>
+									<div class="mt-1 flex items-center gap-2">
+										<div class="h-2 w-2 rounded-full {version === 'offline' ? 'bg-red-400' : version === 'unknown' ? 'bg-gray-400' : 'bg-green-400'}"></div>
+										<p class="text-sm font-semibold text-gray-900 dark:text-white">{version}</p>
+									</div>
 								</div>
 							{/each}
 						</div>
+					</section>
+
+					<!-- Paths -->
+					{#if systemInfo.paths.length > 0}
+						<section>
+							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Paths</h2>
+							<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
+								<table class="w-full text-left text-sm">
+									<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
+										<tr>
+											<th class="px-4 py-3 font-medium">Setting</th>
+											<th class="px-4 py-3 font-medium">Path</th>
+											<th class="px-4 py-3 font-medium">Status</th>
+										</tr>
+									</thead>
+									<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+										{#each systemInfo.paths as p}
+											<tr class="hover:bg-page dark:hover:bg-gray-800/50">
+												<td class="px-4 py-2 font-mono text-xs font-medium text-gray-500 dark:text-gray-400">{p.setting}</td>
+												<td class="px-4 py-2 font-mono text-xs text-gray-900 dark:text-white">{p.path}</td>
+												<td class="px-4 py-2">
+													{#if !p.exists}
+														<span class="inline-flex items-center gap-1 text-xs text-red-500">
+															<svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+															Missing
+														</span>
+													{:else if p.writable}
+														<span class="inline-flex items-center gap-1 text-xs text-green-500">
+															<svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+															OK
+														</span>
+													{:else}
+														<span class="inline-flex items-center gap-1 text-xs text-amber-500">
+															<svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+															Read-only
+														</span>
+													{/if}
+												</td>
+											</tr>
+										{/each}
+									</tbody>
+								</table>
+							</div>
+						</section>
 					{/if}
-				{:else}
-					<p class="text-sm text-gray-400">No ARM configuration found.</p>
-				{/if}
+
+					<!-- Database -->
+					<section>
+						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Database</h2>
+						<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+							<dl class="grid grid-cols-3 gap-4 text-sm">
+								<div>
+									<dt class="text-gray-500 dark:text-gray-400">Path</dt>
+									<dd class="mt-1 font-mono text-xs text-gray-900 dark:text-white">{systemInfo.database.path}</dd>
+								</div>
+								<div>
+									<dt class="text-gray-500 dark:text-gray-400">Size</dt>
+									<dd class="mt-1 font-medium text-gray-900 dark:text-white">{systemInfo.database.size_bytes != null ? formatBytes(systemInfo.database.size_bytes) : 'N/A'}</dd>
+								</div>
+								<div>
+									<dt class="text-gray-500 dark:text-gray-400">Status</dt>
+									<dd class="mt-1">
+										<span class="inline-flex items-center gap-1.5 text-sm font-medium {systemInfo.database.available ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+											<div class="h-2 w-2 rounded-full {systemInfo.database.available ? 'bg-green-500' : 'bg-red-500'}"></div>
+											{systemInfo.database.available ? 'Connected' : 'Unavailable'}
+										</span>
+									</dd>
+								</div>
+							</dl>
+						</div>
+					</section>
+
+					<!-- Drives -->
+					{#if systemInfo.drives.length > 0}
+						<section>
+							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
+							<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
+								<table class="w-full text-left text-sm">
+									<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
+										<tr>
+											<th class="px-4 py-3 font-medium">Name</th>
+											<th class="px-4 py-3 font-medium">Device</th>
+											<th class="px-4 py-3 font-medium">Maker / Model</th>
+											<th class="px-4 py-3 font-medium">Capabilities</th>
+											<th class="px-4 py-3 font-medium">Firmware</th>
+										</tr>
+									</thead>
+									<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+										{#each systemInfo.drives as drive}
+											<tr class="hover:bg-page dark:hover:bg-gray-800/50">
+												<td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{drive.name ?? 'Unnamed'}</td>
+												<td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400">{drive.mount ?? ''}</td>
+												<td class="px-4 py-2 text-gray-900 dark:text-white">{[drive.maker, drive.model].filter(Boolean).join(' ') || 'Unknown'}</td>
+												<td class="px-4 py-2">
+													<div class="flex gap-1">
+														{#each drive.capabilities as cap}
+															<span class="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary-text dark:bg-primary/15 dark:text-primary-text-dark">{cap}</span>
+														{/each}
+													</div>
+												</td>
+												<td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400">{drive.firmware ?? ''}</td>
+											</tr>
+										{/each}
+									</tbody>
+								</table>
+							</div>
+						</section>
+					{/if}
+				</div>
+			{:else}
+				<p class="py-8 text-center text-gray-400">Failed to load system info.</p>
+			{/if}
+
+			<!-- Editable ARM system settings below diagnostics -->
+			<section>
+				<div class="mb-3 flex items-center justify-between gap-3">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Configuration</h2>
+					{@render armSearchBar()}
+				</div>
+				{@render armSettingsSection('system', true)}
 			</section>
 		{/if}
 

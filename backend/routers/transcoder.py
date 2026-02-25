@@ -66,3 +66,30 @@ async def get_log(
     if data is None:
         raise HTTPException(status_code=404, detail="Log not found or transcoder offline")
     return data
+
+
+@router.post("/jobs/{job_id}/retranscode")
+async def retranscode_transcoder_job(job_id: int):
+    """Re-queue a completed or failed transcoder job for re-transcoding."""
+    job = await transcoder_client.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Transcoder job not found or transcoder offline")
+
+    status = job.get("status", "")
+    if status not in ("completed", "failed"):
+        raise HTTPException(status_code=400, detail=f"Cannot re-transcode job with status '{status}'")
+
+    payload = {
+        "title": f"Re-transcode: {job.get('title', 'Unknown')}",
+        "body": job.get("title", "Unknown"),
+        "path": job.get("source_path", ""),
+        "job_id": job.get("arm_job_id"),
+        "status": "success",
+        "video_type": job.get("video_type", "movie"),
+        "year": job.get("year", ""),
+        "disctype": job.get("disctype", "bluray"),
+    }
+    result = await transcoder_client.send_webhook(payload)
+    if not result.get("success"):
+        raise HTTPException(status_code=503, detail=result.get("error", "Transcoder unavailable"))
+    return {"status": "ok", "message": "Transcode job re-queued"}

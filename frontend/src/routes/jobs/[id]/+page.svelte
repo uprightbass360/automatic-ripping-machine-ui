@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { fetchJob } from '$lib/api/jobs';
+	import { fetchJob, retranscodeJob } from '$lib/api/jobs';
 	import type { JobDetail } from '$lib/types/arm';
 	import JobActions from '$lib/components/JobActions.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
@@ -15,6 +15,22 @@
 	let error = $state<string | null>(null);
 	let showTitleSearch = $state(false);
 	let showRipSettings = $state(false);
+	let retranscoding = $state(false);
+	let retranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	async function handleRetranscode() {
+		if (!job) return;
+		retranscoding = true;
+		retranscodeFeedback = null;
+		try {
+			const result = await retranscodeJob(job.job_id);
+			retranscodeFeedback = { type: 'success', message: result.message || 'Queued for transcoding' };
+		} catch (e) {
+			retranscodeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to queue' };
+		} finally {
+			retranscoding = false;
+		}
+	}
 
 	let isVideoDisc = $derived(
 		job?.disctype === 'dvd' || job?.disctype === 'bluray' || job?.disctype === 'bluray4k'
@@ -114,6 +130,23 @@
 				</div>
 
 				<JobActions {job} onaction={loadJob} />
+
+				{#if isVideoDisc && (job.status === 'success' || job.status === 'fail')}
+					<div class="flex items-center gap-3">
+						<button
+							onclick={handleRetranscode}
+							disabled={retranscoding}
+							class="rounded-lg px-3 py-1.5 text-sm font-medium bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 disabled:opacity-50 transition-colors"
+						>
+							{retranscoding ? 'Queuing...' : 'Re-transcode'}
+						</button>
+						{#if retranscodeFeedback}
+							<span class="text-sm {retranscodeFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+								{retranscodeFeedback.message}
+							</span>
+						{/if}
+					</div>
+				{/if}
 
 				{#if job.imdb_id && !isMusicDisc}
 					<a

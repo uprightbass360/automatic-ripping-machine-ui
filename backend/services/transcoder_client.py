@@ -128,6 +128,49 @@ async def test_webhook(webhook_secret: str) -> dict[str, Any]:
     return result
 
 
+async def send_webhook(payload: dict) -> dict[str, Any]:
+    """Send a webhook payload to the transcoder to trigger a transcode job.
+
+    Returns {"success": True} or {"success": False, "error": "..."}.
+    """
+    from backend.services import bash_script
+
+    # Read webhook secret from the notification script
+    script_info = bash_script.read_script()
+    webhook_secret = ""
+    if script_info.get("variables"):
+        webhook_secret = script_info["variables"].get("webhook_secret", "")
+
+    headers: dict[str, str] = {}
+    if webhook_secret:
+        headers["X-Webhook-Secret"] = webhook_secret
+
+    try:
+        async with httpx.AsyncClient(
+            base_url=settings.transcoder_url,
+            timeout=httpx.Timeout(10.0, connect=3.0),
+        ) as client:
+            resp = await client.post("/webhook/arm", json=payload, headers=headers)
+        if resp.status_code in (401, 403):
+            return {"success": False, "error": "Webhook secret rejected"}
+        resp.raise_for_status()
+        return {"success": True}
+    except (httpx.ConnectError, httpx.TimeoutException) as e:
+        return {"success": False, "error": f"Transcoder offline: {e}"}
+    except httpx.HTTPError as e:
+        return {"success": False, "error": f"Webhook failed: {e}"}
+
+
+async def get_job(job_id: int) -> dict[str, Any] | None:
+    """Fetch a single transcoder job by ID."""
+    try:
+        resp = await get_client().get(f"/jobs/{job_id}")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None
+
+
 async def get_system_info() -> dict[str, Any] | None:
     """Fetch static hardware info (CPU, RAM, GPU) from the transcoder."""
     try:
