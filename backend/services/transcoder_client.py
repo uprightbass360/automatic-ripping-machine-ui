@@ -133,13 +133,19 @@ async def send_webhook(payload: dict) -> dict[str, Any]:
 
     Returns {"success": True} or {"success": False, "error": "..."}.
     """
-    from backend.services import bash_script
+    import os
+    import yaml
 
-    # Read webhook secret from the notification script
-    script_info = bash_script.read_script()
+    # Read webhook secret directly from arm.yaml (API masks secrets)
     webhook_secret = ""
-    if script_info.get("variables"):
-        webhook_secret = script_info["variables"].get("webhook_secret", "")
+    yaml_path = settings.arm_config_path
+    if yaml_path and os.path.isfile(yaml_path):
+        try:
+            with open(yaml_path, "r") as f:
+                arm_cfg = yaml.safe_load(f) or {}
+            webhook_secret = arm_cfg.get("TRANSCODER_WEBHOOK_SECRET", "") or ""
+        except Exception:
+            pass
 
     headers: dict[str, str] = {}
     if webhook_secret:

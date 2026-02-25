@@ -53,37 +53,6 @@ export function testTranscoderWebhook(secret: string): Promise<WebhookTestResult
 	});
 }
 
-export interface BashScriptInfo {
-	script_exists: boolean;
-	arm_path: string;
-	default_transcoder_url: string;
-	variables: {
-		transcoder_url: string;
-		webhook_secret: string;
-		local_raw_path: string;
-		shared_raw_path: string;
-	} | null;
-	content: string | null;
-}
-
-export interface BashScriptSaveRequest {
-	transcoder_url: string;
-	webhook_secret: string;
-	local_raw_path: string;
-	shared_raw_path: string;
-}
-
-export function fetchBashScript(): Promise<BashScriptInfo> {
-	return apiFetch<BashScriptInfo>('/api/settings/bash-script');
-}
-
-export function saveBashScript(req: BashScriptSaveRequest): Promise<{ success: boolean; arm_path: string }> {
-	return apiFetch('/api/settings/bash-script', {
-		method: 'PUT',
-		body: JSON.stringify(req)
-	});
-}
-
 export interface SystemInfoData {
 	versions: Record<string, string>;
 	paths: Array<{

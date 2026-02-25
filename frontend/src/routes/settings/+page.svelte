@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchBashScript, saveBashScript, fetchSystemInfo } from '$lib/api/settings';
-	import type { ConnectionTestResult, WebhookTestResult, BashScriptInfo, SystemInfoData } from '$lib/api/settings';
+	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo } from '$lib/api/settings';
+	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
 	import type { SettingsData } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES } from '$lib/stores/colorScheme';
@@ -41,16 +41,6 @@
 	let webhookTesting = $state(false);
 	let webhookResult = $state<WebhookTestResult | null>(null);
 	let webhookSecret = $state('');
-
-	// --- Notification script state ---
-	let scriptInfo = $state<BashScriptInfo | null>(null);
-	let scriptLoading = $state(false);
-	let scriptSaving = $state(false);
-	let scriptFeedback = $state<{type: 'success' | 'error'; message: string} | null>(null);
-	let scriptForm = $state({transcoder_url: '', webhook_secret: '', local_raw_path: '', shared_raw_path: ''});
-	let showAdvanced = $state(false);
-	let showScriptPreview = $state(false);
-	let scriptLoaded = false;
 
 	// --- System Info state ---
 	let systemInfo = $state<SystemInfoData | null>(null);
@@ -412,6 +402,11 @@
 		BASH_SCRIPT: { label: 'Notification Script', description: 'Path to a custom bash script run on notifications' },
 		JSON_URL: { label: 'Apprise JSON URL', description: 'Apprise webhook URL for notifications' },
 		APPRISE: { label: 'Apprise Config', description: 'Apprise notification service configuration string' },
+		// Transcoder Integration
+		TRANSCODER_URL: { label: 'Transcoder Webhook URL', description: 'URL of the arm-transcoder webhook endpoint (leave empty to disable)' },
+		TRANSCODER_WEBHOOK_SECRET: { label: 'Transcoder Webhook Secret', description: 'Must match WEBHOOK_SECRET in arm-transcoder .env' },
+		LOCAL_RAW_PATH: { label: 'Local Raw Path', description: 'Local scratch storage where ARM rips to (for file move before notify)' },
+		SHARED_RAW_PATH: { label: 'Shared Raw Path', description: 'Shared/NFS storage the transcoder reads from (for file move before notify)' },
 	};
 
 	let armInfoKeys = $state<Set<string>>(new Set());
@@ -453,6 +448,9 @@
 		notifications: [
 			{ label: 'Triggers', subpanels: [
 				{ keys: ['NOTIFY_RIP', 'NOTIFY_TRANSCODE', 'NOTIFY_JOBID'] },
+			]},
+			{ label: 'Transcoder', subpanels: [
+				{ keys: ['TRANSCODER_URL', 'TRANSCODER_WEBHOOK_SECRET', 'LOCAL_RAW_PATH', 'SHARED_RAW_PATH'] },
 			]},
 			{ label: 'Apprise', subpanels: [
 				{ keys: ['JSON_URL', 'APPRISE'] },
@@ -509,6 +507,7 @@
 		'PO_APP_KEY',
 		'ARM_API_KEY',
 		'TMDB_API_KEY',
+		'TRANSCODER_WEBHOOK_SECRET',
 	]);
 
 	// Keys hidden based on metadata provider selection
@@ -560,54 +559,6 @@
 			webhookResult = { reachable: false, secret_ok: false, secret_required: false, error: 'Failed to reach test endpoint' };
 		} finally {
 			webhookTesting = false;
-		}
-	}
-
-	// --- Notification script ---
-	async function loadScriptInfo() {
-		if (scriptLoaded || scriptLoading) return;
-		scriptLoading = true;
-		try {
-			scriptInfo = await fetchBashScript();
-			if (scriptInfo.variables) {
-				scriptForm = { ...scriptInfo.variables };
-			} else {
-				scriptForm.transcoder_url = scriptInfo.default_transcoder_url;
-			}
-			scriptLoaded = true;
-		} catch {
-			// silently fail — section will show loading state
-		} finally {
-			scriptLoading = false;
-		}
-	}
-
-	$effect(() => {
-		if (activeTab === 'transcoding') {
-			loadScriptInfo();
-		}
-	});
-
-	async function handleSaveScript() {
-		scriptSaving = true;
-		scriptFeedback = null;
-		try {
-			const result = await saveBashScript(scriptForm);
-			if (result.success) {
-				// Auto-fill BASH_SCRIPT in ARM config if empty or different
-				const currentBashScript = armForm['BASH_SCRIPT'] ?? '';
-				if (currentBashScript !== result.arm_path) {
-					armForm['BASH_SCRIPT'] = result.arm_path;
-				}
-				scriptFeedback = { type: 'success', message: 'Script saved. Save ARM settings to apply BASH_SCRIPT path.' };
-				// Refresh script info for preview
-				scriptInfo = await fetchBashScript();
-			}
-		} catch (e) {
-			scriptFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to save script' };
-		} finally {
-			scriptSaving = false;
-			clearFeedback(() => (scriptFeedback = null));
 		}
 	}
 
@@ -1022,146 +973,7 @@
 									<span class="text-gray-700 dark:text-gray-300">Webhook secret {settings.transcoder_auth_status.webhook_secret_configured ? 'configured' : 'not configured'}</span>
 								</div>
 							</div>
-							<p class="mt-3 text-xs text-gray-400">Authentication is configured via Docker environment variables (REQUIRE_API_AUTH, API_KEY, WEBHOOK_SECRET) on the transcoder container.</p>
-						</div>
-					{/if}
-				</div>
-			</section>
-
-			<!-- Notification Script -->
-			<section>
-				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Notification Script</h2>
-				<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
-					<p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-						Generates a script that ARM executes to notify the transcoder when a rip completes.
-					</p>
-
-					{#if scriptLoading}
-						<p class="text-sm text-gray-400">Loading...</p>
-					{:else}
-						<div class="space-y-4">
-							<!-- Transcoder Webhook URL -->
-							<div>
-								<label for="script-url" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									Transcoder Webhook URL
-								</label>
-								<input
-									id="script-url"
-									type="text"
-									class={inputClass}
-									placeholder="http://arm-transcoder:5000/webhook/arm"
-									bind:value={scriptForm.transcoder_url}
-								/>
-								<p class="mt-1 text-xs text-gray-400">The full URL ARM uses to reach the transcoder webhook endpoint.</p>
-							</div>
-
-							<!-- Webhook Secret -->
-							<div>
-								<label for="script-secret" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-									Webhook Secret
-								</label>
-								<input
-									id="script-secret"
-									type="password"
-									class={inputClass}
-									placeholder="Leave empty if webhook auth is disabled"
-									bind:value={scriptForm.webhook_secret}
-								/>
-								<p class="mt-1 text-xs text-gray-400">Must match WEBHOOK_SECRET on the transcoder. Leave empty if webhook auth is disabled.</p>
-							</div>
-
-							<!-- Advanced toggle -->
-							<div>
-								<button
-									type="button"
-									onclick={() => (showAdvanced = !showAdvanced)}
-									class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-								>
-									<svg
-										class="h-3.5 w-3.5 transform transition-transform {showAdvanced ? 'rotate-90' : ''}"
-										fill="none" stroke="currentColor" viewBox="0 0 24 24"
-									>
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-									</svg>
-									Advanced
-								</button>
-
-								{#if showAdvanced}
-									<div class="mt-3 space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
-										<p class="text-xs text-gray-500 dark:text-gray-400">
-											When both paths are set, the script moves ripped files from local scratch storage
-											to a shared location before notifying the transcoder.
-										</p>
-										<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-											<div>
-												<label for="script-local-raw" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-													LOCAL_RAW_PATH
-												</label>
-												<input
-													id="script-local-raw"
-													type="text"
-													class={inputClass}
-													placeholder="e.g. /home/arm/media/raw"
-													bind:value={scriptForm.local_raw_path}
-												/>
-												<p class="mt-1 text-xs text-gray-400">Local disk where ARM rips to.</p>
-											</div>
-											<div>
-												<label for="script-shared-raw" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-													SHARED_RAW_PATH
-												</label>
-												<input
-													id="script-shared-raw"
-													type="text"
-													class={inputClass}
-													placeholder="e.g. /mnt/media/raw"
-													bind:value={scriptForm.shared_raw_path}
-												/>
-												<p class="mt-1 text-xs text-gray-400">Shared storage handoff directory.</p>
-											</div>
-										</div>
-									</div>
-								{/if}
-							</div>
-
-							<!-- Generate & Save button -->
-							<div class="flex items-center gap-3">
-								<button
-									type="button"
-									onclick={handleSaveScript}
-									disabled={scriptSaving || !scriptForm.transcoder_url}
-									class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
-								>
-									{scriptSaving ? 'Saving...' : 'Generate & Save'}
-								</button>
-								{#if scriptFeedback}
-									<span class="text-sm {scriptFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-										{scriptFeedback.message}
-									</span>
-								{/if}
-							</div>
-
-							<!-- Script preview toggle -->
-							{#if scriptInfo?.content}
-								<div>
-									<button
-										type="button"
-										onclick={() => (showScriptPreview = !showScriptPreview)}
-										class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-									>
-										<svg
-											class="h-3.5 w-3.5 transform transition-transform {showScriptPreview ? 'rotate-90' : ''}"
-											fill="none" stroke="currentColor" viewBox="0 0 24 24"
-										>
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-										</svg>
-										Preview Script
-									</button>
-									{#if showScriptPreview}
-										<pre class="mt-2 max-h-80 overflow-auto rounded-md border border-primary/15 bg-page p-3 text-xs text-gray-700 dark:border-primary/20 dark:bg-primary/5 dark:text-gray-300">{scriptInfo.content}</pre>
-									{/if}
-								</div>
-							{/if}
+							<p class="mt-3 text-xs text-gray-400">API authentication is configured via Docker environment variables (REQUIRE_API_AUTH, API_KEY) on the transcoder container. The webhook secret is set in Notifications &gt; Transcoder and must match WEBHOOK_SECRET on the transcoder.</p>
 						</div>
 					{/if}
 				</div>
