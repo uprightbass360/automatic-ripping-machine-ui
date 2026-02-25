@@ -1,4 +1,8 @@
+[![CI](https://github.com/uprightbass360/automatic-ripping-machine-ui/actions/workflows/test.yml/badge.svg)](https://github.com/uprightbass360/automatic-ripping-machine-ui/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/uprightbass360/automatic-ripping-machine-ui/graph/badge.svg)](https://codecov.io/gh/uprightbass360/automatic-ripping-machine-ui)
+[![GitHub release](https://img.shields.io/github/v/release/uprightbass360/automatic-ripping-machine-ui)](https://github.com/uprightbass360/automatic-ripping-machine-ui/releases/latest)
+[![Docker Image](https://img.shields.io/docker/v/uprightbass360/arm-ui?label=docker)](https://hub.docker.com/r/uprightbass360/arm-ui)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # ARM UI
 
