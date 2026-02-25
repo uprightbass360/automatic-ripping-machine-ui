@@ -1481,7 +1481,7 @@
 
 		<!-- Reusable ARM settings renderer -->
 		{#snippet armSettingsSection(tabKey: string, includeUnmapped?: boolean)}
-			{#if settings.arm_config}
+			{#if settings?.arm_config}
 				{@const groups = getArmGroups(settings.arm_config, TAB_ARM_GROUPS[tabKey] ?? [], includeUnmapped ?? false)}
 				{#if groups.length === 0 && armSearch}
 					<p class="py-4 text-center text-sm text-gray-400">No settings match "{armSearch}"</p>
