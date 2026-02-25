@@ -327,8 +327,6 @@
 		// Video Ripping
 		VIDEOTYPE: { label: 'Video Type', description: 'auto, series, or movie — how to identify inserted discs' },
 		RIPMETHOD: { label: 'Rip Method', description: 'mkv (MakeMKV), backup (full disc), or backup_dvd' },
-		RIPMETHOD_DVD: { label: 'Rip Method (DVD)', description: 'Override rip method for DVDs' },
-		RIPMETHOD_BR: { label: 'Rip Method (Blu-ray)', description: 'Override rip method for Blu-rays' },
 		PREVENT_99: { label: 'Track 99 Protection', description: 'Eject discs with DRM fake-title schemes instead of risking a hang' },
 		ARM_CHECK_UDF: { label: 'Check UDF Filesystem', description: 'Distinguish UDF video discs from data discs' },
 		GET_VIDEO_TITLE: { label: 'Lookup Video Title', description: 'Query metadata services for the movie/series title' },
@@ -430,7 +428,7 @@
 				{ keys: ['MINLENGTH', 'MAXLENGTH', 'MAINFEATURE', 'PREVENT_99', 'ALLOW_DUPLICATES'] },
 			]},
 			{ label: 'Rip Method', subpanels: [
-				{ keys: ['RIPMETHOD', 'RIPMETHOD_DVD', 'RIPMETHOD_BR', 'MKV_ARGS', 'DATA_RIP_PARAMETERS'] },
+				{ keys: ['RIPMETHOD', 'MKV_ARGS', 'DATA_RIP_PARAMETERS'] },
 			]},
 			{ label: 'MakeMKV', subpanels: [
 				{ keys: ['MAKEMKV_PERMA_KEY', 'MAKEMKV_COMMUNITY_KEYDB', 'MAX_CONCURRENT_MAKEMKVINFO'] },
