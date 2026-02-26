@@ -167,7 +167,7 @@
 
 <div class="overflow-hidden rounded-lg border-2 border-primary bg-surface shadow-md dark:border-primary dark:bg-surface-dark">
 	<!-- Status bar -->
-	<div class="flex items-center justify-between bg-primary px-4 py-1.5 dark:bg-primary-dark">
+	<div class="flex items-center justify-between bg-primary px-4 py-1.5">
 		<div class="flex items-center gap-2">
 			<div class="h-2 w-2 animate-pulse rounded-full bg-white/80"></div>
 			<span class="text-sm font-semibold text-on-primary">Waiting for Review</span>
