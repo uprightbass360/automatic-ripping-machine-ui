@@ -340,7 +340,7 @@ def get_job_retranscode_info(job_id: int) -> dict | None:
             year = job.year or job.year_auto or ""
 
             return {
-                "title": f"ARM rip complete: {title}",
+                "title": title,
                 "body": f"{title} ({year})" if year else title,
                 "path": job.raw_path or job.path or "",
                 "job_id": job.job_id,

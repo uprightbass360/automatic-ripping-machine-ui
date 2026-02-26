@@ -80,7 +80,7 @@ async def retranscode_transcoder_job(job_id: int):
         raise HTTPException(status_code=400, detail=f"Cannot re-transcode job with status '{status}'")
 
     payload = {
-        "title": f"Re-transcode: {job.get('title', 'Unknown')}",
+        "title": job.get("title", "Unknown"),
         "body": job.get("title", "Unknown"),
         "path": job.get("source_path", ""),
         "job_id": job.get("arm_job_id"),
