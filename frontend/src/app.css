@@ -35,6 +35,11 @@
 		color-scheme: dark;
 	}
 
+	button:not(:disabled),
+	[role="button"]:not(:disabled) {
+		cursor: pointer;
+	}
+
 	body {
 		@apply bg-page text-gray-900 dark:bg-page-dark dark:text-gray-100;
 	}
