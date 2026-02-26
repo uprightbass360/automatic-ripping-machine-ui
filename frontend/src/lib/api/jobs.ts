@@ -66,6 +66,36 @@ export function updateJobConfig(jobId: number, data: Partial<JobConfigUpdate>): 
 	});
 }
 
+export interface CrcLookupResult {
+	title: string;
+	year: string;
+	imdb_id: string;
+	tmdb_id: string;
+	video_type: string;
+	disctype: string;
+	label: string;
+	poster_url: string;
+	hasnicetitle: string;
+	validated: string;
+	date_added: string;
+}
+
+export interface CrcLookupResponse {
+	found: boolean;
+	results: CrcLookupResult[];
+	no_crc?: boolean;
+	error?: string;
+	has_api_key?: boolean;
+}
+
+export function fetchCrcLookup(jobId: number): Promise<CrcLookupResponse> {
+	return apiFetch<CrcLookupResponse>(`/api/jobs/${jobId}/crc-lookup`);
+}
+
+export function submitToCrcDb(id: number): Promise<unknown> {
+	return apiFetch(`/api/jobs/${id}/crc-submit`, { method: 'POST' });
+}
+
 export interface RipProgress {
 	progress: number | null;
 	stage: string | null;

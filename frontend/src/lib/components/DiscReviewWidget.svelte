@@ -6,6 +6,7 @@
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
 	import RipSettings from './RipSettings.svelte';
+	import CrcLookup from './CrcLookup.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 
 	interface Props {
@@ -23,6 +24,7 @@
 	let initialLoading = $state(true);
 	let showInfo = $state(false);
 	let showTitleSearch = $state(false);
+	let showCrcLookup = $state(false);
 	let showRipSettings = $state(false);
 	let cancelling = $state(false);
 	let starting = $state(false);
@@ -71,6 +73,9 @@
 	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
 	let isVideo = $derived(
 		job.disctype === 'dvd' || job.disctype === 'bluray' || job.disctype === 'bluray4k' || job.video_type === 'movie' || job.video_type === 'series'
+	);
+	let hasCrcData = $derived(
+		job.disctype === 'dvd' || !!job.crc_id
 	);
 	let discLabelDiffers = $derived(
 		!!job.label && !!job.title && job.label.toLowerCase() !== job.title.toLowerCase()
@@ -122,16 +127,24 @@
 		}
 	}
 
-	function toggleSection(section: 'info' | 'title' | 'settings') {
+	function handleCrcApply() {
+		onrefresh?.();
+		loadDetail();
+	}
+
+	function toggleSection(section: 'info' | 'title' | 'crc' | 'settings') {
 		if (section === 'info') {
 			showInfo = !showInfo;
-			if (showInfo) { showTitleSearch = false; showRipSettings = false; }
+			if (showInfo) { showTitleSearch = false; showCrcLookup = false; showRipSettings = false; }
 		} else if (section === 'title') {
 			showTitleSearch = !showTitleSearch;
-			if (showTitleSearch) { showInfo = false; showRipSettings = false; }
+			if (showTitleSearch) { showInfo = false; showCrcLookup = false; showRipSettings = false; }
+		} else if (section === 'crc') {
+			showCrcLookup = !showCrcLookup;
+			if (showCrcLookup) { showInfo = false; showTitleSearch = false; showRipSettings = false; }
 		} else {
 			showRipSettings = !showRipSettings;
-			if (showRipSettings) { showInfo = false; showTitleSearch = false; }
+			if (showRipSettings) { showInfo = false; showTitleSearch = false; showCrcLookup = false; }
 		}
 	}
 
@@ -238,6 +251,16 @@
 					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
 			>
 				Search/Edit Title
+			</button>
+		{/if}
+		{#if hasCrcData}
+			<button
+				onclick={() => toggleSection('crc')}
+				class="{btnBase} {showCrcLookup
+					? 'bg-primary text-on-primary'
+					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
+			>
+				CRC Database
 			</button>
 		{/if}
 		<button
@@ -399,6 +422,17 @@
 						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Output Path</span>
 						<input type="text" bind:value={infoPath} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 					</label>
+
+					<!-- Link to full job detail -->
+					<a
+						href="/jobs/{job.job_id}"
+						class="{btnBase} inline-flex items-center gap-1 bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15"
+					>
+						View Full Details
+						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+						</svg>
+					</a>
 				</div>
 			{/if}
 		</div>
@@ -407,6 +441,12 @@
 	{#if showTitleSearch && isVideo}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
 			<TitleSearch {job} onapply={handleTitleApply} />
+		</div>
+	{/if}
+
+	{#if showCrcLookup && hasCrcData}
+		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
+			<CrcLookup {job} onapply={handleCrcApply} />
 		</div>
 	{/if}
 

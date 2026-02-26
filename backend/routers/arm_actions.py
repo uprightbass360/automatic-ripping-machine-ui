@@ -58,6 +58,12 @@ async def start_waiting_job(job_id: int) -> dict[str, Any]:
     return _check_result(await arm_client.start_waiting_job(job_id))
 
 
+@router.post("/{job_id}/crc-submit")
+async def crc_submit(job_id: int) -> dict[str, Any]:
+    """Submit a job's CRC data to the community database (proxies to ARM)."""
+    return _check_result(await arm_client.send_to_crc_db(job_id))
+
+
 # --- System-level actions (separate prefix) ---
 
 class RippingEnabledRequest(BaseModel):

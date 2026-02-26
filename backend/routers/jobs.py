@@ -8,7 +8,7 @@ from backend.models.schemas import (
     SearchResultSchema,
     TrackSchema,
 )
-from backend.services import arm_db, metadata, progress, transcoder_client
+from backend.services import arm_db, crc_lookup, metadata, progress, transcoder_client
 from backend.services.metadata import MetadataConfigError
 
 router = APIRouter(prefix="/api", tags=["jobs"])
@@ -49,7 +49,20 @@ def get_job_progress(job_id: int):
     job = arm_db.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    return progress.get_rip_progress(job.logfile)
+    return progress.get_rip_progress(job.job_id)
+
+
+@router.get("/jobs/{job_id}/crc-lookup")
+async def crc_lookup_endpoint(job_id: int):
+    """Look up a job's CRC64 hash in the community database."""
+    job = arm_db.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if not job.crc_id:
+        return {"no_crc": True, "found": False, "results": [], "has_api_key": False}
+    result = await crc_lookup.lookup_crc(job.crc_id)
+    result["has_api_key"] = crc_lookup.has_api_key()
+    return result
 
 
 @router.get("/metadata/search", response_model=list[SearchResultSchema])

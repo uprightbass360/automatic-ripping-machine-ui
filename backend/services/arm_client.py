@@ -173,6 +173,16 @@ async def get_paths() -> list[dict[str, Any]] | None:
         return None
 
 
+async def send_to_crc_db(job_id: int) -> dict[str, Any] | None:
+    """Submit a job's CRC data to the community database. Returns None if ARM is unreachable."""
+    try:
+        resp = await get_client().post(f"/api/v1/jobs/{job_id}/send")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError):
+        return None
+
+
 async def update_drive(drive_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
     """Update a drive's name/description via ARM's REST API. Returns None if unreachable."""
     try:

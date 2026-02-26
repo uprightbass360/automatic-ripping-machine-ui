@@ -8,12 +8,14 @@
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TitleSearch from '$lib/components/TitleSearch.svelte';
 	import RipSettings from '$lib/components/RipSettings.svelte';
+	import CrcLookup from '$lib/components/CrcLookup.svelte';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
 	import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
 
 	let job = $state<JobDetail | null>(null);
 	let error = $state<string | null>(null);
 	let showTitleSearch = $state(false);
+	let showCrcLookup = $state(false);
 	let showRipSettings = $state(false);
 	let retranscoding = $state(false);
 	let retranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -38,6 +40,10 @@
 
 	let isMusicDisc = $derived(
 		job?.disctype === 'music' || job?.video_type === 'music'
+	);
+
+	let hasCrcData = $derived(
+		job?.disctype === 'dvd' || !!job?.crc_id
 	);
 
 	let hasAutoManualDiff = $derived(
@@ -102,11 +108,11 @@
 {:else}
 	<div class="space-y-6">
 		<!-- Back link -->
-		<a href="/jobs" class="inline-flex items-center gap-1 text-sm text-primary-text hover:underline dark:text-primary-text-dark">
+		<a href="/" class="inline-flex items-center gap-1 text-sm text-primary-text hover:underline dark:text-primary-text-dark">
 			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 			</svg>
-			Back to Jobs
+			Back to Dashboard
 		</a>
 
 		<!-- Header -->
@@ -253,6 +259,34 @@
 						</button>
 					</div>
 					<TitleSearch {job} onapply={handleTitleApply} />
+				</section>
+			{/if}
+		{/if}
+
+		<!-- CRC Database -->
+		{#if hasCrcData}
+			{#if !showCrcLookup}
+				<button
+					onclick={() => (showCrcLookup = true)}
+					class="rounded-lg px-3 py-1.5 text-sm font-medium bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15 transition-colors"
+				>
+					CRC Database
+				</button>
+			{:else}
+				<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
+					<div class="mb-3 flex items-center justify-between">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">CRC Database</h2>
+						<button
+							onclick={() => (showCrcLookup = false)}
+							aria-label="Close CRC database"
+							class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+						>
+							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+					<CrcLookup {job} onapply={loadJob} />
 				</section>
 			{/if}
 		{/if}

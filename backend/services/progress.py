@@ -1,4 +1,10 @@
-"""Read MakeMKV rip progress from ARM log files."""
+"""Read MakeMKV rip progress from ARM progress files.
+
+MakeMKV writes real-time PRGV/PRGC messages to a dedicated progress file
+at {LOGPATH}/progress/{job_id}.log via the ``--progress=`` flag.  This is
+separate from the main job log which only receives this data after the
+subprocess completes (stdout is buffered by subprocess.run).
+"""
 import logging
 import os
 import re
@@ -8,16 +14,14 @@ from backend.config import settings
 log = logging.getLogger(__name__)
 
 
-def get_rip_progress(logfile: str | None) -> dict:
-    """Parse MakeMKV progress from an ARM job's log file.
+def get_rip_progress(job_id: int) -> dict:
+    """Parse MakeMKV progress from a job's progress file.
 
     Returns {"progress": float | None, "stage": str | None}
     """
     result: dict = {"progress": None, "stage": None}
-    if not logfile:
-        return result
 
-    path = os.path.join(settings.arm_log_path, logfile)
+    path = os.path.join(settings.arm_log_path, "progress", f"{job_id}.log")
     if not os.path.isfile(path):
         return result
 
@@ -36,22 +40,23 @@ def get_rip_progress(logfile: str | None) -> dict:
     last_prgv = None
     last_prgc = None
     for line in lines:
-        m = re.search(r"PRGV:(\d{3,}),(\d+),(\d{3,})", line)
+        m = re.match(r"PRGV:(\d+),(\d+),(\d+)", line)
         if m:
             last_prgv = m
-        m = re.search(r'PRGC:\d+,(\d+),"([\w -]{2,})"', line)
+        m = re.match(r'PRGC:\d+,(\d+),"([^"]+)"', line)
         if m:
             last_prgc = m
 
     if last_prgv:
-        current = int(last_prgv.group(1))
+        # PRGV:current,total,max — total/max gives overall disc progress
+        total = int(last_prgv.group(2))
         maximum = int(last_prgv.group(3))
         if maximum > 0:
-            result["progress"] = round(current / maximum * 100, 1)
+            result["progress"] = round(total / maximum * 100, 1)
 
     if last_prgc:
         index = int(last_prgc.group(1)) + 1
         name = last_prgc.group(2)
-        result["stage"] = f"{index} - {name}"
+        result["stage"] = f"Title {index}: {name}"
 
     return result
