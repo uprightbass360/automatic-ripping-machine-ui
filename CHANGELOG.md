@@ -1,5 +1,13 @@
 # Changelog
 
+## [11.1.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.1.0-alpha.1...v11.1.1-alpha.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* send plain media title in webhook payload ([17a5310](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/17a531010245b77563772f4b30ebb87b92f098dd))
+* use vivid primary bg for review status bar on dark themes ([f1dab61](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f1dab61e25f99ea91259048d91fe036c13046741))
+
 ## [11.1.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.0.1-alpha.1...v11.1.0-alpha.1) (2026-02-26)
 
 
