@@ -1,5 +1,13 @@
 # Changelog
 
+## [11.0.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.0.0-alpha.1...v11.0.1-alpha.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* remove dead RIPMETHOD_DVD and RIPMETHOD_BR config fields ([1077a62](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1077a62aa55e5ec6515de057717a58d20ab7e866))
+* replace hardcoded paths with env vars in standalone compose ([5d365bb](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5d365bbe45ac067dd04ff8dec0345ebd8a1ba68d))
+
 ## [11.0.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v10.1.0-alpha.1...v11.0.0-alpha.1) (2026-02-25)
 
 
