@@ -1,5 +1,17 @@
 # Changelog
 
+## [11.1.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.0.1-alpha.1...v11.1.0-alpha.1) (2026-02-26)
+
+
+### Features
+
+* add CRC database lookup and submit to job detail and review widget ([28ca62d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/28ca62d7d611f67925a1ce4b50c4504b8afeea4b))
+
+
+### Bug Fixes
+
+* restore pointer cursor on buttons for Tailwind v4 ([6fb102e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6fb102e8664d900b4ff3193326965322dda15f38))
+
 ## [11.0.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.0.0-alpha.1...v11.0.1-alpha.1) (2026-02-26)
 
 
