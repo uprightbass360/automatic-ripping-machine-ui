@@ -159,7 +159,7 @@
 						href="https://www.imdb.com/title/{job.imdb_id}"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="inline-flex items-center gap-1 rounded bg-yellow-400 px-2 py-0.5 text-xs font-bold text-black"
+						class="inline-flex items-center gap-1 rounded-sm bg-yellow-400 px-2 py-0.5 text-xs font-bold text-black"
 					>
 						IMDb
 					</a>
@@ -226,7 +226,7 @@
 		<!-- Auto vs Manual title info -->
 		{#if hasAutoManualDiff}
 			<div class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm dark:border-amber-800 dark:bg-amber-900/20">
-				<svg class="h-4 w-4 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<svg class="h-4 w-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 				</svg>
 				<span class="text-amber-800 dark:text-amber-300">
@@ -251,7 +251,7 @@
 						<button
 							onclick={() => (showTitleSearch = false)}
 							aria-label="Close title search"
-							class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+							class="rounded-sm p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
 						>
 							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -279,7 +279,7 @@
 						<button
 							onclick={() => (showCrcLookup = false)}
 							aria-label="Close CRC database"
-							class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+							class="rounded-sm p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
 						>
 							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -306,7 +306,7 @@
 						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Rip Settings</h2>
 						<button
 							onclick={() => (showRipSettings = false)}
-							class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+							class="rounded-sm p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
 							aria-label="Close rip settings"
 						>
 							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

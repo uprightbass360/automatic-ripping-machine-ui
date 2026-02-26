@@ -199,7 +199,7 @@
 	<!-- Global pause banner -->
 	{#if dashReady && !dash.ripping_enabled}
 		<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
-			<div class="h-3 w-3 flex-shrink-0 rounded-full bg-amber-500"></div>
+			<div class="h-3 w-3 shrink-0 rounded-full bg-amber-500"></div>
 			<div>
 				<p class="font-medium text-amber-800 dark:text-amber-300">Ripping Paused</p>
 				<p class="text-sm text-amber-700 dark:text-amber-400">New discs will wait for manual start. Click "Start Ripping" on individual jobs or toggle "Accepting Discs" to resume.</p>
@@ -217,7 +217,7 @@
 	<!-- Service status banners -->
 	{#if dashReady && !dash.db_available}
 		<div class="flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-900/20">
-			<div class="h-3 w-3 flex-shrink-0 rounded-full bg-yellow-500"></div>
+			<div class="h-3 w-3 shrink-0 rounded-full bg-yellow-500"></div>
 			<div>
 				<p class="font-medium text-yellow-800 dark:text-yellow-300">ARM Database Unavailable</p>
 				<p class="text-sm text-yellow-700 dark:text-yellow-400">Cannot connect to the ARM database. Check that the database file is mounted and the path is correct.</p>
@@ -227,7 +227,7 @@
 
 	{#if dashReady && !dash.transcoder_online}
 		<div class="flex items-center gap-3 rounded-lg border border-primary/25 bg-page p-4 dark:border-primary/25 dark:bg-page-dark">
-			<div class="h-3 w-3 flex-shrink-0 rounded-full bg-gray-400"></div>
+			<div class="h-3 w-3 shrink-0 rounded-full bg-gray-400"></div>
 			<div>
 				<p class="font-medium text-gray-700 dark:text-gray-300">Transcoder Offline</p>
 				<p class="text-sm text-gray-500 dark:text-gray-400">The transcoder service is not responding. Transcoding features are unavailable.</p>
@@ -238,9 +238,9 @@
 	<!-- Stats cards -->
 	<div class="grid grid-cols-3 gap-4">
 		<!-- Active Rips -->
-		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 			<div class="flex items-center gap-3">
-				<div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-light-bg dark:bg-primary-light-bg-dark/30">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light-bg dark:bg-primary-light-bg-dark/30">
 					<svg class="h-5 w-5 text-primary dark:text-primary-text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 						<circle cx="12" cy="12" r="10" />
 						<circle cx="12" cy="12" r="3" />
@@ -256,9 +256,9 @@
 			</div>
 		</div>
 		<!-- Active Transcodes -->
-		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 			<div class="flex items-center gap-3">
-				<div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
 					<svg class="h-5 w-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
 					</svg>
@@ -272,9 +272,9 @@
 			</div>
 		</div>
 		<!-- Drives Online -->
-		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 			<div class="flex items-center gap-3">
-				<div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
 					<svg class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
 					</svg>
@@ -307,7 +307,7 @@
 			</span>
 		</div>
 		<div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<div class="flex items-center gap-2">
 					<svg class="h-4 w-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -316,7 +316,7 @@
 				</div>
 				<p class="mt-1 text-3xl font-bold text-yellow-600 dark:text-yellow-400">{dash.transcoder_stats?.pending ?? 0}</p>
 			</div>
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<div class="flex items-center gap-2">
 					<svg class="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -325,7 +325,7 @@
 				</div>
 				<p class="mt-1 text-3xl font-bold text-blue-600 dark:text-blue-400">{dash.transcoder_stats?.processing ?? 0}</p>
 			</div>
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<div class="flex items-center gap-2">
 					<svg class="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -334,7 +334,7 @@
 				</div>
 				<p class="mt-1 text-3xl font-bold text-green-600 dark:text-green-400">{dash.transcoder_stats?.completed ?? 0}</p>
 			</div>
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<div class="flex items-center gap-2">
 					<svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -343,7 +343,7 @@
 				</div>
 				<p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">{dash.transcoder_stats?.failed ?? 0}</p>
 			</div>
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<div class="flex items-center gap-2">
 					<svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -492,13 +492,13 @@
 							<button
 								disabled={jobsData.page <= 1}
 								onclick={() => goPage(jobsData!.page - 1)}
-								class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
+								class="rounded-sm px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
 							>Prev</button>
 							{#each Array.from({ length: jobsData.pages }, (_, i) => i + 1) as p}
 								{#if p === jobsData.page || p === 1 || p === jobsData.pages || Math.abs(p - jobsData.page) <= 1}
 									<button
 										onclick={() => goPage(p)}
-										class="rounded px-3 py-1 text-sm {p === jobsData.page ? 'bg-primary text-on-primary' : 'bg-primary/15 dark:bg-primary/15 dark:text-gray-300'}"
+										class="rounded-sm px-3 py-1 text-sm {p === jobsData.page ? 'bg-primary text-on-primary' : 'bg-primary/15 dark:bg-primary/15 dark:text-gray-300'}"
 									>{p}</button>
 								{:else if Math.abs(p - jobsData.page) === 2}
 									<span class="px-1 text-gray-400">...</span>
@@ -507,7 +507,7 @@
 							<button
 								disabled={jobsData.page >= jobsData.pages}
 								onclick={() => goPage(jobsData!.page + 1)}
-								class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
+								class="rounded-sm px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
 							>Next</button>
 						</div>
 					</div>

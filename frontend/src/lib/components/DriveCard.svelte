@@ -56,7 +56,7 @@
 	}
 </script>
 
-<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 	<div class="mb-3 flex items-center justify-between">
 		{#if editing}
 			<div class="flex items-center gap-2">
@@ -64,18 +64,18 @@
 					type="text"
 					bind:value={editName}
 					onkeydown={onKeydown}
-					class="rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm font-semibold text-gray-900 dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class="rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm font-semibold text-gray-900 dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 					disabled={saving}
 				/>
 				<button
 					onclick={saveEdit}
 					disabled={saving}
-					class="rounded bg-primary px-2 py-1 text-xs text-on-primary hover:bg-primary-hover disabled:opacity-50"
+					class="rounded-sm bg-primary px-2 py-1 text-xs text-on-primary hover:bg-primary-hover disabled:opacity-50"
 				>Save</button>
 				<button
 					onclick={cancelEdit}
 					disabled={saving}
-					class="rounded px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+					class="rounded-sm px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
 				>Cancel</button>
 			</div>
 		{:else}
@@ -112,17 +112,17 @@
 
 	<div class="mt-3 flex flex-wrap gap-1.5">
 		{#if drive.read_cd}
-			<span class="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
+			<span class="inline-flex items-center gap-1 rounded-sm bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
 				<DiscTypeIcon disctype="music" size="h-3.5 w-3.5" />CD
 			</span>
 		{/if}
 		{#if drive.read_dvd}
-			<span class="inline-flex items-center gap-1 rounded bg-primary-light-bg px-1.5 py-0.5 text-xs text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark">
+			<span class="inline-flex items-center gap-1 rounded-sm bg-primary-light-bg px-1.5 py-0.5 text-xs text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark">
 				<DiscTypeIcon disctype="dvd" size="h-3.5 w-3.5" />DVD
 			</span>
 		{/if}
 		{#if drive.read_bd}
-			<span class="inline-flex items-center gap-1 rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+			<span class="inline-flex items-center gap-1 rounded-sm bg-purple-100 px-1.5 py-0.5 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
 				<DiscTypeIcon disctype="bluray" size="h-3.5 w-3.5" />Blu-ray
 			</span>
 			<label class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
@@ -131,7 +131,7 @@
 					checked={drive.uhd_capable ?? false}
 					disabled={togglingUhd}
 					onchange={toggleUhd}
-					class="h-3.5 w-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700"
+					class="h-3.5 w-3.5 rounded-sm border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700"
 				/>
 				UHD Capable
 			</label>

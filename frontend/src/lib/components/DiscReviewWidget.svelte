@@ -184,10 +184,10 @@
 			<img
 				src={job.poster_url}
 				alt={job.title ?? 'Poster'}
-				class="h-24 w-16 flex-shrink-0 rounded object-cover"
+				class="h-24 w-16 shrink-0 rounded-sm object-cover"
 			/>
 		{:else}
-			<div class="flex h-24 w-16 flex-shrink-0 items-center justify-center rounded {typeConfig.placeholderClasses}">
+			<div class="flex h-24 w-16 shrink-0 items-center justify-center rounded-sm {typeConfig.placeholderClasses}">
 				<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 					<circle cx="12" cy="12" r="10" />
 					<circle cx="12" cy="12" r="3" />
@@ -210,7 +210,7 @@
 						href="https://www.imdb.com/title/{job.imdb_id}/"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="inline-flex items-center rounded bg-yellow-400 px-1.5 py-0.5 text-xs font-bold text-black hover:bg-yellow-300"
+						class="inline-flex items-center rounded-sm bg-yellow-400 px-1.5 py-0.5 text-xs font-bold text-black hover:bg-yellow-300"
 					>IMDb</a>
 				{/if}
 			</div>
@@ -221,10 +221,10 @@
 			{/if}
 			<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
 				{#if job.devpath}
-					<span class="rounded bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">{driveName ?? job.devpath}</span>
+					<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">{driveName ?? job.devpath}</span>
 				{/if}
 				{#if job.disctype}
-					<span class="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">
+					<span class="inline-flex items-center gap-1 rounded-sm bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">
 						<DiscTypeIcon disctype={job.disctype} size="h-3.5 w-3.5" />
 						{discTypeLabel(job.disctype)}
 					</span>
@@ -300,9 +300,9 @@
 							<span class="text-gray-500 dark:text-gray-400">Auto-detected:</span>
 							<span class="font-medium text-gray-700 dark:text-gray-300">{job.title_auto}{#if job.year_auto} ({job.year_auto}){/if}</span>
 							{#if job.hasnicetitle}
-								<span class="rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">confident</span>
+								<span class="rounded-sm bg-green-100 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">confident</span>
 							{:else}
-								<span class="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">best guess</span>
+								<span class="rounded-sm bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">best guess</span>
 							{/if}
 						</div>
 					{/if}
@@ -311,28 +311,28 @@
 					<div class="space-y-2">
 						<label class="block">
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
-							<input type="text" bind:value={infoTitle} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+							<input type="text" bind:value={infoTitle} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 						</label>
 						<div class="grid grid-cols-3 gap-3">
 							<label>
 								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
-								<input type="text" bind:value={infoYear} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+								<input type="text" bind:value={infoYear} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 							</label>
 							<label>
 								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</span>
-								<select bind:value={infoType} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white">
+								<select bind:value={infoType} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white">
 									<option value="movie">Movie</option>
 									<option value="series">Series</option>
 								</select>
 							</label>
 							<label>
 								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
-								<input type="text" bind:value={infoImdbId} placeholder="tt..." class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+								<input type="text" bind:value={infoImdbId} placeholder="tt..." class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 							</label>
 						</div>
 						<label class="block">
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Poster URL</span>
-							<input type="text" bind:value={infoPosterUrl} placeholder="https://..." class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+							<input type="text" bind:value={infoPosterUrl} placeholder="https://..." class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 						</label>
 					</div>
 
@@ -405,7 +405,7 @@
 												<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.fps ?? '--'}</td>
 												<td class="px-3 py-1.5">
 													{#if track.main_feature}
-														<span class="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary-text dark:bg-primary/20 dark:text-primary-text-dark">MAIN</span>
+														<span class="rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary-text dark:bg-primary/20 dark:text-primary-text-dark">MAIN</span>
 													{/if}
 												</td>
 												<td class="px-3 py-1.5 font-mono text-gray-500 dark:text-gray-400">{track.filename ?? track.basename ?? '--'}</td>
@@ -420,7 +420,7 @@
 					<!-- Output path -->
 					<label class="block text-sm">
 						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Output Path</span>
-						<input type="text" bind:value={infoPath} class="w-full rounded border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+						<input type="text" bind:value={infoPath} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 					</label>
 
 					<!-- Link to full job detail -->

@@ -162,13 +162,13 @@
 					<button
 						disabled={data.page <= 1}
 						onclick={() => goPage(data!.page - 1)}
-						class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
+						class="rounded-sm px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
 					>Prev</button>
 					{#each Array.from({ length: data.pages }, (_, i) => i + 1) as p}
 						{#if p === data.page || p === 1 || p === data.pages || Math.abs(p - data.page) <= 1}
 							<button
 								onclick={() => goPage(p)}
-								class="rounded px-3 py-1 text-sm {p === data.page ? 'bg-primary text-on-primary' : 'bg-primary/15 dark:bg-primary/15 dark:text-gray-300'}"
+								class="rounded-sm px-3 py-1 text-sm {p === data.page ? 'bg-primary text-on-primary' : 'bg-primary/15 dark:bg-primary/15 dark:text-gray-300'}"
 							>{p}</button>
 						{:else if Math.abs(p - data.page) === 2}
 							<span class="px-1 text-gray-400">...</span>
@@ -177,7 +177,7 @@
 					<button
 						disabled={data.page >= data.pages}
 						onclick={() => goPage(data!.page + 1)}
-						class="rounded px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
+						class="rounded-sm px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
 					>Next</button>
 				</div>
 			</div>

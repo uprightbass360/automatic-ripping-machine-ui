@@ -668,7 +668,7 @@
 	}
 
 	// Input class shared across all ARM fields
-	const inputClass = 'w-full rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
+	const inputClass = 'w-full rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
 </script>
 
 <svelte:head>
@@ -728,7 +728,7 @@
 					<button
 						type="button"
 						onclick={() => toggleBool(key)}
-						class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+						class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
 							{val?.toString().toLowerCase() === 'true'
 							? 'bg-primary'
 							: 'bg-primary/30 dark:bg-primary/20'}"
@@ -752,7 +752,7 @@
 					<input
 						id="arm-{key}"
 						type={armRevealedKeys.has(key) ? 'text' : 'password'}
-						class="flex-1 rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+						class="flex-1 rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 						value={val?.toString() ?? ''}
 						oninput={(e) => (armForm[key] = (e.target as HTMLInputElement).value)}
 					/>
@@ -816,7 +816,7 @@
 			{#each HW_GROUPS as group}
 				{@const available = hasAny(gpu, group.keys)}
 				<div
-					class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark"
+					class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark"
 				>
 					<div class="mb-3 flex items-center gap-2">
 						<span
@@ -883,7 +883,7 @@
 				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Status</h2>
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<!-- Connection card -->
-					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 						<h3 class="mb-3 font-semibold text-gray-900 dark:text-white">Connection</h3>
 						<button
 							type="button"
@@ -917,7 +917,7 @@
 					</div>
 
 					<!-- Webhook card -->
-					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 						<h3 class="mb-3 font-semibold text-gray-900 dark:text-white">Webhook</h3>
 						<div class="mb-3">
 							<label for="webhook-secret" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook Secret</label>
@@ -959,7 +959,7 @@
 
 					<!-- Authentication info card (full width) -->
 					{#if settings.transcoder_auth_status}
-						<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm md:col-span-2 dark:border-primary/20 dark:bg-surface-dark">
+						<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs md:col-span-2 dark:border-primary/20 dark:bg-surface-dark">
 							<h3 class="mb-3 font-semibold text-gray-900 dark:text-white">Authentication</h3>
 							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 								<div class="flex items-center gap-2 text-sm">
@@ -1133,15 +1133,15 @@
 							<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Output Directories</h3>
 							{#if tcPaths}
 								<div class="grid grid-cols-1 gap-2 text-xs md:grid-cols-3">
-									<div class="rounded bg-primary/10 px-2 py-1 dark:bg-primary/15">
+									<div class="rounded-sm bg-primary/10 px-2 py-1 dark:bg-primary/15">
 										<span class="font-medium text-gray-500 dark:text-gray-400">Raw:</span>
 										<span class="ml-1 font-mono text-gray-700 dark:text-gray-200">{tcPaths.raw_path}</span>
 									</div>
-									<div class="rounded bg-primary/10 px-2 py-1 dark:bg-primary/15">
+									<div class="rounded-sm bg-primary/10 px-2 py-1 dark:bg-primary/15">
 										<span class="font-medium text-gray-500 dark:text-gray-400">Completed:</span>
 										<span class="ml-1 font-mono text-gray-700 dark:text-gray-200">{tcPaths.completed_path}</span>
 									</div>
-									<div class="rounded bg-primary/10 px-2 py-1 dark:bg-primary/15">
+									<div class="rounded-sm bg-primary/10 px-2 py-1 dark:bg-primary/15">
 										<span class="font-medium text-gray-500 dark:text-gray-400">Work:</span>
 										<span class="ml-1 font-mono text-gray-700 dark:text-gray-200">{tcPaths.work_path}</span>
 									</div>
@@ -1186,7 +1186,7 @@
 										<button
 											type="button"
 											onclick={() => (tcForm.delete_source = !tcForm.delete_source)}
-											class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+											class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
 												{tcForm.delete_source ? 'bg-primary' : 'bg-primary/30 dark:bg-primary/20'}"
 											role="switch"
 											aria-checked={!!tcForm.delete_source}
@@ -1238,7 +1238,7 @@
 														<button
 															type="button"
 															onclick={() => (tcForm[key] = !tcForm[key])}
-															class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+															class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
 																{tcForm[key] ? 'bg-primary' : 'bg-primary/30 dark:bg-primary/20'}"
 															role="switch"
 															aria-checked={!!tcForm[key]}
@@ -1358,7 +1358,7 @@
 				<input
 					type="text"
 					placeholder="Filter settings..."
-					class="w-56 rounded-md border border-primary/25 bg-primary/5 py-1.5 pl-8 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+					class="w-56 rounded-md border border-primary/25 bg-primary/5 py-1.5 pl-8 pr-3 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
 					bind:value={armSearch}
 				/>
 				{#if armSearch}
@@ -1409,7 +1409,7 @@
 						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
 						<div class="grid grid-cols-2 gap-4 md:grid-cols-5">
 							{#each Object.entries(systemInfo.versions) as [name, version]}
-								<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+								<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 									<p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{name}</p>
 									<div class="mt-1 flex items-center gap-2">
 										<div class="h-2 w-2 rounded-full {version === 'offline' ? 'bg-red-400' : version === 'unknown' ? 'bg-gray-400' : 'bg-green-400'}"></div>
@@ -1467,7 +1467,7 @@
 					<!-- Database -->
 					<section>
 						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Database</h2>
-						<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+						<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 							<dl class="grid grid-cols-3 gap-4 text-sm">
 								<div>
 									<dt class="text-gray-500 dark:text-gray-400">Path</dt>
@@ -1514,7 +1514,7 @@
 												<td class="px-4 py-2">
 													<div class="flex gap-1">
 														{#each drive.capabilities as cap}
-															<span class="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary-text dark:bg-primary/15 dark:text-primary-text-dark">{cap}</span>
+															<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary-text dark:bg-primary/15 dark:text-primary-text-dark">{cap}</span>
 														{/each}
 													</div>
 												</td>
@@ -1545,7 +1545,7 @@
 		{#if activeTab === 'appearance'}
 			<section class="space-y-6">
 				<!-- Color Scheme -->
-				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 					<h2 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Color Scheme</h2>
 					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Choose an accent color for buttons, links, and highlights throughout the UI.</p>
 					<div class="flex flex-wrap gap-3">
@@ -1566,7 +1566,7 @@
 				</div>
 
 				<!-- Dark Mode -->
-				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 					<div class="flex items-center justify-between">
 						<div>
 							<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Dark Mode</h2>
@@ -1576,7 +1576,7 @@
 							<button
 								type="button"
 								onclick={toggleTheme}
-								class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+								class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
 									{$theme === 'dark' ? 'bg-primary' : 'bg-primary/30 dark:bg-primary/20'}"
 								role="switch"
 								aria-checked={$theme === 'dark'}
@@ -1603,7 +1603,7 @@
 	<div class="fixed bottom-0 left-0 right-0 z-50 border-t border-primary/30 bg-surface/95 shadow-lg backdrop-blur-sm dark:border-primary/30 dark:bg-surface-dark/95">
 		<div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
 			<div class="flex items-center gap-3">
-				<span class="h-2 w-2 flex-shrink-0 rounded-full bg-primary animate-pulse"></span>
+				<span class="h-2 w-2 shrink-0 rounded-full bg-primary animate-pulse"></span>
 				<span class="text-sm font-bold text-gray-700 dark:text-gray-300">Unsaved {dirtyTabLabel} changes</span>
 				{#if anyFeedback}
 					<span

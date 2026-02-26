@@ -139,7 +139,7 @@
 	const btnBase =
 		'rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50 transition-colors';
 	const inputBase =
-		'rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
+		'rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
 </script>
 
 <div class="space-y-4">
@@ -219,7 +219,7 @@
 						<div class="mt-1 flex items-center gap-1.5">
 							<span class="text-xs text-gray-500 dark:text-gray-400">{result.year}</span>
 							<span
-								class="rounded px-1 py-0.5 text-[10px] font-medium uppercase {result.media_type === 'series'
+								class="rounded-sm px-1 py-0.5 text-[10px] font-medium uppercase {result.media_type === 'series'
 									? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
 									: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}"
 							>

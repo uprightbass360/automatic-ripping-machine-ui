@@ -53,7 +53,7 @@
 					href="https://www.imdb.com/title/{job.imdb_id}/"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="inline-flex items-center rounded bg-yellow-400 px-1 py-0.5 text-[10px] font-bold leading-none text-black hover:bg-yellow-300"
+					class="inline-flex items-center rounded-sm bg-yellow-400 px-1 py-0.5 text-[10px] font-bold leading-none text-black hover:bg-yellow-300"
 				>IMDb</a>
 			{/if}
 		</div>
@@ -79,7 +79,7 @@
 
 	<!-- Type (colored badge) -->
 	<td class="px-4 py-3 text-sm">
-		<span class="rounded px-1.5 py-0.5 text-xs font-medium {typeConfig.badgeClasses}">{typeConfig.label}</span>
+		<span class="rounded-sm px-1.5 py-0.5 text-xs font-medium {typeConfig.badgeClasses}">{typeConfig.label}</span>
 	</td>
 
 	<!-- Disc -->

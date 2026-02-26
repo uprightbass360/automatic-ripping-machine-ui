@@ -26,17 +26,17 @@
 
 <a
 	href="/jobs/{job.job_id}"
-	class="block rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-sm transition hover:shadow-md dark:border-primary/20 dark:bg-surface-dark"
+	class="block rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs transition hover:shadow-md dark:border-primary/20 dark:bg-surface-dark"
 >
 	<div class="flex gap-4">
 		{#if job.poster_url}
 			<img
 				src={job.poster_url}
 				alt={job.title ?? 'Poster'}
-				class="h-24 w-16 rounded object-cover"
+				class="h-24 w-16 rounded-sm object-cover"
 			/>
 		{:else}
-			<div class="flex h-24 w-16 items-center justify-center rounded {typeConfig.placeholderClasses}">
+			<div class="flex h-24 w-16 items-center justify-center rounded-sm {typeConfig.placeholderClasses}">
 				<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 					<circle cx="12" cy="12" r="10" />
 					<circle cx="12" cy="12" r="3" />
@@ -61,7 +61,7 @@
 				{#if job.imdb_id}
 					<button
 						onclick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`https://www.imdb.com/title/${job.imdb_id}/`, '_blank', 'noopener,noreferrer'); }}
-						class="inline-flex items-center rounded bg-yellow-400 px-1.5 py-0.5 text-xs font-bold text-black hover:bg-yellow-300"
+						class="inline-flex items-center rounded-sm bg-yellow-400 px-1.5 py-0.5 text-xs font-bold text-black hover:bg-yellow-300"
 					>IMDb</button>
 				{/if}
 				{#if discLabelDiffers}
@@ -73,7 +73,7 @@
 			<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
 				{#if active}
 					{#if job.stage}
-						<span class="rounded bg-primary-light-bg px-1.5 py-0.5 font-medium text-primary-text dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">{job.stage}</span>
+						<span class="rounded-sm bg-primary-light-bg px-1.5 py-0.5 font-medium text-primary-text dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">{job.stage}</span>
 					{/if}
 					{#if job.status === 'info'}
 						<span>Scanning{job.no_of_titles ? `... ${job.no_of_titles} titles` : '...'}</span>
@@ -105,9 +105,9 @@
 
 			<!-- Row 4: Type badge, disctype, device, start time -->
 			<div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-				<span class="rounded px-1.5 py-0.5 font-medium {typeConfig.badgeClasses}">{typeConfig.label}</span>
+				<span class="rounded-sm px-1.5 py-0.5 font-medium {typeConfig.badgeClasses}">{typeConfig.label}</span>
 				{#if job.disctype}
-					<span class="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">
+					<span class="inline-flex items-center gap-1 rounded-sm bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">
 						<DiscTypeIcon disctype={job.disctype} size="h-3.5 w-3.5" />
 						{discTypeLabel(job.disctype)}
 					</span>
@@ -128,7 +128,7 @@
 					<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-primary/15 dark:bg-primary/15">
 						<div class="h-full rounded-full bg-primary transition-all duration-500" style="width: {Math.min(progress, 100)}%"></div>
 					</div>
-					<span class="flex-shrink-0 text-xs font-medium text-primary-text dark:text-primary-text-dark">{progress.toFixed(1)}%</span>
+					<span class="shrink-0 text-xs font-medium text-primary-text dark:text-primary-text-dark">{progress.toFixed(1)}%</span>
 				</div>
 				{#if progressStage}
 					<p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{progressStage}</p>

@@ -15,9 +15,9 @@
 	);
 </script>
 
-<div class="rounded-lg border border-primary/20 border-l-4 border-l-indigo-500 bg-surface p-4 shadow-sm dark:border-primary/20 dark:bg-surface-dark">
+<div class="rounded-lg border border-primary/20 border-l-4 border-l-indigo-500 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 	<div class="flex gap-4">
-		<div class="flex h-24 w-16 flex-shrink-0 items-center justify-center rounded bg-indigo-100 text-indigo-400 dark:bg-indigo-900/30 dark:text-indigo-500">
+		<div class="flex h-24 w-16 shrink-0 items-center justify-center rounded-sm bg-indigo-100 text-indigo-400 dark:bg-indigo-900/30 dark:text-indigo-500">
 			<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 				<path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
 			</svg>
@@ -40,7 +40,7 @@
 
 			<!-- Row 3: Elapsed time -->
 			<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-				<span class="rounded bg-indigo-100 px-1.5 py-0.5 font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">transcoding</span>
+				<span class="rounded-sm bg-indigo-100 px-1.5 py-0.5 font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">transcoding</span>
 				{#if job.started_at}
 					<span>{elapsedTime(job.started_at)}</span>
 				{/if}

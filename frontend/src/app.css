@@ -1,25 +1,34 @@
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+	--color-primary: rgb(37, 99, 235);
+	--color-primary-hover: rgb(29, 78, 216);
+	--color-primary-dark: rgb(30, 64, 175);
+	--color-primary-light-bg: rgb(219, 234, 254);
+	--color-primary-light-bg-dark: rgb(30, 58, 138);
+	--color-primary-text: rgb(29, 78, 216);
+	--color-primary-text-dark: rgb(96, 165, 250);
+	--color-primary-border: rgb(59, 130, 246);
+	--color-on-primary: rgb(255, 255, 255);
+	--color-page: rgb(232, 240, 255);
+	--color-page-dark: rgb(13, 16, 28);
+	--color-surface: rgb(241, 247, 255);
+	--color-surface-dark: rgb(22, 28, 45);
+
+	--animate-indeterminate: indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(400%); }
+}
 
 @layer base {
 	:root {
 		color-scheme: light;
-		--color-primary: 37 99 235;
-		--color-primary-hover: 29 78 216;
-		--color-primary-dark: 30 64 175;
-		--color-primary-light-bg: 219 234 254;
-		--color-primary-light-bg-dark: 30 58 138;
-		--color-primary-text: 29 78 216;
-		--color-primary-text-dark: 96 165 250;
-		--color-primary-border: 59 130 246;
-		--color-on-primary: 255 255 255;
-		--color-page-bg: 232 240 255;
-		--color-page-bg-dark: 13 16 28;
-		--color-surface: 241 247 255;
-		--color-surface-dark: 22 28 45;
 	}
 
 	.dark {
@@ -31,11 +40,11 @@
 	}
 
 	select option {
-		background-color: rgb(var(--color-surface));
+		background-color: var(--color-surface);
 		color: #111827;
 	}
 	.dark select option {
-		background-color: rgb(var(--color-surface-dark));
+		background-color: var(--color-surface-dark);
 		color: #fff;
 	}
 }
@@ -826,7 +835,7 @@
 }
 
 /* ── Global LCARS overrides: flatten shadows ── */
-[data-scheme="lcars"] main .shadow-sm,
+[data-scheme="lcars"] main .shadow-xs,
 [data-scheme="lcars"] main .shadow-md,
 [data-scheme="lcars"] main .hover\:shadow-md:hover {
 	box-shadow: none !important;

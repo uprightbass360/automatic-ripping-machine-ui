@@ -26,19 +26,19 @@
 	{:else}
 		<!-- Panel switcher -->
 		{#if hasTranscoder}
-			<div class="mb-2 flex rounded bg-primary/10 p-0.5 dark:bg-primary/10">
+			<div class="mb-2 flex rounded-sm bg-primary/10 p-0.5 dark:bg-primary/10">
 				<button
 					onclick={() => activePanel = 'ripper'}
-					class="flex-1 rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors
+					class="flex-1 rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors
 						{activePanel === 'ripper'
-							? 'bg-primary/20 text-primary-text shadow-sm dark:bg-primary/25 dark:text-primary-text-dark'
+							? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
 							: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
 				>Ripper</button>
 				<button
 					onclick={() => activePanel = 'transcoder'}
-					class="flex-1 rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors
+					class="flex-1 rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors
 						{activePanel === 'transcoder'
-							? 'bg-primary/20 text-primary-text shadow-sm dark:bg-primary/25 dark:text-primary-text-dark'
+							? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
 							: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
 				>Transcoder</button>
 			</div>

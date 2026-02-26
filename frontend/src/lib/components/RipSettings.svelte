@@ -43,7 +43,7 @@
 	}
 
 	const inputClass =
-		'rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
+		'rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
 	const labelClass = 'text-sm font-medium text-gray-700 dark:text-gray-300';
 	const btnBase =
 		'rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50 transition-colors';
@@ -75,7 +75,7 @@
 				<input
 					type="checkbox"
 					bind:checked={mainfeature}
-					class="h-4 w-4 rounded border-primary/25 text-primary focus:ring-primary dark:border-primary/30 dark:bg-primary/10"
+					class="h-4 w-4 rounded-sm border-primary/25 text-primary focus:ring-primary dark:border-primary/30 dark:bg-primary/10"
 				/>
 				<span class={labelClass}>Main Feature Only</span>
 			</label>

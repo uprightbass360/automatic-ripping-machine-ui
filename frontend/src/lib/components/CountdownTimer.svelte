@@ -57,7 +57,7 @@
 	<button
 		type="button"
 		onclick={togglePause}
-		class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors
+		class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors
 			{inverted
 			? 'text-on-primary/90 hover:bg-white/20'
 			: 'text-primary-text hover:bg-primary/15 dark:text-primary-text-dark dark:hover:bg-primary/20'}"

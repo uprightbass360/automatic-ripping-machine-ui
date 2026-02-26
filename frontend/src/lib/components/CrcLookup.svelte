@@ -97,7 +97,7 @@
 	});
 
 	const inputBase =
-		'rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
+		'rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
 
 	const typeBadgeClass = (vt: string) => {
 		switch (vt) {
@@ -116,7 +116,7 @@
 	{#if job.crc_id}
 		<div class="flex items-center gap-2 text-sm">
 			<span class="text-gray-500 dark:text-gray-400">CRC64:</span>
-			<code class="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 dark:bg-gray-800 dark:text-gray-300">{job.crc_id}</code>
+			<code class="rounded-sm bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 dark:bg-gray-800 dark:text-gray-300">{job.crc_id}</code>
 		</div>
 	{/if}
 
@@ -136,7 +136,7 @@
 				onclick={doLookup}
 				disabled={loading}
 				aria-label="Refresh CRC lookup"
-				class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+				class="rounded-sm p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
 			>
 				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -152,7 +152,7 @@
 						<img
 							src={result.poster_url}
 							alt={result.title}
-							class="h-28 w-20 flex-shrink-0 rounded object-cover"
+							class="h-28 w-20 shrink-0 rounded-sm object-cover"
 							loading="lazy"
 						/>
 					{/if}
@@ -164,7 +164,7 @@
 						<dt class="text-gray-500 dark:text-gray-400">Video Type</dt>
 						<dd>
 							{#if result.video_type}
-								<span class="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase {typeBadgeClass(result.video_type)}">
+								<span class="rounded-sm px-1.5 py-0.5 text-[10px] font-medium uppercase {typeBadgeClass(result.video_type)}">
 									{result.video_type}
 								</span>
 							{:else}

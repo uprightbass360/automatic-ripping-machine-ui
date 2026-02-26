@@ -34,7 +34,7 @@
 
 <div class="flex h-screen overflow-hidden">
 	<!-- Sidebar -->
-	<aside class="hidden w-64 flex-shrink-0 border-r border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark lg:block">
+	<aside class="hidden w-64 shrink-0 border-r border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark lg:block">
 		<div class="flex h-full flex-col">
 			<div data-logo class="flex items-center justify-center py-6">
 				<img src="/img/arm-logo-black.png" alt="ARM" class="h-24 w-24 dark:hidden" />
@@ -51,7 +51,7 @@
 								? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark'
 								: 'text-gray-700 hover:bg-primary/10 dark:text-gray-300 dark:hover:bg-primary/15'}"
 					>
-						<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
 						</svg>
 						{item.label}

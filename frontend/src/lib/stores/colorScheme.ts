@@ -12,8 +12,8 @@ export interface ColorScheme {
 }
 
 /**
- * RGB triplet tokens applied as CSS custom properties on :root.
- * Tailwind references them via `rgb(var(--color-primary) / <alpha>)`.
+ * Color tokens applied as CSS custom properties on :root.
+ * Tailwind v4 references them via `color-mix()` for opacity modifiers.
  */
 export const COLOR_SCHEMES: ColorScheme[] = [
 	{
@@ -21,19 +21,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		label: 'Default',
 		swatch: 'bg-blue-500',
 		tokens: {
-			'--color-primary': '37 99 235',          // blue-600
-			'--color-primary-hover': '29 78 216',    // blue-700
-			'--color-primary-dark': '30 64 175',     // blue-800
-			'--color-primary-light-bg': '219 234 254', // blue-100
-			'--color-primary-light-bg-dark': '30 58 138', // blue-900
-			'--color-primary-text': '29 78 216',     // blue-700
-			'--color-primary-text-dark': '96 165 250', // blue-400
-			'--color-primary-border': '59 130 246',  // blue-500
-			'--color-on-primary': '255 255 255',     // white
-			'--color-page-bg': '232 240 255',        // blue-tinted light
-			'--color-page-bg-dark': '13 16 28',      // dark navy
-			'--color-surface': '241 247 255',        // blue-tinted surface
-			'--color-surface-dark': '22 28 45'       // blue-tinted dark
+			'--color-primary': 'rgb(37, 99, 235)',          // blue-600
+			'--color-primary-hover': 'rgb(29, 78, 216)',    // blue-700
+			'--color-primary-dark': 'rgb(30, 64, 175)',     // blue-800
+			'--color-primary-light-bg': 'rgb(219, 234, 254)', // blue-100
+			'--color-primary-light-bg-dark': 'rgb(30, 58, 138)', // blue-900
+			'--color-primary-text': 'rgb(29, 78, 216)',     // blue-700
+			'--color-primary-text-dark': 'rgb(96, 165, 250)', // blue-400
+			'--color-primary-border': 'rgb(59, 130, 246)',  // blue-500
+			'--color-on-primary': 'rgb(255, 255, 255)',     // white
+			'--color-page': 'rgb(232, 240, 255)',           // blue-tinted light
+			'--color-page-dark': 'rgb(13, 16, 28)',         // dark navy
+			'--color-surface': 'rgb(241, 247, 255)',        // blue-tinted surface
+			'--color-surface-dark': 'rgb(22, 28, 45)'      // blue-tinted dark
 		}
 	},
 	{
@@ -41,19 +41,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		label: 'Ocean',
 		swatch: 'bg-teal-500',
 		tokens: {
-			'--color-primary': '13 148 136',         // teal-600
-			'--color-primary-hover': '15 118 110',   // teal-700
-			'--color-primary-dark': '17 94 89',      // teal-800
-			'--color-primary-light-bg': '204 251 241', // teal-100
-			'--color-primary-light-bg-dark': '19 78 74', // teal-900
-			'--color-primary-text': '15 118 110',    // teal-700
-			'--color-primary-text-dark': '94 234 212', // teal-400
-			'--color-primary-border': '20 184 166',  // teal-500
-			'--color-on-primary': '255 255 255',     // white
-			'--color-page-bg': '228 248 245',        // teal-tinted light
-			'--color-page-bg-dark': '12 19 20',      // dark teal
-			'--color-surface': '238 252 249',        // teal-tinted surface
-			'--color-surface-dark': '9 69 79'        // teal-tinted dark
+			'--color-primary': 'rgb(13, 148, 136)',         // teal-600
+			'--color-primary-hover': 'rgb(15, 118, 110)',   // teal-700
+			'--color-primary-dark': 'rgb(17, 94, 89)',      // teal-800
+			'--color-primary-light-bg': 'rgb(204, 251, 241)', // teal-100
+			'--color-primary-light-bg-dark': 'rgb(19, 78, 74)', // teal-900
+			'--color-primary-text': 'rgb(15, 118, 110)',    // teal-700
+			'--color-primary-text-dark': 'rgb(94, 234, 212)', // teal-400
+			'--color-primary-border': 'rgb(20, 184, 166)',  // teal-500
+			'--color-on-primary': 'rgb(255, 255, 255)',     // white
+			'--color-page': 'rgb(228, 248, 245)',           // teal-tinted light
+			'--color-page-dark': 'rgb(12, 19, 20)',         // dark teal
+			'--color-surface': 'rgb(238, 252, 249)',        // teal-tinted surface
+			'--color-surface-dark': 'rgb(9, 69, 79)'        // teal-tinted dark
 		}
 	},
 	{
@@ -61,19 +61,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		label: 'Forest',
 		swatch: 'bg-emerald-500',
 		tokens: {
-			'--color-primary': '5 150 105',          // emerald-600
-			'--color-primary-hover': '4 120 87',     // emerald-700
-			'--color-primary-dark': '6 95 70',       // emerald-800
-			'--color-primary-light-bg': '209 250 229', // emerald-100
-			'--color-primary-light-bg-dark': '6 78 59', // emerald-900
-			'--color-primary-text': '4 120 87',      // emerald-700
-			'--color-primary-text-dark': '110 231 183', // emerald-400
-			'--color-primary-border': '16 185 129',  // emerald-500
-			'--color-on-primary': '255 255 255',     // white
-			'--color-page-bg': '228 248 238',        // emerald-tinted light
-			'--color-page-bg-dark': '12 19 15',      // dark forest
-			'--color-surface': '237 252 244',        // emerald-tinted surface
-			'--color-surface-dark': '21 54 37'       // emerald-tinted dark
+			'--color-primary': 'rgb(5, 150, 105)',          // emerald-600
+			'--color-primary-hover': 'rgb(4, 120, 87)',     // emerald-700
+			'--color-primary-dark': 'rgb(6, 95, 70)',       // emerald-800
+			'--color-primary-light-bg': 'rgb(209, 250, 229)', // emerald-100
+			'--color-primary-light-bg-dark': 'rgb(6, 78, 59)', // emerald-900
+			'--color-primary-text': 'rgb(4, 120, 87)',      // emerald-700
+			'--color-primary-text-dark': 'rgb(110, 231, 183)', // emerald-400
+			'--color-primary-border': 'rgb(16, 185, 129)',  // emerald-500
+			'--color-on-primary': 'rgb(255, 255, 255)',     // white
+			'--color-page': 'rgb(228, 248, 238)',           // emerald-tinted light
+			'--color-page-dark': 'rgb(12, 19, 15)',         // dark forest
+			'--color-surface': 'rgb(237, 252, 244)',        // emerald-tinted surface
+			'--color-surface-dark': 'rgb(21, 54, 37)'       // emerald-tinted dark
 		}
 	},
 	{
@@ -81,19 +81,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		label: 'Red Alert',
 		swatch: 'bg-red-500',
 		tokens: {
-			'--color-primary': '220 38 38',          // red-600
-			'--color-primary-hover': '185 28 28',    // red-700
-			'--color-primary-dark': '153 27 27',     // red-800
-			'--color-primary-light-bg': '254 226 226', // red-100
-			'--color-primary-light-bg-dark': '127 29 29', // red-900
-			'--color-primary-text': '185 28 28',     // red-700
-			'--color-primary-text-dark': '248 113 113', // red-400
-			'--color-primary-border': '239 68 68',   // red-500
-			'--color-on-primary': '255 255 255',     // white
-			'--color-page-bg': '255 235 235',        // red-tinted light
-			'--color-page-bg-dark': '38 0 0',        // dark red
-			'--color-surface': '255 243 243',        // red-tinted surface
-			'--color-surface-dark': '68 1 0'         // red alert dark
+			'--color-primary': 'rgb(220, 38, 38)',          // red-600
+			'--color-primary-hover': 'rgb(185, 28, 28)',    // red-700
+			'--color-primary-dark': 'rgb(153, 27, 27)',     // red-800
+			'--color-primary-light-bg': 'rgb(254, 226, 226)', // red-100
+			'--color-primary-light-bg-dark': 'rgb(127, 29, 29)', // red-900
+			'--color-primary-text': 'rgb(185, 28, 28)',     // red-700
+			'--color-primary-text-dark': 'rgb(248, 113, 113)', // red-400
+			'--color-primary-border': 'rgb(239, 68, 68)',   // red-500
+			'--color-on-primary': 'rgb(255, 255, 255)',     // white
+			'--color-page': 'rgb(255, 235, 235)',           // red-tinted light
+			'--color-page-dark': 'rgb(38, 0, 0)',           // dark red
+			'--color-surface': 'rgb(255, 243, 243)',        // red-tinted surface
+			'--color-surface-dark': 'rgb(68, 1, 0)'         // red alert dark
 		}
 	},
 	{
@@ -101,19 +101,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		label: 'Rose',
 		swatch: 'bg-pink-500',
 		tokens: {
-			'--color-primary': '219 39 119',         // pink-600
-			'--color-primary-hover': '190 24 93',    // pink-700
-			'--color-primary-dark': '157 23 77',     // pink-800
-			'--color-primary-light-bg': '252 231 243', // pink-100
-			'--color-primary-light-bg-dark': '131 24 67', // pink-900
-			'--color-primary-text': '190 24 93',     // pink-700
-			'--color-primary-text-dark': '244 114 182', // pink-400
-			'--color-primary-border': '236 72 153',  // pink-500
-			'--color-on-primary': '255 255 255',     // white
-			'--color-page-bg': '252 232 243',        // pink-tinted light
-			'--color-page-bg-dark': '47 0 23',       // dark rose
-			'--color-surface': '253 242 249',        // pink-tinted surface
-			'--color-surface-dark': '132 28 81'      // rose dark
+			'--color-primary': 'rgb(219, 39, 119)',         // pink-600
+			'--color-primary-hover': 'rgb(190, 24, 93)',    // pink-700
+			'--color-primary-dark': 'rgb(157, 23, 77)',     // pink-800
+			'--color-primary-light-bg': 'rgb(252, 231, 243)', // pink-100
+			'--color-primary-light-bg-dark': 'rgb(131, 24, 67)', // pink-900
+			'--color-primary-text': 'rgb(190, 24, 93)',     // pink-700
+			'--color-primary-text-dark': 'rgb(244, 114, 182)', // pink-400
+			'--color-primary-border': 'rgb(236, 72, 153)',  // pink-500
+			'--color-on-primary': 'rgb(255, 255, 255)',     // white
+			'--color-page': 'rgb(252, 232, 243)',           // pink-tinted light
+			'--color-page-dark': 'rgb(47, 0, 23)',          // dark rose
+			'--color-surface': 'rgb(253, 242, 249)',        // pink-tinted surface
+			'--color-surface-dark': 'rgb(132, 28, 81)'      // rose dark
 		}
 	},
 	{
@@ -121,19 +121,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		label: 'Grape',
 		swatch: 'bg-purple-500',
 		tokens: {
-			'--color-primary': '147 51 234',         // purple-600
-			'--color-primary-hover': '126 34 206',   // purple-700
-			'--color-primary-dark': '107 33 168',    // purple-800
-			'--color-primary-light-bg': '237 226 255', // purple-100
-			'--color-primary-light-bg-dark': '76 29 149', // purple-900
-			'--color-primary-text': '126 34 206',    // purple-700
-			'--color-primary-text-dark': '192 132 252', // purple-400
-			'--color-primary-border': '168 85 247',  // purple-500
-			'--color-on-primary': '255 255 255',     // white
-			'--color-page-bg': '243 235 255',        // purple-tinted light
-			'--color-page-bg-dark': '16 13 26',      // dark violet
-			'--color-surface': '247 243 255',        // purple-tinted surface
-			'--color-surface-dark': '48 22 92'       // grape dark
+			'--color-primary': 'rgb(147, 51, 234)',         // purple-600
+			'--color-primary-hover': 'rgb(126, 34, 206)',   // purple-700
+			'--color-primary-dark': 'rgb(107, 33, 168)',    // purple-800
+			'--color-primary-light-bg': 'rgb(237, 226, 255)', // purple-100
+			'--color-primary-light-bg-dark': 'rgb(76, 29, 149)', // purple-900
+			'--color-primary-text': 'rgb(126, 34, 206)',    // purple-700
+			'--color-primary-text-dark': 'rgb(192, 132, 252)', // purple-400
+			'--color-primary-border': 'rgb(168, 85, 247)',  // purple-500
+			'--color-on-primary': 'rgb(255, 255, 255)',     // white
+			'--color-page': 'rgb(243, 235, 255)',           // purple-tinted light
+			'--color-page-dark': 'rgb(16, 13, 26)',         // dark violet
+			'--color-surface': 'rgb(247, 243, 255)',        // purple-tinted surface
+			'--color-surface-dark': 'rgb(48, 22, 92)'       // grape dark
 		}
 	},
 	{
@@ -142,19 +142,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		swatch: 'bg-indigo-400',
 		forceDark: true,
 		tokens: {
-			'--color-primary': '129 140 248',        // indigo-400
-			'--color-primary-hover': '99 102 241',   // indigo-500
-			'--color-primary-dark': '67 56 202',     // indigo-700
-			'--color-primary-light-bg': '49 46 129', // indigo-900
-			'--color-primary-light-bg-dark': '49 46 129', // indigo-900
-			'--color-primary-text': '165 180 252',   // indigo-300
-			'--color-primary-text-dark': '165 180 252', // indigo-300
-			'--color-primary-border': '129 140 248', // indigo-400
-			'--color-on-primary': '255 255 255',     // white
-			'--color-page-bg': '15 23 42',           // slate-900
-			'--color-page-bg-dark': '15 23 42',      // slate-900
-			'--color-surface': '30 27 75',           // indigo-950
-			'--color-surface-dark': '30 27 75'       // indigo-950
+			'--color-primary': 'rgb(129, 140, 248)',        // indigo-400
+			'--color-primary-hover': 'rgb(99, 102, 241)',   // indigo-500
+			'--color-primary-dark': 'rgb(67, 56, 202)',     // indigo-700
+			'--color-primary-light-bg': 'rgb(49, 46, 129)', // indigo-900
+			'--color-primary-light-bg-dark': 'rgb(49, 46, 129)', // indigo-900
+			'--color-primary-text': 'rgb(165, 180, 252)',   // indigo-300
+			'--color-primary-text-dark': 'rgb(165, 180, 252)', // indigo-300
+			'--color-primary-border': 'rgb(129, 140, 248)', // indigo-400
+			'--color-on-primary': 'rgb(255, 255, 255)',     // white
+			'--color-page': 'rgb(15, 23, 42)',              // slate-900
+			'--color-page-dark': 'rgb(15, 23, 42)',         // slate-900
+			'--color-surface': 'rgb(30, 27, 75)',           // indigo-950
+			'--color-surface-dark': 'rgb(30, 27, 75)'       // indigo-950
 		}
 	},
 	{
@@ -163,19 +163,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		swatch: 'bg-yellow-600',
 		forceDark: true,
 		tokens: {
-			'--color-primary': '212 175 55',          // gold
-			'--color-primary-hover': '188 155 40',    // darker gold
-			'--color-primary-dark': '138 109 59',     // muted gold
-			'--color-primary-light-bg': '30 25 10',   // dark gold tint
-			'--color-primary-light-bg-dark': '30 25 10', // dark gold tint
-			'--color-primary-text': '212 175 55',     // gold
-			'--color-primary-text-dark': '212 175 55', // gold
-			'--color-primary-border': '138 109 59',   // muted gold
-			'--color-on-primary': '13 13 13',         // cinema black
-			'--color-page-bg': '26 26 26',            // dark gray
-			'--color-page-bg-dark': '26 26 26',       // dark gray
-			'--color-surface': '13 13 13',            // cinema black
-			'--color-surface-dark': '13 13 13'        // cinema black
+			'--color-primary': 'rgb(212, 175, 55)',          // gold
+			'--color-primary-hover': 'rgb(188, 155, 40)',    // darker gold
+			'--color-primary-dark': 'rgb(138, 109, 59)',     // muted gold
+			'--color-primary-light-bg': 'rgb(30, 25, 10)',   // dark gold tint
+			'--color-primary-light-bg-dark': 'rgb(30, 25, 10)', // dark gold tint
+			'--color-primary-text': 'rgb(212, 175, 55)',     // gold
+			'--color-primary-text-dark': 'rgb(212, 175, 55)', // gold
+			'--color-primary-border': 'rgb(138, 109, 59)',   // muted gold
+			'--color-on-primary': 'rgb(13, 13, 13)',         // cinema black
+			'--color-page': 'rgb(26, 26, 26)',               // dark gray
+			'--color-page-dark': 'rgb(26, 26, 26)',          // dark gray
+			'--color-surface': 'rgb(13, 13, 13)',            // cinema black
+			'--color-surface-dark': 'rgb(13, 13, 13)'        // cinema black
 		}
 	},
 	{
@@ -184,19 +184,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		swatch: 'bg-fuchsia-500',
 		forceDark: true,
 		tokens: {
-			'--color-primary': '0 210 255',            // neon blue
-			'--color-primary-hover': '188 19 254',     // neon purple
-			'--color-primary-dark': '27 27 47',        // border dark
-			'--color-primary-light-bg': '0 210 255',   // blue (unused in dark)
-			'--color-primary-light-bg-dark': '0 30 50', // dark blue tint
-			'--color-primary-text': '0 210 255',       // neon blue
-			'--color-primary-text-dark': '0 210 255',  // neon blue
-			'--color-primary-border': '0 210 255',     // neon blue
-			'--color-on-primary': '5 5 10',            // bg dark
-			'--color-page-bg': '5 5 10',               // bg dark
-			'--color-page-bg-dark': '5 5 10',          // bg dark
-			'--color-surface': '12 12 18',             // surface
-			'--color-surface-dark': '12 12 18'         // surface
+			'--color-primary': 'rgb(0, 210, 255)',            // neon blue
+			'--color-primary-hover': 'rgb(188, 19, 254)',     // neon purple
+			'--color-primary-dark': 'rgb(27, 27, 47)',        // border dark
+			'--color-primary-light-bg': 'rgb(0, 210, 255)',   // blue (unused in dark)
+			'--color-primary-light-bg-dark': 'rgb(0, 30, 50)', // dark blue tint
+			'--color-primary-text': 'rgb(0, 210, 255)',       // neon blue
+			'--color-primary-text-dark': 'rgb(0, 210, 255)',  // neon blue
+			'--color-primary-border': 'rgb(0, 210, 255)',     // neon blue
+			'--color-on-primary': 'rgb(5, 5, 10)',            // bg dark
+			'--color-page': 'rgb(5, 5, 10)',                  // bg dark
+			'--color-page-dark': 'rgb(5, 5, 10)',             // bg dark
+			'--color-surface': 'rgb(12, 12, 18)',             // surface
+			'--color-surface-dark': 'rgb(12, 12, 18)'         // surface
 		}
 	},
 	{
@@ -205,19 +205,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		swatch: 'bg-yellow-400',
 		forceDark: true,
 		tokens: {
-			'--color-primary': '0 123 255',            // fortnite blue
-			'--color-primary-hover': '248 251 17',     // fortnite yellow
-			'--color-primary-dark': '17 42 94',        // deep blue border
-			'--color-primary-light-bg': '11 26 61',    // item bg
-			'--color-primary-light-bg-dark': '11 26 61', // item bg
-			'--color-primary-text': '248 251 17',      // yellow
-			'--color-primary-text-dark': '248 251 17', // yellow
-			'--color-primary-border': '17 42 94',      // deep blue
-			'--color-on-primary': '0 0 0',             // black
-			'--color-page-bg': '5 5 5',                // near-black
-			'--color-page-bg-dark': '5 5 5',           // near-black
-			'--color-surface': '2 11 36',              // dark blue
-			'--color-surface-dark': '2 11 36'          // dark blue
+			'--color-primary': 'rgb(0, 123, 255)',            // fortnite blue
+			'--color-primary-hover': 'rgb(248, 251, 17)',     // fortnite yellow
+			'--color-primary-dark': 'rgb(17, 42, 94)',        // deep blue border
+			'--color-primary-light-bg': 'rgb(11, 26, 61)',    // item bg
+			'--color-primary-light-bg-dark': 'rgb(11, 26, 61)', // item bg
+			'--color-primary-text': 'rgb(248, 251, 17)',      // yellow
+			'--color-primary-text-dark': 'rgb(248, 251, 17)', // yellow
+			'--color-primary-border': 'rgb(17, 42, 94)',      // deep blue
+			'--color-on-primary': 'rgb(0, 0, 0)',             // black
+			'--color-page': 'rgb(5, 5, 5)',                   // near-black
+			'--color-page-dark': 'rgb(5, 5, 5)',              // near-black
+			'--color-surface': 'rgb(2, 11, 36)',              // dark blue
+			'--color-surface-dark': 'rgb(2, 11, 36)'          // dark blue
 		}
 	},
 	{
@@ -226,19 +226,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		swatch: 'bg-orange-400',
 		forceDark: true,
 		tokens: {
-			'--color-primary': '255 153 0',            // lcars orange
-			'--color-primary-hover': '255 204 51',     // lcars yellow
-			'--color-primary-dark': '40 30 0',         // dark orange
-			'--color-primary-light-bg': '153 153 255', // lcars blue
-			'--color-primary-light-bg-dark': '30 30 60', // dark blue
-			'--color-primary-text': '255 204 51',      // yellow
-			'--color-primary-text-dark': '255 153 0',  // orange
-			'--color-primary-border': '255 153 0',     // orange
-			'--color-on-primary': '0 0 0',             // black
-			'--color-page-bg': '0 0 0',                // pure black
-			'--color-page-bg-dark': '0 0 0',
-			'--color-surface': '0 0 0',                // pure black
-			'--color-surface-dark': '0 0 0'
+			'--color-primary': 'rgb(255, 153, 0)',            // lcars orange
+			'--color-primary-hover': 'rgb(255, 204, 51)',     // lcars yellow
+			'--color-primary-dark': 'rgb(40, 30, 0)',         // dark orange
+			'--color-primary-light-bg': 'rgb(153, 153, 255)', // lcars blue
+			'--color-primary-light-bg-dark': 'rgb(30, 30, 60)', // dark blue
+			'--color-primary-text': 'rgb(255, 204, 51)',      // yellow
+			'--color-primary-text-dark': 'rgb(255, 153, 0)',  // orange
+			'--color-primary-border': 'rgb(255, 153, 0)',     // orange
+			'--color-on-primary': 'rgb(0, 0, 0)',             // black
+			'--color-page': 'rgb(0, 0, 0)',                   // pure black
+			'--color-page-dark': 'rgb(0, 0, 0)',
+			'--color-surface': 'rgb(0, 0, 0)',                // pure black
+			'--color-surface-dark': 'rgb(0, 0, 0)'
 		}
 	},
 	{
@@ -247,19 +247,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		swatch: 'bg-teal-400',
 		forceDark: true,
 		tokens: {
-			'--color-primary': '100 255 218',          // tactical teal
-			'--color-primary-hover': '80 200 175',     // dimmer teal
-			'--color-primary-dark': '10 25 47',        // navy
-			'--color-primary-light-bg': '10 25 47',    // navy
-			'--color-primary-light-bg-dark': '10 25 47',
-			'--color-primary-text': '100 255 218',     // teal
-			'--color-primary-text-dark': '100 255 218',
-			'--color-primary-border': '100 255 218',   // teal
-			'--color-on-primary': '2 6 23',            // deep navy
-			'--color-page-bg': '2 6 23',               // deep navy
-			'--color-page-bg-dark': '2 6 23',
-			'--color-surface': '10 25 47',             // navy
-			'--color-surface-dark': '10 25 47'
+			'--color-primary': 'rgb(100, 255, 218)',          // tactical teal
+			'--color-primary-hover': 'rgb(80, 200, 175)',     // dimmer teal
+			'--color-primary-dark': 'rgb(10, 25, 47)',        // navy
+			'--color-primary-light-bg': 'rgb(10, 25, 47)',    // navy
+			'--color-primary-light-bg-dark': 'rgb(10, 25, 47)',
+			'--color-primary-text': 'rgb(100, 255, 218)',     // teal
+			'--color-primary-text-dark': 'rgb(100, 255, 218)',
+			'--color-primary-border': 'rgb(100, 255, 218)',   // teal
+			'--color-on-primary': 'rgb(2, 6, 23)',            // deep navy
+			'--color-page': 'rgb(2, 6, 23)',                  // deep navy
+			'--color-page-dark': 'rgb(2, 6, 23)',
+			'--color-surface': 'rgb(10, 25, 47)',             // navy
+			'--color-surface-dark': 'rgb(10, 25, 47)'
 		}
 	},
 	{
@@ -268,19 +268,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		swatch: 'bg-green-500',
 		forceDark: true,
 		tokens: {
-			'--color-primary': '56 255 56',            // MC green
-			'--color-primary-hover': '128 128 255',    // MC hover blue
-			'--color-primary-dark': '34 34 34',        // dark stone
-			'--color-primary-light-bg': '74 74 74',    // pressed button
-			'--color-primary-light-bg-dark': '74 74 74',
-			'--color-primary-text': '56 255 56',       // MC green
-			'--color-primary-text-dark': '56 255 56',
-			'--color-primary-border': '0 0 0',         // black
-			'--color-on-primary': '224 224 224',       // light gray
-			'--color-page-bg': '30 30 30',             // dark bg
-			'--color-page-bg-dark': '30 30 30',
-			'--color-surface': '49 49 49',             // stone
-			'--color-surface-dark': '49 49 49'
+			'--color-primary': 'rgb(56, 255, 56)',            // MC green
+			'--color-primary-hover': 'rgb(128, 128, 255)',    // MC hover blue
+			'--color-primary-dark': 'rgb(34, 34, 34)',        // dark stone
+			'--color-primary-light-bg': 'rgb(74, 74, 74)',    // pressed button
+			'--color-primary-light-bg-dark': 'rgb(74, 74, 74)',
+			'--color-primary-text': 'rgb(56, 255, 56)',       // MC green
+			'--color-primary-text-dark': 'rgb(56, 255, 56)',
+			'--color-primary-border': 'rgb(0, 0, 0)',         // black
+			'--color-on-primary': 'rgb(224, 224, 224)',       // light gray
+			'--color-page': 'rgb(30, 30, 30)',                // dark bg
+			'--color-page-dark': 'rgb(30, 30, 30)',
+			'--color-surface': 'rgb(49, 49, 49)',             // stone
+			'--color-surface-dark': 'rgb(49, 49, 49)'
 		}
 	},
 	{
@@ -289,19 +289,19 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		swatch: 'bg-green-400',
 		forceDark: true,
 		tokens: {
-			'--color-primary': '57 255 20',          // terminal green
-			'--color-primary-hover': '45 200 16',    // dimmer green
-			'--color-primary-dark': '10 26 5',       // dark green
-			'--color-primary-light-bg': '10 26 5',   // dark green (light bg unused)
-			'--color-primary-light-bg-dark': '10 26 5', // dark green
-			'--color-primary-text': '57 255 20',     // terminal green
-			'--color-primary-text-dark': '57 255 20', // terminal green
-			'--color-primary-border': '57 255 20',   // terminal green
-			'--color-on-primary': '5 5 5',           // near-black
-			'--color-page-bg': '5 5 5',              // CRT black
-			'--color-page-bg-dark': '5 5 5',         // CRT black
-			'--color-surface': '8 8 8',              // barely-off-black
-			'--color-surface-dark': '8 8 8'          // barely-off-black
+			'--color-primary': 'rgb(57, 255, 20)',          // terminal green
+			'--color-primary-hover': 'rgb(45, 200, 16)',    // dimmer green
+			'--color-primary-dark': 'rgb(10, 26, 5)',       // dark green
+			'--color-primary-light-bg': 'rgb(10, 26, 5)',   // dark green (light bg unused)
+			'--color-primary-light-bg-dark': 'rgb(10, 26, 5)', // dark green
+			'--color-primary-text': 'rgb(57, 255, 20)',     // terminal green
+			'--color-primary-text-dark': 'rgb(57, 255, 20)', // terminal green
+			'--color-primary-border': 'rgb(57, 255, 20)',   // terminal green
+			'--color-on-primary': 'rgb(5, 5, 5)',           // near-black
+			'--color-page': 'rgb(5, 5, 5)',                 // CRT black
+			'--color-page-dark': 'rgb(5, 5, 5)',            // CRT black
+			'--color-surface': 'rgb(8, 8, 8)',              // barely-off-black
+			'--color-surface-dark': 'rgb(8, 8, 8)'          // barely-off-black
 		}
 	}
 ];
