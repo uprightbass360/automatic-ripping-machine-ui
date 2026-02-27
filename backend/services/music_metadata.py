@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 import httpx
@@ -50,6 +51,15 @@ def _extract_format(media: list[dict]) -> str | None:
     return None
 
 
+# Lucene special characters that must be escaped in user-provided search terms.
+_LUCENE_SPECIAL = re.compile(r'([+\-&|!(){}\[\]^"~*?:\\/<>])')
+
+
+def _escape_lucene(text: str) -> str:
+    """Escape Lucene special characters in user input."""
+    return _LUCENE_SPECIAL.sub(r"\\\1", text)
+
+
 async def search(
     query: str,
     artist: str | None = None,
@@ -59,11 +69,13 @@ async def search(
     status: str | None = None,
 ) -> list[dict[str, Any]]:
     """Search MusicBrainz for releases matching query text and optional filters."""
+    safe_query = _escape_lucene(query)
     parts: list[str] = []
     if artist:
-        parts.append(f'release:"{query}" AND artist:"{artist}"')
+        safe_artist = _escape_lucene(artist)
+        parts.append(f'release:"{safe_query}" AND artist:"{safe_artist}"')
     else:
-        parts.append(query)
+        parts.append(safe_query)
     if release_type:
         parts.append(f"AND type:{release_type}")
     if format:

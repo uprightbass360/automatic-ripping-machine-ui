@@ -26,6 +26,9 @@
 	let applying = $state(false);
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
+	// Track which poster URLs failed to load (Cover Art Archive may 404)
+	let failedImages = $state(new Set<string>());
+
 	// Editable metadata fields (populated from detail)
 	let editTitle = $state('');
 	let editYear = $state('');
@@ -46,6 +49,7 @@
 		results = [];
 		selectedId = null;
 		detail = null;
+		failedImages = new Set();
 		try {
 			results = await searchMusicMetadata(query.trim(), {
 				artist: artistInput.trim() || undefined,
@@ -116,11 +120,12 @@
 		if (e.key === 'Enter') handleSearch();
 	}
 
-	function handleImgError(e: Event) {
-		const img = e.target as HTMLImageElement;
-		img.style.display = 'none';
-		const placeholder = img.nextElementSibling as HTMLElement | null;
-		if (placeholder) placeholder.style.display = '';
+	function handleImgError(url: string) {
+		failedImages = new Set(failedImages).add(url);
+	}
+
+	function hasValidPoster(url: string | null): boolean {
+		return !!url && !failedImages.has(url);
 	}
 
 	function formatDuration(ms: number | null): string {
@@ -248,18 +253,17 @@
 						: 'border-primary/20 hover:border-primary/40 dark:border-primary/20 dark:hover:border-primary/40'}"
 				>
 					<div class="relative aspect-square w-full">
-						{#if result.poster_url}
+						{#if hasValidPoster(result.poster_url)}
 							<img
 								src={result.poster_url}
 								alt={result.title}
 								class="aspect-square w-full object-cover"
 								loading="lazy"
-								onerror={handleImgError}
+								onerror={() => handleImgError(result.poster_url!)}
 							/>
-						{/if}
+						{:else}
 						<div
 							class="flex aspect-square w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15"
-							style={result.poster_url ? 'display: none' : ''}
 						>
 							<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path
@@ -270,6 +274,7 @@
 								/>
 							</svg>
 						</div>
+						{/if}
 					</div>
 					<div class="p-2">
 						<p
@@ -334,27 +339,27 @@
 				<!-- Album art + info summary -->
 				<div class="flex gap-4">
 					<div class="relative h-28 w-28 shrink-0 overflow-hidden rounded-md">
-						{#if detail.poster_url}
+						{#if hasValidPoster(detail.poster_url)}
 							<img
 								src={detail.poster_url}
 								alt={detail.title}
 								class="h-full w-full object-cover"
-								onerror={handleImgError}
+								onerror={() => handleImgError(detail!.poster_url!)}
 							/>
+						{:else}
+							<div
+								class="flex h-full w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15"
+							>
+								<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="1.5"
+										d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+									/>
+								</svg>
+							</div>
 						{/if}
-						<div
-							class="flex h-full w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15"
-							style={detail.poster_url ? 'display: none' : ''}
-						>
-							<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="1.5"
-									d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-								/>
-							</svg>
-						</div>
 					</div>
 					<div class="min-w-0 flex-1">
 						<p class="text-lg font-semibold text-gray-900 dark:text-white">{detail.title}</p>
