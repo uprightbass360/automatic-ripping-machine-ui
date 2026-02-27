@@ -6,6 +6,7 @@
 	import { elapsedTime } from '$lib/utils/format';
 	import { getVideoTypeConfig, isJobActive, discTypeLabel } from '$lib/utils/job-type';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
+	import VideoTypeIcon from './VideoTypeIcon.svelte';
 
 	interface Props {
 		job: Job;
@@ -28,9 +29,7 @@
 	<!-- Title -->
 	<td class="px-4 py-3">
 		<div class="flex items-center gap-2">
-			<svg class="h-4 w-4 shrink-0 {typeConfig.iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={typeConfig.iconPath} />
-			</svg>
+			<VideoTypeIcon icon={typeConfig.icon} class="h-4 w-4 shrink-0 {typeConfig.iconColor}" />
 			<div class="min-w-0">
 				<a href="/jobs/{job.job_id}" class="font-medium text-primary-text hover:underline dark:text-primary-text-dark">
 					{job.title || job.label || 'Untitled'}

@@ -149,6 +149,7 @@
 			type="text"
 			bind:value={query}
 			onkeydown={handleSearchKeydown}
+			onfocus={(e) => (e.target as HTMLInputElement).select()}
 			placeholder="Title..."
 			class="flex-1 min-w-[200px] {inputBase}"
 		/>

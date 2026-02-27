@@ -112,6 +112,7 @@
 			<option value="movie">Movie</option>
 			<option value="series">Series</option>
 			<option value="music">Music</option>
+			<option value="data">Data</option>
 		</select>
 	</div>
 

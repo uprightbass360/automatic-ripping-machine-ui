@@ -183,6 +183,27 @@ export interface MediaDetail extends SearchResult {
 	background_url: string | null;
 }
 
+export interface MusicSearchResult {
+	title: string;
+	artist: string;
+	year: string;
+	release_id: string;
+	media_type: string;
+	poster_url: string | null;
+	track_count: number | null;
+	country: string | null;
+	release_type: string | null;
+	format: string | null;
+	label: string | null;
+}
+
+export interface MusicDetail extends MusicSearchResult {
+	catalog_number: string | null;
+	barcode: string | null;
+	status: string | null;
+	tracks: { number: string; title: string; length_ms: number | null }[];
+}
+
 export interface TitleUpdate {
 	title?: string;
 	year?: string;

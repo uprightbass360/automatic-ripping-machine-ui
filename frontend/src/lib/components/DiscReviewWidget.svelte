@@ -5,6 +5,7 @@
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
+	import MusicSearch from './MusicSearch.svelte';
 	import RipSettings from './RipSettings.svelte';
 	import CrcLookup from './CrcLookup.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
@@ -24,6 +25,7 @@
 	let initialLoading = $state(true);
 	let showInfo = $state(false);
 	let showTitleSearch = $state(false);
+	let showMusicSearch = $state(false);
 	let showCrcLookup = $state(false);
 	let showRipSettings = $state(false);
 	let cancelling = $state(false);
@@ -73,6 +75,9 @@
 	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
 	let isVideo = $derived(
 		job.disctype === 'dvd' || job.disctype === 'bluray' || job.disctype === 'bluray4k' || job.video_type === 'movie' || job.video_type === 'series'
+	);
+	let isMusic = $derived(
+		job.disctype === 'music' || job.video_type === 'music'
 	);
 	let hasCrcData = $derived(
 		job.disctype === 'dvd' || !!job.crc_id
@@ -132,19 +137,22 @@
 		loadDetail();
 	}
 
-	function toggleSection(section: 'info' | 'title' | 'crc' | 'settings') {
+	function toggleSection(section: 'info' | 'title' | 'music' | 'crc' | 'settings') {
 		if (section === 'info') {
 			showInfo = !showInfo;
-			if (showInfo) { showTitleSearch = false; showCrcLookup = false; showRipSettings = false; }
+			if (showInfo) { showTitleSearch = false; showMusicSearch = false; showCrcLookup = false; showRipSettings = false; }
 		} else if (section === 'title') {
 			showTitleSearch = !showTitleSearch;
-			if (showTitleSearch) { showInfo = false; showCrcLookup = false; showRipSettings = false; }
+			if (showTitleSearch) { showInfo = false; showMusicSearch = false; showCrcLookup = false; showRipSettings = false; }
+		} else if (section === 'music') {
+			showMusicSearch = !showMusicSearch;
+			if (showMusicSearch) { showInfo = false; showTitleSearch = false; showCrcLookup = false; showRipSettings = false; }
 		} else if (section === 'crc') {
 			showCrcLookup = !showCrcLookup;
-			if (showCrcLookup) { showInfo = false; showTitleSearch = false; showRipSettings = false; }
+			if (showCrcLookup) { showInfo = false; showTitleSearch = false; showMusicSearch = false; showRipSettings = false; }
 		} else {
 			showRipSettings = !showRipSettings;
-			if (showRipSettings) { showInfo = false; showTitleSearch = false; showCrcLookup = false; }
+			if (showRipSettings) { showInfo = false; showTitleSearch = false; showMusicSearch = false; showCrcLookup = false; }
 		}
 	}
 
@@ -253,6 +261,16 @@
 				Search/Edit Title
 			</button>
 		{/if}
+		{#if isMusic}
+			<button
+				onclick={() => toggleSection('music')}
+				class="{btnBase} {showMusicSearch
+					? 'bg-primary text-on-primary'
+					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
+			>
+				Search Music
+			</button>
+		{/if}
 		{#if hasCrcData}
 			<button
 				onclick={() => toggleSection('crc')}
@@ -323,6 +341,7 @@
 								<select bind:value={infoType} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white">
 									<option value="movie">Movie</option>
 									<option value="series">Series</option>
+									<option value="music">Music</option>
 								</select>
 							</label>
 							<label>
@@ -441,6 +460,12 @@
 	{#if showTitleSearch && isVideo}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
 			<TitleSearch {job} onapply={handleTitleApply} />
+		</div>
+	{/if}
+
+	{#if showMusicSearch && isMusic}
+		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
+			<MusicSearch {job} onapply={handleTitleApply} />
 		</div>
 	{/if}
 

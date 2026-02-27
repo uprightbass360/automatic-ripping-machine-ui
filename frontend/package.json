@@ -28,6 +28,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@tailwindcss/vite": "^4.2.1"
+    "@tailwindcss/vite": "^4.2.1",
+    "lucide-svelte": "^0.575.0"
   }
 }

@@ -5,10 +5,12 @@ from backend.models.schemas import (
     JobListResponse,
     JobSchema,
     MediaDetailSchema,
+    MusicDetailSchema,
+    MusicSearchResultSchema,
     SearchResultSchema,
     TrackSchema,
 )
-from backend.services import arm_db, crc_lookup, metadata, progress, transcoder_client
+from backend.services import arm_db, crc_lookup, metadata, music_metadata, progress, transcoder_client
 from backend.services.metadata import MetadataConfigError
 
 router = APIRouter(prefix="/api", tags=["jobs"])
@@ -86,6 +88,31 @@ async def get_media_detail(imdb_id: str):
         raise HTTPException(status_code=503, detail=str(exc))
     if not result:
         raise HTTPException(status_code=404, detail="Title not found")
+    return result
+
+
+@router.get("/metadata/music/search", response_model=list[MusicSearchResultSchema])
+async def search_music_metadata(
+    q: str = Query(..., min_length=1),
+    artist: str | None = None,
+    release_type: str | None = None,
+    format: str | None = None,
+    country: str | None = None,
+    status: str | None = None,
+):
+    """Search MusicBrainz for releases matching the query with optional filters."""
+    return await music_metadata.search(
+        q, artist, release_type=release_type, format=format,
+        country=country, status=status,
+    )
+
+
+@router.get("/metadata/music/{release_id}", response_model=MusicDetailSchema)
+async def get_music_detail(release_id: str):
+    """Fetch full release details from MusicBrainz by release MBID."""
+    result = await music_metadata.get_details(release_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Release not found")
     return result
 
 

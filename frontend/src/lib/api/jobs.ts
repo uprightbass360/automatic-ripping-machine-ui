@@ -1,4 +1,4 @@
-import type { JobConfigUpdate, JobDetail, JobListResponse, MediaDetail, SearchResult, TitleUpdate } from '$lib/types/arm';
+import type { JobConfigUpdate, JobDetail, JobListResponse, MediaDetail, MusicDetail, MusicSearchResult, SearchResult, TitleUpdate } from '$lib/types/arm';
 import { apiFetch } from './client';
 
 export function fetchJobs(params?: {
@@ -50,6 +50,23 @@ export function searchMetadata(query: string, year?: string): Promise<SearchResu
 
 export function fetchMediaDetail(imdbId: string): Promise<MediaDetail> {
 	return apiFetch<MediaDetail>(`/api/metadata/${imdbId}`);
+}
+
+export function searchMusicMetadata(
+	query: string,
+	filters?: { artist?: string; release_type?: string; format?: string; country?: string; status?: string }
+): Promise<MusicSearchResult[]> {
+	const params = new URLSearchParams({ q: query });
+	if (filters?.artist) params.set('artist', filters.artist);
+	if (filters?.release_type) params.set('release_type', filters.release_type);
+	if (filters?.format) params.set('format', filters.format);
+	if (filters?.country) params.set('country', filters.country);
+	if (filters?.status) params.set('status', filters.status);
+	return apiFetch<MusicSearchResult[]>(`/api/metadata/music/search?${params}`);
+}
+
+export function fetchMusicDetail(releaseId: string): Promise<MusicDetail> {
+	return apiFetch<MusicDetail>(`/api/metadata/music/${releaseId}`);
 }
 
 export function updateJobTitle(jobId: number, data: Partial<TitleUpdate>): Promise<unknown> {

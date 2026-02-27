@@ -247,6 +247,27 @@ class MediaDetailSchema(SearchResultSchema):
     background_url: str | None = None
 
 
+class MusicSearchResultSchema(BaseModel):
+    title: str
+    artist: str
+    year: str
+    release_id: str
+    media_type: str = "music"
+    poster_url: str | None = None
+    track_count: int | None = None
+    country: str | None = None
+    release_type: str | None = None
+    format: str | None = None
+    label: str | None = None
+
+
+class MusicDetailSchema(MusicSearchResultSchema):
+    catalog_number: str | None = None
+    barcode: str | None = None
+    status: str | None = None
+    tracks: list[dict[str, Any]] = []
+
+
 class TitleUpdateRequest(BaseModel):
     title: str | None = None
     year: str | None = None
