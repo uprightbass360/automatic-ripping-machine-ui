@@ -4,6 +4,7 @@ import type { DashboardData } from '$lib/types/arm';
 
 const emptyDashboard: DashboardData = {
 	db_available: true,
+	arm_online: false,
 	active_jobs: [],
 	system_info: null,
 	drives_online: 0,

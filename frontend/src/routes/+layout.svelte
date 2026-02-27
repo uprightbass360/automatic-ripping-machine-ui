@@ -59,7 +59,7 @@
 				{/each}
 			</nav>
 			<hr class="border-primary/20 dark:border-primary/20" />
-			<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} />
+			<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
 		</div>
 	</aside>
 
@@ -125,7 +125,7 @@
 						{/each}
 					</nav>
 					<hr class="border-primary/20 dark:border-primary/20" />
-					<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} />
+					<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
 				</aside>
 			</div>
 		{/if}

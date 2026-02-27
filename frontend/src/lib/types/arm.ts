@@ -143,6 +143,7 @@ export interface SystemStats {
 
 export interface DashboardData {
 	db_available: boolean;
+	arm_online: boolean;
 	active_jobs: Job[];
 	system_info: HardwareInfo | null;
 	drives_online: number;

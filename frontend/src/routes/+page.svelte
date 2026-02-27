@@ -15,6 +15,7 @@
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
 		db_available: true,
+		arm_online: false,
 		active_jobs: [],
 		system_info: null,
 		drives_online: 0,
@@ -225,12 +226,22 @@
 		</div>
 	{/if}
 
-	{#if dashReady && !dash.transcoder_online}
-		<div class="flex items-center gap-3 rounded-lg border border-primary/25 bg-page p-4 dark:border-primary/25 dark:bg-page-dark">
-			<div class="h-3 w-3 shrink-0 rounded-full bg-gray-400"></div>
+	{#if dashReady && !dash.arm_online}
+		<div class="flex items-center gap-3 rounded-lg border border-orange-300 bg-orange-50 p-4 dark:border-orange-700 dark:bg-orange-900/20">
+			<div class="h-3 w-3 shrink-0 rounded-full bg-orange-500"></div>
 			<div>
-				<p class="font-medium text-gray-700 dark:text-gray-300">Transcoder Offline</p>
-				<p class="text-sm text-gray-500 dark:text-gray-400">The transcoder service is not responding. Transcoding features are unavailable.</p>
+				<p class="font-medium text-orange-800 dark:text-orange-300">ARM Service Unreachable</p>
+				<p class="text-sm text-orange-700 dark:text-orange-400">Cannot reach the ARM ripping service API. Check that ARM_UI_ARM_URL is configured correctly and that the service is running.</p>
+			</div>
+		</div>
+	{/if}
+
+	{#if dashReady && !dash.transcoder_online}
+		<div class="flex items-center gap-3 rounded-lg border border-orange-300 bg-orange-50 p-4 dark:border-orange-700 dark:bg-orange-900/20">
+			<div class="h-3 w-3 shrink-0 rounded-full bg-orange-500"></div>
+			<div>
+				<p class="font-medium text-orange-800 dark:text-orange-300">Transcoder Service Unreachable</p>
+				<p class="text-sm text-orange-700 dark:text-orange-400">Cannot reach the transcoder service API. Check that ARM_UI_TRANSCODER_URL is configured correctly and that the service is running.</p>
 			</div>
 		</div>
 	{/if}

@@ -1420,6 +1420,30 @@
 						</div>
 					</section>
 
+					<!-- Service Endpoints -->
+					{#if systemInfo.endpoints}
+						<section>
+							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Endpoints</h2>
+							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+								{#each Object.entries(systemInfo.endpoints) as [name, ep]}
+									<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+										<div class="flex items-center justify-between">
+											<p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{name}</p>
+											<span class="inline-flex items-center gap-1.5 text-xs font-medium {ep.reachable ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+												<div class="h-2 w-2 rounded-full {ep.reachable ? 'bg-green-500' : 'bg-red-500'}"></div>
+												{ep.reachable ? 'Reachable' : 'Unreachable'}
+											</span>
+										</div>
+										<p class="mt-2 font-mono text-sm text-gray-900 dark:text-white">{ep.url}</p>
+										<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+											{name === 'arm' ? 'ARM_UI_ARM_URL' : name === 'transcoder' ? 'ARM_UI_TRANSCODER_URL' : name.toUpperCase() + '_URL'}
+										</p>
+									</div>
+								{/each}
+							</div>
+						</section>
+					{/if}
+
 					<!-- Paths -->
 					{#if systemInfo.paths.length > 0}
 						<section>

@@ -55,6 +55,7 @@ export function testTranscoderWebhook(secret: string): Promise<WebhookTestResult
 
 export interface SystemInfoData {
 	versions: Record<string, string>;
+	endpoints: Record<string, { url: string; reachable: boolean }>;
 	paths: Array<{
 		setting: string;
 		path: string;

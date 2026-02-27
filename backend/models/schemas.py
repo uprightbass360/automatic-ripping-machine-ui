@@ -173,6 +173,7 @@ class SystemStatsSchema(BaseModel):
 
 class DashboardResponse(BaseModel):
     db_available: bool = True
+    arm_online: bool = False
     active_jobs: list[JobSchema] = []
     system_info: HardwareInfoSchema | None = None
     drives_online: int = 0

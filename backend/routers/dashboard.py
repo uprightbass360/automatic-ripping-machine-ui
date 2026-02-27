@@ -69,8 +69,11 @@ async def get_dashboard():
     arm_hw = system_cache.get_arm_info()
     transcoder_hw = system_cache.get_transcoder_info()
 
+    arm_online = stats_data is not None
+
     return DashboardResponse(
         db_available=db_available,
+        arm_online=arm_online,
         active_jobs=[JobSchema(**j) for j in active_jobs],
         system_info=HardwareInfoSchema(**arm_hw) if arm_hw else None,
         drives_online=drives_online,

@@ -177,8 +177,14 @@ async def get_system_info():
             "firmware": d.firmware,
         })
 
+    endpoints = {
+        "arm": {"url": app_settings.arm_url, "reachable": arm_versions is not None},
+        "transcoder": {"url": app_settings.transcoder_url, "reachable": tc_health is not None},
+    }
+
     return {
         "versions": versions,
+        "endpoints": endpoints,
         "paths": paths,
         "database": db_info,
         "drives": drive_list,
