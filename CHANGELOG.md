@@ -1,5 +1,17 @@
 # Changelog
 
+## [11.4.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.3.0-alpha.1...v11.4.0-alpha.1) (2026-02-28)
+
+
+### Features
+
+* per-job transcoder log previews and plain-text log parsing ([0b843bd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0b843bdba165886f6f29abcb920999ac1326c6a6))
+
+
+### Bug Fixes
+
+* update plain text log parser test to match regex parsing ([ab6be9b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ab6be9b8833fbf15a289144ee711bc985388c09c))
+
 ## [11.3.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.2.0-alpha.1...v11.3.0-alpha.1) (2026-02-28)
 
 
