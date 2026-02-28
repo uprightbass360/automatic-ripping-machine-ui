@@ -570,8 +570,6 @@
 	{/if}
 
 	{#if job.logfile}
-		<div class="border-t border-primary/20 px-4 py-3 dark:border-primary/20">
-			<InlineLogFeed logfile={job.logfile} maxEntries={5} levelFilter="error" />
-		</div>
+		<InlineLogFeed logfile={job.logfile} maxEntries={5} levelFilter="error" containerClass="border-t border-primary/20 px-4 py-3 dark:border-primary/20" />
 	{/if}
 </div>
