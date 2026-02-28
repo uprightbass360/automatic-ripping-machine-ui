@@ -456,7 +456,7 @@
 									</svg>
 									Loading tracks...
 								</div>
-							{:else if flipData && flipData !== 'loading' && flipData.tracks && flipData.tracks.length > 0}
+							{:else if flipData && flipData.tracks && flipData.tracks.length > 0}
 								<!-- Compact header -->
 								<div class="flex items-center gap-2 border-b border-primary/15 p-2 dark:border-primary/20">
 									{#if hasValidPoster(flipData.poster_url)}
