@@ -62,10 +62,19 @@ if static_dir.is_dir():
     if img_dir.is_dir():
         app.mount("/img", StaticFiles(directory=str(img_dir)), name="images")
 
-    # SPA catch-all: serve index.html for any non-API route
-    @app.get("/{path:path}")
-    async def spa_fallback(request: Request):
-        return FileResponse(static_dir / "index.html")
+    # Serve root-level static files (favicon, apple-touch-icon, etc.)
+    resolved_static = static_dir.resolve()
+
+    @app.get("/{filename:path}")
+    async def root_static_or_spa(request: Request, filename: str):
+        if filename:
+            file_path = (static_dir / filename).resolve()
+            if file_path.is_relative_to(resolved_static) and file_path.is_file():
+                return FileResponse(file_path)
+        return FileResponse(
+            static_dir / "index.html",
+            headers={"Cache-Control": "no-cache"},
+        )
 
 
 if __name__ == "__main__":
