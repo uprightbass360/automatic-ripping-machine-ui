@@ -38,7 +38,7 @@ async def health() -> dict[str, Any] | None:
         resp = await get_client().get("/health")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -173,7 +173,7 @@ async def get_job(job_id: int) -> dict[str, Any] | None:
         resp = await get_client().get(f"/jobs/{job_id}")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -183,7 +183,7 @@ async def get_system_info() -> dict[str, Any] | None:
         resp = await get_client().get("/system/info")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -193,7 +193,7 @@ async def get_system_stats() -> dict[str, Any] | None:
         resp = await get_client().get("/system/stats")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -203,7 +203,7 @@ async def get_config() -> dict[str, Any] | None:
         resp = await get_client().get("/config")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -213,7 +213,7 @@ async def update_config(config: dict[str, Any]) -> dict[str, Any] | None:
         resp = await get_client().patch("/config", json=config)
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -229,7 +229,7 @@ async def get_jobs(
         resp = await get_client().get("/jobs", params=params)
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -238,7 +238,7 @@ async def get_stats() -> dict[str, Any] | None:
         resp = await get_client().get("/stats")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -247,7 +247,7 @@ async def retry_job(job_id: int) -> dict[str, Any] | None:
         resp = await get_client().post(f"/jobs/{job_id}/retry")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -256,7 +256,7 @@ async def delete_job(job_id: int) -> bool:
         resp = await get_client().delete(f"/jobs/{job_id}")
         resp.raise_for_status()
         return True
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return False
 
 
@@ -266,7 +266,7 @@ async def list_logs() -> list[dict[str, Any]] | None:
         resp = await get_client().get("/logs")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -280,5 +280,5 @@ async def read_log(
         )
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None

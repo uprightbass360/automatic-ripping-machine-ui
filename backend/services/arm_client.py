@@ -34,7 +34,7 @@ async def abandon_job(job_id: int) -> dict[str, Any] | None:
         resp = await get_client().post(f"/api/v1/jobs/{job_id}/abandon")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -44,7 +44,7 @@ async def cancel_waiting_job(job_id: int) -> dict[str, Any] | None:
         resp = await get_client().post(f"/api/v1/jobs/{job_id}/cancel")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -54,7 +54,7 @@ async def delete_job(job_id: int) -> dict[str, Any] | None:
         resp = await get_client().delete(f"/api/v1/jobs/{job_id}")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -64,7 +64,7 @@ async def get_config() -> dict[str, Any] | None:
         resp = await get_client().get("/api/v1/settings/config")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -76,7 +76,7 @@ async def update_config(config: dict[str, Any]) -> dict[str, Any] | None:
             json={"config": config},
         )
         return resp.json()
-    except (httpx.ConnectError, httpx.TimeoutException):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -86,7 +86,7 @@ async def get_system_info() -> dict[str, Any] | None:
         resp = await get_client().get("/api/v1/system/info")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -96,7 +96,7 @@ async def get_system_stats() -> dict[str, Any] | None:
         resp = await get_client().get("/api/v1/system/stats")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -106,7 +106,7 @@ async def fix_permissions(job_id: int) -> dict[str, Any] | None:
         resp = await get_client().post(f"/api/v1/jobs/{job_id}/fix-permissions")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -116,7 +116,7 @@ async def update_title(job_id: int, data: dict[str, Any]) -> dict[str, Any] | No
         resp = await get_client().put(f"/api/v1/jobs/{job_id}/title", json=data)
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -126,7 +126,7 @@ async def update_job_config(job_id: int, data: dict[str, Any]) -> dict[str, Any]
         resp = await get_client().patch(f"/api/v1/jobs/{job_id}/config", json=data)
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -136,7 +136,7 @@ async def start_waiting_job(job_id: int) -> dict[str, Any] | None:
         resp = await get_client().post(f"/api/v1/jobs/{job_id}/start")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -149,7 +149,7 @@ async def set_ripping_enabled(enabled: bool) -> dict[str, Any] | None:
         )
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -159,7 +159,7 @@ async def get_version() -> dict[str, str] | None:
         resp = await get_client().get("/api/v1/system/version")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -169,7 +169,7 @@ async def get_paths() -> list[dict[str, Any]] | None:
         resp = await get_client().get("/api/v1/system/paths")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -179,7 +179,7 @@ async def send_to_crc_db(job_id: int) -> dict[str, Any] | None:
         resp = await get_client().post(f"/api/v1/jobs/{job_id}/send")
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -192,7 +192,7 @@ async def set_job_tracks(job_id: int, tracks: list[dict[str, Any]]) -> dict[str,
         )
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
 
@@ -202,5 +202,5 @@ async def update_drive(drive_id: int, data: dict[str, Any]) -> dict[str, Any] | 
         resp = await get_client().patch(f"/api/v1/drives/{drive_id}", json=data)
         resp.raise_for_status()
         return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError):
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
