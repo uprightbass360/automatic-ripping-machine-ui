@@ -158,6 +158,11 @@ These Flask UI features already exist in the replacement UI or are superseded:
 | Ripping pause toggle | Dashboard toggle |
 | Dark mode | Theme system with color schemes |
 | Metadata search (OMDb/TMDb) | Title search on job detail |
+| Music metadata search (MusicBrainz) | MusicSearch with card flip tracklist preview |
+| Disc track comparison | Duration match indicators on music search |
+| Structured metadata editing | Artist, album, season, episode fields |
+| CRC database lookup | Audio disc identification on job detail |
+| Service connection status | Status indicators for ARM and transcoder |
 | Job rip parameter editing | RipSettings component |
 | Responsive mobile layout | Tailwind responsive design |
 | History / completed jobs | Jobs page with status filters |

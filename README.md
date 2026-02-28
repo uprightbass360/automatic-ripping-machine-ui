@@ -43,16 +43,20 @@ The backend reads ARM's SQLite database directly (read-only) for job data, calls
 
 - Real-time dashboard with active rip and transcode job status
 - Job management: view, abandon, delete, fix permissions
+- Metadata search: OMDb/TMDb (video), MusicBrainz (audio) with card flip tracklist preview
+- Disc track comparison with duration match indicators
+- Structured metadata editing (artist, album, season, episode)
 - Transcoder integration: job listing, retry, stats
 - Log viewer with per-job log access
-- Drive status monitoring
+- Drive status monitoring with CRC database lookup
+- Service connection status indicators
 - Notification history
-- Settings overview
+- ARM and transcoder settings management
 - 14 color schemes (including themed dark modes) with responsive layout
 
 ## Tech Stack
 
-**Frontend:** SvelteKit 2, Svelte 5, TypeScript, Tailwind CSS 3, Vite 6
+**Frontend:** SvelteKit 2, Svelte 5, TypeScript, Tailwind CSS 4, Vite 7
 
 **Backend:** FastAPI, SQLAlchemy 2 (read-only), httpx, Pydantic Settings, Uvicorn
 
