@@ -11,6 +11,35 @@
 	let transcoderError = $state<string | null>(null);
 	let transcoderLoaded = $state(false);
 
+	let fileSortKey = $state<keyof LogFile>('modified');
+	let fileSortDir = $state<'asc' | 'desc'>('desc');
+
+	function toggleFileSort(key: keyof LogFile) {
+		if (fileSortKey === key) {
+			fileSortDir = fileSortDir === 'asc' ? 'desc' : 'asc';
+		} else {
+			fileSortKey = key;
+			fileSortDir = key === 'modified' ? 'desc' : 'asc';
+		}
+	}
+
+	function sortLogFiles(files: LogFile[]): LogFile[] {
+		return [...files].sort((a, b) => {
+			const av = a[fileSortKey];
+			const bv = b[fileSortKey];
+			let cmp: number;
+			if (fileSortKey === 'size') {
+				cmp = (av as number) - (bv as number);
+			} else {
+				cmp = String(av).localeCompare(String(bv));
+			}
+			return fileSortDir === 'asc' ? cmp : -cmp;
+		});
+	}
+
+	let sortedArmLogs = $derived(sortLogFiles(armLogs));
+	let sortedTranscoderLogs = $derived(sortLogFiles(transcoderLogs));
+
 	onMount(async () => {
 		try {
 			armLogs = await fetchLogs();
@@ -82,13 +111,22 @@
 				<table class="w-full text-left text-sm">
 					<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 						<tr>
-							<th class="px-4 py-3 font-medium">Filename</th>
-							<th class="px-4 py-3 font-medium">Size</th>
-							<th class="px-4 py-3 font-medium">Last Modified</th>
+							<th class="cursor-pointer select-none px-4 py-3 font-medium" onclick={() => toggleFileSort('filename')}>
+								Filename
+								<span class="ml-0.5 text-[10px]">{fileSortKey === 'filename' ? (fileSortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+							</th>
+							<th class="cursor-pointer select-none px-4 py-3 font-medium" onclick={() => toggleFileSort('size')}>
+								Size
+								<span class="ml-0.5 text-[10px]">{fileSortKey === 'size' ? (fileSortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+							</th>
+							<th class="cursor-pointer select-none px-4 py-3 font-medium" onclick={() => toggleFileSort('modified')}>
+								Last Modified
+								<span class="ml-0.5 text-[10px]">{fileSortKey === 'modified' ? (fileSortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+							</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-						{#each armLogs as log}
+						{#each sortedArmLogs as log}
 							<tr class="hover:bg-page dark:hover:bg-gray-800/50">
 								<td class="px-4 py-3">
 									<a href="/logs/{log.filename}" class="text-primary-text hover:underline dark:text-primary-text-dark">
@@ -123,13 +161,22 @@
 				<table class="w-full text-left text-sm">
 					<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 						<tr>
-							<th class="px-4 py-3 font-medium">Filename</th>
-							<th class="px-4 py-3 font-medium">Size</th>
-							<th class="px-4 py-3 font-medium">Last Modified</th>
+							<th class="cursor-pointer select-none px-4 py-3 font-medium" onclick={() => toggleFileSort('filename')}>
+								Filename
+								<span class="ml-0.5 text-[10px]">{fileSortKey === 'filename' ? (fileSortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+							</th>
+							<th class="cursor-pointer select-none px-4 py-3 font-medium" onclick={() => toggleFileSort('size')}>
+								Size
+								<span class="ml-0.5 text-[10px]">{fileSortKey === 'size' ? (fileSortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+							</th>
+							<th class="cursor-pointer select-none px-4 py-3 font-medium" onclick={() => toggleFileSort('modified')}>
+								Last Modified
+								<span class="ml-0.5 text-[10px]">{fileSortKey === 'modified' ? (fileSortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+							</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-						{#each transcoderLogs as log}
+						{#each sortedTranscoderLogs as log}
 							<tr class="hover:bg-page dark:hover:bg-gray-800/50">
 								<td class="px-4 py-3">
 									<a href="/logs/transcoder/{log.filename}" class="text-primary-text hover:underline dark:text-primary-text-dark">

@@ -36,6 +36,30 @@
 	let searchInput = $state('');
 	let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
+	type SortableKey = 'timestamp' | 'level' | 'logger' | 'event';
+	let sortKey = $state<SortableKey | ''>('');
+	let sortDir = $state<'asc' | 'desc'>('asc');
+
+	function toggleSort(key: SortableKey) {
+		if (sortKey === key) {
+			sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+		} else {
+			sortKey = key;
+			sortDir = key === 'timestamp' ? 'desc' : 'asc';
+		}
+	}
+
+	let sortedEntries = $derived.by(() => {
+		if (!sortKey) return entries;
+		const k = sortKey;
+		return [...entries].sort((a, b) => {
+			const av = a[k] ?? '';
+			const bv = b[k] ?? '';
+			const cmp = String(av).localeCompare(String(bv));
+			return sortDir === 'asc' ? cmp : -cmp;
+		});
+	});
+
 	const levelColors: Record<string, string> = {
 		error: 'border-l-red-500 bg-red-950/30',
 		critical: 'border-l-red-500 bg-red-950/30',
@@ -141,15 +165,27 @@
 		<table class="w-full text-left text-xs">
 			<thead class="sticky top-0 bg-gray-800 text-gray-400">
 				<tr>
-					<th class="w-[140px] px-3 py-2 font-medium">Time</th>
-					<th class="w-[60px] px-2 py-2 font-medium">Level</th>
-					<th class="w-[160px] px-2 py-2 font-medium">Logger</th>
-					<th class="px-3 py-2 font-medium">Event</th>
+					<th class="w-[140px] cursor-pointer select-none px-3 py-2 font-medium" onclick={() => toggleSort('timestamp')}>
+						Time
+						<span class="ml-0.5 text-[10px]">{sortKey === 'timestamp' ? (sortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+					</th>
+					<th class="w-[60px] cursor-pointer select-none px-2 py-2 font-medium" onclick={() => toggleSort('level')}>
+						Level
+						<span class="ml-0.5 text-[10px]">{sortKey === 'level' ? (sortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+					</th>
+					<th class="w-[160px] cursor-pointer select-none px-2 py-2 font-medium" onclick={() => toggleSort('logger')}>
+						Logger
+						<span class="ml-0.5 text-[10px]">{sortKey === 'logger' ? (sortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+					</th>
+					<th class="cursor-pointer select-none px-3 py-2 font-medium" onclick={() => toggleSort('event')}>
+						Event
+						<span class="ml-0.5 text-[10px]">{sortKey === 'event' ? (sortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
+					</th>
 					<th class="w-[80px] px-2 py-2 font-medium">Context</th>
 				</tr>
 			</thead>
 			<tbody class="font-mono">
-				{#each entries as entry}
+				{#each sortedEntries as entry}
 					<tr class="border-l-2 border-b border-b-gray-800/50 {levelColors[entry.level] ?? 'border-l-gray-700'}">
 						<td class="whitespace-nowrap px-3 py-1.5 text-gray-500">
 							{#if entry.timestamp}
