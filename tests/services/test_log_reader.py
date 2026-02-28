@@ -130,14 +130,26 @@ def test_parse_json_line():
 
 
 def test_parse_plain_text_line():
-    """Non-JSON line falls back to plain text wrapper."""
+    """ARM plain text line is parsed via regex into structured fields."""
     line = "2024-01-01 10:00:00 ARM: INFO: Ripping started"
+    entry = log_reader._parse_log_line(line)
+    assert entry["timestamp"] == "2024-01-01 10:00:00"
+    assert entry["level"] == "info"
+    assert entry["logger"] == "ARM"
+    assert entry["event"] == "Ripping started"
+    assert entry["job_id"] is None
+    assert entry["label"] is None
+    assert entry["raw"] == line
+
+
+def test_parse_unstructured_line():
+    """Non-JSON, non-ARM line falls back to raw wrapper."""
+    line = "Some random unstructured text"
     entry = log_reader._parse_log_line(line)
     assert entry["timestamp"] == ""
     assert entry["level"] == "info"
     assert entry["event"] == line
     assert entry["job_id"] is None
-    assert entry["label"] is None
     assert entry["raw"] == line
 
 
