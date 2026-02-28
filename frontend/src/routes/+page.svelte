@@ -192,7 +192,7 @@
 				<div class="relative h-5 w-9 rounded-full transition-colors {dash.ripping_enabled ? 'bg-emerald-500' : 'bg-amber-500'}">
 					<div class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform {dash.ripping_enabled ? 'translate-x-4' : 'translate-x-0.5'}"></div>
 				</div>
-				{dash.ripping_enabled ? 'Accepting Discs' : 'Paused'}
+				{dash.ripping_enabled ? 'Auto-Start' : 'Paused'}
 			</button>
 		{/if}
 	</div>
@@ -203,7 +203,7 @@
 			<div class="h-3 w-3 shrink-0 rounded-full bg-amber-500"></div>
 			<div>
 				<p class="font-medium text-amber-800 dark:text-amber-300">Ripping Paused</p>
-				<p class="text-sm text-amber-700 dark:text-amber-400">New discs will wait for manual start. Click "Start Ripping" on individual jobs or toggle "Accepting Discs" to resume.</p>
+				<p class="text-sm text-amber-700 dark:text-amber-400">New discs will wait for manual start. Click "Start Ripping" on individual jobs or toggle "Auto-Start" to resume.</p>
 			</div>
 		</div>
 	{/if}
