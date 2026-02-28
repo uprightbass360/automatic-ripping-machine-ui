@@ -9,7 +9,6 @@
 	let transcoderLogs = $state<LogFile[]>([]);
 	let armError = $state<string | null>(null);
 	let transcoderError = $state<string | null>(null);
-	let transcoderLoaded = $state(false);
 
 	let fileSortKey = $state<keyof LogFile>('modified');
 	let fileSortDir = $state<'asc' | 'desc'>('desc');
@@ -40,30 +39,24 @@
 	let sortedArmLogs = $derived(sortLogFiles(armLogs));
 	let sortedTranscoderLogs = $derived(sortLogFiles(transcoderLogs));
 
+	function switchTab(tab: 'arm' | 'transcoder') {
+		activeTab = tab;
+		fileSortKey = 'modified';
+		fileSortDir = 'desc';
+	}
+
 	onMount(async () => {
 		try {
 			armLogs = await fetchLogs();
 		} catch (e) {
 			armError = e instanceof Error ? e.message : 'Failed to load ARM logs';
 		}
-	});
-
-	async function loadTranscoderLogs() {
-		if (transcoderLoaded) return;
 		try {
 			transcoderLogs = await fetchTranscoderLogs();
 		} catch (e) {
 			transcoderError = e instanceof Error ? e.message : 'Failed to load transcoder logs';
 		}
-		transcoderLoaded = true;
-	}
-
-	function switchTab(tab: 'arm' | 'transcoder') {
-		activeTab = tab;
-		if (tab === 'transcoder') {
-			loadTranscoderLogs();
-		}
-	}
+	});
 </script>
 
 <svelte:head>
@@ -77,22 +70,20 @@
 	<div class="border-b border-primary/20 dark:border-primary/20">
 		<nav class="-mb-px flex gap-4" aria-label="Log tabs">
 			<button
-				type="button"
 				onclick={() => switchTab('arm')}
 				class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
 					{activeTab === 'arm'
-					? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
-					: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
+						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
+						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
 			>
 				ARM Ripper
 			</button>
 			<button
-				type="button"
 				onclick={() => switchTab('transcoder')}
 				class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
 					{activeTab === 'transcoder'
-					? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
-					: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
+						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
+						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
 			>
 				Transcoder
 			</button>
@@ -146,16 +137,8 @@
 			<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
 				{transcoderError}
 			</div>
-		{:else if !transcoderLoaded}
-			<div class="flex items-center justify-center p-8 text-gray-400">
-				<svg class="mr-2 h-5 w-5 animate-spin" viewBox="0 0 24 24">
-					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
-					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-				</svg>
-				Loading...
-			</div>
 		{:else if transcoderLogs.length === 0}
-			<p class="py-8 text-center text-gray-400">Transcoder offline or no logs available.</p>
+			<p class="py-8 text-center text-gray-400">No transcoder log files found.</p>
 		{:else}
 			<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 				<table class="w-full text-left text-sm">

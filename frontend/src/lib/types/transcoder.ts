@@ -5,6 +5,7 @@ export interface TranscoderJob {
 	status: string;
 	progress: number;
 	error: string | null;
+	logfile: string | null;
 	created_at: string | null;
 	started_at: string | null;
 	completed_at: string | null;

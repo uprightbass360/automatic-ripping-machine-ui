@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
 from backend.config import settings
+
+# ARM plain text log format: "{timestamp} {logger}: {LEVEL}: {message}"
+# e.g. "02-28-2026 04:59:16 ARM: INFO: Ripping complete"
+_ARM_PLAIN_RE = re.compile(
+    r'^(.+?)\s+(\w+):\s+(DEBUG|INFO|WARNING|ERROR|CRITICAL):\s*(.*)',
+    re.IGNORECASE,
+)
 
 
 def _log_dir() -> Path:
@@ -71,8 +79,9 @@ def read_log(
 
 
 def _parse_log_line(line: str) -> dict:
-    """Parse a single log line. JSON lines get structured fields; plain text gets wrapped."""
+    """Parse a single log line. Tries JSON first, then ARM plain text, then raw fallback."""
     line = line.rstrip("\n")
+    # JSON lines (structlog format)
     try:
         parsed = json.loads(line)
         return {
@@ -85,15 +94,31 @@ def _parse_log_line(line: str) -> dict:
             "raw": line,
         }
     except (json.JSONDecodeError, TypeError):
+        pass
+
+    # ARM plain text format: "{timestamp} {logger}: {LEVEL}: {message}"
+    m = _ARM_PLAIN_RE.match(line)
+    if m:
         return {
-            "timestamp": "",
-            "level": "info",
-            "logger": "",
-            "event": line,
+            "timestamp": m.group(1).strip(),
+            "level": m.group(3).lower(),
+            "logger": m.group(2),
+            "event": m.group(4),
             "job_id": None,
             "label": None,
             "raw": line,
         }
+
+    # Fallback: entire line as event
+    return {
+        "timestamp": "",
+        "level": "info",
+        "logger": "",
+        "event": line,
+        "job_id": None,
+        "label": None,
+        "raw": line,
+    }
 
 
 def read_structured_log(

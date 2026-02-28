@@ -2,10 +2,12 @@
 	import { onMount } from 'svelte';
 	import { createPollingStore } from '$lib/stores/polling';
 	import { fetchTranscoderStats, fetchTranscoderJobs, retryTranscoderJob, deleteTranscoderJob, retranscodeTranscoderJob } from '$lib/api/transcoder';
+	import { fetchStructuredTranscoderLogContent } from '$lib/api/logs';
 	import type { TranscoderStats, TranscoderJobListResponse } from '$lib/types/transcoder';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
 	import TimeAgo from '$lib/components/TimeAgo.svelte';
+	import InlineLogFeed from '$lib/components/InlineLogFeed.svelte';
 
 	const emptyStats: TranscoderStats = { online: false, stats: null };
 	const emptyJobs: TranscoderJobListResponse = { jobs: [], total: 0 };
@@ -244,6 +246,18 @@
 								{/if}
 							{/if}
 						</div>
+
+						<!-- Per-job log preview -->
+						{#if job.logfile}
+							<InlineLogFeed
+								logfile={job.logfile}
+								maxEntries={8}
+								fetchFn={fetchStructuredTranscoderLogContent}
+								logLinkBase="/logs/transcoder"
+								autoRefresh={job.status === 'processing'}
+								containerClass="mt-3"
+							/>
+						{/if}
 					</div>
 				{/each}
 			</div>

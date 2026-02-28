@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { LogEntry } from '$lib/types/arm';
+	import type { LogEntry, StructuredLogContent } from '$lib/types/arm';
 	import { fetchStructuredLogContent } from '$lib/api/logs';
 
 	interface Props {
@@ -8,9 +8,25 @@
 		levelFilter?: string;
 		autoRefresh?: boolean;
 		containerClass?: string;
+		fetchFn?: (
+			filename: string,
+			mode: 'tail' | 'full',
+			lines: number,
+			level?: string,
+			search?: string
+		) => Promise<StructuredLogContent>;
+		logLinkBase?: string;
 	}
 
-	let { logfile, maxEntries = 10, levelFilter, autoRefresh = true, containerClass }: Props = $props();
+	let {
+		logfile,
+		maxEntries = 10,
+		levelFilter,
+		autoRefresh = true,
+		containerClass,
+		fetchFn = fetchStructuredLogContent,
+		logLinkBase = '/logs',
+	}: Props = $props();
 
 	let entries = $state<LogEntry[]>([]);
 	let error = $state<string | null>(null);
@@ -38,7 +54,7 @@
 
 	async function load() {
 		try {
-			const data = await fetchStructuredLogContent(
+			const data = await fetchFn(
 				logfile,
 				'tail',
 				maxEntries,
@@ -119,7 +135,7 @@
 					</div>
 					<div class="border-t border-gray-200 px-3 py-2 dark:border-gray-700">
 						<a
-							href="/logs/{logfile}"
+							href="{logLinkBase}/{logfile}"
 							class="text-xs text-primary-text hover:underline dark:text-primary-text-dark"
 						>
 							View full log &rarr;
