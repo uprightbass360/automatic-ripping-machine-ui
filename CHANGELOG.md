@@ -1,5 +1,26 @@
 # Changelog
 
+## [11.3.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.2.0-alpha.1...v11.3.0-alpha.1) (2026-02-28)
+
+
+### Features
+
+* progress bar tracks overall disc, per-job pause, year parsing fix, review pane improvements ([e958f6d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e958f6dd019822b02fbc7e3a5203d4ba5b87e1c4))
+* show log_level_libraries on transcoder config page ([be060e7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/be060e7d3b76dcfcdfc59368fd39eb2f7526ebf7))
+* sortable column headers on log pages ([a447f7e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a447f7e66338bd1751ea65a1566ae975ee055fd6))
+* structured logging with StructuredLogViewer for ARM and transcoder ([cf222f1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cf222f191d1e47f00012e44545f1a1debfd34442))
+* switch favicon to white ARM logo ([36d950e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/36d950e56ea216948c1f4309ab9917109ace080d))
+
+
+### Bug Fixes
+
+* catch RuntimeError and OSError in httpx client exception handlers ([c0d56a5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c0d56a50347cd1a04c6a466df5992df40f195135))
+* prevent FOUC by hiding body until CSS loads ([99313a1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/99313a165054b3ebf69e825d7808a58e613262f6))
+* prevent layout jump in review widget InlineLogFeed ([9fb6196](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9fb61966f973a37a4874557b1f1617b4eea1dc44))
+* rename "Accepting Discs" toggle label to "Auto-Start" ([001054d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/001054dad74162940bdb777fb76760aaee106ca9))
+* serve root-level static files and prevent path traversal in SPA catch-all ([c190797](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c190797b4ffcc4280579eb9dc2649652f572a98a))
+* TMDb metadata provider fallback, error handling, and logging ([b075b1b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b075b1b44db7b5bfb1423523fbeb4635192ba482))
+
 ## [11.2.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.1.1-alpha.1...v11.2.0-alpha.1) (2026-02-28)
 
 
