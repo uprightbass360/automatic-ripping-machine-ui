@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.5.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.5.0-alpha.1...v11.5.1-alpha.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* clamp rip progress to 100% when all tracks are ripped ([92f32d1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/92f32d1c3f4dfc553abac13efa1769698ad5fbcb))
+
 ## [11.5.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.4.1-alpha.1...v11.5.0-alpha.1) (2026-02-28)
 
 
