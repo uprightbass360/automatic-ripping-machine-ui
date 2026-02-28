@@ -20,7 +20,7 @@ def get_client() -> httpx.AsyncClient:
         _client = httpx.AsyncClient(
             base_url=settings.transcoder_url,
             headers=headers,
-            timeout=httpx.Timeout(10.0, connect=3.0),
+            timeout=httpx.Timeout(15.0, connect=5.0),
         )
     return _client
 
