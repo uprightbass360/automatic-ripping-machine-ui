@@ -365,6 +365,7 @@ def get_job_retranscode_info(job_id: int) -> dict | None:
                 "video_type": job.video_type or job.video_type_auto or "movie",
                 "year": year,
                 "disctype": job.disctype,
+                "poster_url": job.poster_url or job.poster_url_auto or "",
             }
     except Exception:
         log.exception("Failed to get retranscode info for job %s", job_id)

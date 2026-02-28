@@ -6,6 +6,13 @@ export interface TranscoderJob {
 	progress: number;
 	error: string | null;
 	logfile: string | null;
+	video_type: string | null;
+	year: string | null;
+	disctype: string | null;
+	arm_job_id: string | null;
+	output_path: string | null;
+	total_tracks: number | null;
+	poster_url: string | null;
 	created_at: string | null;
 	started_at: string | null;
 	completed_at: string | null;
