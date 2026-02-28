@@ -34,6 +34,10 @@ export function startWaitingJob(id: number): Promise<unknown> {
 	return apiFetch(`/api/jobs/${id}/start`, { method: 'POST' });
 }
 
+export function pauseWaitingJob(id: number): Promise<unknown> {
+	return apiFetch(`/api/jobs/${id}/pause`, { method: 'POST' });
+}
+
 export function deleteJob(id: number): Promise<unknown> {
 	return apiFetch(`/api/jobs/${id}`, { method: 'DELETE' });
 }
@@ -134,6 +138,8 @@ export function submitToCrcDb(id: number): Promise<unknown> {
 export interface RipProgress {
 	progress: number | null;
 	stage: string | null;
+	tracks_total: number;
+	tracks_ripped: number;
 }
 
 export function fetchJobProgress(id: number): Promise<RipProgress> {

@@ -134,3 +134,25 @@ async def test_update_drive_http_error():
     with patch.object(arm_client, "get_client", return_value=mock_client):
         result = await arm_client.update_drive(3, {"name": "X"})
     assert result is None
+
+
+# --- pause_waiting_job ---
+
+
+async def test_pause_waiting_job_success():
+    """pause_waiting_job returns JSON on success."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.post.return_value = _mock_response({"success": True, "paused": True})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.pause_waiting_job(42)
+    assert result == {"success": True, "paused": True}
+    mock_client.post.assert_awaited_once_with("/api/v1/jobs/42/pause")
+
+
+async def test_pause_waiting_job_connect_error():
+    """pause_waiting_job returns None on ConnectError."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.post.side_effect = httpx.ConnectError("refused")
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.pause_waiting_job(42)
+    assert result is None

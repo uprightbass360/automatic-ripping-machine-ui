@@ -143,6 +143,23 @@ def get_jobs_paginated_response(
     }
 
 
+def get_job_track_counts(job_id: int) -> dict:
+    """Return track completion counts for a single job."""
+    try:
+        with get_session() as session:
+            stmt = select(Job).where(Job.job_id == job_id)
+            job = session.scalars(stmt).unique().first()
+            if not job:
+                return {"tracks_total": 0, "tracks_ripped": 0}
+            tracks = list(job.tracks) if job.tracks else []
+            return {
+                "tracks_total": len(tracks),
+                "tracks_ripped": sum(1 for t in tracks if t.ripped),
+            }
+    except Exception:
+        return {"tracks_total": 0, "tracks_ripped": 0}
+
+
 def get_job(job_id: int) -> Job | None:
     try:
         with get_session() as session:

@@ -51,7 +51,9 @@ def get_job_progress(job_id: int):
     job = arm_db.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    return progress.get_rip_progress(job.job_id)
+    result = progress.get_rip_progress(job.job_id)
+    result.update(arm_db.get_job_track_counts(job_id))
+    return result
 
 
 @router.get("/jobs/{job_id}/crc-lookup")

@@ -67,6 +67,13 @@
 		}
 	}
 
+	function overallProgress(p: RipProgress | undefined): number | null {
+		if (!p || p.progress == null) return null;
+		if (p.tracks_total > 0)
+			return ((p.tracks_ripped + p.progress / 100) / p.tracks_total) * 100;
+		return p.progress;
+	}
+
 	async function pollProgress() {
 		const rippingJobs = dash.active_jobs.filter(j => j.status?.toLowerCase() === 'ripping');
 		if (rippingJobs.length === 0) {
@@ -387,7 +394,7 @@
 			<LcarsFrame variant="full" accent="#99f" label="ACTIVE RIPS — {nonWaitingActiveJobs.length} IN PROGRESS">
 				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 					{#each nonWaitingActiveJobs as job (job.job_id)}
-						<JobCard {job} driveNames={dash.drive_names} progress={progressMap[job.job_id]?.progress} progressStage={progressMap[job.job_id]?.stage} />
+						<JobCard {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} />
 					{/each}
 				</div>
 			</LcarsFrame>
@@ -488,7 +495,7 @@
 				{:else}
 					<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{#each jobsData.jobs as job (job.job_id)}
-							<JobCard {job} driveNames={dash.drive_names} progress={progressMap[job.job_id]?.progress} progressStage={progressMap[job.job_id]?.stage} />
+							<JobCard {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} />
 						{/each}
 					</div>
 				{/if}

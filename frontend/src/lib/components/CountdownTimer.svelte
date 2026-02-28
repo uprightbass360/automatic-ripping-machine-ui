@@ -5,9 +5,11 @@
 		paused?: boolean;
 		/** Render with white text/track for use on colored backgrounds */
 		inverted?: boolean;
+		onpause?: () => void;
+		onresume?: () => void;
 	}
 
-	let { startTime, waitSeconds, paused = false, inverted = false }: Props = $props();
+	let { startTime, waitSeconds, paused = false, inverted = false, onpause, onresume }: Props = $props();
 
 	let localPaused = $state(false);
 	let localResumed = $state(false);
@@ -36,11 +38,13 @@
 			frozenAt = null;
 			localPaused = false;
 			localResumed = true;
+			onresume?.();
 		} else {
 			// Pausing: freeze the current time
 			frozenAt = Date.now();
 			localPaused = true;
 			localResumed = false;
+			onpause?.();
 		}
 	}
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Job, JobDetail } from '$lib/types/arm';
-	import { cancelWaitingJob, startWaitingJob, fetchJob, updateJobTitle } from '$lib/api/jobs';
+	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle } from '$lib/api/jobs';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
@@ -44,6 +44,7 @@
 	let infoAlbum = $state(job.album || '');
 	let infoSeason = $state(job.season || '');
 	let infoEpisode = $state(job.episode || '');
+	let infoPlot = $state<string | null>(null);
 	let infoSaving = $state(false);
 	let infoFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -199,7 +200,20 @@
 			<span class="text-sm font-semibold text-on-primary">Waiting for Review</span>
 		</div>
 		{#if job.start_time}
-			<CountdownTimer startTime={job.start_time} waitSeconds={waitTime} {paused} inverted />
+			<CountdownTimer
+			startTime={job.start_time}
+			waitSeconds={waitTime}
+			{paused}
+			inverted
+			onpause={() => { pauseWaitingJob(job.job_id).then(() => onrefresh?.()); }}
+			onresume={() => {
+				if (paused) {
+					startWaitingJob(job.job_id).then(() => onrefresh?.());
+				} else {
+					pauseWaitingJob(job.job_id).then(() => onrefresh?.());
+				}
+			}}
+		/>
 		{/if}
 	</div>
 
@@ -347,7 +361,8 @@
 						</div>
 					{/if}
 
-					<!-- Editable metadata -->
+					<!-- Identity -->
+					<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Identity</h4>
 					<div class="space-y-2">
 						<label class="block">
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
@@ -377,6 +392,10 @@
 								</label>
 							</div>
 						{/if}
+					</div>
+					<hr class="border-primary/10 dark:border-primary/15" />
+					<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Media Metadata</h4>
+					<div class="space-y-2">
 						<div class="grid gap-3 {isMusic ? 'grid-cols-2' : 'grid-cols-3'}">
 							<label>
 								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
@@ -401,6 +420,9 @@
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{isMusic ? 'Cover Art URL' : 'Poster URL'}</span>
 							<input type="text" bind:value={infoPosterUrl} placeholder="https://..." class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 						</label>
+						{#if infoPlot}
+							<div class="rounded-md bg-primary/5 px-3 py-2 text-sm italic text-gray-600 dark:bg-primary/10 dark:text-gray-400">{infoPlot}</div>
+						{/if}
 					</div>
 
 					{#if infoDirty}
@@ -421,6 +443,8 @@
 					{/if}
 
 					<!-- Disc details -->
+					<hr class="border-primary/10 dark:border-primary/15" />
+					<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Disc Details</h4>
 					<div class="grid gap-3 text-sm {isMusic ? 'grid-cols-3' : 'grid-cols-4'}">
 						<label>
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc Type</span>
@@ -518,7 +542,7 @@
 
 	{#if showTitleSearch && isVideo}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
-			<TitleSearch {job} onapply={handleTitleApply} />
+			<TitleSearch {job} onapply={handleTitleApply} onapplydetail={(d) => { infoPlot = d.plot ?? null; }} />
 		</div>
 	{/if}
 

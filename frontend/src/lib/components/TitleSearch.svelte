@@ -5,9 +5,10 @@
 	interface Props {
 		job: Job;
 		onapply?: () => void;
+		onapplydetail?: (d: { plot?: string | null }) => void;
 	}
 
-	let { job, onapply }: Props = $props();
+	let { job, onapply, onapplydetail }: Props = $props();
 
 	let query = $state(job.title || job.label || '');
 	let yearInput = $state(job.year || '');
@@ -125,6 +126,7 @@
 			imdb_id: editImdbId.trim() || undefined,
 			poster_url: editPosterUrl.trim() || undefined
 		});
+		onapplydetail?.({ plot: detail?.plot });
 	}
 
 	function backToResults() {

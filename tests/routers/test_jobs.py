@@ -87,3 +87,27 @@ async def test_metadata_search_503_on_config_error(app_client):
     ):
         resp = await app_client.get("/api/metadata/search?q=test")
     assert resp.status_code == 503
+
+
+# --- GET /api/jobs/{job_id}/progress ---
+
+
+async def test_get_job_progress_with_track_counts(app_client):
+    """GET /api/jobs/{id}/progress returns rip progress enriched with track counts."""
+    job = make_job(job_id=5, title="Test Movie")
+    with patch("backend.routers.jobs.arm_db.get_job", return_value=job), \
+         patch("backend.routers.jobs.progress.get_rip_progress", return_value={"progress": 45, "stage": "rip"}), \
+         patch("backend.routers.jobs.arm_db.get_job_track_counts", return_value={"tracks_total": 10, "tracks_ripped": 3}):
+        resp = await app_client.get("/api/jobs/5/progress")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["progress"] == 45
+    assert data["tracks_total"] == 10
+    assert data["tracks_ripped"] == 3
+
+
+async def test_get_job_progress_404(app_client):
+    """GET /api/jobs/{id}/progress returns 404 when job not found."""
+    with patch("backend.routers.jobs.arm_db.get_job", return_value=None):
+        resp = await app_client.get("/api/jobs/999/progress")
+    assert resp.status_code == 404

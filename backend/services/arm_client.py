@@ -140,6 +140,16 @@ async def start_waiting_job(job_id: int) -> dict[str, Any] | None:
         return None
 
 
+async def pause_waiting_job(job_id: int) -> dict[str, Any] | None:
+    """Toggle per-job pause for a waiting job. Returns None if ARM is unreachable."""
+    try:
+        resp = await get_client().post(f"/api/v1/jobs/{job_id}/pause")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
 async def set_ripping_enabled(enabled: bool) -> dict[str, Any] | None:
     """Toggle global ripping pause. Returns None if ARM is unreachable."""
     try:

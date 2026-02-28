@@ -112,3 +112,25 @@ async def test_start_waiting_job_endpoint(app_client):
     ):
         resp = await app_client.post("/api/jobs/1/start")
     assert resp.status_code == 200
+
+
+async def test_pause_waiting_job_endpoint(app_client):
+    """POST /api/jobs/{id}/pause proxies to arm_client."""
+    with patch(
+        "backend.routers.arm_actions.arm_client.pause_waiting_job",
+        new_callable=AsyncMock, return_value={"success": True, "paused": True},
+    ):
+        resp = await app_client.post("/api/jobs/1/pause")
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+    assert resp.json()["paused"] is True
+
+
+async def test_pause_waiting_job_503_when_unreachable(app_client):
+    """POST /api/jobs/{id}/pause returns 503 when ARM is down."""
+    with patch(
+        "backend.routers.arm_actions.arm_client.pause_waiting_job",
+        new_callable=AsyncMock, return_value=None,
+    ):
+        resp = await app_client.post("/api/jobs/1/pause")
+    assert resp.status_code == 503

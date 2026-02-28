@@ -58,6 +58,12 @@ async def start_waiting_job(job_id: int) -> dict[str, Any]:
     return _check_result(await arm_client.start_waiting_job(job_id))
 
 
+@router.post("/{job_id}/pause")
+async def pause_waiting_job(job_id: int) -> dict[str, Any]:
+    """Toggle per-job pause for a waiting job (proxies to ARM)."""
+    return _check_result(await arm_client.pause_waiting_job(job_id))
+
+
 @router.put("/{job_id}/tracks")
 async def set_job_tracks(job_id: int, body: list[dict]) -> dict[str, Any]:
     """Replace a job's tracks with MusicBrainz data (proxies to ARM)."""

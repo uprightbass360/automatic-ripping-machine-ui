@@ -15,8 +15,17 @@ from backend.config import settings
 
 log = logging.getLogger(__name__)
 
-TMDB_YEAR_REGEX = r"-\d{0,2}-\d{0,2}"
 TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/original"
+
+
+def _extract_year(raw: str) -> str:
+    """Extract a 4-digit year from a date/range string.
+
+    Handles ISO dates ("2006-05-19"), ranges ("2006-2008", "2006\u20132008"),
+    open ranges ("2006\u2013"), and plain years ("2006").
+    """
+    m = re.search(r"\d{4}", str(raw))
+    return m.group(0) if m else raw
 
 
 class MetadataConfigError(Exception):
@@ -204,9 +213,10 @@ def _normalize_omdb(item: dict) -> dict[str, Any]:
     poster = item.get("Poster")
     if poster == "N/A":
         poster = None
+    year_raw = item.get("Year", "")
     return {
         "title": item.get("Title", ""),
-        "year": item.get("Year", ""),
+        "year": _extract_year(year_raw) if year_raw else "",
         "imdb_id": item.get("imdbID"),
         "media_type": media_type,
         "poster_url": poster,
@@ -281,7 +291,7 @@ async def _normalize_tmdb(
 ) -> dict[str, Any]:
     title = item.get("title") or item.get("name", "")
     release = item.get("release_date") or item.get("first_air_date") or ""
-    year = re.sub(TMDB_YEAR_REGEX, "", release) if release else ""
+    year = _extract_year(release) if release else ""
     poster_path = item.get("poster_path")
     poster_url = f"{TMDB_POSTER_BASE}{poster_path}" if poster_path else None
     imdb_id = await _tmdb_get_imdb(item["id"], media_type, api_key)
@@ -366,7 +376,7 @@ async def _tmdb_find(imdb_id: str, api_key: str) -> dict[str, Any] | None:
 
     title = item.get("title") or item.get("name", "")
     release = item.get("release_date") or item.get("first_air_date") or ""
-    year = re.sub(TMDB_YEAR_REGEX, "", release) if release else ""
+    year = _extract_year(release) if release else ""
     poster_path = item.get("poster_path")
     backdrop_path = item.get("backdrop_path")
 
