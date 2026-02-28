@@ -11,9 +11,6 @@
 	let sidebarOpen = $state(false);
 
 	onMount(() => {
-		// Apply initial theme class
-		document.documentElement.classList.toggle('dark', $theme === 'dark');
-
 		// Start dashboard polling (provides sidebar stats on all pages)
 		dashboard.start();
 		return () => dashboard.stop();

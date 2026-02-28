@@ -54,6 +54,10 @@
 	}
 }
 
+/* FOUC prevention: overrides the inline visibility:hidden in app.html.
+   Must be unlayered so it beats the unlayered inline <style>. */
+body { visibility: visible; }
+
 /* ── Glass theme ───────────────────────────────────────── */
 
 /* Gradient background visible through the glass */
