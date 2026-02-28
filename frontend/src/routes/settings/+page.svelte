@@ -197,6 +197,7 @@
 		minimum_free_space_gb: 'Min Free Disk Space (GB)',
 		max_retry_count: 'Max Retry Attempts',
 		log_level: 'Log Level',
+		log_level_libraries: 'Log Level (Libraries)',
 	};
 
 	// Transcoder boolean fields rendered as toggle switches
@@ -250,6 +251,8 @@
 		handbrake_preset_dvd: 'Used for DVD/low-res sources (<720p). Falls back to the default preset if empty.',
 		handbrake_preset_file:
 			'Imports custom presets from a JSON file. When set, those preset names become available alongside built-in presets.',
+		log_level_libraries:
+			'Log level for third-party libraries (aiosqlite, httpcore, httpx, uvicorn). Defaults to WARNING to reduce noise.',
 	};
 
 	// Preset options: custom presets from selected file first, then built-in.
@@ -306,6 +309,7 @@
 			audio_encoder: tc.valid_audio_encoders,
 			subtitle_mode: tc.valid_subtitle_modes,
 			log_level: tc.valid_log_levels,
+			log_level_libraries: tc.valid_log_levels,
 			handbrake_preset: presets.length ? ['', ...presets] : undefined,
 			handbrake_preset_4k: presets.length ? ['', ...presets] : undefined,
 			handbrake_preset_dvd: presets.length ? ['', ...presets] : undefined,
