@@ -91,7 +91,7 @@ async def get_media_detail(imdb_id: str):
     return result
 
 
-@router.get("/metadata/music/search", response_model=list[MusicSearchResultSchema])
+@router.get("/metadata/music/search")
 async def search_music_metadata(
     q: str = Query(..., min_length=1),
     artist: str | None = None,
@@ -99,11 +99,13 @@ async def search_music_metadata(
     format: str | None = None,
     country: str | None = None,
     status: str | None = None,
+    tracks: int | None = None,
+    offset: int = Query(0, ge=0),
 ):
     """Search MusicBrainz for releases matching the query with optional filters."""
     return await music_metadata.search(
         q, artist, release_type=release_type, format=format,
-        country=country, status=status,
+        country=country, status=status, tracks=tracks, offset=offset,
     )
 
 

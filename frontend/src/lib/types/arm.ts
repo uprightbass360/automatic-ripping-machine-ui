@@ -53,6 +53,18 @@ export interface Job {
 	path: string | null;
 	raw_path: string | null;
 	transcode_path: string | null;
+	artist: string | null;
+	artist_auto: string | null;
+	artist_manual: string | null;
+	album: string | null;
+	album_auto: string | null;
+	album_manual: string | null;
+	season: string | null;
+	season_auto: string | null;
+	season_manual: string | null;
+	episode: string | null;
+	episode_auto: string | null;
+	episode_manual: string | null;
 	ejected: boolean | null;
 	pid: number | null;
 	tracks_total: number | null;
@@ -211,6 +223,12 @@ export interface TitleUpdate {
 	imdb_id?: string;
 	poster_url?: string;
 	path?: string;
+	disctype?: string;
+	label?: string;
+	artist?: string;
+	album?: string;
+	season?: string;
+	episode?: string;
 }
 
 export interface JobConfigUpdate {
@@ -243,6 +261,7 @@ export interface SettingsData {
 	arm_config: Record<string, string | null> | null;
 	arm_metadata: Record<string, string> | null;
 	arm_handbrake_presets: string[] | null;
+	naming_variables: Record<string, string> | null;
 	transcoder_config: TranscoderConfig | null;
 	transcoder_gpu_support: Record<string, boolean> | null;
 	transcoder_auth_status: TranscoderAuthStatus | null;

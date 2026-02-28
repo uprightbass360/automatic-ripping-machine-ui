@@ -52,21 +52,39 @@ export function fetchMediaDetail(imdbId: string): Promise<MediaDetail> {
 	return apiFetch<MediaDetail>(`/api/metadata/${imdbId}`);
 }
 
+export interface MusicSearchResponse {
+	results: MusicSearchResult[];
+	total: number;
+}
+
 export function searchMusicMetadata(
 	query: string,
-	filters?: { artist?: string; release_type?: string; format?: string; country?: string; status?: string }
-): Promise<MusicSearchResult[]> {
+	filters?: { artist?: string; release_type?: string; format?: string; country?: string; status?: string; tracks?: number },
+	offset = 0
+): Promise<MusicSearchResponse> {
 	const params = new URLSearchParams({ q: query });
 	if (filters?.artist) params.set('artist', filters.artist);
 	if (filters?.release_type) params.set('release_type', filters.release_type);
 	if (filters?.format) params.set('format', filters.format);
 	if (filters?.country) params.set('country', filters.country);
 	if (filters?.status) params.set('status', filters.status);
-	return apiFetch<MusicSearchResult[]>(`/api/metadata/music/search?${params}`);
+	if (filters?.tracks) params.set('tracks', String(filters.tracks));
+	if (offset > 0) params.set('offset', String(offset));
+	return apiFetch<MusicSearchResponse>(`/api/metadata/music/search?${params}`);
 }
 
 export function fetchMusicDetail(releaseId: string): Promise<MusicDetail> {
 	return apiFetch<MusicDetail>(`/api/metadata/music/${releaseId}`);
+}
+
+export function setJobTracks(
+	jobId: number,
+	tracks: { track_number: string; title: string; length_ms: number | null }[]
+): Promise<unknown> {
+	return apiFetch(`/api/jobs/${jobId}/tracks`, {
+		method: 'PUT',
+		body: JSON.stringify(tracks)
+	});
 }
 
 export function updateJobTitle(jobId: number, data: Partial<TitleUpdate>): Promise<unknown> {

@@ -5,10 +5,11 @@
 	interface Props {
 		job: Job;
 		config: Record<string, string | null>;
+		isMusic?: boolean;
 		onsaved?: () => void;
 	}
 
-	let { job, config, onsaved }: Props = $props();
+	let { job, config, isMusic = false, onsaved }: Props = $props();
 
 	let ripmethod = $state(String(config.RIPMETHOD ?? 'mkv').toLowerCase());
 	let disctype = $state(String(config.DISCTYPE ?? job.disctype ?? 'dvd').toLowerCase());
@@ -51,13 +52,15 @@
 
 <div class="space-y-4">
 	<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-		<label class="space-y-1">
-			<span class={labelClass}>Rip Method</span>
-			<select bind:value={ripmethod} class="{inputClass} w-full">
-				<option value="mkv">MKV</option>
-				<option value="backup">Backup (ISO)</option>
-			</select>
-		</label>
+		{#if !isMusic}
+			<label class="space-y-1">
+				<span class={labelClass}>Rip Method</span>
+				<select bind:value={ripmethod} class="{inputClass} w-full">
+					<option value="mkv">MKV</option>
+					<option value="backup">Backup (ISO)</option>
+				</select>
+			</label>
+		{/if}
 
 		<label class="space-y-1">
 			<span class={labelClass}>Disc Type</span>
@@ -70,27 +73,29 @@
 			</select>
 		</label>
 
-		<div class="space-y-1">
-			<label class="flex items-center gap-2">
-				<input
-					type="checkbox"
-					bind:checked={mainfeature}
-					class="h-4 w-4 rounded-sm border-primary/25 text-primary focus:ring-primary dark:border-primary/30 dark:bg-primary/10"
-				/>
-				<span class={labelClass}>Main Feature Only</span>
+		{#if !isMusic}
+			<div class="space-y-1">
+				<label class="flex items-center gap-2">
+					<input
+						type="checkbox"
+						bind:checked={mainfeature}
+						class="h-4 w-4 rounded-sm border-primary/25 text-primary focus:ring-primary dark:border-primary/30 dark:bg-primary/10"
+					/>
+					<span class={labelClass}>Main Feature Only</span>
+				</label>
+				<p class="text-xs text-gray-500 dark:text-gray-400">Rip only the longest title, skipping extras and bonus features</p>
+			</div>
+
+			<label class="space-y-1">
+				<span class={labelClass}>Min Length (s)</span>
+				<input type="number" bind:value={minlength} min="0" class="{inputClass} w-full" />
 			</label>
-			<p class="text-xs text-gray-500 dark:text-gray-400">Rip only the longest title, skipping extras and bonus features</p>
-		</div>
 
-		<label class="space-y-1">
-			<span class={labelClass}>Min Length (s)</span>
-			<input type="number" bind:value={minlength} min="0" class="{inputClass} w-full" />
-		</label>
-
-		<label class="space-y-1">
-			<span class={labelClass}>Max Length (s)</span>
-			<input type="number" bind:value={maxlength} min="0" class="{inputClass} w-full" />
-		</label>
+			<label class="space-y-1">
+				<span class={labelClass}>Max Length (s)</span>
+				<input type="number" bind:value={maxlength} min="0" class="{inputClass} w-full" />
+			</label>
+		{/if}
 	</div>
 
 	<div class="flex items-center gap-2">

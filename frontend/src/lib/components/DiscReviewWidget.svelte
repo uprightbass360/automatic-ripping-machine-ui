@@ -38,6 +38,12 @@
 	let infoImdbId = $state(job.imdb_id || '');
 	let infoPosterUrl = $state(job.poster_url || '');
 	let infoPath = $state(job.path || '');
+	let infoDisctype = $state(job.disctype || '');
+	let infoLabel = $state(job.label || '');
+	let infoArtist = $state(job.artist || '');
+	let infoAlbum = $state(job.album || '');
+	let infoSeason = $state(job.season || '');
+	let infoEpisode = $state(job.episode || '');
 	let infoSaving = $state(false);
 	let infoFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -47,7 +53,13 @@
 		infoType !== (job.video_type || '') ||
 		infoImdbId !== (job.imdb_id || '') ||
 		infoPosterUrl !== (job.poster_url || '') ||
-		infoPath !== (job.path || '')
+		infoPath !== (job.path || '') ||
+		infoDisctype !== (job.disctype || '') ||
+		infoLabel !== (job.label || '') ||
+		infoArtist !== (job.artist || '') ||
+		infoAlbum !== (job.album || '') ||
+		infoSeason !== (job.season || '') ||
+		infoEpisode !== (job.episode || '')
 	);
 
 	async function saveInfo() {
@@ -61,6 +73,12 @@
 				imdb_id: infoImdbId.trim() || undefined,
 				poster_url: infoPosterUrl.trim() || undefined,
 				path: infoPath.trim() || undefined,
+				disctype: infoDisctype || undefined,
+				label: infoLabel.trim() || undefined,
+				artist: infoArtist.trim() || undefined,
+				album: infoAlbum.trim() || undefined,
+				season: infoSeason.trim() || undefined,
+				episode: infoEpisode.trim() || undefined,
 			});
 			infoFeedback = { type: 'success', message: 'Saved' };
 			onrefresh?.();
@@ -192,22 +210,26 @@
 			<img
 				src={job.poster_url}
 				alt={job.title ?? 'Poster'}
-				class="h-24 w-16 shrink-0 rounded-sm object-cover"
+				class="h-24 shrink-0 rounded-sm object-cover {isMusic ? 'w-24' : 'w-16'}"
 			/>
 		{:else}
-			<div class="flex h-24 w-16 shrink-0 items-center justify-center rounded-sm {typeConfig.placeholderClasses}">
+			<div class="flex h-24 shrink-0 items-center justify-center rounded-sm {isMusic ? 'w-24' : 'w-16'} {typeConfig.placeholderClasses}">
 				<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="12" r="10" />
-					<circle cx="12" cy="12" r="3" />
-					<circle cx="12" cy="12" r="6.5" stroke-width="0.75" opacity="0.4" />
+					{#if isMusic}
+						<path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+					{:else}
+						<circle cx="12" cy="12" r="10" />
+						<circle cx="12" cy="12" r="3" />
+						<circle cx="12" cy="12" r="6.5" stroke-width="0.75" opacity="0.4" />
+					{/if}
 				</svg>
 			</div>
 		{/if}
 
 		<!-- Info -->
 		<div class="min-w-0 flex-1">
-			<div class="flex flex-wrap items-center gap-2">
-				<h3 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
+			<div class="flex items-center gap-2">
+				<h3 class="min-w-0 truncate text-lg font-semibold text-gray-900 dark:text-white">
 					{job.title || job.label || 'Untitled'}
 					{#if job.year}
 						<span class="font-normal text-gray-500 dark:text-gray-400">({job.year})</span>
@@ -331,7 +353,31 @@
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
 							<input type="text" bind:value={infoTitle} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 						</label>
-						<div class="grid grid-cols-3 gap-3">
+						{#if isMusic}
+							<div class="grid grid-cols-2 gap-3">
+								<label>
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Artist</span>
+									<input type="text" bind:value={infoArtist} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+								</label>
+								<label>
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Album</span>
+									<input type="text" bind:value={infoAlbum} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+								</label>
+							</div>
+						{/if}
+						{#if infoType === 'series'}
+							<div class="grid grid-cols-2 gap-3">
+								<label>
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Season</span>
+									<input type="text" bind:value={infoSeason} placeholder="1" class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+								</label>
+								<label>
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Episode</span>
+									<input type="text" bind:value={infoEpisode} placeholder="1" class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+								</label>
+							</div>
+						{/if}
+						<div class="grid gap-3 {isMusic ? 'grid-cols-2' : 'grid-cols-3'}">
 							<label>
 								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
 								<input type="text" bind:value={infoYear} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
@@ -344,13 +390,15 @@
 									<option value="music">Music</option>
 								</select>
 							</label>
-							<label>
-								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
-								<input type="text" bind:value={infoImdbId} placeholder="tt..." class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
-							</label>
+							{#if !isMusic}
+								<label>
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
+									<input type="text" bind:value={infoImdbId} placeholder="tt..." class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+								</label>
+							{/if}
 						</div>
 						<label class="block">
-							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Poster URL</span>
+							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{isMusic ? 'Cover Art URL' : 'Poster URL'}</span>
 							<input type="text" bind:value={infoPosterUrl} placeholder="https://..." class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 						</label>
 					</div>
@@ -372,31 +420,32 @@
 						</div>
 					{/if}
 
-					<!-- Read-only disc details -->
-					<div class="grid grid-cols-5 gap-3 text-sm">
+					<!-- Disc details -->
+					<div class="grid gap-3 text-sm {isMusic ? 'grid-cols-3' : 'grid-cols-4'}">
+						<label>
+							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc Type</span>
+							<select bind:value={infoDisctype} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white">
+								<option value="dvd">DVD</option>
+								<option value="bluray">Blu-ray</option>
+								<option value="bluray4k">4K UHD</option>
+								<option value="music">Music</option>
+								<option value="data">Data</option>
+							</select>
+						</label>
+						<label>
+							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc Label</span>
+							<input type="text" bind:value={infoLabel} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+						</label>
 						<div>
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Disc Type</span>
-							<p class="flex items-center gap-1.5 text-gray-900 dark:text-white">
-								<DiscTypeIcon disctype={job.disctype} size="h-5 w-5" />
-								<span>{discTypeLabel(job.disctype) || '--'}</span>
-							</p>
+							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Drive</span>
+							<p class="px-2 py-1 text-sm text-gray-900 dark:text-white">{driveName ?? job.devpath ?? '--'}</p>
 						</div>
-						<div>
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Disc Label</span>
-							<p class="font-mono text-xs text-gray-900 dark:text-white">{job.label || '--'}</p>
-						</div>
-						<div>
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Drive</span>
-							<p class="text-gray-900 dark:text-white">{driveName ?? job.devpath ?? '--'}</p>
-						</div>
-						<div>
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">CRC</span>
-							<p class="font-mono text-xs text-gray-900 dark:text-white">{job.crc_id || '--'}</p>
-						</div>
-						<div>
-							<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Titles on Disc</span>
-							<p class="text-gray-900 dark:text-white">{job.no_of_titles ?? '--'}</p>
-						</div>
+						{#if !isMusic}
+							<div>
+								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">CRC</span>
+								<p class="px-2 py-1 font-mono text-xs text-gray-900 dark:text-white">{job.crc_id || '--'}</p>
+							</div>
+						{/if}
 					</div>
 
 					<!-- Tracks table -->
@@ -408,25 +457,35 @@
 									<thead class="bg-page text-gray-500 dark:bg-primary/5 dark:text-gray-400">
 										<tr>
 											<th class="px-3 py-1.5 font-medium">#</th>
+											{#if isMusic}
+												<th class="px-3 py-1.5 font-medium">Title</th>
+											{/if}
 											<th class="px-3 py-1.5 font-medium">Length</th>
-											<th class="px-3 py-1.5 font-medium">Aspect</th>
-											<th class="px-3 py-1.5 font-medium">FPS</th>
-											<th class="px-3 py-1.5 font-medium">Main</th>
+											{#if !isMusic}
+												<th class="px-3 py-1.5 font-medium">Aspect</th>
+												<th class="px-3 py-1.5 font-medium">FPS</th>
+												<th class="px-3 py-1.5 font-medium">Main</th>
+											{/if}
 											<th class="px-3 py-1.5 font-medium">File</th>
 										</tr>
 									</thead>
 									<tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
 										{#each detail.tracks as track}
-											<tr class="{track.main_feature ? 'bg-primary-light-bg/50 dark:bg-primary-light-bg-dark/10' : ''}">
+											<tr class="{track.main_feature && !isMusic ? 'bg-primary-light-bg/50 dark:bg-primary-light-bg-dark/10' : ''}">
 												<td class="px-3 py-1.5 font-mono text-gray-700 dark:text-gray-300">{track.track_number ?? '--'}</td>
+												{#if isMusic}
+													<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{track.basename ?? '--'}</td>
+												{/if}
 												<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{formatLength(track.length)}</td>
-												<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.aspect_ratio ?? '--'}</td>
-												<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.fps ?? '--'}</td>
-												<td class="px-3 py-1.5">
-													{#if track.main_feature}
-														<span class="rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary-text dark:bg-primary/20 dark:text-primary-text-dark">MAIN</span>
-													{/if}
-												</td>
+												{#if !isMusic}
+													<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.aspect_ratio ?? '--'}</td>
+													<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.fps ?? '--'}</td>
+													<td class="px-3 py-1.5">
+														{#if track.main_feature}
+															<span class="rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary-text dark:bg-primary/20 dark:text-primary-text-dark">MAIN</span>
+														{/if}
+													</td>
+												{/if}
 												<td class="px-3 py-1.5 font-mono text-gray-500 dark:text-gray-400">{track.filename ?? track.basename ?? '--'}</td>
 											</tr>
 										{/each}
@@ -465,7 +524,7 @@
 
 	{#if showMusicSearch && isMusic}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
-			<MusicSearch {job} onapply={handleTitleApply} />
+			<MusicSearch {job} discTracks={detail?.tracks ?? []} onapply={handleTitleApply} />
 		</div>
 	{/if}
 
@@ -477,7 +536,7 @@
 
 	{#if showRipSettings && detail?.config}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
-			<RipSettings {job} config={detail.config} onsaved={handleConfigSaved} />
+			<RipSettings {job} config={detail.config} {isMusic} onsaved={handleConfigSaved} />
 		</div>
 	{:else if showRipSettings && initialLoading}
 		<div class="border-t border-primary/20 p-4 text-sm text-gray-400 dark:border-primary/20">

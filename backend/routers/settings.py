@@ -33,10 +33,12 @@ async def get_settings():
     # ARM config: prefer live API, fall back to DB snapshot
     arm_config = None
     arm_metadata = None
+    naming_variables = None
     arm_resp = await arm_client.get_config()
     if arm_resp:
         arm_config = arm_resp.get("config")
         arm_metadata = arm_resp.get("comments")
+        naming_variables = arm_resp.get("naming_variables")
     if not arm_config:
         arm_config = arm_db.get_all_config_safe()
 
@@ -70,6 +72,7 @@ async def get_settings():
         arm_config=arm_config,
         arm_metadata=arm_metadata,
         arm_handbrake_presets=arm_handbrake_presets,
+        naming_variables=naming_variables,
         transcoder_config=transcoder_config,
         transcoder_gpu_support=transcoder_gpu_support,
         transcoder_auth_status=transcoder_auth_status,

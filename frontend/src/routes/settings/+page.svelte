@@ -400,6 +400,13 @@
 		BASH_SCRIPT: { label: 'Notification Script', description: 'Path to a custom bash script run on notifications' },
 		JSON_URL: { label: 'Apprise JSON URL', description: 'Apprise webhook URL for notifications' },
 		APPRISE: { label: 'Apprise Config', description: 'Apprise notification service configuration string' },
+		// Naming Patterns
+		MOVIE_TITLE_PATTERN: { label: 'Movie Title Pattern', description: 'Pattern for movie display titles' },
+		MOVIE_FOLDER_PATTERN: { label: 'Movie Folder Pattern', description: 'Pattern for movie folder names (use / for nested directories)' },
+		TV_TITLE_PATTERN: { label: 'TV Title Pattern', description: 'Pattern for TV series display titles' },
+		TV_FOLDER_PATTERN: { label: 'TV Folder Pattern', description: 'Pattern for TV series folder names (use / for nested directories)' },
+		MUSIC_TITLE_PATTERN: { label: 'Music Title Pattern', description: 'Pattern for music display titles' },
+		MUSIC_FOLDER_PATTERN: { label: 'Music Folder Pattern', description: 'Pattern for music folder names (use / for nested directories)' },
 		// Transcoder Integration
 		TRANSCODER_URL: { label: 'Transcoder Webhook URL', description: 'URL of the arm-transcoder webhook endpoint (leave empty to disable)' },
 		TRANSCODER_WEBHOOK_SECRET: { label: 'Transcoder Webhook Secret', description: 'Must match WEBHOOK_SECRET in arm-transcoder .env' },
@@ -438,6 +445,11 @@
 			]},
 			{ label: 'Music', subpanels: [
 				{ keys: ['GET_AUDIO_TITLE', 'ABCDE_CONFIG_FILE'] },
+			]},
+			{ label: 'Naming Patterns', subpanels: [
+				{ label: 'Movie',  keys: ['MOVIE_TITLE_PATTERN', 'MOVIE_FOLDER_PATTERN'] },
+				{ label: 'TV',     keys: ['TV_TITLE_PATTERN', 'TV_FOLDER_PATTERN'] },
+				{ label: 'Music',  keys: ['MUSIC_TITLE_PATTERN', 'MUSIC_FOLDER_PATTERN'] },
 			]},
 			{ label: 'Metadata', subpanels: [
 				{ keys: ['METADATA_PROVIDER', 'OMDB_API_KEY', 'TMDB_API_KEY', 'ARM_API_KEY'] },
@@ -801,6 +813,19 @@
 				<p class="mt-1 text-xs text-gray-400">{ARM_LABELS[key].description}</p>
 			{:else if comment}
 				<p class="mt-1 text-xs text-gray-400">{comment}</p>
+			{/if}
+
+			{#if key.endsWith('_PATTERN') && settings?.naming_variables}
+				<div class="mt-1.5 flex flex-wrap gap-1">
+					{#each Object.entries(settings.naming_variables) as [varName, varDesc]}
+						<span
+							class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono
+								bg-primary/10 text-gray-600 dark:bg-primary/15 dark:text-gray-300
+								cursor-default"
+							title={varDesc}
+						>{'{' + varName + '}'}</span>
+					{/each}
+				</div>
 			{/if}
 		</div>
 	</div>

@@ -2,11 +2,12 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { fetchJob, retranscodeJob } from '$lib/api/jobs';
-	import type { JobDetail } from '$lib/types/arm';
+	import { fetchJob, retranscodeJob, fetchMusicDetail } from '$lib/api/jobs';
+	import type { JobDetail, MusicDetail } from '$lib/types/arm';
 	import JobActions from '$lib/components/JobActions.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TitleSearch from '$lib/components/TitleSearch.svelte';
+	import MusicSearch from '$lib/components/MusicSearch.svelte';
 	import RipSettings from '$lib/components/RipSettings.svelte';
 	import CrcLookup from '$lib/components/CrcLookup.svelte';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
@@ -15,10 +16,15 @@
 	let job = $state<JobDetail | null>(null);
 	let error = $state<string | null>(null);
 	let showTitleSearch = $state(false);
+	let showMusicSearch = $state(false);
 	let showCrcLookup = $state(false);
 	let showRipSettings = $state(false);
 	let retranscoding = $state(false);
 	let retranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	// MusicBrainz track listing (fetched when DB tracks are empty for music discs)
+	let musicDetail = $state<MusicDetail | null>(null);
+	let musicDetailLoading = $state(false);
 
 	async function handleRetranscode() {
 		if (!job) return;
@@ -53,6 +59,26 @@
 			job.title_auto !== job.title
 	);
 
+	function extractReleaseId(posterUrl: string | null): string | null {
+		if (!posterUrl) return null;
+		const match = posterUrl.match(/coverartarchive\.org\/release\/([a-f0-9-]+)\//);
+		return match?.[1] ?? null;
+	}
+
+	async function loadMusicTracks() {
+		if (!job || !isMusicDisc || job.tracks.length > 0) return;
+		const releaseId = extractReleaseId(job.poster_url);
+		if (!releaseId) return;
+		musicDetailLoading = true;
+		try {
+			musicDetail = await fetchMusicDetail(releaseId);
+		} catch {
+			musicDetail = null;
+		} finally {
+			musicDetailLoading = false;
+		}
+	}
+
 	async function loadJob() {
 		const id = Number($page.params.id);
 		try {
@@ -64,6 +90,14 @@
 			}
 			error = e instanceof Error ? e.message : 'Failed to load job';
 		}
+	}
+
+	function formatDurationMs(ms: number | null): string {
+		if (!ms) return '--';
+		const totalSec = Math.round(ms / 1000);
+		const m = Math.floor(totalSec / 60);
+		const s = totalSec % 60;
+		return `${m}:${s.toString().padStart(2, '0')}`;
 	}
 
 	function handleTitleApply() {
@@ -88,7 +122,7 @@
 				}
 			}
 		}
-		loadJob().then(poll);
+		loadJob().then(() => { loadMusicTracks(); return poll(); });
 		return () => {
 			stopped = true;
 		};
@@ -121,7 +155,7 @@
 				<img
 					src={job.poster_url}
 					alt={job.title ?? 'Poster'}
-					class="h-64 w-44 rounded-lg object-cover shadow-md"
+					class="rounded-lg object-cover shadow-md {isMusicDisc ? 'h-48 w-48' : 'h-64 w-44'}"
 				/>
 			{/if}
 			<div class="flex-1 space-y-3">
@@ -263,6 +297,34 @@
 			{/if}
 		{/if}
 
+		<!-- Music search -->
+		{#if isMusicDisc}
+			{#if !showMusicSearch}
+				<button
+					onclick={() => (showMusicSearch = true)}
+					class="rounded-lg px-3 py-1.5 text-sm font-medium bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
+				>
+					Search Music
+				</button>
+			{:else}
+				<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
+					<div class="mb-3 flex items-center justify-between">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Search Music</h2>
+						<button
+							onclick={() => (showMusicSearch = false)}
+							aria-label="Close music search"
+							class="rounded-sm p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+						>
+							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+					<MusicSearch {job} onapply={handleTitleApply} />
+				</section>
+			{/if}
+		{/if}
+
 		<!-- CRC Database -->
 		{#if hasCrcData}
 			{#if !showCrcLookup}
@@ -314,7 +376,7 @@
 							</svg>
 						</button>
 					</div>
-					<RipSettings {job} config={job.config} onsaved={handleConfigSaved} />
+					<RipSettings {job} config={job.config} isMusic={isMusicDisc} onsaved={handleConfigSaved} />
 				</section>
 			{/if}
 		{/if}
@@ -346,7 +408,7 @@
 								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
 									<td class="px-4 py-3">{track.track_number ?? ''}</td>
 									{#if isMusicDisc}
-										<td class="max-w-[300px] truncate px-4 py-3">{(track.basename ?? track.filename ?? '').replace(/^\d+-/, '').replace(/\.\w+$/, '').replace(/_/g, ' ')}</td>
+										<td class="max-w-[300px] truncate px-4 py-3">{track.filename || track.basename || ''}</td>
 									{:else}
 										<td class="max-w-[200px] truncate px-4 py-3 font-mono text-xs">{track.filename ?? track.basename ?? ''}</td>
 									{/if}
@@ -360,6 +422,38 @@
 									{/if}
 									<td class="px-4 py-3">{track.ripped ? 'Yes' : 'No'}</td>
 									<td class="px-4 py-3"><StatusBadge status={track.status} /></td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</section>
+		{:else if isMusicDisc && musicDetailLoading}
+			<section>
+				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Track Listing</h2>
+				<p class="text-sm text-gray-400">Loading track listing from MusicBrainz...</p>
+			</section>
+		{:else if isMusicDisc && musicDetail && musicDetail.tracks.length > 0}
+			<section>
+				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+					Track Listing
+					<span class="text-sm font-normal text-gray-500 dark:text-gray-400">({musicDetail.tracks.length} tracks via MusicBrainz)</span>
+				</h2>
+				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
+					<table class="w-full text-left text-sm">
+						<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
+							<tr>
+								<th class="w-12 px-4 py-3 font-medium">#</th>
+								<th class="px-4 py-3 font-medium">Title</th>
+								<th class="w-20 px-4 py-3 font-medium text-right">Duration</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+							{#each musicDetail.tracks as track}
+								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
+									<td class="px-4 py-3 font-mono text-gray-500 dark:text-gray-400">{track.number}</td>
+									<td class="px-4 py-3 text-gray-900 dark:text-white">{track.title}</td>
+									<td class="px-4 py-3 text-right font-mono text-gray-500 dark:text-gray-400">{formatDurationMs(track.length_ms)}</td>
 								</tr>
 							{/each}
 						</tbody>

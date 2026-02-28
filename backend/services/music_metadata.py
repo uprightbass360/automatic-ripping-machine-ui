@@ -67,7 +67,9 @@ async def search(
     format: str | None = None,
     country: str | None = None,
     status: str | None = None,
-) -> list[dict[str, Any]]:
+    tracks: int | None = None,
+    offset: int = 0,
+) -> dict[str, Any]:
     """Search MusicBrainz for releases matching query text and optional filters."""
     safe_query = _escape_lucene(query)
     parts: list[str] = []
@@ -84,15 +86,24 @@ async def search(
         parts.append(f"AND country:{country}")
     if status:
         parts.append(f"AND status:{status}")
+    if tracks is not None:
+        parts.append(f"AND tracks:{tracks}")
     lucene_query = " ".join(parts)
 
-    params = {"query": lucene_query, "fmt": "json", "limit": "15"}
+    params: dict[str, str] = {"query": lucene_query, "fmt": "json", "limit": "15"}
+    if offset > 0:
+        params["offset"] = str(offset)
 
-    async with _http_client() as client:
-        resp = await client.get(f"{MUSICBRAINZ_BASE}/release", params=params)
-        resp.raise_for_status()
-        data = resp.json()
+    try:
+        async with _http_client() as client:
+            resp = await client.get(f"{MUSICBRAINZ_BASE}/release", params=params)
+            resp.raise_for_status()
+            data = resp.json()
+    except (httpx.ConnectError, httpx.HTTPError) as exc:
+        log.warning("MusicBrainz search failed: %s", exc)
+        return {"results": [], "total": 0}
 
+    total = data.get("count", 0)
     results: list[dict[str, Any]] = []
     for release in data.get("releases", []):
         mbid = release.get("id", "")
@@ -121,7 +132,7 @@ async def search(
             "format": _extract_format(media),
             "label": _extract_label(label_info),
         })
-    return results
+    return {"results": results, "total": total}
 
 
 async def get_details(release_id: str) -> dict[str, Any] | None:
@@ -131,14 +142,18 @@ async def get_details(release_id: str) -> dict[str, Any] | None:
         "fmt": "json",
     }
 
-    async with _http_client() as client:
-        resp = await client.get(
-            f"{MUSICBRAINZ_BASE}/release/{release_id}", params=params
-        )
-        if resp.status_code == 404:
-            return None
-        resp.raise_for_status()
-        data = resp.json()
+    try:
+        async with _http_client() as client:
+            resp = await client.get(
+                f"{MUSICBRAINZ_BASE}/release/{release_id}", params=params
+            )
+            if resp.status_code == 404:
+                return None
+            resp.raise_for_status()
+            data = resp.json()
+    except (httpx.ConnectError, httpx.HTTPError) as exc:
+        log.warning("MusicBrainz detail fetch failed for %s: %s", release_id, exc)
+        return None
 
     mbid = data.get("id", release_id)
 

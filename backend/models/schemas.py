@@ -66,6 +66,18 @@ class JobSchema(BaseModel):
     path: str | None = None
     raw_path: str | None = None
     transcode_path: str | None = None
+    artist: str | None = None
+    artist_auto: str | None = None
+    artist_manual: str | None = None
+    album: str | None = None
+    album_auto: str | None = None
+    album_manual: str | None = None
+    season: str | None = None
+    season_auto: str | None = None
+    season_manual: str | None = None
+    episode: str | None = None
+    episode_auto: str | None = None
+    episode_manual: str | None = None
     ejected: bool | None = None
     pid: int | None = None
     tracks_total: int | None = None
@@ -223,6 +235,7 @@ class SettingsResponse(BaseModel):
     arm_config: dict[str, Any] | None = None
     arm_metadata: dict[str, Any] | None = None
     arm_handbrake_presets: list[str] | None = None
+    naming_variables: dict[str, str] | None = None
     transcoder_config: dict[str, Any] | None = None
     transcoder_gpu_support: dict[str, Any] | None = None
     transcoder_auth_status: dict[str, Any] | None = None
@@ -275,6 +288,12 @@ class TitleUpdateRequest(BaseModel):
     imdb_id: str | None = None
     poster_url: str | None = None
     path: str | None = None
+    disctype: str | None = None
+    label: str | None = None
+    artist: str | None = None
+    album: str | None = None
+    season: str | None = None
+    episode: str | None = None
 
 
 class JobConfigUpdateRequest(BaseModel):
