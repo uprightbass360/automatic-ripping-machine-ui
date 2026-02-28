@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import LogViewer from '$lib/components/LogViewer.svelte';
+	import StructuredLogViewer from '$lib/components/StructuredLogViewer.svelte';
 
 	let mode = $state<'tail' | 'full'>('tail');
 	let lines = $state(200);
@@ -35,5 +35,5 @@
 		</div>
 	</div>
 
-	<LogViewer {filename} {mode} {lines} autoRefresh={mode === 'tail'} />
+	<StructuredLogViewer {filename} {mode} {lines} autoRefresh={mode === 'tail'} />
 </div>

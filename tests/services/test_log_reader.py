@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -103,3 +104,95 @@ def test_read_log_missing_file(tmp_path: Path):
     with patch.object(log_reader, "_log_dir", return_value=tmp_path):
         result = log_reader.read_log("no_such.log")
     assert result is None
+
+
+# --- Structured log parsing tests ---
+
+
+def test_parse_json_line():
+    """Valid JSON line is parsed into structured fields."""
+    line = json.dumps({
+        "timestamp": "2026-02-28T10:15:30Z",
+        "level": "info",
+        "logger": "arm.ripper.makemkv",
+        "event": "Ripping title 1",
+        "job_id": 5,
+        "label": "LOTR",
+    })
+    entry = log_reader._parse_log_line(line)
+    assert entry["timestamp"] == "2026-02-28T10:15:30Z"
+    assert entry["level"] == "info"
+    assert entry["logger"] == "arm.ripper.makemkv"
+    assert entry["event"] == "Ripping title 1"
+    assert entry["job_id"] == 5
+    assert entry["label"] == "LOTR"
+    assert entry["raw"] == line
+
+
+def test_parse_plain_text_line():
+    """Non-JSON line falls back to plain text wrapper."""
+    line = "2024-01-01 10:00:00 ARM: INFO: Ripping started"
+    entry = log_reader._parse_log_line(line)
+    assert entry["timestamp"] == ""
+    assert entry["level"] == "info"
+    assert entry["event"] == line
+    assert entry["job_id"] is None
+    assert entry["label"] is None
+    assert entry["raw"] == line
+
+
+def test_read_structured_log_filters_by_level(tmp_path: Path):
+    """Level filter returns only matching entries."""
+    log_file = tmp_path / "job.log"
+    lines = [
+        json.dumps({"level": "info", "event": "Starting rip"}),
+        json.dumps({"level": "error", "event": "Disc read failed"}),
+        json.dumps({"level": "info", "event": "Retrying"}),
+        json.dumps({"level": "warning", "event": "Slow read"}),
+    ]
+    log_file.write_text("\n".join(lines) + "\n")
+    with patch.object(log_reader, "_log_dir", return_value=tmp_path):
+        result = log_reader.read_structured_log("job.log", mode="full", level="error")
+    assert result is not None
+    assert result["lines"] == 1
+    assert result["entries"][0]["event"] == "Disc read failed"
+
+
+def test_read_structured_log_filters_by_search(tmp_path: Path):
+    """Search filter matches event text case-insensitively."""
+    log_file = tmp_path / "job.log"
+    lines = [
+        json.dumps({"level": "info", "event": "Ripping title 1"}),
+        json.dumps({"level": "info", "event": "Ripping title 2"}),
+        json.dumps({"level": "info", "event": "Transcoding complete"}),
+    ]
+    log_file.write_text("\n".join(lines) + "\n")
+    with patch.object(log_reader, "_log_dir", return_value=tmp_path):
+        result = log_reader.read_structured_log("job.log", mode="full", search="ripping")
+    assert result is not None
+    assert result["lines"] == 2
+    assert all("Ripping" in e["event"] for e in result["entries"])
+
+
+def test_mixed_format_log(tmp_path: Path):
+    """Handles mix of JSON and plain text lines gracefully."""
+    log_file = tmp_path / "mixed.log"
+    content = (
+        "Plain text startup message\n"
+        + json.dumps({"level": "info", "event": "Structured log", "job_id": 1}) + "\n"
+        + "Another plain text line\n"
+        + json.dumps({"level": "error", "event": "Something broke", "job_id": 1}) + "\n"
+    )
+    log_file.write_text(content)
+    with patch.object(log_reader, "_log_dir", return_value=tmp_path):
+        result = log_reader.read_structured_log("mixed.log", mode="full")
+    assert result is not None
+    assert result["lines"] == 4
+    # First entry is plain text
+    assert result["entries"][0]["event"] == "Plain text startup message"
+    assert result["entries"][0]["job_id"] is None
+    # Second entry is JSON
+    assert result["entries"][1]["event"] == "Structured log"
+    assert result["entries"][1]["job_id"] == 1
+    # Fourth entry is error
+    assert result["entries"][3]["level"] == "error"

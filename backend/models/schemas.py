@@ -228,6 +228,22 @@ class LogContentResponse(BaseModel):
     lines: int
 
 
+class LogEntrySchema(BaseModel):
+    timestamp: str
+    level: str
+    logger: str
+    event: str
+    job_id: int | None = None
+    label: str | None = None
+    raw: str
+
+
+class StructuredLogResponse(BaseModel):
+    filename: str
+    entries: list[LogEntrySchema]
+    lines: int
+
+
 # --- Settings Schema ---
 
 

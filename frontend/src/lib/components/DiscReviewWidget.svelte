@@ -9,6 +9,7 @@
 	import RipSettings from './RipSettings.svelte';
 	import CrcLookup from './CrcLookup.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
+	import InlineLogFeed from './InlineLogFeed.svelte';
 
 	interface Props {
 		job: Job;
@@ -565,6 +566,12 @@
 	{:else if showRipSettings && initialLoading}
 		<div class="border-t border-primary/20 p-4 text-sm text-gray-400 dark:border-primary/20">
 			Loading config...
+		</div>
+	{/if}
+
+	{#if job.logfile}
+		<div class="border-t border-primary/20 px-4 py-3 dark:border-primary/20">
+			<InlineLogFeed logfile={job.logfile} maxEntries={5} levelFilter="error" />
 		</div>
 	{/if}
 </div>

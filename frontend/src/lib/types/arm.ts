@@ -182,6 +182,22 @@ export interface LogContent {
 	lines: number;
 }
 
+export interface LogEntry {
+	timestamp: string;
+	level: string;
+	logger: string;
+	event: string;
+	job_id: number | null;
+	label: string | null;
+	raw: string;
+}
+
+export interface StructuredLogContent {
+	filename: string;
+	entries: LogEntry[];
+	lines: number;
+}
+
 export interface SearchResult {
 	title: string;
 	year: string;

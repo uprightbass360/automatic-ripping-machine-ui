@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.models.schemas import LogContentResponse, LogFileSchema, TranscoderJobListResponse, TranscoderStatsResponse
+from backend.models.schemas import LogContentResponse, LogFileSchema, StructuredLogResponse, TranscoderJobListResponse, TranscoderStatsResponse
 from backend.services import transcoder_client
 
 router = APIRouter(prefix="/api/transcoder", tags=["transcoder"])
@@ -53,6 +53,22 @@ async def list_logs():
     data = await transcoder_client.list_logs()
     if data is None:
         return []
+    return data
+
+
+@router.get("/logs/{filename}/structured", response_model=StructuredLogResponse)
+async def get_structured_log(
+    filename: str,
+    mode: str = Query("tail", pattern="^(tail|full)$"),
+    lines: int = Query(100, ge=1, le=10000),
+    level: str | None = Query(None),
+    search: str | None = Query(None),
+):
+    data = await transcoder_client.read_structured_log(
+        filename, mode=mode, lines=lines, level=level, search=search
+    )
+    if data is None:
+        raise HTTPException(status_code=404, detail="Log not found or transcoder offline")
     return data
 
 

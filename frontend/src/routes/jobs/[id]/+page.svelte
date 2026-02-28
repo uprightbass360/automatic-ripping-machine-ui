@@ -10,6 +10,7 @@
 	import MusicSearch from '$lib/components/MusicSearch.svelte';
 	import RipSettings from '$lib/components/RipSettings.svelte';
 	import CrcLookup from '$lib/components/CrcLookup.svelte';
+	import InlineLogFeed from '$lib/components/InlineLogFeed.svelte';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
 	import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
 
@@ -240,19 +241,14 @@
 					</div>
 				</dl>
 
-				{#if job.logfile}
-					<a
-						href="/logs/{job.logfile}"
-						class="inline-flex items-center gap-1 text-sm text-primary-text hover:underline dark:text-primary-text-dark"
-					>
-						View Log
-					</a>
-				{/if}
-
 				{#if job.errors}
 					<div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
 						<strong>Errors:</strong> {job.errors}
 					</div>
+				{/if}
+
+				{#if job.logfile}
+					<InlineLogFeed logfile={job.logfile} maxEntries={15} />
 				{/if}
 			</div>
 		</div>

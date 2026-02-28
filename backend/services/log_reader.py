@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -67,3 +68,52 @@ def read_log(
         "content": content,
         "lines": line_count,
     }
+
+
+def _parse_log_line(line: str) -> dict:
+    """Parse a single log line. JSON lines get structured fields; plain text gets wrapped."""
+    line = line.rstrip("\n")
+    try:
+        parsed = json.loads(line)
+        return {
+            "timestamp": parsed.get("timestamp", ""),
+            "level": parsed.get("level", "info"),
+            "logger": parsed.get("logger", ""),
+            "event": parsed.get("event", ""),
+            "job_id": parsed.get("job_id"),
+            "label": parsed.get("label"),
+            "raw": line,
+        }
+    except (json.JSONDecodeError, TypeError):
+        return {
+            "timestamp": "",
+            "level": "info",
+            "logger": "",
+            "event": line,
+            "job_id": None,
+            "label": None,
+            "raw": line,
+        }
+
+
+def read_structured_log(
+    filename: str,
+    mode: str = "tail",
+    lines: int = 100,
+    level: str | None = None,
+    search: str | None = None,
+) -> dict | None:
+    """Read and parse a structured log file with optional filtering."""
+    raw = read_log(filename, mode=mode, lines=lines)
+    if raw is None:
+        return None
+
+    entries = [_parse_log_line(l) for l in raw["content"].splitlines() if l.strip()]
+
+    if level:
+        entries = [e for e in entries if e["level"] == level.lower()]
+    if search:
+        search_lower = search.lower()
+        entries = [e for e in entries if search_lower in e["event"].lower()]
+
+    return {"filename": filename, "entries": entries, "lines": len(entries)}

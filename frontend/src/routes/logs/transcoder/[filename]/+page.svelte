@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import LogViewer from '$lib/components/LogViewer.svelte';
-	import { fetchTranscoderLogContent } from '$lib/api/logs';
+	import StructuredLogViewer from '$lib/components/StructuredLogViewer.svelte';
+	import { fetchStructuredTranscoderLogContent } from '$lib/api/logs';
 
 	let mode = $state<'tail' | 'full'>('tail');
 	let lines = $state(200);
@@ -39,5 +39,6 @@
 		</div>
 	</div>
 
-	<LogViewer {filename} {mode} {lines} autoRefresh={mode === 'tail'} fetchFn={fetchTranscoderLogContent} />
+	<StructuredLogViewer {filename} {mode} {lines} autoRefresh={mode === 'tail'}
+		fetchFn={fetchStructuredTranscoderLogContent} />
 </div>

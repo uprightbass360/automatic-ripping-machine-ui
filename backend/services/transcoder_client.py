@@ -282,3 +282,26 @@ async def read_log(
         return resp.json()
     except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
+
+
+async def read_structured_log(
+    filename: str,
+    mode: str = "tail",
+    lines: int = 100,
+    level: str | None = None,
+    search: str | None = None,
+) -> dict[str, Any] | None:
+    """Read a structured transcoder log file. Returns None if offline."""
+    try:
+        params: dict[str, Any] = {"mode": mode, "lines": lines}
+        if level:
+            params["level"] = level
+        if search:
+            params["search"] = search
+        resp = await get_client().get(
+            f"/logs/{filename}/structured", params=params
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
