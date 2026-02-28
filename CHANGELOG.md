@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.5.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.4.1-alpha.1...v11.5.0-alpha.1) (2026-02-28)
+
+
+### Features
+
+* enrich transcoder job card with poster, type badge, and metadata ([c27c48e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c27c48ec5fe2332adfec5419232bfcc86d5c9782))
+
 ## [11.4.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.4.0-alpha.1...v11.4.1-alpha.1) (2026-02-28)
 
 
