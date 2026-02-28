@@ -69,8 +69,10 @@
 
 	function overallProgress(p: RipProgress | undefined): number | null {
 		if (!p || p.progress == null) return null;
-		if (p.tracks_total > 0)
+		if (p.tracks_total > 0) {
+			if (p.tracks_ripped >= p.tracks_total) return 100;
 			return ((p.tracks_ripped + p.progress / 100) / p.tracks_total) * 100;
+		}
 		return p.progress;
 	}
 
