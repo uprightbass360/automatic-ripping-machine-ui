@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.4.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.4.0-alpha.1...v11.4.1-alpha.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* increase transcoder client timeout to 15s read / 5s connect ([f91a9a0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f91a9a00a8babaf0f8b022d0cb1ce76b969844a9))
+
 ## [11.4.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.3.0-alpha.1...v11.4.0-alpha.1) (2026-02-28)
 
 
