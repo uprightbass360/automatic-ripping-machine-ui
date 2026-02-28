@@ -1,5 +1,20 @@
 # Changelog
 
+## [11.2.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.1.1-alpha.1...v11.2.0-alpha.1) (2026-02-28)
+
+
+### Features
+
+* add connection status visibility for ARM and transcoder services ([044660c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/044660c015ad728d1e2f6ea7ccaad89fb3a91898))
+* add MusicBrainz search for audio CDs ([938fb6e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/938fb6e8a0cf1a87232442e0d27a8019e1ce5b20))
+* add structured fields, track comparison, and card flip animation ([b90fb3e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b90fb3e8266c9246e71620b518014aeaf5ecdddd))
+
+
+### Bug Fixes
+
+* harden MusicBrainz search and cover art handling ([c6127f1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c6127f1ae539bd47b439a666adb65284a1a23170))
+* remove redundant type comparison in MusicSearch flip card ([c1b88fb](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c1b88fb365335d9ab9cae5b5d7520a7491eb5fc7))
+
 ## [11.1.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.1.0-alpha.1...v11.1.1-alpha.1) (2026-02-26)
 
 
