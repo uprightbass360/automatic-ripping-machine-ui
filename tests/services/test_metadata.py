@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from backend.services import metadata
@@ -129,4 +130,147 @@ async def test_get_details_raises_on_no_key():
     keys = {"provider": "tmdb", "omdb_key": None, "tmdb_key": None}
     with patch.object(metadata, "_get_api_keys", return_value=keys):
         with pytest.raises(MetadataConfigError):
+            await metadata.get_details("tt0133093")
+
+
+# --- _normalize_tmdb ---
+
+
+async def test_normalize_tmdb_movie():
+    """Movie fields are normalized correctly (title, release_date, poster)."""
+    item = {
+        "id": 603,
+        "title": "The Matrix",
+        "release_date": "1999-03-31",
+        "poster_path": "/poster.jpg",
+    }
+    with patch.object(metadata, "_tmdb_get_imdb", new_callable=AsyncMock, return_value="tt0133093"):
+        result = await metadata._normalize_tmdb(item, "movie", "fake_key")
+    assert result["title"] == "The Matrix"
+    assert result["year"] == "1999"
+    assert result["imdb_id"] == "tt0133093"
+    assert result["media_type"] == "movie"
+    assert result["poster_url"] == f"{metadata.TMDB_POSTER_BASE}/poster.jpg"
+
+
+async def test_normalize_tmdb_series():
+    """Series uses 'name' and 'first_air_date' fields."""
+    item = {
+        "id": 1396,
+        "name": "Breaking Bad",
+        "first_air_date": "2008-01-20",
+        "poster_path": "/bb.jpg",
+    }
+    with patch.object(metadata, "_tmdb_get_imdb", new_callable=AsyncMock, return_value="tt0903747"):
+        result = await metadata._normalize_tmdb(item, "series", "fake_key")
+    assert result["title"] == "Breaking Bad"
+    assert result["year"] == "2008"
+    assert result["media_type"] == "series"
+    assert result["imdb_id"] == "tt0903747"
+
+
+async def test_normalize_tmdb_missing_fields():
+    """Missing fields produce safe defaults."""
+    item = {"id": 999}
+    with patch.object(metadata, "_tmdb_get_imdb", new_callable=AsyncMock, return_value=None):
+        result = await metadata._normalize_tmdb(item, "movie", "fake_key")
+    assert result["title"] == ""
+    assert result["year"] == ""
+    assert result["imdb_id"] is None
+    assert result["poster_url"] is None
+
+
+# --- _tmdb_get_imdb error handling ---
+
+
+async def test_tmdb_get_imdb_returns_none_on_error():
+    """HTTP errors are caught and return None instead of raising."""
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.get = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
+
+    with patch.object(metadata, "_http_client", return_value=mock_client):
+        result = await metadata._tmdb_get_imdb(603, "movie", "fake_key")
+    assert result is None
+
+
+async def test_tmdb_get_imdb_tries_tv_first_for_series():
+    """When media_type is 'series', TV endpoint is tried first."""
+    tv_response = MagicMock()
+    tv_response.json.return_value = {"imdb_id": "tt0903747"}
+
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.get = AsyncMock(return_value=tv_response)
+
+    with patch.object(metadata, "_http_client", return_value=mock_client):
+        result = await metadata._tmdb_get_imdb(1396, "series", "fake_key")
+    assert result == "tt0903747"
+    # Verify TV endpoint was called (first call)
+    first_call_url = mock_client.get.call_args_list[0][0][0]
+    assert "/tv/" in first_call_url
+
+
+async def test_tmdb_get_imdb_tries_movie_first_for_movie():
+    """When media_type is 'movie', movie endpoint is tried first."""
+    movie_response = MagicMock()
+    movie_response.json.return_value = {"external_ids": {"imdb_id": "tt0133093"}}
+
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.get = AsyncMock(return_value=movie_response)
+
+    with patch.object(metadata, "_http_client", return_value=mock_client):
+        result = await metadata._tmdb_get_imdb(603, "movie", "fake_key")
+    assert result == "tt0133093"
+    # Verify movie endpoint was called (first call)
+    first_call_url = mock_client.get.call_args_list[0][0][0]
+    assert "/movie/" in first_call_url
+
+
+# --- search() / get_details() TMDb fallback ---
+
+
+async def test_search_tmdb_no_key_falls_back_to_omdb():
+    """search() falls back to OMDb with warning when tmdb key is missing."""
+    keys = {"provider": "tmdb", "omdb_key": "omdb_key", "tmdb_key": None}
+    with (
+        patch.object(metadata, "_get_api_keys", return_value=keys),
+        patch.object(metadata, "_omdb_search", new_callable=AsyncMock, return_value=[{"title": "Fallback"}]) as mock_omdb,
+    ):
+        result = await metadata.search("test")
+    mock_omdb.assert_awaited_once_with("test", None, "omdb_key")
+    assert result == [{"title": "Fallback"}]
+
+
+async def test_search_tmdb_no_key_no_omdb_raises():
+    """search() raises MetadataConfigError when tmdb key missing and no omdb fallback."""
+    keys = {"provider": "tmdb", "omdb_key": None, "tmdb_key": None}
+    with patch.object(metadata, "_get_api_keys", return_value=keys):
+        with pytest.raises(MetadataConfigError, match="TMDB_API_KEY is not set"):
+            await metadata.search("test")
+
+
+async def test_get_details_tmdb_no_key_falls_back_to_omdb():
+    """get_details() falls back to OMDb with warning when tmdb key is missing."""
+    keys = {"provider": "tmdb", "omdb_key": "omdb_key", "tmdb_key": None}
+    detail = {"title": "Fallback", "year": "2020", "imdb_id": "tt1234567",
+              "media_type": "movie", "poster_url": None, "plot": None, "background_url": None}
+    with (
+        patch.object(metadata, "_get_api_keys", return_value=keys),
+        patch.object(metadata, "_omdb_details", new_callable=AsyncMock, return_value=detail) as mock_det,
+    ):
+        result = await metadata.get_details("tt1234567")
+    mock_det.assert_awaited_once_with("tt1234567", "omdb_key")
+    assert result["title"] == "Fallback"
+
+
+async def test_get_details_tmdb_no_key_no_omdb_raises():
+    """get_details() raises MetadataConfigError when tmdb key missing and no omdb fallback."""
+    keys = {"provider": "tmdb", "omdb_key": None, "tmdb_key": None}
+    with patch.object(metadata, "_get_api_keys", return_value=keys):
+        with pytest.raises(MetadataConfigError, match="TMDB_API_KEY is not set"):
             await metadata.get_details("tt0133093")

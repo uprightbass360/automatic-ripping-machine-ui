@@ -122,6 +122,13 @@ async def search(query: str, year: str | None = None) -> list[dict[str, Any]]:
     keys = _get_api_keys()
     if keys["provider"] == "tmdb" and keys["tmdb_key"]:
         return await _tmdb_search(query, year, keys["tmdb_key"])
+    if keys["provider"] == "tmdb" and not keys["tmdb_key"]:
+        if keys["omdb_key"]:
+            log.warning("METADATA_PROVIDER is 'tmdb' but TMDB_API_KEY is empty; falling back to OMDb")
+        else:
+            raise MetadataConfigError(
+                "METADATA_PROVIDER is 'tmdb' but TMDB_API_KEY is not set and no OMDB_API_KEY fallback."
+            )
     if keys["omdb_key"]:
         return await _omdb_search(query, year, keys["omdb_key"])
     raise MetadataConfigError(
@@ -135,6 +142,13 @@ async def get_details(imdb_id: str) -> dict[str, Any] | None:
     keys = _get_api_keys()
     if keys["provider"] == "tmdb" and keys["tmdb_key"]:
         return await _tmdb_find(imdb_id, keys["tmdb_key"])
+    if keys["provider"] == "tmdb" and not keys["tmdb_key"]:
+        if keys["omdb_key"]:
+            log.warning("METADATA_PROVIDER is 'tmdb' but TMDB_API_KEY is empty; falling back to OMDb")
+        else:
+            raise MetadataConfigError(
+                "METADATA_PROVIDER is 'tmdb' but TMDB_API_KEY is not set and no OMDB_API_KEY fallback."
+            )
     if keys["omdb_key"]:
         return await _omdb_details(imdb_id, keys["omdb_key"])
     raise MetadataConfigError(
@@ -162,9 +176,11 @@ async def _omdb_search(query: str, year: str | None, api_key: str) -> list[dict[
     if data.get("Response") == "True" and "Search" in data:
         for item in data["Search"]:
             results.append(_normalize_omdb(item))
+        log.info("OMDb search for %r returned %d results", query, len(results))
         return results
 
     # Fallback: ?t= exact match for short/numeric titles
+    log.debug("OMDb ?s= search for %r returned no results, trying ?t= exact match", query)
     params_t: dict[str, str] = {"t": query, "r": "json", "apikey": api_key}
     if year:
         params_t["y"] = year
@@ -175,6 +191,7 @@ async def _omdb_search(query: str, year: str | None, api_key: str) -> list[dict[
         data = resp.json()
     if data.get("Response") == "True":
         results.append(_normalize_omdb(data))
+    log.info("OMDb search for %r returned %d results (via ?t= fallback)", query, len(results))
     return results
 
 
@@ -232,12 +249,15 @@ async def _tmdb_search(query: str, year: str | None, api_key: str) -> list[dict[
             raise MetadataConfigError("TMDb API key is invalid or expired. Check TMDB_API_KEY in arm.yaml.")
         data = resp.json()
 
-    if data.get("total_results", 0) > 0:
+    movie_count = data.get("total_results", 0)
+    if movie_count > 0:
         for item in data["results"]:
             results.append(await _normalize_tmdb(item, "movie", api_key))
+        log.info("TMDb movie search for %r returned %d results", query, len(results))
         return results
 
     # Fallback to TV
+    log.debug("TMDb movie search for %r returned 0 results, trying TV", query)
     params_tv: dict[str, str] = {"api_key": api_key, "query": query}
     if year:
         params_tv["first_air_date_year"] = year
@@ -252,6 +272,7 @@ async def _tmdb_search(query: str, year: str | None, api_key: str) -> list[dict[
     if data.get("total_results", 0) > 0:
         for item in data["results"]:
             results.append(await _normalize_tmdb(item, "series", api_key))
+    log.info("TMDb TV search for %r returned %d results", query, len(results))
     return results
 
 
@@ -277,24 +298,46 @@ async def _tmdb_get_imdb(
     tmdb_id: int, media_type: str, api_key: str
 ) -> str | None:
     """Get the IMDb ID for a TMDb entry."""
-    async with _http_client() as client:
-        # Try movie endpoint first
-        resp = await client.get(
-            f"https://api.themoviedb.org/3/movie/{tmdb_id}",
-            params={"api_key": api_key, "append_to_response": "external_ids"},
-        )
-        data = resp.json()
-        if "status_code" not in data:
-            return data.get("external_ids", {}).get("imdb_id")
-
-        # Fallback to TV external IDs
-        resp = await client.get(
-            f"https://api.themoviedb.org/3/tv/{tmdb_id}/external_ids",
-            params={"api_key": api_key},
-        )
-        data = resp.json()
-        if "status_code" not in data:
-            return data.get("imdb_id")
+    try:
+        async with _http_client() as client:
+            if media_type == "series":
+                # Try TV first for series
+                resp = await client.get(
+                    f"https://api.themoviedb.org/3/tv/{tmdb_id}/external_ids",
+                    params={"api_key": api_key},
+                )
+                data = resp.json()
+                if "status_code" not in data:
+                    return data.get("imdb_id")
+                # Fallback to movie
+                log.debug("TMDb TV external_ids failed for %s, trying movie endpoint", tmdb_id)
+                resp = await client.get(
+                    f"https://api.themoviedb.org/3/movie/{tmdb_id}",
+                    params={"api_key": api_key, "append_to_response": "external_ids"},
+                )
+                data = resp.json()
+                if "status_code" not in data:
+                    return data.get("external_ids", {}).get("imdb_id")
+            else:
+                # Try movie first, then TV fallback
+                resp = await client.get(
+                    f"https://api.themoviedb.org/3/movie/{tmdb_id}",
+                    params={"api_key": api_key, "append_to_response": "external_ids"},
+                )
+                data = resp.json()
+                if "status_code" not in data:
+                    return data.get("external_ids", {}).get("imdb_id")
+                # Fallback to TV external IDs
+                log.debug("TMDb movie endpoint failed for %s, trying TV external_ids", tmdb_id)
+                resp = await client.get(
+                    f"https://api.themoviedb.org/3/tv/{tmdb_id}/external_ids",
+                    params={"api_key": api_key},
+                )
+                data = resp.json()
+                if "status_code" not in data:
+                    return data.get("imdb_id")
+    except Exception as e:
+        log.warning("Failed to resolve IMDb ID for TMDb %s %s: %s", media_type, tmdb_id, e)
     return None
 
 
