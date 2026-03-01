@@ -1,5 +1,18 @@
 # Changelog
 
+## [11.6.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.5.1-alpha.1...v11.6.0-alpha.1) (2026-03-01)
+
+
+### Features
+
+* per-job transcode config overrides UI ([f0638b3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f0638b32ce42d3e14aaa5725de2d7b7fad2b19f9))
+
+
+### Bug Fixes
+
+* prevent false 100% progress during MakeMKV scan phase ([11a52d5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/11a52d5e6fcdb7473cf2514505e8440a9b564fee))
+* read full progress file so PRGT phase messages are not missed ([c8c6e62](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c8c6e62279dbdee357db15602f5fede439026782))
+
 ## [11.5.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.5.0-alpha.1...v11.5.1-alpha.1) (2026-02-28)
 
 
