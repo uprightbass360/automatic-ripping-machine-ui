@@ -3,11 +3,12 @@ import logging
 import os
 
 from fastapi import APIRouter, HTTPException
+import httpx
 from pydantic import BaseModel
 
 from backend.config import settings as app_settings
 from backend.models.schemas import SettingsResponse
-from backend.services import arm_client, arm_db, metadata, transcoder_client
+from backend.services import arm_client, arm_db, transcoder_client
 
 router = APIRouter(prefix="/api", tags=["settings"])
 log = logging.getLogger(__name__)
@@ -96,8 +97,15 @@ async def update_arm_config(body: ArmConfigUpdate):
 
 @router.get("/settings/test-metadata")
 async def test_metadata_key():
-    """Test the currently saved metadata API key by making a real API call."""
-    return await metadata.test_configured_key()
+    """Test the currently saved metadata API key (proxied through ARM)."""
+    try:
+        return await arm_client.test_metadata_key()
+    except httpx.HTTPStatusError as exc:
+        log.warning("Metadata key test failed: %d", exc.response.status_code)
+        return {"success": False, "message": "Metadata key test failed", "provider": "unknown"}
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError) as exc:
+        log.error("Metadata key test unreachable: %s", exc)
+        return {"success": False, "message": "ARM service unreachable", "provider": "unknown"}
 
 
 @router.patch("/settings/transcoder")

@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
+import pytest
 
 from backend.services import arm_client
 
@@ -156,3 +157,183 @@ async def test_pause_waiting_job_connect_error():
     with patch.object(arm_client, "get_client", return_value=mock_client):
         result = await arm_client.pause_waiting_job(42)
     assert result is None
+
+
+# --- search_metadata ---
+
+
+async def test_search_metadata_success():
+    """search_metadata returns list of results."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(
+        [{"title": "Matrix", "year": "1999"}])
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.search_metadata("Matrix")
+    assert result == [{"title": "Matrix", "year": "1999"}]
+    # Verify year not included in params when None
+    call_kwargs = mock_client.get.call_args
+    assert "year" not in call_kwargs[1].get("params", {})
+
+
+async def test_search_metadata_with_year():
+    """search_metadata includes year param when provided."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response([])
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        await arm_client.search_metadata("Matrix", year="1999")
+    call_kwargs = mock_client.get.call_args
+    assert call_kwargs[1]["params"]["year"] == "1999"
+
+
+async def test_search_metadata_raises_on_error():
+    """search_metadata raises HTTPStatusError on 5xx."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response({}, status_code=503)
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await arm_client.search_metadata("Matrix")
+
+
+# --- get_media_detail ---
+
+
+async def test_get_media_detail_success():
+    """get_media_detail returns detail dict on 200."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(
+        {"title": "Matrix", "imdb_id": "tt0133093"})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.get_media_detail("tt0133093")
+    assert result["title"] == "Matrix"
+
+
+async def test_get_media_detail_404_returns_none():
+    """get_media_detail returns None on 404 (not found)."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    resp = MagicMock(spec=httpx.Response)
+    resp.status_code = 404
+    resp.json.return_value = {}
+    resp.raise_for_status = MagicMock()  # not called — 404 handled before
+    mock_client.get.return_value = resp
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.get_media_detail("tt9999999")
+    assert result is None
+
+
+async def test_get_media_detail_raises_on_500():
+    """get_media_detail raises on 500 (not 404)."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response({}, status_code=500)
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await arm_client.get_media_detail("tt0133093")
+
+
+# --- search_music_metadata ---
+
+
+async def test_search_music_metadata_success():
+    """search_music_metadata returns results."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(
+        {"results": [{"title": "Master of Puppets"}], "total": 1})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.search_music_metadata("Metallica")
+    assert result["total"] == 1
+
+
+async def test_search_music_metadata_filters_none_kwargs():
+    """search_music_metadata excludes None kwargs from params."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response({"results": [], "total": 0})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        await arm_client.search_music_metadata(
+            "Metallica", artist="Metallica", format=None, country="US")
+    call_kwargs = mock_client.get.call_args
+    params = call_kwargs[1]["params"]
+    assert params["artist"] == "Metallica"
+    assert params["country"] == "US"
+    assert "format" not in params
+
+
+async def test_search_music_metadata_converts_to_str():
+    """search_music_metadata converts non-string kwargs to str."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response({"results": [], "total": 0})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        await arm_client.search_music_metadata("test", offset=25)
+    call_kwargs = mock_client.get.call_args
+    params = call_kwargs[1]["params"]
+    assert params["offset"] == "25"
+
+
+# --- get_music_detail ---
+
+
+async def test_get_music_detail_success():
+    """get_music_detail returns detail dict on 200."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(
+        {"title": "Master of Puppets", "artist": "Metallica"})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.get_music_detail("mbid-123")
+    assert result["title"] == "Master of Puppets"
+
+
+async def test_get_music_detail_404_returns_none():
+    """get_music_detail returns None on 404."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    resp = MagicMock(spec=httpx.Response)
+    resp.status_code = 404
+    resp.json.return_value = {}
+    resp.raise_for_status = MagicMock()
+    mock_client.get.return_value = resp
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.get_music_detail("bad-mbid")
+    assert result is None
+
+
+# --- lookup_crc ---
+
+
+async def test_lookup_crc_success():
+    """lookup_crc returns CRC result dict."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(
+        {"found": True, "results": [{"title": "Matrix"}], "has_api_key": True})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.lookup_crc("abc123")
+    assert result["found"] is True
+    mock_client.get.assert_awaited_once_with("/api/v1/metadata/crc/abc123")
+
+
+async def test_lookup_crc_raises_on_error():
+    """lookup_crc raises HTTPStatusError on failure."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response({}, status_code=500)
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await arm_client.lookup_crc("abc123")
+
+
+# --- test_metadata_key ---
+
+
+async def test_metadata_key_success():
+    """test_metadata_key returns result dict."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(
+        {"success": True, "message": "OMDb key valid", "provider": "omdb"})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.test_metadata_key()
+    assert result["success"] is True
+    mock_client.get.assert_awaited_once_with("/api/v1/metadata/test-key")
+
+
+async def test_metadata_key_raises_on_error():
+    """test_metadata_key raises HTTPStatusError on failure."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response({}, status_code=502)
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await arm_client.test_metadata_key()

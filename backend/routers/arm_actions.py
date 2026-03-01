@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.models.schemas import JobConfigUpdateRequest, TitleUpdateRequest
+from backend.models.schemas import JobConfigUpdateRequest, NamingPreviewRequest, TitleUpdateRequest
 from backend.services import arm_client
 
 router = APIRouter(prefix="/api/jobs", tags=["arm-actions"])
@@ -74,6 +74,17 @@ async def set_job_tracks(job_id: int, body: list[dict]) -> dict[str, Any]:
 async def crc_submit(job_id: int) -> dict[str, Any]:
     """Submit a job's CRC data to the community database (proxies to ARM)."""
     return _check_result(await arm_client.send_to_crc_db(job_id))
+
+
+# --- Naming preview (separate prefix) ---
+
+naming_router = APIRouter(prefix="/api", tags=["naming"])
+
+
+@naming_router.post("/naming/preview")
+async def naming_preview(body: NamingPreviewRequest) -> dict[str, Any]:
+    """Preview a naming pattern with given variables (proxies to ARM)."""
+    return _check_result(await arm_client.naming_preview(body.pattern, body.variables))
 
 
 # --- System-level actions (separate prefix) ---

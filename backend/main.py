@@ -44,6 +44,7 @@ app.add_middleware(
 app.include_router(dashboard.router)
 app.include_router(jobs.router)
 app.include_router(arm_actions.router)
+app.include_router(arm_actions.naming_router)
 app.include_router(arm_actions.system_router)
 app.include_router(transcoder.router)
 app.include_router(drives.router)

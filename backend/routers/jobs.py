@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from backend.models.schemas import (
@@ -10,8 +12,11 @@ from backend.models.schemas import (
     SearchResultSchema,
     TrackSchema,
 )
-from backend.services import arm_db, crc_lookup, metadata, music_metadata, progress, transcoder_client
-from backend.services.metadata import MetadataConfigError
+import httpx
+
+from backend.services import arm_client, arm_db, progress, transcoder_client
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["jobs"])
 
@@ -64,9 +69,14 @@ async def crc_lookup_endpoint(job_id: int):
         raise HTTPException(status_code=404, detail="Job not found")
     if not job.crc_id:
         return {"no_crc": True, "found": False, "results": [], "has_api_key": False}
-    result = await crc_lookup.lookup_crc(job.crc_id)
-    result["has_api_key"] = crc_lookup.has_api_key()
-    return result
+    try:
+        return await arm_client.lookup_crc(job.crc_id)
+    except httpx.HTTPStatusError as exc:
+        log.warning("CRC lookup for job %d failed: %d", job_id, exc.response.status_code)
+        raise HTTPException(status_code=exc.response.status_code, detail="CRC lookup failed")
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError) as exc:
+        log.error("CRC lookup for job %d unreachable: %s", job_id, exc)
+        raise HTTPException(status_code=502, detail="ARM service unreachable")
 
 
 @router.get("/metadata/search", response_model=list[SearchResultSchema])
@@ -74,20 +84,28 @@ async def search_metadata(
     q: str = Query(..., min_length=1),
     year: str | None = None,
 ):
-    """Search OMDb/TMDb for titles matching the query."""
+    """Search OMDb/TMDb for titles matching the query (proxied through ARM)."""
     try:
-        return await metadata.search(q, year)
-    except MetadataConfigError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        return await arm_client.search_metadata(q, year)
+    except httpx.HTTPStatusError as exc:
+        log.warning("Metadata search failed for q=%r: %d", q, exc.response.status_code)
+        raise HTTPException(status_code=exc.response.status_code, detail="Metadata search failed")
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError) as exc:
+        log.error("Metadata search unreachable for q=%r: %s", q, exc)
+        raise HTTPException(status_code=502, detail="ARM service unreachable")
 
 
 @router.get("/metadata/{imdb_id}", response_model=MediaDetailSchema)
 async def get_media_detail(imdb_id: str):
-    """Fetch full details for a title by IMDb ID."""
+    """Fetch full details for a title by IMDb ID (proxied through ARM)."""
     try:
-        result = await metadata.get_details(imdb_id)
-    except MetadataConfigError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        result = await arm_client.get_media_detail(imdb_id)
+    except httpx.HTTPStatusError as exc:
+        log.warning("Metadata detail failed for %s: %d", imdb_id, exc.response.status_code)
+        raise HTTPException(status_code=exc.response.status_code, detail="Metadata detail failed")
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError) as exc:
+        log.error("Metadata detail unreachable for %s: %s", imdb_id, exc)
+        raise HTTPException(status_code=502, detail="ARM service unreachable")
     if not result:
         raise HTTPException(status_code=404, detail="Title not found")
     return result
@@ -104,17 +122,31 @@ async def search_music_metadata(
     tracks: int | None = None,
     offset: int = Query(0, ge=0),
 ):
-    """Search MusicBrainz for releases matching the query with optional filters."""
-    return await music_metadata.search(
-        q, artist, release_type=release_type, format=format,
-        country=country, status=status, tracks=tracks, offset=offset,
-    )
+    """Search MusicBrainz for releases (proxied through ARM)."""
+    try:
+        return await arm_client.search_music_metadata(
+            q, artist=artist, release_type=release_type, format=format,
+            country=country, status=status, tracks=tracks, offset=offset,
+        )
+    except httpx.HTTPStatusError as exc:
+        log.warning("Music search failed for q=%r: %d", q, exc.response.status_code)
+        raise HTTPException(status_code=exc.response.status_code, detail="Music search failed")
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError) as exc:
+        log.error("Music search unreachable for q=%r: %s", q, exc)
+        raise HTTPException(status_code=502, detail="ARM service unreachable")
 
 
 @router.get("/metadata/music/{release_id}", response_model=MusicDetailSchema)
 async def get_music_detail(release_id: str):
-    """Fetch full release details from MusicBrainz by release MBID."""
-    result = await music_metadata.get_details(release_id)
+    """Fetch full release details from MusicBrainz (proxied through ARM)."""
+    try:
+        result = await arm_client.get_music_detail(release_id)
+    except httpx.HTTPStatusError as exc:
+        log.warning("Music detail failed for %s: %d", release_id, exc.response.status_code)
+        raise HTTPException(status_code=exc.response.status_code, detail="Music detail failed")
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError) as exc:
+        log.error("Music detail unreachable for %s: %s", release_id, exc)
+        raise HTTPException(status_code=502, detail="ARM service unreachable")
     if not result:
         raise HTTPException(status_code=404, detail="Release not found")
     return result
