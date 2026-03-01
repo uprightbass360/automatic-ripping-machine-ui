@@ -214,3 +214,86 @@ async def update_drive(drive_id: int, data: dict[str, Any]) -> dict[str, Any] | 
         return resp.json()
     except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
+
+
+async def dismiss_notification(notify_id: int) -> dict[str, Any] | None:
+    """Mark a notification as read. Returns None if ARM is unreachable."""
+    try:
+        resp = await get_client().patch(f"/api/v1/notifications/{notify_id}")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
+async def naming_preview(pattern: str, variables: dict[str, str]) -> dict[str, Any] | None:
+    """Preview a naming pattern with given variables. Returns None if ARM is unreachable."""
+    try:
+        resp = await get_client().post(
+            "/api/v1/naming/preview",
+            json={"pattern": pattern, "variables": variables},
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Metadata proxy — ARM is the single source of truth
+# ---------------------------------------------------------------------------
+
+
+async def search_metadata(query: str, year: str | None = None) -> list[dict[str, Any]]:
+    """Search OMDb/TMDb via ARM. Raises httpx.HTTPStatusError on 4xx/5xx."""
+    params: dict[str, str] = {"q": query}
+    if year:
+        params["year"] = year
+    resp = await get_client().get("/api/v1/metadata/search", params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def get_media_detail(imdb_id: str) -> dict[str, Any] | None:
+    """Fetch full details for a title by IMDb ID via ARM."""
+    resp = await get_client().get(f"/api/v1/metadata/{imdb_id}")
+    if resp.status_code == 404:
+        return None
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def search_music_metadata(
+    query: str, **kwargs: Any
+) -> dict[str, Any]:
+    """Search MusicBrainz via ARM."""
+    params: dict[str, str] = {"q": query}
+    for key, val in kwargs.items():
+        if val is not None:
+            params[key] = str(val)
+    resp = await get_client().get("/api/v1/metadata/music/search", params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def get_music_detail(release_id: str) -> dict[str, Any] | None:
+    """Fetch full release details from MusicBrainz via ARM."""
+    resp = await get_client().get(f"/api/v1/metadata/music/{release_id}")
+    if resp.status_code == 404:
+        return None
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def lookup_crc(crc64: str) -> dict[str, Any]:
+    """Look up a CRC64 hash via ARM."""
+    resp = await get_client().get(f"/api/v1/metadata/crc/{crc64}")
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def test_metadata_key() -> dict[str, Any]:
+    """Test the configured metadata API key via ARM."""
+    resp = await get_client().get("/api/v1/metadata/test-key")
+    resp.raise_for_status()
+    return resp.json()

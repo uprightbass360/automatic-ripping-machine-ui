@@ -16,7 +16,7 @@ from unittest.mock import AsyncMock, patch  # noqa: E402
 import httpx  # noqa: E402
 import pytest  # noqa: E402
 
-from backend.services import arm_client, arm_db, metadata, system_cache, transcoder_client  # noqa: E402
+from backend.services import arm_client, arm_db, system_cache, transcoder_client  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -33,8 +33,6 @@ def _reset_singletons():
     # system_cache
     system_cache._arm_info = None
     system_cache._transcoder_info = None
-    # metadata cached keys
-    metadata._get_api_keys.cache_clear()
 
 
 @pytest.fixture

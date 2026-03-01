@@ -67,9 +67,9 @@ async def test_get_job_404(app_client):
 
 
 async def test_metadata_search(app_client):
-    """GET /api/metadata/search returns search results."""
+    """GET /api/metadata/search returns search results (proxied through ARM)."""
     results = [{"title": "Matrix", "year": "1999", "imdb_id": "tt0133093", "media_type": "movie", "poster_url": None}]
-    with patch("backend.routers.jobs.metadata.search", new_callable=AsyncMock, return_value=results):
+    with patch("backend.routers.jobs.arm_client.search_metadata", new_callable=AsyncMock, return_value=results):
         resp = await app_client.get("/api/metadata/search?q=matrix")
     assert resp.status_code == 200
     data = resp.json()
@@ -77,16 +77,15 @@ async def test_metadata_search(app_client):
     assert data[0]["title"] == "Matrix"
 
 
-async def test_metadata_search_503_on_config_error(app_client):
-    """GET /api/metadata/search returns 503 when no API key configured."""
-    from backend.services.metadata import MetadataConfigError
-
+async def test_metadata_search_502_on_arm_unreachable(app_client):
+    """GET /api/metadata/search returns 502 when ARM is unreachable."""
+    import httpx as _httpx
     with patch(
-        "backend.routers.jobs.metadata.search",
-        new_callable=AsyncMock, side_effect=MetadataConfigError("No key"),
+        "backend.routers.jobs.arm_client.search_metadata",
+        new_callable=AsyncMock, side_effect=_httpx.ConnectError("offline"),
     ):
         resp = await app_client.get("/api/metadata/search?q=test")
-    assert resp.status_code == 503
+    assert resp.status_code == 502
 
 
 # --- GET /api/jobs/{job_id}/progress ---
