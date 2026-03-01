@@ -73,7 +73,10 @@
 			if (p.tracks_ripped >= p.tracks_total) return 100;
 			return ((p.tracks_ripped + p.progress / 100) / p.tracks_total) * 100;
 		}
-		return p.progress;
+		// No tracks in DB yet (scan/decrypt phase) — show indeterminate bar.
+		// MakeMKV resets PRGV per phase, so raw progress can spike to 100%
+		// during scan completion before any actual ripping starts.
+		return null;
 	}
 
 	async function pollProgress() {

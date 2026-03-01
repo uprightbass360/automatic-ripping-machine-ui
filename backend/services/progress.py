@@ -39,7 +39,11 @@ def get_rip_progress(job_id: int) -> dict:
 
     last_prgv = None
     last_prgc = None
+    last_prgt = None
     for line in lines:
+        m = re.match(r'PRGT:\d+,\d+,"([^"]+)"', line)
+        if m:
+            last_prgt = m.group(1)
         m = re.match(r"PRGV:(\d+),(\d+),(\d+)", line)
         if m:
             last_prgv = m
@@ -48,11 +52,18 @@ def get_rip_progress(job_id: int) -> dict:
             last_prgc = m
 
     if last_prgv:
-        # PRGV:current,total,max — total/max gives overall disc progress
+        # PRGV:current,total,max — total/max gives overall disc progress.
+        # MakeMKV resets total/max per major phase (scan, decrypt, save),
+        # so total==max during the scan phase is NOT 100% rip completion.
+        # Only report progress during the actual "Saving" rip phase.
         total = int(last_prgv.group(2))
         maximum = int(last_prgv.group(3))
         if maximum > 0:
-            result["progress"] = round(total / maximum * 100, 1)
+            is_rip_phase = last_prgt and "Saving" in last_prgt
+            if is_rip_phase:
+                result["progress"] = round(total / maximum * 100, 1)
+            else:
+                result["stage"] = last_prgt
 
     if last_prgc:
         index = int(last_prgc.group(1)) + 1
