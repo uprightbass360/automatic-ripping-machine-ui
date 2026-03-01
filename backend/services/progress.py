@@ -27,29 +27,32 @@ def get_rip_progress(job_id: int) -> dict:
 
     try:
         with open(path, "rb") as f:
-            # Read last 8KB — progress lines are near the end
-            f.seek(0, 2)
-            size = f.tell()
-            f.seek(max(0, size - 8192))
-            tail = f.read().decode("utf-8", errors="replace")
+            data = f.read().decode("utf-8", errors="replace")
     except OSError:
         return result
 
-    lines = tail.splitlines()
+    lines = data.splitlines()
 
+    # PRGT messages are rare (one per phase transition) and can be anywhere
+    # in the file, so scan all lines.  PRGV/PRGC are high-frequency and we
+    # only need the last occurrence, but scanning all lines is cheap for
+    # progress files (typically < 200 KB).
     last_prgv = None
     last_prgc = None
     last_prgt = None
     for line in lines:
-        m = re.match(r'PRGT:\d+,\d+,"([^"]+)"', line)
-        if m:
-            last_prgt = m.group(1)
-        m = re.match(r"PRGV:(\d+),(\d+),(\d+)", line)
-        if m:
-            last_prgv = m
-        m = re.match(r'PRGC:\d+,(\d+),"([^"]+)"', line)
-        if m:
-            last_prgc = m
+        if line.startswith("PRGT:"):
+            m = re.match(r'PRGT:\d+,\d+,"([^"]+)"', line)
+            if m:
+                last_prgt = m.group(1)
+        elif line.startswith("PRGV:"):
+            m = re.match(r"PRGV:(\d+),(\d+),(\d+)", line)
+            if m:
+                last_prgv = m
+        elif line.startswith("PRGC:"):
+            m = re.match(r'PRGC:\d+,(\d+),"([^"]+)"', line)
+            if m:
+                last_prgc = m
 
     if last_prgv:
         # PRGV:current,total,max — total/max gives overall disc progress.
