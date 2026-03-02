@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchRoots, fetchDirectory, renameFile, moveFile, deleteFile, createDirectory } from '$lib/api/files';
+	import { fetchRoots, fetchDirectory, renameFile, moveFile, deleteFile, createDirectory, fixPermissions } from '$lib/api/files';
 	import type { FileRoot, DirectoryListing, FileEntry } from '$lib/types/files';
 	import { formatBytes, formatDateTime } from '$lib/utils/format';
 	import FileIcon from '$lib/components/FileIcon.svelte';
@@ -143,6 +143,18 @@
 		}
 	}
 
+	async function handleFixPermissions(path: string, name: string) {
+		try {
+			const result = await fixPermissions(path);
+			feedback = { type: 'success', message: `Fixed permissions on ${name} (${result.fixed} item${result.fixed !== 1 ? 's' : ''})` };
+			clearFeedback();
+			await navigate(currentPath);
+		} catch (e) {
+			feedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to fix permissions' };
+			clearFeedback();
+		}
+	}
+
 	function handleDeleteRequest(path: string, name: string) {
 		deleteDialog = { open: true, path, name };
 	}
@@ -237,10 +249,19 @@
 	async function confirmBulkDelete() {
 		let deleted = 0;
 		let failed = 0;
-		for (const path of selectedPaths) {
+		// Sort longest paths first so children are deleted before parents,
+		// then skip paths whose ancestor was already deleted.
+		const paths = [...selectedPaths].sort((a, b) => b.length - a.length);
+		const deletedPaths: string[] = [];
+		for (const path of paths) {
+			if (deletedPaths.some((dp) => path.startsWith(dp + '/'))) {
+				deleted++;
+				continue;
+			}
 			try {
 				await deleteFile(path);
 				deleted++;
+				deletedPaths.push(path);
 			} catch {
 				failed++;
 			}
@@ -345,6 +366,16 @@
 				{/each}
 			</nav>
 		</div>
+		{@const activeRoot = roots.find(r => currentPath.startsWith(r.path))}
+		{#if activeRoot}
+			<div class="mt-2 text-xs text-gray-400 dark:text-gray-500">
+				<p class="mb-1 font-semibold uppercase tracking-wide">Paths</p>
+				<p><span class="font-medium">Container:</span> <code class="font-mono">{activeRoot.path}</code></p>
+				{#if activeRoot.host_path}
+					<p><span class="font-medium">Host:</span> <code class="font-mono">{activeRoot.host_path}</code></p>
+				{/if}
+			</div>
+		{/if}
 	{/if}
 
 	<!-- Breadcrumb + toolbar row -->
@@ -475,6 +506,7 @@
 									Name{sortIcon('name')}
 								</button>
 							</th>
+							<th class="hidden px-3 py-2 lg:table-cell">Permissions</th>
 							<th class="px-3 py-2 text-right">
 								<button type="button" onclick={() => toggleSort('size')} class="hover:text-gray-700 dark:hover:text-gray-300">
 									Size{sortIcon('size')}
@@ -498,6 +530,7 @@
 								onrename={handleRename}
 								ondelete={handleDeleteRequest}
 								ontoggle={toggleSelect}
+								onfixpermissions={handleFixPermissions}
 							/>
 						{/each}
 					</tbody>

@@ -34,6 +34,10 @@ class MkdirRequest(BaseModel):
     name: str
 
 
+class FixPermissionsRequest(BaseModel):
+    path: str
+
+
 class DeleteRequest(BaseModel):
     path: str
 
@@ -66,6 +70,12 @@ async def move_file(body: MoveRequest) -> dict[str, Any]:
 async def create_directory(body: MkdirRequest) -> dict[str, Any]:
     """Create a new directory."""
     return _check_result(await arm_client.create_directory(body.path, body.name))
+
+
+@router.post("/fix-permissions")
+async def fix_permissions(body: FixPermissionsRequest) -> dict[str, Any]:
+    """Fix ownership and permissions for a file or directory."""
+    return _check_result(await arm_client.fix_file_permissions(body.path))
 
 
 @router.delete("/delete")

@@ -269,6 +269,11 @@ async def create_directory(path: str, name: str) -> dict[str, Any] | None:
     return await _request("POST", "/api/v1/files/mkdir", json={"path": path, "name": name})
 
 
+async def fix_file_permissions(path: str) -> dict[str, Any] | None:
+    """Fix ownership and permissions for a file or directory. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/files/fix-permissions", json={"path": path})
+
+
 async def delete_file(path: str) -> dict[str, Any] | None:
     """Delete a file or directory. Returns None if ARM is unreachable."""
     return await _request("DELETE", "/api/v1/files/delete", json={"path": path})

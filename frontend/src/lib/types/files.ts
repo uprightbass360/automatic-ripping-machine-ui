@@ -2,6 +2,7 @@ export interface FileRoot {
 	key: string;
 	label: string;
 	path: string;
+	host_path?: string;
 }
 
 export interface FileEntry {
@@ -11,6 +12,9 @@ export interface FileEntry {
 	modified: string;
 	extension: string;
 	category: string;
+	permissions?: string;
+	owner?: string;
+	group?: string;
 }
 
 export interface DirectoryListing {

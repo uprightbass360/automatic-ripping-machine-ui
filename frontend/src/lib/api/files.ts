@@ -39,6 +39,13 @@ export function createDirectory(
 	});
 }
 
+export function fixPermissions(path: string): Promise<{ success: boolean; fixed: number }> {
+	return apiFetch('/api/files/fix-permissions', {
+		method: 'POST',
+		body: JSON.stringify({ path })
+	});
+}
+
 export function deleteFile(path: string): Promise<{ success: boolean }> {
 	return apiFetch('/api/files/delete', {
 		method: 'DELETE',
