@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.12.2-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.12.1-alpha.1...v11.12.2-alpha.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* address SonarCloud reliability bugs ([d8d5ed7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d8d5ed7ba54a269fe22a6d4c8c551de2cefc56ad))
+
 ## [11.12.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.12.0-alpha.1...v11.12.1-alpha.1) (2026-03-02)
 
 
