@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.11.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.11.0-alpha.1...v11.11.1-alpha.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* breadcrumb hover too dark on dark mode ([3449f94](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3449f94310d39254b3bf40146a888b29665217e4))
+
 ## [11.11.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.10.0-alpha.1...v11.11.0-alpha.1) (2026-03-02)
 
 
