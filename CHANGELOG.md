@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.10.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.9.0-alpha.1...v11.10.0-alpha.1) (2026-03-02)
+
+
+### Features
+
+* add warning banner to file browser page ([e16451e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e16451e59c4186a10b2d156f6eff55e08d9cb6e9))
+
 ## [11.9.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.8.0-alpha.1...v11.9.0-alpha.1) (2026-03-02)
 
 
