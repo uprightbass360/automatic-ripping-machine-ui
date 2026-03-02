@@ -2,9 +2,12 @@
 	import { onMount } from 'svelte';
 	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo } from '$lib/api/settings';
 	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
-	import type { SettingsData } from '$lib/types/arm';
+	import type { SettingsData, Drive } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES } from '$lib/stores/colorScheme';
+	import { createPollingStore } from '$lib/stores/polling';
+	import { fetchDrives } from '$lib/api/drives';
+	import DriveCard from '$lib/components/DriveCard.svelte';
 
 	let settings = $state<SettingsData | null>(null);
 	let error = $state<string | null>(null);
@@ -24,7 +27,11 @@
 	let armCollapsed = $state<Record<string, boolean>>({});
 
 	// --- Tab state ---
-	let activeTab = $state<'ripping' | 'transcoding' | 'notifications' | 'appearance' | 'system'>('ripping');
+	let activeTab = $state<'ripping' | 'transcoding' | 'notifications' | 'appearance' | 'drives' | 'system'>('ripping');
+
+	// --- Drives polling store ---
+	const drives = createPollingStore(fetchDrives, [] as Drive[], 10000);
+	const driveError = drives.error;
 
 	// --- Search/filter ---
 	let armSearch = $state('');
@@ -61,6 +68,7 @@
 	}
 
 	onMount(async () => {
+		drives.start();
 		try {
 			settings = await fetchSettings();
 			if (settings?.transcoder_config?.config) {
@@ -76,6 +84,7 @@
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load settings';
 		}
+		return () => drives.stop();
 	});
 
 	function clearFeedback(setter: (v: null) => void) {
@@ -896,6 +905,7 @@
 				<button type="button" onclick={() => (activeTab = 'ripping')} class={tabClass('ripping')}>Ripping</button>
 				<button type="button" onclick={() => (activeTab = 'transcoding')} class={tabClass('transcoding')}>Transcoding</button>
 				<button type="button" onclick={() => (activeTab = 'notifications')} class={tabClass('notifications')}>Notifications</button>
+				<button type="button" onclick={() => (activeTab = 'drives')} class={tabClass('drives')}>Drives</button>
 				<button type="button" onclick={() => (activeTab = 'appearance')} class={tabClass('appearance')}>Appearance</button>
 				<button type="button" onclick={() => { activeTab = 'system'; loadSystemInfo(); }} class={tabClass('system')}>System</button>
 			</nav>
@@ -1646,6 +1656,24 @@
 						</div>
 					</div>
 				</div>
+			</section>
+		{/if}
+
+		{#if activeTab === 'drives'}
+			<section class="space-y-6">
+				{#if $driveError}
+					<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+						{$driveError}
+					</div>
+				{:else if $drives.length === 0}
+					<p class="py-8 text-center text-gray-400">No drives detected.</p>
+				{:else}
+					<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+						{#each $drives as drive (drive.drive_id)}
+							<DriveCard {drive} onupdate={() => drives.refresh()} />
+						{/each}
+					</div>
+				{/if}
 			</section>
 		{/if}
 	{/if}
