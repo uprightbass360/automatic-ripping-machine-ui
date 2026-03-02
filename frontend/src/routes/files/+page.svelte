@@ -304,6 +304,11 @@
 <div class="space-y-4">
 	<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Files</h1>
 
+	<!-- Warning banner -->
+	<div class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+		<span class="font-semibold">Warning:</span> Modify files at your own risk. This will not update database records and will cause issues for any in-progress rips or transcodes.
+	</div>
+
 	<!-- Feedback toast -->
 	{#if feedback}
 		<div
