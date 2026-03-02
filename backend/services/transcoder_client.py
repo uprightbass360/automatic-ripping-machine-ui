@@ -133,19 +133,23 @@ async def send_webhook(payload: dict) -> dict[str, Any]:
 
     Returns {"success": True} or {"success": False, "error": "..."}.
     """
+    import asyncio
     import os
     import yaml
 
+    def _read_webhook_secret() -> str:
+        yaml_path = settings.arm_config_path
+        if yaml_path and os.path.isfile(yaml_path):
+            try:
+                with open(yaml_path, "r") as f:
+                    arm_cfg = yaml.safe_load(f) or {}
+                return arm_cfg.get("TRANSCODER_WEBHOOK_SECRET", "") or ""
+            except Exception:
+                pass
+        return ""
+
     # Read webhook secret directly from arm.yaml (API masks secrets)
-    webhook_secret = ""
-    yaml_path = settings.arm_config_path
-    if yaml_path and os.path.isfile(yaml_path):
-        try:
-            with open(yaml_path, "r") as f:
-                arm_cfg = yaml.safe_load(f) or {}
-            webhook_secret = arm_cfg.get("TRANSCODER_WEBHOOK_SECRET", "") or ""
-        except Exception:
-            pass
+    webhook_secret = await asyncio.to_thread(_read_webhook_secret)
 
     headers: dict[str, str] = {}
     if webhook_secret:

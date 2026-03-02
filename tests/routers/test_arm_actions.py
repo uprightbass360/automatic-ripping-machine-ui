@@ -49,13 +49,13 @@ def test_check_result_success_false_fallback_message():
 def test_check_result_success_true_passthrough():
     """Successful result is returned unchanged."""
     result: dict[str, Any] = {"success": True, "data": "ok"}
-    assert _check_result(result) is result
+    assert _check_result(result) == result
 
 
 def test_check_result_dict_without_success_key():
     """A dict without 'success' key is passed through (not an error)."""
     result: dict[str, Any] = {"job_id": 1, "status": "abandoned"}
-    assert _check_result(result) is result
+    assert _check_result(result) == result
 
 
 # --- Endpoint tests via app_client ---

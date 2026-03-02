@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -146,11 +147,15 @@ async def get_system_info():
     # UI version from local VERSION file
     ui_version = "unknown"
     ui_version_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "VERSION")
-    try:
-        with open(ui_version_file) as f:
-            ui_version = f.read().strip()
-    except OSError:
-        pass
+
+    def _read_version() -> str:
+        try:
+            with open(ui_version_file) as f:
+                return f.read().strip()
+        except OSError:
+            return "unknown"
+
+    ui_version = await asyncio.to_thread(_read_version)
 
     versions = {
         "arm": arm_versions.get("arm_version", "unknown") if arm_versions else "offline",

@@ -340,8 +340,6 @@ def _read_arm_yaml() -> dict | None:
         for key in list(config.keys()):
             if key in HIDDEN_CONFIG_FIELDS and config[key]:
                 config[key] = "***"
-            else:
-                config[key] = config[key]
         return config
     except Exception as e:
         log.warning("Failed to read arm.yaml: %s", e)

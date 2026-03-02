@@ -1347,7 +1347,6 @@ body { visibility: visible; }
 	color: #fff !important;
 	border-radius: 20px !important;
 	box-shadow: none !important;
-	ring: none !important;
 }
 
 /* Ghost buttons with rings → LCARS blue outline pill */

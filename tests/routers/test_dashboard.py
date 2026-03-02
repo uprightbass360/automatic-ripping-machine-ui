@@ -47,7 +47,7 @@ async def test_dashboard_full(app_client):
     assert data["notification_count"] == 3
     assert data["ripping_enabled"] is True
     assert data["transcoder_online"] is True
-    assert data["system_stats"]["cpu_percent"] == 45.0
+    assert abs(data["system_stats"]["cpu_percent"] - 45.0) < 0.01
     assert data["system_info"]["cpu"] == "AMD Ryzen 7"
     assert len(data["active_jobs"]) == 1
 
