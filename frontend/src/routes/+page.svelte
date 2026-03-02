@@ -227,166 +227,73 @@
 		</div>
 	{/if}
 
-	<!-- Service status banners -->
-	{#if dashReady && !dash.db_available}
-		<div class="flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-900/20">
-			<div class="h-3 w-3 shrink-0 rounded-full bg-yellow-500"></div>
-			<div>
-				<p class="font-medium text-yellow-800 dark:text-yellow-300">ARM Database Unavailable</p>
-				<p class="text-sm text-yellow-700 dark:text-yellow-400">Cannot connect to the ARM database. Check that the database file is mounted and the path is correct.</p>
+	<!-- Unified status bar: services + activity + queue -->
+	{#if dashReady}
+		<div class="rounded-lg border border-primary/20 bg-surface dark:bg-surface-dark">
+			<!-- Top row: service health (left) + activity counters (right) -->
+			<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
+				<div class="flex items-center gap-5">
+					<div class="flex items-center gap-2">
+						<div class="h-2 w-2 shrink-0 rounded-full {dash.arm_online ? 'bg-green-500' : 'bg-red-500'}"></div>
+						<span class="text-sm text-gray-600 dark:text-gray-400">ARM</span>
+						<span class="text-sm font-medium {dash.arm_online ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+							{dash.arm_online ? 'Online' : 'Unreachable'}
+						</span>
+					</div>
+					<div class="flex items-center gap-2">
+						<div class="h-2 w-2 shrink-0 rounded-full {dash.db_available ? 'bg-green-500' : 'bg-yellow-500'}"></div>
+						<span class="text-sm text-gray-600 dark:text-gray-400">Database</span>
+						<span class="text-sm font-medium {dash.db_available ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}">
+							{dash.db_available ? 'Connected' : 'Unavailable'}
+						</span>
+					</div>
+					<div class="flex items-center gap-2">
+						<div class="h-2 w-2 shrink-0 rounded-full {dash.transcoder_online && dash.transcoder_stats?.worker_running ? 'bg-green-500' : dash.transcoder_online ? 'bg-yellow-500' : 'bg-gray-400'}"></div>
+						<span class="text-sm text-gray-600 dark:text-gray-400">Transcoder</span>
+						<span class="text-sm font-medium {dash.transcoder_online && dash.transcoder_stats?.worker_running ? 'text-green-600 dark:text-green-400' : dash.transcoder_online ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400'}">
+							{#if dash.transcoder_online && dash.transcoder_stats?.worker_running}Running{:else if dash.transcoder_online}Idle{:else}Offline{/if}
+						</span>
+					</div>
+				</div>
+				<div class="flex items-center gap-5 text-sm">
+					<div class="flex items-center gap-1.5">
+						<span class="text-lg font-bold text-gray-900 dark:text-white">{dash.db_available ? dash.active_jobs.length : '--'}</span>
+						<span class="text-gray-500 dark:text-gray-400">Rips</span>
+					</div>
+					<div class="flex items-center gap-1.5">
+						<span class="text-lg font-bold text-gray-900 dark:text-white">{dash.transcoder_online ? dash.active_transcodes.length : '--'}</span>
+						<span class="text-gray-500 dark:text-gray-400">Transcodes</span>
+					</div>
+					<div class="flex items-center gap-1.5">
+						<span class="text-lg font-bold text-gray-900 dark:text-white">{dash.db_available ? dash.drives_online : '--'}</span>
+						<span class="text-gray-500 dark:text-gray-400">Drives</span>
+					</div>
+				</div>
 			</div>
+			<!-- Bottom row: transcoder queue breakdown -->
+			{#if dash.transcoder_online}
+				<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-primary/10 px-4 py-2">
+					<span class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Queue</span>
+					<span class="text-sm"><span class="font-semibold text-yellow-600 dark:text-yellow-400">{dash.transcoder_stats?.pending ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">pending</span></span>
+					<span class="text-gray-300 dark:text-gray-600">&middot;</span>
+					<span class="text-sm"><span class="font-semibold text-blue-600 dark:text-blue-400">{dash.transcoder_stats?.processing ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">processing</span></span>
+					<span class="text-gray-300 dark:text-gray-600">&middot;</span>
+					<span class="text-sm"><span class="font-semibold text-green-600 dark:text-green-400">{dash.transcoder_stats?.completed ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">completed</span></span>
+					<span class="text-gray-300 dark:text-gray-600">&middot;</span>
+					<span class="text-sm"><span class="font-semibold text-red-600 dark:text-red-400">{dash.transcoder_stats?.failed ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">failed</span></span>
+					<span class="text-gray-300 dark:text-gray-600">&middot;</span>
+					<span class="text-sm"><span class="font-semibold text-gray-600 dark:text-gray-400">{dash.transcoder_stats?.cancelled ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">cancelled</span></span>
+				</div>
+			{/if}
 		</div>
 	{/if}
-
-	{#if dashReady && !dash.arm_online}
-		<div class="flex items-center gap-3 rounded-lg border border-orange-300 bg-orange-50 p-4 dark:border-orange-700 dark:bg-orange-900/20">
-			<div class="h-3 w-3 shrink-0 rounded-full bg-orange-500"></div>
-			<div>
-				<p class="font-medium text-orange-800 dark:text-orange-300">ARM Service Unreachable</p>
-				<p class="text-sm text-orange-700 dark:text-orange-400">Cannot reach the ARM ripping service API. Check that ARM_UI_ARM_URL is configured correctly and that the service is running.</p>
-			</div>
-		</div>
-	{/if}
-
-	{#if dashReady && !dash.transcoder_online}
-		<div class="flex items-center gap-3 rounded-lg border border-orange-300 bg-orange-50 p-4 dark:border-orange-700 dark:bg-orange-900/20">
-			<div class="h-3 w-3 shrink-0 rounded-full bg-orange-500"></div>
-			<div>
-				<p class="font-medium text-orange-800 dark:text-orange-300">Transcoder Service Unreachable</p>
-				<p class="text-sm text-orange-700 dark:text-orange-400">Cannot reach the transcoder service API. Check that ARM_UI_TRANSCODER_URL is configured correctly and that the service is running.</p>
-			</div>
-		</div>
-	{/if}
-
-	<!-- Stats cards -->
-	<div class="grid grid-cols-3 gap-4">
-		<!-- Active Rips -->
-		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-			<div class="flex items-center gap-3">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light-bg dark:bg-primary-light-bg-dark/30">
-					<svg class="h-5 w-5 text-primary dark:text-primary-text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<circle cx="12" cy="12" r="10" />
-						<circle cx="12" cy="12" r="3" />
-						<circle cx="12" cy="12" r="6.5" stroke-width="1" opacity="0.4" />
-					</svg>
-				</div>
-				<div>
-					<p class="text-sm text-gray-500 dark:text-gray-400">Active Rips</p>
-					<p class="text-2xl font-bold text-gray-900 dark:text-white">
-						{dash.db_available ? dash.active_jobs.length : '--'}
-					</p>
-				</div>
-			</div>
-		</div>
-		<!-- Active Transcodes -->
-		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-			<div class="flex items-center gap-3">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
-					<svg class="h-5 w-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-					</svg>
-				</div>
-				<div>
-					<p class="text-sm text-gray-500 dark:text-gray-400">Active Transcodes</p>
-					<p class="text-2xl font-bold text-gray-900 dark:text-white">
-						{dashReady ? (dash.transcoder_online ? dash.active_transcodes.length : '--') : '...'}
-					</p>
-				</div>
-			</div>
-		</div>
-		<!-- Drives Online -->
-		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-			<div class="flex items-center gap-3">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-					<svg class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-					</svg>
-				</div>
-				<div>
-					<p class="text-sm text-gray-500 dark:text-gray-400">Drives Online</p>
-					<p class="text-2xl font-bold text-gray-900 dark:text-white">
-						{dash.db_available ? dash.drives_online : '--'}
-					</p>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- Transcoder stats -->
-	<section>
-		<div class="mb-3 flex items-center gap-2">
-			<div class="h-2.5 w-2.5 rounded-full {dash.transcoder_online && dash.transcoder_stats?.worker_running ? 'bg-green-500' : dash.transcoder_online ? 'bg-yellow-500' : 'bg-gray-400'}"></div>
-			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcoder</h2>
-			<span class="text-sm text-gray-500 dark:text-gray-400">
-				{#if !dashReady}
-					&mdash; Loading...
-				{:else if !dash.transcoder_online}
-					&mdash; Offline
-				{:else if dash.transcoder_stats?.worker_running}
-					&mdash; Worker running
-				{:else}
-					&mdash; Worker idle
-				{/if}
-			</span>
-		</div>
-		<div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-				<div class="flex items-center gap-2">
-					<svg class="h-4 w-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-					</svg>
-					<p class="text-sm text-gray-500 dark:text-gray-400">Pending</p>
-				</div>
-				<p class="mt-1 text-3xl font-bold text-yellow-600 dark:text-yellow-400">{dash.transcoder_stats?.pending ?? 0}</p>
-			</div>
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-				<div class="flex items-center gap-2">
-					<svg class="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-					</svg>
-					<p class="text-sm text-gray-500 dark:text-gray-400">Processing</p>
-				</div>
-				<p class="mt-1 text-3xl font-bold text-blue-600 dark:text-blue-400">{dash.transcoder_stats?.processing ?? 0}</p>
-			</div>
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-				<div class="flex items-center gap-2">
-					<svg class="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-					</svg>
-					<p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
-				</div>
-				<p class="mt-1 text-3xl font-bold text-green-600 dark:text-green-400">{dash.transcoder_stats?.completed ?? 0}</p>
-			</div>
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-				<div class="flex items-center gap-2">
-					<svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-					</svg>
-					<p class="text-sm text-gray-500 dark:text-gray-400">Failed</p>
-				</div>
-				<p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">{dash.transcoder_stats?.failed ?? 0}</p>
-			</div>
-			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-				<div class="flex items-center gap-2">
-					<svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-					</svg>
-					<p class="text-sm text-gray-500 dark:text-gray-400">Cancelled</p>
-				</div>
-				<p class="mt-1 text-3xl font-bold text-gray-600 dark:text-gray-400">{dash.transcoder_stats?.cancelled ?? 0}</p>
-			</div>
-		</div>
-	</section>
 
 	<!-- Disc review (waiting jobs) -->
 	{#if waitingJobs.length > 0}
 		<section>
-			<h2 class="mb-3 text-lg font-semibold text-primary-text dark:text-primary-text-dark">New Disc Detected &mdash; Review Before Ripping</h2>
 			<div class="grid gap-4">
 				{#each waitingJobs as job (job.job_id)}
-					<LcarsFrame variant="full" accent="#f90" label="WAITING FOR REVIEW — {(job.title || job.label || 'UNKNOWN').toUpperCase()}">
-						<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
-					</LcarsFrame>
+					<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
 				{/each}
 			</div>
 		</section>
@@ -395,7 +302,6 @@
 	<!-- Active rips -->
 	{#if nonWaitingActiveJobs.length > 0}
 		<section>
-			<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Active Rips</h2>
 			<LcarsFrame variant="full" accent="#99f" label="ACTIVE RIPS — {nonWaitingActiveJobs.length} IN PROGRESS">
 				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 					{#each nonWaitingActiveJobs as job (job.job_id)}
@@ -409,7 +315,6 @@
 	<!-- Active transcodes -->
 	{#if dash.active_transcodes.length > 0}
 		<section>
-			<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Active Transcodes</h2>
 			<LcarsFrame variant="full" accent="#c9c" label="TRANSCODING — {dash.active_transcodes.length} ACTIVE">
 				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 					{#each dash.active_transcodes as tc}
