@@ -1,5 +1,20 @@
 # Changelog
 
+## [11.7.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.6.0-alpha.1...v11.7.0-alpha.1) (2026-03-02)
+
+
+### Features
+
+* condense dashboard into unified status bar ([52d8e08](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/52d8e08c160559ff4878fa6f840044f43aa205d6))
+* move drives page into settings as a tab ([f494bd7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f494bd7a7897993979e493aab1c76004e60226bb))
+* proxy metadata requests through ARM API ([6d343f7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6d343f7c90522efd79fd392fb579703b06a6fcf5))
+
+
+### Bug Fixes
+
+* resolve TypeScript error and update arm_client tests ([92af79a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/92af79a0e0a9db19cf37c4b7df36a8fbc5da1c5d))
+* surface real ARM API errors instead of generic "unreachable" message ([42c8988](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/42c8988c238e347a69fcd24dacca9316ec67d6e2))
+
 ## [11.6.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.5.1-alpha.1...v11.6.0-alpha.1) (2026-03-01)
 
 
