@@ -67,8 +67,13 @@
 		}
 	}
 
-	onMount(async () => {
+	onMount(() => {
 		drives.start();
+		loadSettings();
+		return () => drives.stop();
+	});
+
+	async function loadSettings() {
 		try {
 			settings = await fetchSettings();
 			if (settings?.transcoder_config?.config) {
@@ -84,8 +89,7 @@
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load settings';
 		}
-		return () => drives.stop();
-	});
+	}
 
 	function clearFeedback(setter: (v: null) => void) {
 		setTimeout(() => setter(null), 4000);
