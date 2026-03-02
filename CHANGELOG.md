@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.8.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.7.1-alpha.1...v11.8.0-alpha.1) (2026-03-02)
+
+
+### Features
+
+* file browser with browsable move dialog ([af13ab2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/af13ab2719b7983d4ebe4904769ff7b1d83c9aba))
+
 ## [11.7.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.7.0-alpha.1...v11.7.1-alpha.1) (2026-03-02)
 
 
