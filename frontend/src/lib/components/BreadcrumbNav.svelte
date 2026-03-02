@@ -47,7 +47,7 @@
 			<button
 				type="button"
 				onclick={() => onnavigate(segment.path)}
-				class="hover:text-primary dark:hover:text-primary-dark transition-colors"
+				class="transition-colors hover:text-primary dark:hover:text-primary-text-dark"
 			>
 				{segment.label}
 			</button>
