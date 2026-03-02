@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.11.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.10.0-alpha.1...v11.11.0-alpha.1) (2026-03-02)
+
+
+### Features
+
+* file permissions display, fix-permissions, host paths, bulk delete fix ([a2be5d4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a2be5d4a9f2e0ede9337d29979a9e0d24e68f168))
+
 ## [11.10.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.9.0-alpha.1...v11.10.0-alpha.1) (2026-03-02)
 
 
