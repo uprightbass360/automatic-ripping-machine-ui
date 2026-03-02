@@ -1318,10 +1318,10 @@ body { visibility: visible; }
 	border-radius: 0 !important;
 }
 
-/* Review widget outer: elbow frame, clip status bar to shape */
+/* Review widget outer: LCARS left-side elbow shape */
 [data-scheme="lcars"] main .border-2.border-primary {
 	border-color: #f90 !important;
-	border-radius: 63px !important;
+	border-radius: 30px 0 0 30px !important;
 	border-width: 2px !important;
 	overflow: hidden;
 }
@@ -1547,17 +1547,6 @@ body { visibility: visible; }
 [data-scheme="lcars"] .lcars-body .dark\:bg-surface-dark::before,
 [data-scheme="lcars"] .lcars-body .dark\:bg-surface-dark::after {
 	display: none !important;
-}
-
-/* DiscReviewWidget inside frame: remove its own border/rounding */
-[data-scheme="lcars"] .lcars-body .border-2.border-primary {
-	border: none !important;
-	border-radius: 0 !important;
-}
-
-/* DiscReviewWidget status bar: hidden in LCARS (merged into frame header bar) */
-[data-scheme="lcars"] .lcars-body .border-2 > .bg-primary {
-	display: none;
 }
 
 /* Settings page and other sections with bordered containers */
