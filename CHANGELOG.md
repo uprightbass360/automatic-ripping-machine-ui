@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.7.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.7.0-alpha.1...v11.7.1-alpha.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* show waiting_transcode status with yellow color instead of gray ([22dd128](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/22dd1284c03b7928c41f7c975860477d4beed796))
+
 ## [11.7.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.6.0-alpha.1...v11.7.0-alpha.1) (2026-03-02)
 
 
