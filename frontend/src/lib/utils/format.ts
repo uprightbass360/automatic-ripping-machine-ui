@@ -58,6 +58,7 @@ export function statusColor(status: string | null): string {
 		case 'error':
 			return 'bg-red-500';
 		case 'waiting':
+		case 'waiting_transcode':
 		case 'pending':
 			return 'bg-yellow-500';
 		default:
