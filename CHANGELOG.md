@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.9.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.8.0-alpha.1...v11.9.0-alpha.1) (2026-03-02)
+
+
+### Features
+
+* bulk delete with confirmation, match tab styling to settings ([776bacb](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/776bacbf37e9997db4df9bff89e70fe20ef55084))
+
 ## [11.8.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.7.1-alpha.1...v11.8.0-alpha.1) (2026-03-02)
 
 
