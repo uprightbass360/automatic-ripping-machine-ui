@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.12.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.11.1-alpha.1...v11.12.0-alpha.1) (2026-03-02)
+
+
+### Features
+
+* display folder sizes in file browser ([6c650ea](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6c650eaf11772959d85ba1da3b5b7f00009f7d24))
+
 ## [11.11.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.11.0-alpha.1...v11.11.1-alpha.1) (2026-03-02)
 
 
