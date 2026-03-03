@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.13.2-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.13.1-alpha.1...v11.13.2-alpha.1) (2026-03-03)
+
+
+### Bug Fixes
+
+* improve font rendering and Blockbuster theme legibility ([2b82738](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2b82738897675d52c3025a1639c8806172695610))
+
 ## [11.13.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.13.0-alpha.1...v11.13.1-alpha.1) (2026-03-03)
 
 
