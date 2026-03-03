@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.13.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.12.2-alpha.1...v11.13.0-alpha.1) (2026-03-03)
+
+
+### Features
+
+* move stats bar and auto-start toggle to global header, add themes ([480cebc](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/480cebcf041fc03699a278bd5342c1653becd8d2))
+
 ## [11.12.2-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.12.1-alpha.1...v11.12.2-alpha.1) (2026-03-02)
 
 
