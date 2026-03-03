@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.13.3-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.13.2-alpha.1...v11.13.3-alpha.1) (2026-03-03)
+
+
+### Bug Fixes
+
+* metadata not syncing on review and pause toggle not flipping ([40f4ca0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/40f4ca0550497d3b1e703e3f6807f78d42df6ea6))
+
 ## [11.13.2-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.13.1-alpha.1...v11.13.2-alpha.1) (2026-03-03)
 
 
