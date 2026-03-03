@@ -8,11 +8,13 @@ from backend.services import arm_client
 
 router = APIRouter(prefix="/api/files", tags=["files"])
 
+_ARM_UI_UNREACHABLE = "ARM web UI is unreachable"
+
 
 def _check_result(result: dict[str, Any] | list | None) -> dict[str, Any] | list:
     """Raise HTTPException if the ARM proxy result is None or reports failure."""
     if result is None:
-        raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+        raise HTTPException(status_code=503, detail=_ARM_UI_UNREACHABLE)
     if isinstance(result, dict) and result.get("success") is False:
         detail = result.get("error") or result.get("Error") or "Action failed"
         raise HTTPException(status_code=502, detail=detail)
@@ -42,8 +44,8 @@ class DeleteRequest(BaseModel):
     path: str
 
 
-_503_ARM = {503: {"description": "ARM web UI is unreachable"}}
-_502_503_ARM = {502: {"description": "ARM action failed"}, 503: {"description": "ARM web UI is unreachable"}}
+_503_ARM = {503: {"description": _ARM_UI_UNREACHABLE}}
+_502_503_ARM = {502: {"description": "ARM action failed"}, 503: {"description": _ARM_UI_UNREACHABLE}}
 
 
 @router.get("/roots", responses=_503_ARM)

@@ -21,9 +21,9 @@ log = logging.getLogger(__name__)
 _JOB_NOT_FOUND = "Job not found"
 _ARM_UNREACHABLE = "ARM service unreachable"
 
-_404_JOB = {404: {"description": "Job not found"}}
-_502_ARM = {502: {"description": "ARM service unreachable"}}
-_404_502_ARM = {404: {"description": "Job not found"}, 502: {"description": "ARM service unreachable"}}
+_404_JOB = {404: {"description": _JOB_NOT_FOUND}}
+_502_ARM = {502: {"description": _ARM_UNREACHABLE}}
+_404_502_ARM = {404: {"description": _JOB_NOT_FOUND}, 502: {"description": _ARM_UNREACHABLE}}
 
 router = APIRouter(prefix="/api", tags=["jobs"])
 
@@ -102,7 +102,7 @@ async def search_metadata(
         raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
 
 
-@router.get("/metadata/{imdb_id}", response_model=MediaDetailSchema, responses={**_404_JOB, **_502_ARM})
+@router.get("/metadata/{imdb_id}", response_model=MediaDetailSchema, responses={404: {"description": "Title not found"}, 502: {"description": _ARM_UNREACHABLE}})
 async def get_media_detail(imdb_id: str):
     """Fetch full details for a title by IMDb ID (proxied through ARM)."""
     try:
@@ -143,7 +143,7 @@ async def search_music_metadata(
         raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
 
 
-@router.get("/metadata/music/{release_id}", response_model=MusicDetailSchema, responses={**_404_JOB, **_502_ARM})
+@router.get("/metadata/music/{release_id}", response_model=MusicDetailSchema, responses={404: {"description": "Release not found"}, 502: {"description": _ARM_UNREACHABLE}})
 async def get_music_detail(release_id: str):
     """Fetch full release details from MusicBrainz (proxied through ARM)."""
     try:
@@ -159,7 +159,7 @@ async def get_music_detail(release_id: str):
     return result
 
 
-@router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, **_404_JOB})
+@router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}})
 async def update_transcode_config(job_id: int, request: Request):
     """Set per-job transcode override settings."""
     body = await request.json()
