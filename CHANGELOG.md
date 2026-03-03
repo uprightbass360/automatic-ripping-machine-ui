@@ -1,5 +1,15 @@
 # Changelog
 
+## [11.13.1-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.13.0-alpha.1...v11.13.1-alpha.1) (2026-03-03)
+
+
+### Bug Fixes
+
+* deduplicate job defaults in test factories ([28b80c8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/28b80c8758ccd28c2cc31c3799cfca5a6c878a92))
+* exclude colorScheme.ts from SonarCloud duplication detection ([2936e5d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2936e5d7e83fd2954c7347afeb08e9196d2e0843))
+* resolve 44 SonarCloud high-impact code smells ([b0ff5ad](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b0ff5addbb70a420b4613d1e165279eab4011c1a))
+* resolve remaining 8 SonarCloud high-impact issues ([4c945ea](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4c945ea8ff8c45a732136235e0dd8b356aea50aa))
+
 ## [11.13.0-alpha.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.12.2-alpha.1...v11.13.0-alpha.1) (2026-03-03)
 
 
