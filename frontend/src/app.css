@@ -41,6 +41,9 @@
 	}
 
 	body {
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		text-rendering: optimizeLegibility;
 		@apply bg-page text-gray-900 dark:bg-page-dark dark:text-gray-100;
 	}
 
@@ -2000,7 +2003,7 @@ body { visibility: visible; }
 /* ── Blockbuster theme ──────────────────────────────────── */
 
 [data-scheme="blockbuster"] {
-	font-family: "ITC Eras", "Eras Bold ITC", "Impact", sans-serif;
+	font-family: "ITC Eras", "Eras Bold ITC", "Arial Black", "Arial", sans-serif;
 	letter-spacing: -0.02em;
 }
 
@@ -2059,6 +2062,22 @@ body { visibility: visible; }
 	font-weight: bold;
 	transform: rotate(-1deg);
 	margin: 1rem;
+}
+[data-scheme="blockbuster"] aside [data-stats] > div:first-child {
+	background: rgb(255, 235, 0) !important;
+}
+[data-scheme="blockbuster"] aside [data-stats] button {
+	color: #000 !important;
+	background: transparent !important;
+	box-shadow: none !important;
+}
+[data-scheme="blockbuster"] aside [data-stats] button.shadow-xs {
+	background: rgb(0, 51, 153) !important;
+	color: rgb(255, 235, 0) !important;
+}
+[data-scheme="blockbuster"] aside [data-stats] span,
+[data-scheme="blockbuster"] aside [data-stats] p {
+	color: #333 !important;
 }
 
 [data-scheme="blockbuster"] header {
