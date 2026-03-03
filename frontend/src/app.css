@@ -572,6 +572,11 @@ body { visibility: visible; }
 	border-color: rgba(100, 255, 218, 0.2) !important;
 }
 
+/* DiscReviewWidget: "Waiting for Review" heading */
+[data-scheme="tactical"] .bg-primary .text-on-primary {
+	color: rgb(0, 223, 169) !important;
+}
+
 /* Radial gradient on body */
 [data-scheme="tactical"] body {
 	background: radial-gradient(circle at 20% 50%, #0a192f 0%, #020617 100%) !important;
@@ -829,6 +834,10 @@ body { visibility: visible; }
 
 [data-scheme="lcars"] header button {
 	color: #000 !important;
+}
+
+[data-scheme="lcars"] header .dark\:bg-white\/30 {
+	background: #000 !important;
 }
 
 [data-scheme="lcars"] header button:hover {
@@ -1318,10 +1327,10 @@ body { visibility: visible; }
 	border-radius: 0 !important;
 }
 
-/* Review widget outer: LCARS left-side elbow shape */
+/* Review widget outer: flat inside LCARS frame */
 [data-scheme="lcars"] main .border-2.border-primary {
 	border-color: #f90 !important;
-	border-radius: 30px 0 0 30px !important;
+	border-radius: 0 !important;
 	border-width: 2px !important;
 	overflow: hidden;
 }
@@ -1436,6 +1445,7 @@ body { visibility: visible; }
 /* LCARS theme: activate the frame structure */
 [data-scheme="lcars"] .lcars-frame {
 	position: relative;
+	max-width: 100%;
 }
 
 [data-scheme="lcars"] .lcars-frame[data-lcars-variant="full"] {
@@ -1509,6 +1519,7 @@ body { visibility: visible; }
 /* Body: 5px gap from header bar (black shows through as gap) */
 [data-scheme="lcars"] .lcars-body {
 	margin-top: 5px;
+	min-width: 0;
 }
 
 /* Compact variant: smaller proportions, no sidebar */
@@ -1984,4 +1995,244 @@ body { visibility: visible; }
 [data-scheme="lcars"] select option {
 	background-color: #111 !important;
 	color: #fca !important;
+}
+
+/* ── Blockbuster theme ──────────────────────────────────── */
+
+[data-scheme="blockbuster"] {
+	font-family: "ITC Eras", "Eras Bold ITC", "Impact", sans-serif;
+	letter-spacing: -0.02em;
+}
+
+[data-scheme="blockbuster"] body {
+	background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+	                  linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+	background-size: 100% 4px, 3px 100%;
+}
+
+[data-scheme="blockbuster"] aside {
+	border-right: 4px solid rgb(255, 235, 0) !important;
+}
+
+[data-scheme="blockbuster"] aside nav a {
+	text-transform: uppercase;
+	font-weight: 900;
+	font-style: italic;
+	margin: 4px 8px;
+	border-radius: 4px;
+	transition: transform 0.1s ease;
+}
+
+[data-scheme="blockbuster"] aside nav a:hover {
+	background-color: rgb(255, 235, 0) !important;
+	color: rgb(0, 51, 153) !important;
+	transform: scale(1.05);
+}
+
+[data-scheme="blockbuster"] aside nav a[data-active="true"] {
+	background-color: rgb(255, 235, 0) !important;
+	color: rgb(0, 51, 153) !important;
+	box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+}
+
+[data-scheme="blockbuster"] aside [data-logo] img {
+	filter: drop-shadow(3px 3px 0px #000);
+}
+
+[data-scheme="blockbuster"] [data-progress-track] {
+	background: #fff !important;
+	border: 2px solid #000 !important;
+	border-radius: 0px !important;
+	height: 12px !important;
+}
+
+[data-scheme="blockbuster"] [data-progress-fill] {
+	background: rgb(0, 51, 153) !important;
+	border-right: 2px solid #000;
+}
+
+[data-scheme="blockbuster"] aside [data-stats] {
+	background: #fff !important;
+	color: #000 !important;
+	border: 2px dashed #666 !important;
+	font-family: "Courier New", Courier, monospace;
+	font-weight: bold;
+	transform: rotate(-1deg);
+	margin: 1rem;
+}
+
+[data-scheme="blockbuster"] header {
+	border-bottom: 4px solid rgb(255, 235, 0) !important;
+}
+
+[data-scheme="blockbuster"] .card,
+[data-scheme="blockbuster"] [data-surface] {
+	border: 2px solid rgb(255, 235, 0) !important;
+	box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Hollywood Video theme ──────────────────────────────────── */
+/* Palette: #D90B1C (red) #231640 (purple) #160E26 (deep purple) #24BF5B (green) #F2B705 (gold) */
+
+[data-scheme="hollywood-video-v2"] {
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	color: white;
+}
+
+/* Gritty VHS Scanline Overlay */
+[data-scheme="hollywood-video-v2"]::before {
+	content: "";
+	display: block;
+	position: fixed;
+	top: 0; left: 0; bottom: 0; right: 0;
+	background:
+		linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+		linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+	background-size: 100% 3px, 3px 100%;
+	z-index: 9999;
+	pointer-events: none;
+	opacity: 0.4;
+}
+
+/* Saturated Sidebar */
+[data-scheme="hollywood-video-v2"] aside {
+	background-color: #160E26 !important;
+	border-right: 4px solid #D90B1C !important;
+	box-shadow: 10px 0 30px rgba(0,0,0,0.8);
+}
+
+/* Marquee Nav Links */
+[data-scheme="hollywood-video-v2"] aside nav a {
+	text-transform: uppercase;
+	font-weight: 900;
+	letter-spacing: 0.1em;
+	border-radius: 0;
+	padding: 0.75rem;
+	margin: 8px 0;
+	transition: all 0.2s ease;
+	border: 2px solid transparent;
+}
+
+[data-scheme="hollywood-video-v2"] aside nav a:hover {
+	color: #F2B705 !important;
+	background: rgba(242, 183, 5, 0.1) !important;
+}
+
+[data-scheme="hollywood-video-v2"] aside nav a[data-active="true"] {
+	background-color: #231640 !important;
+	color: #F2B705 !important;
+	border: 2px solid #231640;
+	text-shadow: 0 0 8px rgba(35, 22, 64, 0.5);
+}
+
+/* The Iconic Logo Filter */
+[data-scheme="hollywood-video-v2"] aside [data-logo] img {
+	filter: drop-shadow(0 0 6px rgba(217, 11, 28, 0.4));
+}
+
+/* Mountain Header with Gradient */
+[data-scheme="hollywood-video-v2"] header {
+	background: linear-gradient(180deg, #160E26 0%, #231640 100%) !important;
+	border-bottom: 3px solid #231640 !important;
+	position: relative;
+}
+
+/* Raise header content above decorative pseudo-elements */
+[data-scheme="hollywood-video-v2"] header > * {
+	position: relative;
+	z-index: 1;
+}
+
+/* Searchlight Beam Effect */
+[data-scheme="hollywood-video-v2"] header::before {
+	content: "";
+	position: absolute;
+	top: -50%;
+	left: 20%;
+	width: 150px;
+	height: 300%;
+	background: linear-gradient(to right, transparent, rgba(242, 183, 5, 0.06), transparent);
+	transform: rotate(25deg);
+	pointer-events: none;
+}
+
+/* Mountain Silhouette Mask */
+[data-scheme="hollywood-video-v2"] header::after {
+	content: "";
+	position: absolute;
+	bottom: -2px;
+	left: 0;
+	right: 0;
+	height: 30px;
+	background-color: var(--color-page);
+	clip-path: polygon(0% 100%, 10% 20%, 20% 60%, 35% 10%, 50% 70%, 65% 15%, 80% 60%, 90% 25%, 100% 100%);
+}
+
+/* Segmented Film Strip Progress Bar */
+[data-scheme="hollywood-video-v2"] [data-progress-track] {
+	background: #000 !important;
+	height: 20px !important;
+	border: 2px solid #333;
+	border-radius: 0 !important;
+	padding: 2px;
+}
+
+[data-scheme="hollywood-video-v2"] [data-progress-fill] {
+	background: repeating-linear-gradient(
+		90deg,
+		#F2B705,
+		#F2B705 15px,
+		#000 15px,
+		#000 20px
+	) !important;
+	box-shadow: 0 0 10px rgba(242, 183, 5, 0.6);
+	border-radius: 0 !important;
+}
+
+/* Distressed VHS Label Sticker */
+[data-scheme="hollywood-video-v2"] aside [data-stats] {
+	background: #f4f4f4 !important;
+	color: #111 !important;
+	border: 1px solid #ccc;
+	border-radius: 2px;
+	padding: 1rem;
+	font-family: 'Courier New', Courier, monospace;
+	transform: rotate(-2deg);
+	box-shadow: 5px 5px 0px rgba(0,0,0,0.9);
+	margin: 1.5rem 0.75rem;
+}
+
+[data-scheme="hollywood-video-v2"] aside [data-stats] * {
+	color: #111 !important;
+}
+
+/* Heavy Card Borders + Offset Shadows */
+[data-scheme="hollywood-video-v2"] .lcars-frame,
+[data-scheme="hollywood-video-v2"] section > div[class*="border"] {
+	border-color: #000 !important;
+	box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
+}
+
+/* Review Panel — purple accent */
+[data-scheme="hollywood-video-v2"] .lcars-body .border-2.border-primary {
+	border-color: #231640 !important;
+}
+
+[data-scheme="hollywood-video-v2"] .lcars-body .border-2.border-primary > .bg-primary {
+	background-color: #231640 !important;
+}
+
+/* Bold Angled Buttons */
+[data-scheme="hollywood-video-v2"] button.bg-primary {
+	font-weight: 900;
+	text-transform: uppercase;
+	font-style: italic;
+	border: 3px solid #000;
+	box-shadow: 4px 4px 0px #000;
+	transition: transform 0.1s, box-shadow 0.1s;
+}
+
+[data-scheme="hollywood-video-v2"] button.bg-primary:active {
+	transform: translate(2px, 2px);
+	box-shadow: 2px 2px 0px #000;
 }

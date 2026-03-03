@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchDashboard, setRippingEnabled } from '$lib/api/dashboard';
+	import { fetchDashboard } from '$lib/api/dashboard';
 	import { fetchJobs } from '$lib/api/jobs';
 	import { fetchJobProgress } from '$lib/api/jobs';
 	import type { RipProgress } from '$lib/api/jobs';
@@ -29,19 +29,6 @@
 		system_stats: null,
 		transcoder_info: null
 	});
-	let togglingPause = $state(false);
-
-	async function toggleRipping() {
-		togglingPause = true;
-		try {
-			await setRippingEnabled(!dash.ripping_enabled);
-			await refreshDashboard();
-		} catch {
-			// next poll will reconcile
-		} finally {
-			togglingPause = false;
-		}
-	}
 	let dashReady = $state(false);
 	let dashError = $state<string | null>(null);
 
@@ -195,21 +182,6 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-		<!-- Accepting Discs toggle -->
-		{#if dashReady && dash.db_available}
-			<button
-				onclick={toggleRipping}
-				disabled={togglingPause}
-				class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {dash.ripping_enabled
-					? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-					: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}"
-			>
-				<div class="relative h-5 w-9 rounded-full transition-colors {dash.ripping_enabled ? 'bg-emerald-500' : 'bg-amber-500'}">
-					<div class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform {dash.ripping_enabled ? 'translate-x-4' : 'translate-x-0.5'}"></div>
-				</div>
-				{dash.ripping_enabled ? 'Auto-Start' : 'Paused'}
-			</button>
-		{/if}
 	</div>
 
 	<!-- Global pause banner -->
@@ -230,75 +202,16 @@
 		</div>
 	{/if}
 
-	<!-- Unified status bar: services + activity + queue -->
-	{#if dashReady}
-		<div class="rounded-lg border border-primary/20 bg-surface dark:bg-surface-dark">
-			<!-- Top row: service health (left) + activity counters (right) -->
-			<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
-				<div class="flex items-center gap-5">
-					<div class="flex items-center gap-2">
-						<div class="h-2 w-2 shrink-0 rounded-full {dash.arm_online ? 'bg-green-500' : 'bg-red-500'}"></div>
-						<span class="text-sm text-gray-600 dark:text-gray-400">ARM</span>
-						<span class="text-sm font-medium {dash.arm_online ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-							{dash.arm_online ? 'Online' : 'Unreachable'}
-						</span>
-					</div>
-					<div class="flex items-center gap-2">
-						<div class="h-2 w-2 shrink-0 rounded-full {dash.db_available ? 'bg-green-500' : 'bg-yellow-500'}"></div>
-						<span class="text-sm text-gray-600 dark:text-gray-400">Database</span>
-						<span class="text-sm font-medium {dash.db_available ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}">
-							{dash.db_available ? 'Connected' : 'Unavailable'}
-						</span>
-					</div>
-					<div class="flex items-center gap-2">
-						<div class="h-2 w-2 shrink-0 rounded-full {dash.transcoder_online && dash.transcoder_stats?.worker_running ? 'bg-green-500' : dash.transcoder_online ? 'bg-yellow-500' : 'bg-gray-400'}"></div>
-						<span class="text-sm text-gray-600 dark:text-gray-400">Transcoder</span>
-						<span class="text-sm font-medium {dash.transcoder_online && dash.transcoder_stats?.worker_running ? 'text-green-600 dark:text-green-400' : dash.transcoder_online ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400'}">
-							{#if dash.transcoder_online && dash.transcoder_stats?.worker_running}Running{:else if dash.transcoder_online}Idle{:else}Offline{/if}
-						</span>
-					</div>
-				</div>
-				<div class="flex items-center gap-5 text-sm">
-					<div class="flex items-center gap-1.5">
-						<span class="text-lg font-bold text-gray-900 dark:text-white">{dash.db_available ? dash.active_jobs.length : '--'}</span>
-						<span class="text-gray-500 dark:text-gray-400">Rips</span>
-					</div>
-					<div class="flex items-center gap-1.5">
-						<span class="text-lg font-bold text-gray-900 dark:text-white">{dash.transcoder_online ? dash.active_transcodes.length : '--'}</span>
-						<span class="text-gray-500 dark:text-gray-400">Transcodes</span>
-					</div>
-					<div class="flex items-center gap-1.5">
-						<span class="text-lg font-bold text-gray-900 dark:text-white">{dash.db_available ? dash.drives_online : '--'}</span>
-						<span class="text-gray-500 dark:text-gray-400">Drives</span>
-					</div>
-				</div>
-			</div>
-			<!-- Bottom row: transcoder queue breakdown -->
-			{#if dash.transcoder_online}
-				<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-primary/10 px-4 py-2">
-					<span class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Queue</span>
-					<span class="text-sm"><span class="font-semibold text-yellow-600 dark:text-yellow-400">{dash.transcoder_stats?.pending ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">pending</span></span>
-					<span class="text-gray-300 dark:text-gray-600">&middot;</span>
-					<span class="text-sm"><span class="font-semibold text-blue-600 dark:text-blue-400">{dash.transcoder_stats?.processing ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">processing</span></span>
-					<span class="text-gray-300 dark:text-gray-600">&middot;</span>
-					<span class="text-sm"><span class="font-semibold text-green-600 dark:text-green-400">{dash.transcoder_stats?.completed ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">completed</span></span>
-					<span class="text-gray-300 dark:text-gray-600">&middot;</span>
-					<span class="text-sm"><span class="font-semibold text-red-600 dark:text-red-400">{dash.transcoder_stats?.failed ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">failed</span></span>
-					<span class="text-gray-300 dark:text-gray-600">&middot;</span>
-					<span class="text-sm"><span class="font-semibold text-gray-600 dark:text-gray-400">{dash.transcoder_stats?.cancelled ?? 0}</span> <span class="text-gray-500 dark:text-gray-400">cancelled</span></span>
-				</div>
-			{/if}
-		</div>
-	{/if}
-
 	<!-- Disc review (waiting jobs) -->
 	{#if waitingJobs.length > 0}
 		<section>
-			<div class="grid gap-4">
-				{#each waitingJobs as job (job.job_id)}
-					<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
-				{/each}
-			</div>
+			<LcarsFrame variant="full" accent="#f90" label="WAITING FOR REVIEW — {waitingJobs.length} DISC{waitingJobs.length > 1 ? 'S' : ''}">
+				<div class="grid gap-4">
+					{#each waitingJobs as job (job.job_id)}
+						<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
+					{/each}
+				</div>
+			</LcarsFrame>
 		</section>
 	{/if}
 

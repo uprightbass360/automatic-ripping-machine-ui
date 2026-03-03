@@ -4,11 +4,25 @@
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme } from '$lib/stores/colorScheme';
 	import { dashboard } from '$lib/stores/dashboard';
+	import { setRippingEnabled } from '$lib/api/dashboard';
 	import SidebarStats from '$lib/components/SidebarStats.svelte';
 	import { onMount } from 'svelte';
 	let { children } = $props();
 
 	let sidebarOpen = $state(false);
+	let togglingPause = $state(false);
+
+	async function toggleRipping() {
+		togglingPause = true;
+		try {
+			await setRippingEnabled(!$dashboard.ripping_enabled);
+			await dashboard.refresh();
+		} catch {
+			// next poll will reconcile
+		} finally {
+			togglingPause = false;
+		}
+	}
 
 	onMount(() => {
 		// Start dashboard polling (provides sidebar stats on all pages)
@@ -63,7 +77,7 @@
 	<!-- Main content -->
 	<div class="flex flex-1 flex-col overflow-hidden">
 		<!-- Top bar -->
-		<header class="flex h-16 items-center justify-between border-b border-primary/20 bg-surface px-4 dark:border-primary/20 dark:bg-surface-dark lg:px-6">
+		<header class="flex h-14 items-center justify-between border-b border-primary/20 bg-surface px-4 dark:border-primary/20 dark:bg-surface-dark lg:px-6">
 			<button
 				onclick={() => sidebarOpen = !sidebarOpen}
 				aria-label="Toggle sidebar"
@@ -74,7 +88,84 @@
 				</svg>
 			</button>
 
+			<!-- Stats bar (desktop only) -->
+			<div class="hidden lg:flex items-center gap-3 text-sm">
+				<!-- Service health dots -->
+				<div class="flex items-center gap-3">
+					<div class="flex items-center gap-1.5">
+						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.arm_online ? 'bg-green-500' : 'bg-red-500'}"></div>
+						<span class="text-gray-700 dark:text-gray-200">ARM</span>
+					</div>
+					<div class="flex items-center gap-1.5">
+						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.db_available ? 'bg-green-500' : 'bg-yellow-500'}"></div>
+						<span class="text-gray-700 dark:text-gray-200">DB</span>
+					</div>
+					<div class="flex items-center gap-1.5">
+						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.transcoder_online && $dashboard.transcoder_stats?.worker_running ? 'bg-green-500' : $dashboard.transcoder_online ? 'bg-yellow-500' : 'bg-gray-400'}"></div>
+						<span class="text-gray-700 dark:text-gray-200">Transcode</span>
+					</div>
+				</div>
+				<!-- Divider -->
+				<div class="h-6 w-px bg-black dark:bg-white/30"></div>
+				<!-- Activity counters (mini table) -->
+				<table class="border-separate border-spacing-x-3 border-spacing-y-0 text-xs">
+					<thead>
+						<tr class="text-gray-600 dark:text-gray-300">
+							<th class="font-medium">Rips</th>
+							<th class="font-medium">Transcodes</th>
+							<th class="font-medium">Drives</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="text-center">
+							<td class="font-bold text-gray-900 dark:text-white">{$dashboard.db_available ? $dashboard.active_jobs.length : '--'}</td>
+							<td class="font-bold text-gray-900 dark:text-white">{$dashboard.transcoder_online ? $dashboard.active_transcodes.length : '--'}</td>
+							<td class="font-bold text-gray-900 dark:text-white">{$dashboard.db_available ? $dashboard.drives_online : '--'}</td>
+						</tr>
+					</tbody>
+				</table>
+				<!-- Queue breakdown (if transcoder online) -->
+				{#if $dashboard.transcoder_online}
+					<div class="h-6 w-px bg-black dark:bg-white/30"></div>
+					<table class="border-separate border-spacing-x-2 border-spacing-y-0 text-xs">
+						<thead>
+							<tr class="text-gray-600 dark:text-gray-300">
+								<th class="font-medium">Pend</th>
+								<th class="font-medium">Proc</th>
+								<th class="font-medium">Done</th>
+								<th class="font-medium">Fail</th>
+								<th class="font-medium">Canc</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="text-center">
+								<td class="font-semibold text-yellow-600 dark:text-yellow-400">{$dashboard.transcoder_stats?.pending ?? 0}</td>
+								<td class="font-semibold text-blue-600 dark:text-blue-400">{$dashboard.transcoder_stats?.processing ?? 0}</td>
+								<td class="font-semibold text-green-600 dark:text-green-400">{$dashboard.transcoder_stats?.completed ?? 0}</td>
+								<td class="font-semibold text-red-600 dark:text-red-400">{$dashboard.transcoder_stats?.failed ?? 0}</td>
+								<td class="font-semibold text-gray-600 dark:text-gray-400">{$dashboard.transcoder_stats?.cancelled ?? 0}</td>
+							</tr>
+						</tbody>
+					</table>
+				{/if}
+			</div>
+
 			<div class="flex items-center gap-4 ml-auto">
+				<!-- Auto-Start toggle -->
+				{#if $dashboard.db_available}
+					<button
+						onclick={toggleRipping}
+						disabled={togglingPause}
+						class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {$dashboard.ripping_enabled
+							? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+							: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}"
+					>
+						<div class="relative h-5 w-9 rounded-full transition-colors {$dashboard.ripping_enabled ? 'bg-emerald-500' : 'bg-amber-500'}">
+							<div class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform {$dashboard.ripping_enabled ? 'translate-x-4' : 'translate-x-0.5'}"></div>
+						</div>
+						{$dashboard.ripping_enabled ? 'Auto-Start' : 'Paused'}
+					</button>
+				{/if}
 				<!-- Dark mode toggle -->
 				<button
 					onclick={toggleTheme}

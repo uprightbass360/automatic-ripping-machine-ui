@@ -196,7 +196,7 @@
 	});
 
 	const btnBase =
-		'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors';
+		'rounded-md px-2 py-1 text-xs font-medium transition-colors';
 </script>
 
 <div class="overflow-hidden rounded-lg border-2 border-primary bg-surface shadow-md dark:border-primary dark:bg-surface-dark">
@@ -285,14 +285,14 @@
 	</div>
 
 	<!-- Action buttons -->
-	<div class="flex items-center gap-2 border-t border-primary/20 bg-primary-light-bg/50 px-4 py-2 dark:border-primary/20 dark:bg-primary-light-bg-dark/10">
+	<div class="flex items-center gap-1.5 border-t border-primary/20 bg-primary-light-bg/50 px-4 py-2 dark:border-primary/20 dark:bg-primary-light-bg-dark/10">
 		<button
 			onclick={() => toggleSection('info')}
 			class="{btnBase} {showInfo
 				? 'bg-primary text-on-primary'
 				: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
 		>
-			Disc Info
+			Info
 		</button>
 		{#if isVideo}
 			<button
@@ -301,7 +301,7 @@
 					? 'bg-primary text-on-primary'
 					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
 			>
-				Search/Edit Title
+				Search
 			</button>
 		{/if}
 		{#if isMusic}
@@ -311,7 +311,7 @@
 					? 'bg-primary text-on-primary'
 					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
 			>
-				Search Music
+				Search
 			</button>
 		{/if}
 		{#if hasCrcData}
@@ -321,7 +321,7 @@
 					? 'bg-primary text-on-primary'
 					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
 			>
-				CRC Database
+				CRC
 			</button>
 		{/if}
 		<button
@@ -330,7 +330,7 @@
 				? 'bg-primary text-on-primary'
 				: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
 		>
-			Rip Settings
+			Settings
 		</button>
 		{#if isVideo}
 			<button
@@ -347,7 +347,7 @@
 			disabled={starting}
 			class="{btnBase} ml-auto bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-700 dark:hover:bg-emerald-600"
 		>
-			{starting ? 'Starting...' : 'Start Ripping'}
+			{starting ? 'Starting...' : 'Start'}
 		</button>
 		<button
 			onclick={handleCancel}

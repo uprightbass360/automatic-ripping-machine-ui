@@ -303,6 +303,48 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-surface': 'rgb(8, 8, 8)',              // barely-off-black
 			'--color-surface-dark': 'rgb(8, 8, 8)'          // barely-off-black
 		}
+	},
+	{
+		id: 'blockbuster',
+		label: 'Blockbuster Video',
+		swatch: 'bg-blue-600',
+		forceDark: true,
+		tokens: {
+			'--color-primary': 'rgb(255, 235, 0)',            // vibrant yellow
+			'--color-primary-hover': 'rgb(215, 200, 0)',      // slightly darker yellow
+			'--color-primary-dark': 'rgb(180, 160, 0)',       // deep gold for borders
+			'--color-primary-light-bg': 'rgb(0, 51, 153)',    // rich blue
+			'--color-primary-light-bg-dark': 'rgb(0, 31, 103)', // deep blue
+			'--color-primary-text': 'rgb(255, 235, 0)',       // yellow
+			'--color-primary-text-dark': 'rgb(255, 235, 0)',  // yellow
+			'--color-primary-border': 'rgb(255, 235, 0)',     // yellow
+			'--color-on-primary': 'rgb(0, 0, 0)',             // black on yellow
+			'--color-page': 'rgb(0, 41, 123)',                // darker blue page
+			'--color-page-dark': 'rgb(0, 41, 123)',
+			'--color-surface': 'rgb(0, 51, 153)',             // standard blue surface
+			'--color-surface-dark': 'rgb(0, 51, 153)'
+		}
+	},
+	{
+		id: 'hollywood-video-v2',
+		label: 'Hollywood Video',
+		swatch: 'bg-violet-900',
+		forceDark: true,
+		tokens: {
+			'--color-primary': 'rgb(217, 11, 28)',             // #D90B1C Red
+			'--color-primary-hover': 'rgb(170, 8, 22)',        // darker red
+			'--color-primary-dark': 'rgb(110, 5, 14)',         // deep red
+			'--color-primary-light-bg': 'rgb(35, 22, 64)',     // #231640 Purple
+			'--color-primary-light-bg-dark': 'rgb(22, 14, 38)', // #160E26 Deep Purple
+			'--color-primary-text': 'rgb(242, 183, 5)',        // #F2B705 Gold
+			'--color-primary-text-dark': 'rgb(242, 183, 5)',   // #F2B705 Gold
+			'--color-primary-border': 'rgb(35, 22, 64)',       // #231640 Purple
+			'--color-on-primary': 'rgb(255, 255, 255)',        // White on Red
+			'--color-page': 'rgb(22, 14, 38)',                 // #160E26 Deep Purple
+			'--color-page-dark': 'rgb(22, 14, 38)',            // #160E26 Deep Purple
+			'--color-surface': 'rgb(35, 22, 64)',              // #231640 Purple
+			'--color-surface-dark': 'rgb(35, 22, 64)'          // #231640 Purple
+		}
 	}
 ];
 
