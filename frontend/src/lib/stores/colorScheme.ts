@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
 
 export interface ColorScheme {
@@ -6,8 +6,8 @@ export interface ColorScheme {
 	label: string;
 	/** Tailwind color name for the swatch preview */
 	swatch: string;
-	/** Force dark mode when this scheme is active */
-	forceDark?: boolean;
+	/** Lock the theme to light or dark mode when this scheme is active */
+	mode?: 'light' | 'dark';
 	tokens: Record<string, string>;
 }
 
@@ -140,7 +140,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'glass',
 		label: 'Glass',
 		swatch: 'bg-indigo-400',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(129, 140, 248)',        // indigo-400
 			'--color-primary-hover': 'rgb(99, 102, 241)',   // indigo-500
@@ -161,7 +161,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'cinema',
 		label: 'Cinema',
 		swatch: 'bg-yellow-600',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(212, 175, 55)',          // gold
 			'--color-primary-hover': 'rgb(188, 155, 40)',    // darker gold
@@ -182,7 +182,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'gaming',
 		label: 'Gaming',
 		swatch: 'bg-fuchsia-500',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(0, 210, 255)',            // neon blue
 			'--color-primary-hover': 'rgb(188, 19, 254)',     // neon purple
@@ -203,7 +203,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'royale',
 		label: 'Royale',
 		swatch: 'bg-yellow-400',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(0, 123, 255)',            // fortnite blue
 			'--color-primary-hover': 'rgb(248, 251, 17)',     // fortnite yellow
@@ -224,7 +224,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'lcars',
 		label: 'LCARS',
 		swatch: 'bg-orange-400',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(255, 153, 0)',            // lcars orange
 			'--color-primary-hover': 'rgb(255, 204, 51)',     // lcars yellow
@@ -245,7 +245,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'tactical',
 		label: 'Tactical',
 		swatch: 'bg-teal-400',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(100, 255, 218)',          // tactical teal
 			'--color-primary-hover': 'rgb(80, 200, 175)',     // dimmer teal
@@ -266,7 +266,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'craft',
 		label: 'Craft',
 		swatch: 'bg-green-500',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(56, 255, 56)',            // MC green
 			'--color-primary-hover': 'rgb(128, 128, 255)',    // MC hover blue
@@ -287,7 +287,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'terminal',
 		label: 'Terminal',
 		swatch: 'bg-green-400',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(57, 255, 20)',          // terminal green
 			'--color-primary-hover': 'rgb(45, 200, 16)',    // dimmer green
@@ -308,7 +308,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'blockbuster',
 		label: 'Blockbuster Video',
 		swatch: 'bg-blue-600',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(255, 235, 0)',            // vibrant yellow
 			'--color-primary-hover': 'rgb(215, 200, 0)',      // slightly darker yellow
@@ -329,7 +329,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 		id: 'hollywood-video-v2',
 		label: 'Hollywood Video',
 		swatch: 'bg-violet-900',
-		forceDark: true,
+		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(217, 11, 28)',             // #D90B1C Red
 			'--color-primary-hover': 'rgb(170, 8, 22)',        // darker red
@@ -363,12 +363,25 @@ function applyScheme(id: string) {
 		root.style.setProperty(prop, value);
 	}
 	root.dataset.scheme = scheme.id;
-	if (scheme.forceDark) {
+	if (scheme.mode === 'dark') {
 		root.classList.add('dark');
+	} else if (scheme.mode === 'light') {
+		root.classList.remove('dark');
+	} else {
+		// Restore the user's saved theme preference
+		const saved = localStorage.getItem('theme');
+		const prefersDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+		root.classList.toggle('dark', prefersDark);
 	}
 }
 
 export const colorScheme = writable<string>(getInitialScheme());
+
+/** True when the active color scheme locks the mode (light or dark) */
+export const schemeLocksMode = derived(colorScheme, (id) => {
+	const scheme = COLOR_SCHEMES.find((s) => s.id === id);
+	return scheme?.mode != null;
+});
 
 if (browser) {
 	colorScheme.subscribe((id) => {

@@ -100,7 +100,7 @@
 	let statusFilter = $state('');
 	let videoTypeFilter = $state('');
 	let searchQuery = $state('');
-	let viewMode = $state<'card' | 'table'>('table');
+	let viewMode = $state<'card' | 'table'>('card');
 
 	let searchTimeout: ReturnType<typeof setTimeout>;
 
