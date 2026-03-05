@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { page } from '$app/stores';
 	import { theme, toggleTheme } from '$lib/stores/theme';
-	import { colorScheme } from '$lib/stores/colorScheme';
+	import { colorScheme, schemeLocksMode } from '$lib/stores/colorScheme';
 	import { dashboard } from '$lib/stores/dashboard';
 	import { setRippingEnabled } from '$lib/api/dashboard';
 	import SidebarStats from '$lib/components/SidebarStats.svelte';
@@ -104,7 +104,7 @@
 						<span class="text-gray-700 dark:text-gray-200">DB</span>
 					</div>
 					<div class="flex items-center gap-1.5">
-						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.transcoder_online && $dashboard.transcoder_stats?.worker_running ? 'bg-green-500' : $dashboard.transcoder_online ? 'bg-yellow-500' : 'bg-gray-400'}"></div>
+						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.transcoder_online && ($dashboard.transcoder_stats?.worker_running ?? true) ? 'bg-green-500' : $dashboard.transcoder_online ? 'bg-yellow-500' : 'bg-gray-400'}"></div>
 						<span class="text-gray-700 dark:text-gray-200">Transcode</span>
 					</div>
 				</div>
@@ -169,21 +169,23 @@
 						{$dashboard.ripping_enabled ? 'Auto-Start' : 'Paused'}
 					</button>
 				{/if}
-				<!-- Dark mode toggle -->
-				<button
-					onclick={toggleTheme}
-					class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-400 dark:hover:bg-primary/15"
-				>
-					{#if $theme === 'dark'}
-						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-						</svg>
-					{:else}
-						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-						</svg>
-					{/if}
-				</button>
+				<!-- Dark mode toggle (hidden when theme locks the mode) -->
+				{#if !$schemeLocksMode}
+					<button
+						onclick={toggleTheme}
+						class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-400 dark:hover:bg-primary/15"
+					>
+						{#if $theme === 'dark'}
+							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+							</svg>
+						{:else}
+							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+							</svg>
+						{/if}
+					</button>
+				{/if}
 			</div>
 		</header>
 

@@ -13,9 +13,15 @@
 	<body data-sveltekit-preload-data="hover">
 		<script>
 			(function() {
-				var t = localStorage.getItem('theme');
-				if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+				var darkSchemes = ['glass','cinema','gaming','royale','lcars','tactical','craft','terminal','blockbuster','hollywood-video-v2'];
+				var cs = localStorage.getItem('colorScheme');
+				if (darkSchemes.indexOf(cs) !== -1) {
 					document.documentElement.classList.add('dark');
+				} else {
+					var t = localStorage.getItem('theme');
+					if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+						document.documentElement.classList.add('dark');
+					}
 				}
 			})();
 		</script>

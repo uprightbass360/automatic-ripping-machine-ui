@@ -4,7 +4,7 @@
 	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
 	import type { SettingsData, Drive } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
-	import { colorScheme, COLOR_SCHEMES } from '$lib/stores/colorScheme';
+	import { colorScheme, COLOR_SCHEMES, schemeLocksMode } from '$lib/stores/colorScheme';
 	import { createPollingStore } from '$lib/stores/polling';
 	import { fetchDrives } from '$lib/api/drives';
 	import DriveCard from '$lib/components/DriveCard.svelte';
@@ -1637,28 +1637,42 @@
 					<div class="flex items-center justify-between">
 						<div>
 							<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Dark Mode</h2>
-							<p class="text-sm text-gray-500 dark:text-gray-400">Toggle between light and dark mode.</p>
+							{#if $schemeLocksMode}
+								<p class="text-sm text-gray-500 dark:text-gray-400">Locked by theme</p>
+							{:else}
+								<p class="text-sm text-gray-500 dark:text-gray-400">Toggle between light and dark mode.</p>
+							{/if}
 						</div>
-						<div class="flex items-center gap-2">
-							<button
-								type="button"
-								onclick={toggleTheme}
-								class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
-									{$theme === 'dark' ? 'bg-primary' : 'bg-primary/30 dark:bg-primary/20'}"
-								role="switch"
-								aria-checked={$theme === 'dark'}
-								aria-label="Dark mode"
-							>
-								<span
-									class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-										{$theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}"
-								></span>
-							</button>
-							<span class="text-xs font-medium {$theme === 'dark' ? 'text-primary-text dark:text-primary-text-dark' : 'text-gray-400'}">
-								{$theme === 'dark' ? 'On' : 'Off'}
-							</span>
-						</div>
+						{#if !$schemeLocksMode}
+							<div class="flex items-center gap-2">
+								<button
+									type="button"
+									onclick={toggleTheme}
+									class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+										{$theme === 'dark' ? 'bg-primary' : 'bg-primary/30 dark:bg-primary/20'}"
+									role="switch"
+									aria-checked={$theme === 'dark'}
+									aria-label="Dark mode"
+								>
+									<span
+										class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+											{$theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}"
+									></span>
+								</button>
+								<span class="text-xs font-medium {$theme === 'dark' ? 'text-primary-text dark:text-primary-text-dark' : 'text-gray-400'}">
+									{$theme === 'dark' ? 'On' : 'Off'}
+								</span>
+							</div>
+						{/if}
 					</div>
+				</div>
+
+				<!-- Feature request prompt -->
+				<div class="flex justify-center pt-2">
+					<span class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
+						<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5.002 5.002 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+						Not seeing what you want? Submit your feature requests on GitHub.
+					</span>
 				</div>
 			</section>
 		{/if}
