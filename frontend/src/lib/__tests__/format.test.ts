@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { formatBytes, statusColor } from '../utils/format';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { formatBytes, statusColor, timeAgo, elapsedTime, formatDateTime } from '../utils/format';
 
 describe('formatBytes', () => {
 	it('returns "0 B" for zero bytes', () => {
@@ -33,5 +33,77 @@ describe('statusColor', () => {
 	it('returns gray for unknown statuses', () => {
 		expect(statusColor('unknown')).toBe('bg-gray-500');
 		expect(statusColor(null)).toBe('bg-gray-500');
+	});
+});
+
+describe('timeAgo', () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2025-06-15T12:00:00Z'));
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it('returns N/A for null', () => {
+		expect(timeAgo(null)).toBe('N/A');
+	});
+
+	it('returns seconds ago', () => {
+		expect(timeAgo('2025-06-15T11:59:30Z')).toBe('30s ago');
+	});
+
+	it('returns minutes ago', () => {
+		expect(timeAgo('2025-06-15T11:55:00Z')).toBe('5m ago');
+	});
+
+	it('returns hours ago', () => {
+		expect(timeAgo('2025-06-15T09:00:00Z')).toBe('3h ago');
+	});
+
+	it('returns days ago', () => {
+		expect(timeAgo('2025-06-13T12:00:00Z')).toBe('2d ago');
+	});
+});
+
+describe('elapsedTime', () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2025-06-15T12:00:00Z'));
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it('returns N/A for null', () => {
+		expect(elapsedTime(null)).toBe('N/A');
+	});
+
+	it('returns seconds only for short durations', () => {
+		expect(elapsedTime('2025-06-15T11:59:45Z')).toBe('15s');
+	});
+
+	it('returns minutes and seconds', () => {
+		expect(elapsedTime('2025-06-15T11:57:30Z')).toBe('2m 30s');
+	});
+
+	it('returns hours and minutes', () => {
+		expect(elapsedTime('2025-06-15T09:45:00Z')).toBe('2h 15m');
+	});
+});
+
+describe('formatDateTime', () => {
+	it('returns N/A for null', () => {
+		expect(formatDateTime(null)).toBe('N/A');
+	});
+
+	it('returns a locale string for a valid date', () => {
+		const result = formatDateTime('2025-06-15T12:00:00Z');
+		expect(result).toBeTypeOf('string');
+		expect(result).not.toBe('N/A');
+		// Should contain the year
+		expect(result).toContain('2025');
 	});
 });
