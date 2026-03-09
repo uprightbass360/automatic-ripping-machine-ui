@@ -1,4 +1,4 @@
-import type { JobConfigUpdate, JobDetail, JobListResponse, MediaDetail, MusicDetail, MusicSearchResult, SearchResult, TitleUpdate } from '$lib/types/arm';
+import type { JobConfigUpdate, JobDetail, JobListResponse, MediaDetail, MusicDetail, MusicSearchResult, SearchResult, TitleUpdate, TrackTitleUpdate } from '$lib/types/arm';
 import { apiFetch } from './client';
 
 export function fetchJobs(params?: {
@@ -158,4 +158,26 @@ export function updateJobTranscodeConfig(
 
 export function retranscodeJob(id: number): Promise<{ status: string; message: string }> {
 	return apiFetch(`/api/jobs/${id}/retranscode`, { method: 'POST' });
+}
+
+export function toggleMultiTitle(jobId: number, enabled: boolean): Promise<unknown> {
+	return apiFetch(`/api/jobs/${jobId}/multi-title`, {
+		method: 'POST',
+		body: JSON.stringify({ enabled })
+	});
+}
+
+export function updateTrackTitle(
+	jobId: number,
+	trackId: number,
+	data: Partial<TrackTitleUpdate>
+): Promise<unknown> {
+	return apiFetch(`/api/jobs/${jobId}/tracks/${trackId}/title`, {
+		method: 'PUT',
+		body: JSON.stringify(data)
+	});
+}
+
+export function clearTrackTitle(jobId: number, trackId: number): Promise<unknown> {
+	return apiFetch(`/api/jobs/${jobId}/tracks/${trackId}/title`, { method: 'DELETE' });
 }
