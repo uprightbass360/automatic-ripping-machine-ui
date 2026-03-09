@@ -303,6 +303,9 @@
 						<span class="font-normal text-gray-500 dark:text-gray-400">({job.year})</span>
 					{/if}
 				</h3>
+				{#if job.multi_title}
+					<span class="shrink-0 rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
+				{/if}
 				{#if job.imdb_id}
 					<a
 						href="https://www.imdb.com/title/{job.imdb_id}/"
@@ -387,16 +390,6 @@
 					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
 			>
 				Transcode
-			</button>
-			<button
-				onclick={handleToggleMultiTitle}
-				disabled={togglingMultiTitle}
-				class="{btnBase} {job.multi_title
-					? 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600'
-					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
-				title="Toggle multi-title mode for discs with multiple movies"
-			>
-				{togglingMultiTitle ? '...' : (job.multi_title ? 'Multi-Title' : 'Multi-Title')}
 			</button>
 		{/if}
 		<button
@@ -519,7 +512,7 @@
 					<!-- Disc details -->
 					<hr class="border-primary/10 dark:border-primary/15" />
 					<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Disc Details</h4>
-					<div class="grid gap-3 text-sm {isMusic ? 'grid-cols-3' : 'grid-cols-4'}">
+					<div class="grid gap-3 text-sm {isMusic ? 'grid-cols-3' : 'grid-cols-5'}">
 						<label>
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc Type</span>
 							<select bind:value={infoDisctype} onchange={() => { touched.disctype = true; }} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white">
@@ -530,6 +523,20 @@
 								<option value="data">Data</option>
 							</select>
 						</label>
+						{#if !isMusic}
+							<label>
+								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title Mode</span>
+								<select
+									value={job.multi_title ? 'multi' : 'single'}
+									onchange={(e) => { const v = e.currentTarget.value; if ((v === 'multi') !== !!job.multi_title) handleToggleMultiTitle(); }}
+									disabled={togglingMultiTitle}
+									class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+								>
+									<option value="single">Single Title</option>
+									<option value="multi">Multi-Title</option>
+								</select>
+							</label>
+						{/if}
 						<label>
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc Label</span>
 							<input type="text" bind:value={infoLabel} oninput={() => { touched.label = true; }} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
