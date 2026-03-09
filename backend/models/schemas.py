@@ -28,6 +28,12 @@ class TrackSchema(BaseModel):
     status: str | None = None
     error: str | None = None
     source: str | None = None
+    # Per-track title metadata (null = inherits from job)
+    title: str | None = None
+    year: str | None = None
+    imdb_id: str | None = None
+    poster_url: str | None = None
+    video_type: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -68,6 +74,7 @@ class JobSchema(BaseModel):
     raw_path: str | None = None
     transcode_path: str | None = None
     transcode_overrides: dict | None = None
+    multi_title: bool | None = None
 
     @field_validator("transcode_overrides", mode="before")
     @classmethod

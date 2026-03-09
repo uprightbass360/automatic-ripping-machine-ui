@@ -156,6 +156,21 @@ async def send_to_crc_db(job_id: int) -> dict[str, Any] | None:
     return await _request("POST", f"/api/v1/jobs/{job_id}/send")
 
 
+async def toggle_multi_title(job_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
+    """Toggle the multi_title flag on a job. Returns None if ARM is unreachable."""
+    return await _request("POST", f"/api/v1/jobs/{job_id}/multi-title", json=data)
+
+
+async def update_track_title(job_id: int, track_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
+    """Set per-track title metadata. Returns None if ARM is unreachable."""
+    return await _request("PUT", f"/api/v1/jobs/{job_id}/tracks/{track_id}/title", json=data)
+
+
+async def clear_track_title(job_id: int, track_id: int) -> dict[str, Any] | None:
+    """Clear per-track title metadata. Returns None if ARM is unreachable."""
+    return await _request("DELETE", f"/api/v1/jobs/{job_id}/tracks/{track_id}/title")
+
+
 async def set_job_tracks(job_id: int, tracks: list[dict[str, Any]]) -> dict[str, Any] | None:
     """Replace a job's tracks with MusicBrainz data. Returns None if ARM is unreachable."""
     return await _request("PUT", f"/api/v1/jobs/{job_id}/tracks", json={"tracks": tracks})

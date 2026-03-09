@@ -16,6 +16,12 @@ export interface Track {
 	status: string | null;
 	error: string | null;
 	source: string | null;
+	// Per-track title metadata (null = inherits from job)
+	title: string | null;
+	year: string | null;
+	imdb_id: string | null;
+	poster_url: string | null;
+	video_type: string | null;
 }
 
 export interface Job {
@@ -66,6 +72,7 @@ export interface Job {
 	episode_auto: string | null;
 	episode_manual: string | null;
 	transcode_overrides: Record<string, unknown> | null;
+	multi_title: boolean | null;
 	ejected: boolean | null;
 	pid: number | null;
 	tracks_total: number | null;
@@ -246,6 +253,14 @@ export interface TitleUpdate {
 	album?: string;
 	season?: string;
 	episode?: string;
+}
+
+export interface TrackTitleUpdate {
+	title?: string;
+	year?: string;
+	video_type?: string;
+	imdb_id?: string;
+	poster_url?: string;
 }
 
 export interface JobConfigUpdate {

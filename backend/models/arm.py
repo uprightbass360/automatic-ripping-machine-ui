@@ -55,6 +55,7 @@ class Job(Base):
     raw_path = Column(String(256))
     transcode_path = Column(String(256))
     transcode_overrides = Column(Text)
+    multi_title = Column(Boolean, default=False)
     ejected = Column(Boolean)
     updated = Column(Boolean)
     pid = Column(Integer)
@@ -82,6 +83,12 @@ class Track(Base):
     status = Column(String(32))
     error = Column(Text)
     source = Column(String(256))
+    # Per-track title metadata (nullable — inherits job-level when null)
+    title = Column(String(256))
+    year = Column(String(4))
+    imdb_id = Column(String(15))
+    poster_url = Column(String(256))
+    video_type = Column(String(20))
 
     job = relationship("Job", back_populates="tracks")
 

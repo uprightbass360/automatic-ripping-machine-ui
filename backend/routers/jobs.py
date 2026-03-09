@@ -159,6 +159,44 @@ async def get_music_detail(release_id: str):
     return result
 
 
+@router.post("/jobs/{job_id}/multi-title", responses=_404_502_ARM)
+async def toggle_multi_title(job_id: int, request: Request):
+    """Toggle the multi_title flag on a job."""
+    body = await request.json()
+    result = await arm_client.toggle_multi_title(job_id, body)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success"):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
+@router.put("/jobs/{job_id}/tracks/{track_id}/title", responses=_404_502_ARM)
+async def update_track_title(job_id: int, track_id: int, request: Request):
+    """Set per-track title metadata for a multi-title disc."""
+    body = await request.json()
+    result = await arm_client.update_track_title(job_id, track_id, body)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success"):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
+@router.delete("/jobs/{job_id}/tracks/{track_id}/title", responses=_404_502_ARM)
+async def clear_track_title(job_id: int, track_id: int):
+    """Clear per-track title metadata (revert to job-level inheritance)."""
+    result = await arm_client.clear_track_title(job_id, track_id)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success"):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
 @router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}})
 async def update_transcode_config(job_id: int, request: Request):
     """Set per-job transcode override settings."""

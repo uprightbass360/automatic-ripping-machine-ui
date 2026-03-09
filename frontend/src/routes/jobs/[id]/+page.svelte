@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { fetchJob, retranscodeJob, fetchMusicDetail } from '$lib/api/jobs';
+	import { fetchJob, retranscodeJob, fetchMusicDetail, toggleMultiTitle } from '$lib/api/jobs';
 	import type { JobDetail, MusicDetail } from '$lib/types/arm';
 	import JobActions from '$lib/components/JobActions.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
@@ -12,6 +12,7 @@
 	import TranscodeOverrides from '$lib/components/TranscodeOverrides.svelte';
 	import CrcLookup from '$lib/components/CrcLookup.svelte';
 	import InlineLogFeed from '$lib/components/InlineLogFeed.svelte';
+	import TrackTitleSearch from '$lib/components/TrackTitleSearch.svelte';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
 	import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
 
@@ -28,6 +29,8 @@
 	// MusicBrainz track listing (fetched when DB tracks are empty for music discs)
 	let musicDetail = $state<MusicDetail | null>(null);
 	let musicDetailLoading = $state(false);
+	let togglingMultiTitle = $state(false);
+	let editingTrackId = $state<number | null>(null);
 
 	async function handleRetranscode() {
 		if (!job) return;
@@ -41,6 +44,24 @@
 		} finally {
 			retranscoding = false;
 		}
+	}
+
+	async function handleToggleMultiTitle() {
+		if (!job) return;
+		togglingMultiTitle = true;
+		try {
+			await toggleMultiTitle(job.job_id, !job.multi_title);
+			await loadJob();
+		} catch {
+			// next refresh will reconcile
+		} finally {
+			togglingMultiTitle = false;
+		}
+	}
+
+	function handleTrackTitleApply() {
+		editingTrackId = null;
+		loadJob();
 	}
 
 	let isVideoDisc = $derived(
@@ -410,13 +431,29 @@
 		<!-- Tracks -->
 		{#if job.tracks.length > 0}
 			<section>
-				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Tracks ({job.tracks.length})</h2>
+				<div class="mb-3 flex items-center justify-between">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tracks ({job.tracks.length})</h2>
+					{#if isVideoDisc}
+						<button
+							onclick={handleToggleMultiTitle}
+							disabled={togglingMultiTitle}
+							class="rounded-md px-2 py-1 text-xs font-medium transition-colors {job.multi_title
+								? 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600'
+								: 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}"
+						>
+							{togglingMultiTitle ? '...' : (job.multi_title ? 'Multi-Title On' : 'Multi-Title Off')}
+						</button>
+					{/if}
+				</div>
 				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 					<table class="w-full text-left text-sm">
 						<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 							<tr>
 								<th class="px-4 py-3 font-medium">#</th>
 								<th class="px-4 py-3 font-medium">{isMusicDisc ? 'Title' : 'Filename'}</th>
+								{#if job.multi_title && !isMusicDisc}
+									<th class="px-4 py-3 font-medium">Title Override</th>
+								{/if}
 								<th class="px-4 py-3 font-medium">{isMusicDisc ? 'Duration' : 'Length'}</th>
 								{#if isMusicDisc}
 									<th class="px-4 py-3 font-medium">Format</th>
@@ -427,6 +464,9 @@
 								{/if}
 								<th class="px-4 py-3 font-medium">Ripped</th>
 								<th class="px-4 py-3 font-medium">Status</th>
+								{#if job.multi_title && !isMusicDisc}
+									<th class="px-4 py-3 font-medium"></th>
+								{/if}
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -438,6 +478,26 @@
 									{:else}
 										<td class="max-w-[200px] truncate px-4 py-3 font-mono text-xs">{track.filename ?? track.basename ?? ''}</td>
 									{/if}
+									{#if job.multi_title && !isMusicDisc}
+										<td class="px-4 py-3">
+											{#if track.title}
+												<div class="flex items-center gap-1.5">
+													{#if track.poster_url}
+														<img src={track.poster_url} alt="" class="h-8 w-5 rounded-sm object-cover" />
+													{/if}
+													<div>
+														<span class="font-medium text-gray-900 dark:text-white">{track.title}</span>
+														{#if track.year}
+															<span class="text-gray-400"> ({track.year})</span>
+														{/if}
+													</div>
+													<span class="rounded-sm bg-purple-100 px-1 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">CUSTOM</span>
+												</div>
+											{:else}
+												<span class="text-xs italic text-gray-400">(inherits job title)</span>
+											{/if}
+										</td>
+									{/if}
 									<td class="px-4 py-3">{track.length != null ? `${Math.floor(track.length / 60)}:${String(track.length % 60).padStart(2, '0')}` : ''}</td>
 									{#if isMusicDisc}
 										<td class="px-4 py-3 uppercase text-xs">{track.source ?? ''}</td>
@@ -448,7 +508,24 @@
 									{/if}
 									<td class="px-4 py-3">{track.ripped ? 'Yes' : 'No'}</td>
 									<td class="px-4 py-3"><StatusBadge status={track.status} /></td>
+									{#if job.multi_title && !isMusicDisc}
+										<td class="px-4 py-3">
+											<button
+												onclick={() => { editingTrackId = editingTrackId === track.track_id ? null : track.track_id; }}
+												class="rounded-md px-2 py-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors"
+											>
+												{editingTrackId === track.track_id ? 'Close' : 'Edit'}
+											</button>
+										</td>
+									{/if}
 								</tr>
+								{#if job.multi_title && editingTrackId === track.track_id}
+									<tr>
+										<td colspan="99" class="px-4 py-3">
+											<TrackTitleSearch jobId={job.job_id} {track} onapply={handleTrackTitleApply} onclose={() => { editingTrackId = null; }} />
+										</td>
+									</tr>
+								{/if}
 							{/each}
 						</tbody>
 					</table>

@@ -382,7 +382,7 @@ def get_job_retranscode_info(job_id: int) -> dict | None:
                 except (ValueError, TypeError):
                     pass
 
-            return {
+            payload = {
                 "title": title,
                 "body": f"{title} ({year})" if year else title,
                 "path": job.raw_path or job.path or "",
@@ -394,6 +394,24 @@ def get_job_retranscode_info(job_id: int) -> dict | None:
                 "poster_url": job.poster_url or job.poster_url_auto or "",
                 "config_overrides": config_overrides,
             }
+
+            # Include per-track metadata for multi-title discs
+            if getattr(job, 'multi_title', False):
+                payload["multi_title"] = True
+                tracks_meta = []
+                for track in (job.tracks or []):
+                    if getattr(track, 'title', None):
+                        tracks_meta.append({
+                            "track_number": str(track.track_number or ''),
+                            "title": str(track.title),
+                            "year": str(getattr(track, 'year', '') or ''),
+                            "video_type": str(getattr(track, 'video_type', '') or ''),
+                            "filename": str(track.filename or ''),
+                        })
+                if tracks_meta:
+                    payload["tracks"] = tracks_meta
+
+            return payload
     except Exception:
         log.exception("Failed to get retranscode info for job %s", job_id)
         return None

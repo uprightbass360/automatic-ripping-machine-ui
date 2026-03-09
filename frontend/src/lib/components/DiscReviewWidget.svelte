@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Job, JobDetail } from '$lib/types/arm';
-	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle } from '$lib/api/jobs';
+	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle, toggleMultiTitle } from '$lib/api/jobs';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
@@ -11,6 +11,7 @@
 	import CrcLookup from './CrcLookup.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import InlineLogFeed from './InlineLogFeed.svelte';
+	import TrackTitleSearch from './TrackTitleSearch.svelte';
 
 	interface Props {
 		job: Job;
@@ -33,6 +34,8 @@
 	let showTranscodeSettings = $state(false);
 	let cancelling = $state(false);
 	let starting = $state(false);
+	let togglingMultiTitle = $state(false);
+	let editingTrackId = $state<number | null>(null);
 
 	// Editable metadata in Disc Info panel
 	let infoTitle = $state(job.title || '');
@@ -176,6 +179,25 @@
 			ondismiss?.();
 			onrefresh?.();
 		}
+	}
+
+	async function handleToggleMultiTitle() {
+		togglingMultiTitle = true;
+		try {
+			await toggleMultiTitle(job.job_id, !job.multi_title);
+			onrefresh?.();
+			loadDetail();
+		} catch {
+			// next refresh will reconcile
+		} finally {
+			togglingMultiTitle = false;
+		}
+	}
+
+	function handleTrackTitleApply() {
+		editingTrackId = null;
+		onrefresh?.();
+		loadDetail();
 	}
 
 	function handleCrcApply() {
@@ -366,6 +388,16 @@
 			>
 				Transcode
 			</button>
+			<button
+				onclick={handleToggleMultiTitle}
+				disabled={togglingMultiTitle}
+				class="{btnBase} {job.multi_title
+					? 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600'
+					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
+				title="Toggle multi-title mode for discs with multiple movies"
+			>
+				{togglingMultiTitle ? '...' : (job.multi_title ? 'Multi-Title' : 'Multi-Title')}
+			</button>
 		{/if}
 		<button
 			onclick={handleStart}
@@ -526,6 +558,9 @@
 											{#if isMusic}
 												<th class="px-3 py-1.5 font-medium">Title</th>
 											{/if}
+											{#if job.multi_title && !isMusic}
+												<th class="px-3 py-1.5 font-medium">Title</th>
+											{/if}
 											<th class="px-3 py-1.5 font-medium">Length</th>
 											{#if !isMusic}
 												<th class="px-3 py-1.5 font-medium">Aspect</th>
@@ -533,6 +568,9 @@
 												<th class="px-3 py-1.5 font-medium">Main</th>
 											{/if}
 											<th class="px-3 py-1.5 font-medium">File</th>
+											{#if job.multi_title && !isMusic}
+												<th class="px-3 py-1.5 font-medium"></th>
+											{/if}
 										</tr>
 									</thead>
 									<tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -541,6 +579,24 @@
 												<td class="px-3 py-1.5 font-mono text-gray-700 dark:text-gray-300">{track.track_number ?? '--'}</td>
 												{#if isMusic}
 													<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{track.basename ?? '--'}</td>
+												{/if}
+												{#if job.multi_title && !isMusic}
+													<td class="px-3 py-1.5">
+														{#if track.title}
+															<div class="flex items-center gap-1.5">
+																{#if track.poster_url}
+																	<img src={track.poster_url} alt="" class="h-6 w-4 rounded-sm object-cover" />
+																{/if}
+																<span class="font-medium text-gray-700 dark:text-gray-300">{track.title}</span>
+																{#if track.year}
+																	<span class="text-gray-400">({track.year})</span>
+																{/if}
+																<span class="rounded-sm bg-purple-100 px-1 py-0.5 text-[9px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">CUSTOM</span>
+															</div>
+														{:else}
+															<span class="italic text-gray-400">(inherits job title)</span>
+														{/if}
+													</td>
 												{/if}
 												<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{formatLength(track.length)}</td>
 												{#if !isMusic}
@@ -553,7 +609,24 @@
 													</td>
 												{/if}
 												<td class="px-3 py-1.5 font-mono text-gray-500 dark:text-gray-400">{track.filename ?? track.basename ?? '--'}</td>
+												{#if job.multi_title && !isMusic}
+													<td class="px-3 py-1.5">
+														<button
+															onclick={() => { editingTrackId = editingTrackId === track.track_id ? null : track.track_id; }}
+															class="{btnBase} text-primary hover:text-primary-hover"
+														>
+															{editingTrackId === track.track_id ? 'Close' : 'Edit'}
+														</button>
+													</td>
+												{/if}
 											</tr>
+											{#if job.multi_title && editingTrackId === track.track_id}
+												<tr>
+													<td colspan="99" class="px-3 py-2">
+														<TrackTitleSearch jobId={job.job_id} {track} onapply={handleTrackTitleApply} onclose={() => { editingTrackId = null; }} />
+													</td>
+												</tr>
+											{/if}
 										{/each}
 									</tbody>
 								</table>
