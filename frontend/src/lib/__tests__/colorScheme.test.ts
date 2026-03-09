@@ -36,7 +36,7 @@ describe('COLOR_SCHEMES', () => {
 
 	it('no schemes have a forceDark property', () => {
 		for (const scheme of COLOR_SCHEMES) {
-			expect((scheme as Record<string, unknown>).forceDark).toBeUndefined();
+			expect((scheme as unknown as Record<string, unknown>).forceDark).toBeUndefined();
 		}
 	});
 
