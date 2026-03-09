@@ -191,6 +191,9 @@
 						<span class="text-lg text-gray-500 dark:text-gray-400">({job.year})</span>
 					{/if}
 					<StatusBadge status={job.status} />
+					{#if job.multi_title}
+						<span class="rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
+					{/if}
 				</div>
 
 				<JobActions {job} onaction={loadJob} />
@@ -242,6 +245,22 @@
 						<dt class="text-gray-500 dark:text-gray-400">Disc Type</dt>
 						<dd class="font-medium text-gray-900 dark:text-white">{discTypeLabel(job.disctype)}</dd>
 					</div>
+					{#if isVideoDisc}
+						<div>
+							<dt class="text-gray-500 dark:text-gray-400">Title Mode</dt>
+							<dd>
+								<select
+									value={job.multi_title ? 'multi' : 'single'}
+									onchange={(e) => { const v = e.currentTarget.value; if ((v === 'multi') !== !!job?.multi_title) handleToggleMultiTitle(); }}
+									disabled={togglingMultiTitle}
+									class="rounded-sm border border-primary/25 bg-primary/5 px-1 py-0.5 text-sm font-medium text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+								>
+									<option value="single">Single Title</option>
+									<option value="multi">Multi-Title</option>
+								</select>
+							</dd>
+						</div>
+					{/if}
 					<div>
 						<dt class="text-gray-500 dark:text-gray-400">Device</dt>
 						<dd class="font-medium text-gray-900 dark:text-white">{job.devpath ?? 'N/A'}</dd>
@@ -433,17 +452,6 @@
 			<section>
 				<div class="mb-3 flex items-center justify-between">
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tracks ({job.tracks.length})</h2>
-					{#if isVideoDisc}
-						<button
-							onclick={handleToggleMultiTitle}
-							disabled={togglingMultiTitle}
-							class="rounded-md px-2 py-1 text-xs font-medium transition-colors {job.multi_title
-								? 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600'
-								: 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}"
-						>
-							{togglingMultiTitle ? '...' : (job.multi_title ? 'Multi-Title On' : 'Multi-Title Off')}
-						</button>
-					{/if}
 				</div>
 				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 					<table class="w-full text-left text-sm">
