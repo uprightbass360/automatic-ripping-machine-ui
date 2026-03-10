@@ -181,3 +181,20 @@ export function updateTrackTitle(
 export function clearTrackTitle(jobId: number, trackId: number): Promise<unknown> {
 	return apiFetch(`/api/jobs/${jobId}/tracks/${trackId}/title`, { method: 'DELETE' });
 }
+
+export interface TrackFieldUpdate {
+	enabled?: boolean;
+	filename?: string;
+	ripped?: boolean;
+}
+
+export function updateTrack(
+	jobId: number,
+	trackId: number,
+	data: TrackFieldUpdate
+): Promise<{ success: boolean; updated: TrackFieldUpdate }> {
+	return apiFetch(`/api/jobs/${jobId}/tracks/${trackId}`, {
+		method: 'PATCH',
+		body: JSON.stringify(data)
+	});
+}
