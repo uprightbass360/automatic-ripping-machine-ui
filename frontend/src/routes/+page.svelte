@@ -247,13 +247,13 @@
 				<h2 class="text-lg font-semibold text-gray-900 dark:text-white">All Jobs</h2>
 				<div class="flex gap-2">
 					<button
-						onclick={() => viewMode = 'table'}
-						class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'table' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
-					>Table</button>
-					<button
 						onclick={() => viewMode = 'card'}
 						class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'card' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
 					>Cards</button>
+					<button
+						onclick={() => viewMode = 'table'}
+						class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'table' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
+					>Table</button>
 				</div>
 			</div>
 

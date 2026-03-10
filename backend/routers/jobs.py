@@ -52,7 +52,7 @@ def get_job(job_id: int):
     if not job:
         raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
 
-    tracks = [TrackSchema.model_validate(t) for t in (job.tracks or [])]
+    tracks = [TrackSchema.from_orm_compat(t) for t in (job.tracks or [])]
 
     job_data = JobSchema.model_validate(job).model_dump()
     return JobDetailSchema(**job_data, tracks=tracks, config=config)
@@ -210,6 +210,21 @@ async def update_transcode_config(job_id: int, request: Request):
     if result is None:
         raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
     return {"success": True, "overrides": result}
+
+
+@router.patch("/jobs/{job_id}/tracks/{track_id}", responses={400: {"description": "Invalid request"}, 404: {"description": "Track not found"}})
+async def update_track_fields(job_id: int, track_id: int, request: Request):
+    """Update editable fields (enabled, filename, ripped) on a track."""
+    body = await request.json()
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+    try:
+        result = arm_db.update_track_fields(job_id, track_id, body)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if result is None:
+        raise HTTPException(status_code=404, detail="Track not found")
+    return {"success": True, "updated": result}
 
 
 @router.post("/jobs/{job_id}/retranscode", responses={404: {"description": "Job not found or not a video disc"}, 503: {"description": "Transcoder unavailable"}})

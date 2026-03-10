@@ -58,6 +58,16 @@
 
 <div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 	<div class="mb-3 flex items-center justify-between">
+		<h3 class="font-semibold text-gray-900 dark:text-white">
+			{drive.name || drive.mount || `Drive ${drive.drive_id}`}
+		</h3>
+		{#if drive.current_job}
+			<StatusBadge status={drive.current_job.status} />
+		{:else}
+			<span class="text-xs text-gray-400">Idle</span>
+		{/if}
+	</div>
+	<div class="mb-3">
 		{#if editing}
 			<div class="flex items-center gap-2">
 				<input
@@ -79,25 +89,10 @@
 				>Cancel</button>
 			</div>
 		{:else}
-			<div class="flex items-center gap-1.5">
-				<h3 class="font-semibold text-gray-900 dark:text-white">
-					{drive.name || drive.mount || `Drive ${drive.drive_id}`}
-				</h3>
-				<button
-					onclick={startEdit}
-					class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-					title="Edit drive name"
-				>
-					<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-					</svg>
-				</button>
-			</div>
-		{/if}
-		{#if drive.current_job}
-			<StatusBadge status={drive.current_job.status} />
-		{:else}
-			<span class="text-xs text-gray-400">Idle</span>
+			<button
+				onclick={startEdit}
+				class="rounded-md px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15"
+			>Change Name</button>
 		{/if}
 	</div>
 

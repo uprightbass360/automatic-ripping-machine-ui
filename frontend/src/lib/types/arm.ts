@@ -7,7 +7,7 @@ export interface Track {
 	length: number | null;
 	aspect_ratio: string | null;
 	fps: number | null;
-	main_feature: boolean | null;
+	enabled: boolean | null;
 	basename: string | null;
 	filename: string | null;
 	orig_filename: string | null;

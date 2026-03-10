@@ -18,6 +18,7 @@ from backend.models.arm import (
     Notifications,
     SystemDrives,
     SystemInfo,
+    Track,
 )
 
 log = logging.getLogger(__name__)
@@ -468,4 +469,58 @@ def update_job_transcode_overrides(job_id: int, overrides: dict) -> dict | None:
             return clean
     except Exception:
         log.exception("Failed to update transcode overrides for job %s", job_id)
+        raise
+
+
+TRACK_EDITABLE_FIELDS: dict[str, type] = {
+    "enabled": bool,
+    "filename": str,
+    "ripped": bool,
+}
+
+
+def update_track_fields(job_id: int, track_id: int, fields: dict) -> dict | None:
+    """Update editable fields on a single track.
+
+    Returns the updated field values, or None if the track doesn't exist
+    or doesn't belong to the given job.
+    """
+    invalid = set(fields.keys()) - TRACK_EDITABLE_FIELDS.keys()
+    if invalid:
+        raise ValueError(f"Unknown fields: {', '.join(sorted(invalid))}")
+    if not fields:
+        raise ValueError("No fields to update")
+
+    clean: dict = {}
+    for key, value in fields.items():
+        expected = TRACK_EDITABLE_FIELDS[key]
+        if expected is bool:
+            if isinstance(value, bool):
+                clean[key] = value
+            elif isinstance(value, str):
+                clean[key] = value.lower() in ("true", "1", "yes")
+            else:
+                clean[key] = bool(value)
+        else:
+            clean[key] = str(value)
+
+    try:
+        with get_rw_session() as session:
+            stmt = select(Track).where(
+                Track.track_id == track_id, Track.job_id == job_id
+            )
+            track = session.scalars(stmt).first()
+            if not track:
+                return None
+            for key, value in clean.items():
+                if key == "enabled":
+                    # API exposes "enabled"; DB column is still "main_feature"
+                    # until the arm-neu migration runs.
+                    setattr(track, "main_feature", value)
+                else:
+                    setattr(track, key, value)
+            session.commit()
+            return clean
+    except Exception:
+        log.exception("Failed to update track %s for job %s", track_id, job_id)
         raise

@@ -19,7 +19,7 @@ class TrackSchema(BaseModel):
     length: int | None = None
     aspect_ratio: str | None = None
     fps: float | None = None
-    main_feature: bool | None = None
+    enabled: bool | None = None
     basename: str | None = None
     filename: str | None = None
     orig_filename: str | None = None
@@ -36,6 +36,14 @@ class TrackSchema(BaseModel):
     video_type: str | None = None
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_orm_compat(cls, track) -> "TrackSchema":
+        """Build from a Track ORM object, falling back main_feature -> enabled."""
+        schema = cls.model_validate(track)
+        if schema.enabled is None:
+            schema.enabled = getattr(track, "main_feature", None)
+        return schema
 
 
 class JobSchema(BaseModel):

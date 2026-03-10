@@ -17,7 +17,7 @@ services:
       - ARM_UI_ARM_HB_PRESETS_PATH=/data/hb-presets/presets.json
       - ARM_UI_TRANSCODER_API_KEY=
     volumes:
-      - arm-db:/data/db:ro
+      - arm-db:/data/db:rw
       - ${ARM_NEU_PATH:-../automatic-ripping-machine-neu}/dev-data/logs:/data/logs:ro
       - ${ARM_NEU_PATH:-../automatic-ripping-machine-neu}/dev-data/config:/data/config:rw
     restart: unless-stopped

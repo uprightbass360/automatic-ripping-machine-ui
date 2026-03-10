@@ -84,7 +84,7 @@ def make_track(**overrides) -> MagicMock:
         "length": 5400,
         "aspect_ratio": "16:9",
         "fps": 23.976,
-        "main_feature": True,
+        "enabled": True,
         "basename": "title_t01",
         "filename": "title_t01.mkv",
         "orig_filename": "title_t01.mkv",
