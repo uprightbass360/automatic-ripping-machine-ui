@@ -83,7 +83,7 @@
 					/>
 					<span class={labelClass}>Main Feature Only</span>
 				</label>
-				<p class="text-xs text-gray-500 dark:text-gray-400">Rip only the longest title, skipping extras and bonus features</p>
+				<p class="text-xs text-gray-500 dark:text-gray-400">Auto-enable only the best track; when off, all tracks are enabled</p>
 			</div>
 
 			<label class="space-y-1">
