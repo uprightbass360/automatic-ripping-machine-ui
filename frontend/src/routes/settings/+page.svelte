@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo } from '$lib/api/settings';
+	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo, fetchAbcdeConfig, saveAbcdeConfig } from '$lib/api/settings';
 	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
 	import type { SettingsData, Drive } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
@@ -27,7 +27,7 @@
 	let armCollapsed = $state<Record<string, boolean>>({});
 
 	// --- Tab state ---
-	let activeTab = $state<'ripping' | 'transcoding' | 'notifications' | 'appearance' | 'drives' | 'system'>('ripping');
+	let activeTab = $state<'ripping' | 'music' | 'transcoding' | 'notifications' | 'appearance' | 'drives' | 'system'>('ripping');
 
 	// --- Drives polling store ---
 	const drives = createPollingStore(fetchDrives, [] as Drive[], 10000);
@@ -53,6 +53,87 @@
 	let systemInfo = $state<SystemInfoData | null>(null);
 	let systemInfoLoading = $state(false);
 	let systemInfoLoaded = $state(false);
+
+	// --- abcde.conf editor state ---
+	let abcdeContent = $state('');
+	let abcdeOriginal = $state('');
+	let abcdePath = $state('');
+	let abcdeExists = $state(false);
+	let abcdeLoading = $state(false);
+	let abcdeSaving = $state(false);
+	let abcdeLoaded = $state(false);
+	let abcdeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let abcdeDirty = $derived(abcdeContent !== abcdeOriginal);
+	let abcdeCollapsed = $state(false);
+
+	async function loadAbcdeConfig() {
+		if (abcdeLoaded) return;
+		abcdeLoading = true;
+		try {
+			const data = await fetchAbcdeConfig();
+			abcdeContent = data.content;
+			abcdeOriginal = data.content;
+			abcdePath = data.path;
+			abcdeExists = data.exists;
+			abcdeLoaded = true;
+		} catch {
+			// silently fail, will show empty state
+		} finally {
+			abcdeLoading = false;
+		}
+	}
+
+	async function handleAbcdeSave() {
+		abcdeSaving = true;
+		abcdeFeedback = null;
+		try {
+			await saveAbcdeConfig(abcdeContent);
+			abcdeOriginal = abcdeContent;
+			abcdeExists = true;
+			abcdeFeedback = { type: 'success', message: 'abcde.conf saved' };
+		} catch (e) {
+			abcdeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to save' };
+		} finally {
+			abcdeSaving = false;
+			clearFeedback(() => (abcdeFeedback = null));
+		}
+	}
+
+	function handleAbcdeDiscard() {
+		abcdeContent = abcdeOriginal;
+	}
+
+	// --- abcde.conf search ---
+	let abcdeSearch = $state('');
+	let abcdeSearchIndex = $state(0);
+	let abcdeTextarea = $state<HTMLTextAreaElement | null>(null);
+
+	let abcdeMatches = $derived.by<number[]>(() => {
+		if (!abcdeSearch) return [];
+		const q = abcdeSearch.toLowerCase();
+		const text = abcdeContent.toLowerCase();
+		const positions: number[] = [];
+		let idx = 0;
+		while ((idx = text.indexOf(q, idx)) !== -1) {
+			positions.push(idx);
+			idx += 1;
+		}
+		return positions;
+	});
+
+	function abcdeSearchNav(delta: number) {
+		if (abcdeMatches.length === 0) return;
+		abcdeSearchIndex = (abcdeSearchIndex + delta + abcdeMatches.length) % abcdeMatches.length;
+		const pos = abcdeMatches[abcdeSearchIndex];
+		if (abcdeTextarea) {
+			abcdeTextarea.focus();
+			abcdeTextarea.setSelectionRange(pos, pos + abcdeSearch.length);
+			// Scroll selection into view by briefly blurring/focusing
+			const linesBefore = abcdeContent.substring(0, pos).split('\n').length;
+			const lineHeight = abcdeTextarea.scrollHeight / abcdeContent.split('\n').length;
+			abcdeTextarea.scrollTop = Math.max(0, (linesBefore - 3) * lineHeight);
+		}
+	}
 
 	async function loadSystemInfo() {
 		if (systemInfoLoaded) return;
@@ -364,6 +445,7 @@
 		DELRAWFILES: { label: 'Delete Raw Files', description: 'Remove raw MakeMKV output after processing' },
 		// Music Ripping
 		GET_AUDIO_TITLE: { label: 'Audio Metadata Source', description: 'none, musicbrainz, or freecddb for CD track info' },
+		AUDIO_FORMAT: { label: 'Audio Format', description: 'Output format for music CD ripping (passed to abcde -o)' },
 		ABCDE_CONFIG_FILE: { label: 'abcde Config File', description: 'Path to the abcde configuration file for CD ripping' },
 		// Metadata
 		METADATA_PROVIDER: { label: 'Metadata Provider', description: 'omdb or tmdb for movie/TV lookups' },
@@ -382,6 +464,7 @@
 		RAW_PATH: { label: 'Raw Output Path', description: 'Directory where MakeMKV writes ripped files' },
 		TRANSCODE_PATH: { label: 'Transcode Path', description: 'Staging directory for transcoding work' },
 		COMPLETED_PATH: { label: 'Completed Path', description: 'Final destination for finished media files' },
+		MUSIC_PATH: { label: 'Music Path', description: 'Output directory for music CD rips (used by abcde)' },
 		EXTRAS_SUB: { label: 'Extras Subdirectory', description: 'Subfolder name for bonus features and extras' },
 		INSTALLPATH: { label: 'Install Path', description: 'ARM installation directory' },
 		LOGPATH: { label: 'Log Path', description: 'Directory for ARM log files' },
@@ -460,16 +543,20 @@
 			{ label: 'Post-Rip', subpanels: [
 				{ keys: ['AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER'] },
 			]},
-			{ label: 'Music', subpanels: [
-				{ keys: ['GET_AUDIO_TITLE', 'ABCDE_CONFIG_FILE'] },
-			]},
 			{ label: 'Naming Patterns', subpanels: [
 				{ label: 'Movie',  keys: ['MOVIE_TITLE_PATTERN', 'MOVIE_FOLDER_PATTERN'] },
 				{ label: 'TV',     keys: ['TV_TITLE_PATTERN', 'TV_FOLDER_PATTERN'] },
-				{ label: 'Music',  keys: ['MUSIC_TITLE_PATTERN', 'MUSIC_FOLDER_PATTERN'] },
 			]},
 			{ label: 'Metadata', subpanels: [
 				{ keys: ['METADATA_PROVIDER', 'OMDB_API_KEY', 'TMDB_API_KEY', 'ARM_API_KEY'] },
+			]},
+		],
+		music: [
+			{ label: 'Metadata', subpanels: [
+				{ keys: ['GET_AUDIO_TITLE'] },
+			]},
+			{ label: 'Naming Patterns', subpanels: [
+				{ keys: ['MUSIC_TITLE_PATTERN', 'MUSIC_FOLDER_PATTERN'] },
 			]},
 		],
 		notifications: [
@@ -505,7 +592,7 @@
 				{ keys: ['ARM_NAME', 'DISABLE_LOGIN', 'DATE_FORMAT'] },
 			]},
 			{ label: 'Media Directories', subpanels: [
-				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'EXTRAS_SUB'] },
+				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'MUSIC_PATH', 'EXTRAS_SUB'] },
 			]},
 			{ label: 'System Paths', subpanels: [
 				{ keys: ['INSTALLPATH', 'LOGPATH', 'DBFILE', 'LOGLEVEL', 'LOGLIFE'] },
@@ -520,7 +607,11 @@
 	};
 
 	// All ARM groups flattened (for unmapped key detection)
-	const ALL_ARM_GROUPS = Object.values(TAB_ARM_GROUPS).flat();
+	// Include keys rendered in the abcde.conf panel so they don't appear as "Other"
+	const ALL_ARM_GROUPS = [
+		...Object.values(TAB_ARM_GROUPS).flat(),
+		{ label: '_abcde', subpanels: [{ keys: ['AUDIO_FORMAT', 'ABCDE_CONFIG_FILE'] }] },
+	];
 
 	const HIDDEN_KEYS = new Set([
 		'OMDB_API_KEY',
@@ -595,6 +686,7 @@
 		LOGLEVEL: ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
 		METADATA_PROVIDER: ['omdb', 'tmdb'],
 		GET_AUDIO_TITLE: ['none', 'musicbrainz', 'freecddb'],
+		AUDIO_FORMAT: ['flac', 'mp3', 'vorbis', 'opus', 'm4a', 'wav', 'mka', 'wv', 'ape', 'mpc', 'spx', 'mp2', 'tta', 'aiff'],
 	};
 
 	// --- Search/filter logic ---
@@ -833,8 +925,13 @@
 			{/if}
 
 			{#if key.endsWith('_PATTERN') && settings?.naming_variables}
+				{@const patternVars = Object.entries(settings.naming_variables).filter(([v]) => {
+					if (key.startsWith('MUSIC_')) return ['title', 'year', 'artist', 'album', 'label'].includes(v);
+					if (key.startsWith('TV_')) return ['title', 'year', 'season', 'episode', 'label', 'video_type'].includes(v);
+					return ['title', 'year', 'label', 'video_type'].includes(v);
+				})}
 				<div class="mt-1.5 flex flex-wrap gap-1">
-					{#each Object.entries(settings.naming_variables) as [varName, varDesc]}
+					{#each patternVars as [varName, varDesc]}
 						<span
 							class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono
 								bg-primary/10 text-gray-600 dark:bg-primary/15 dark:text-gray-300
@@ -907,6 +1004,7 @@
 		<div class="border-b border-primary/20 dark:border-primary/20">
 			<nav class="-mb-px flex gap-4" aria-label="Settings tabs">
 				<button type="button" onclick={() => (activeTab = 'ripping')} class={tabClass('ripping')}>Ripping</button>
+				<button type="button" onclick={() => { activeTab = 'music'; loadAbcdeConfig(); }} class={tabClass('music')}>Music</button>
 				<button type="button" onclick={() => (activeTab = 'transcoding')} class={tabClass('transcoding')}>Transcoding</button>
 				<button type="button" onclick={() => (activeTab = 'notifications')} class={tabClass('notifications')}>Notifications</button>
 				<button type="button" onclick={() => (activeTab = 'drives')} class={tabClass('drives')}>Drives</button>
@@ -971,7 +1069,7 @@
 								placeholder="Enter secret to test..."
 								bind:value={webhookSecret}
 							/>
-							<p class="mt-1 text-xs text-gray-400">Not saved &mdash; used only for this test.</p>
+							<p class="mt-1 text-xs text-gray-400">Leave empty to test with the saved TRANSCODER_WEBHOOK_SECRET from arm.yaml.</p>
 						</div>
 						<button
 							type="button"
@@ -1427,6 +1525,140 @@
 					{@render armSearchBar()}
 				</div>
 				{@render armSettingsSection('ripping')}
+			</section>
+		{/if}
+
+		<!-- Music Tab -->
+		{#if activeTab === 'music'}
+			<section>
+				<div class="mb-3 flex items-center justify-between gap-3">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Music</h2>
+					{@render armSearchBar()}
+				</div>
+				{@render armSettingsSection('music')}
+			</section>
+
+			<!-- Encoding & abcde.conf -->
+			<section class="mt-2">
+				<div class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
+					<button
+						type="button"
+						onclick={() => (abcdeCollapsed = !abcdeCollapsed)}
+						class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-page dark:text-white dark:hover:bg-primary/10"
+					>
+						<span>Encoding</span>
+						<svg
+							class="h-4 w-4 transform transition-transform {abcdeCollapsed ? '' : 'rotate-180'}"
+							fill="none" stroke="currentColor" viewBox="0 0 24 24"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+						</svg>
+					</button>
+					{#if !abcdeCollapsed}
+						<div class="border-t border-primary/20 px-4 py-3 dark:border-primary/20">
+							<!-- ARM encoding fields -->
+							{#if settings?.arm_config}
+								<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+									{#each ['AUDIO_FORMAT', 'ABCDE_CONFIG_FILE'] as key}
+										{#if settings.arm_config[key] !== undefined}
+											{@render armField(key)}
+										{/if}
+									{/each}
+								</div>
+							{/if}
+
+							<!-- abcde.conf file editor -->
+							<div class="mt-4">
+								<div class="mb-2 flex items-center justify-between gap-3">
+									<h4 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+										abcde.conf
+										{#if abcdePath}
+											<span class="ml-1 font-normal normal-case tracking-normal text-gray-400">{abcdePath}</span>
+										{/if}
+									</h4>
+									{#if abcdeExists || abcdeDirty}
+										<div class="flex items-center gap-1.5">
+											<div class="relative">
+												<svg class="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+												</svg>
+												<input
+													type="text"
+													placeholder="Search..."
+													class="w-44 rounded-md border border-primary/25 bg-primary/5 py-1 pl-7 pr-2 text-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+													bind:value={abcdeSearch}
+													onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); abcdeSearchNav(e.shiftKey ? -1 : 1); } }}
+												/>
+											</div>
+											{#if abcdeSearch}
+												<span class="text-xs text-gray-400 tabular-nums">{abcdeMatches.length > 0 ? `${abcdeSearchIndex + 1}/${abcdeMatches.length}` : '0'}</span>
+												<button type="button" onclick={() => abcdeSearchNav(-1)} disabled={abcdeMatches.length === 0} class="rounded p-0.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300" aria-label="Previous match">
+													<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+												</button>
+												<button type="button" onclick={() => abcdeSearchNav(1)} disabled={abcdeMatches.length === 0} class="rounded p-0.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300" aria-label="Next match">
+													<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+												</button>
+											{/if}
+										</div>
+									{/if}
+								</div>
+								{#if abcdeLoading}
+									<p class="py-4 text-center text-sm text-gray-400">Loading abcde.conf...</p>
+								{:else if !abcdeLoaded}
+									<p class="py-4 text-center text-sm text-gray-400">Failed to load abcde.conf</p>
+								{:else if !abcdeExists && !abcdeDirty}
+									<div class="rounded-md border border-primary/15 bg-page p-6 text-center dark:border-primary/20 dark:bg-primary/5">
+										<p class="text-sm text-gray-500 dark:text-gray-400">
+											No abcde.conf file found at <code class="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs dark:bg-gray-700">{abcdePath}</code>
+										</p>
+										<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Start typing below to create one.</p>
+									</div>
+									<textarea
+										bind:this={abcdeTextarea}
+										class="mt-3 w-full rounded-md border border-primary/25 bg-primary/5 p-3 font-mono text-sm leading-relaxed focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+										rows="10"
+										placeholder="# abcde.conf — paste or type your configuration here"
+										bind:value={abcdeContent}
+									></textarea>
+								{:else}
+									<textarea
+										bind:this={abcdeTextarea}
+										class="w-full rounded-md border border-primary/25 bg-primary/5 p-3 font-mono text-sm leading-relaxed focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+										rows="20"
+										bind:value={abcdeContent}
+									></textarea>
+								{/if}
+
+								{#if abcdeDirty || abcdeFeedback}
+									<div class="mt-3 flex items-center gap-3">
+										{#if abcdeDirty}
+											<button
+												type="button"
+												onclick={handleAbcdeSave}
+												disabled={abcdeSaving}
+												class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-primary/80 disabled:opacity-50"
+											>
+												{abcdeSaving ? 'Saving...' : 'Save'}
+											</button>
+											<button
+												type="button"
+												onclick={handleAbcdeDiscard}
+												class="rounded-md border border-primary/25 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-page dark:border-primary/30 dark:text-gray-300 dark:hover:bg-primary/10"
+											>
+												Discard
+											</button>
+										{/if}
+										{#if abcdeFeedback}
+											<span class="text-sm {abcdeFeedback.type === 'success' ? 'text-green-500' : 'text-red-500'}">
+												{abcdeFeedback.message}
+											</span>
+										{/if}
+									</div>
+								{/if}
+							</div>
+						</div>
+					{/if}
+				</div>
 			</section>
 		{/if}
 

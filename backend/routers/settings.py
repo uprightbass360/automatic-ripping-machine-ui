@@ -96,6 +96,28 @@ async def update_arm_config(body: ArmConfigUpdate):
     return result
 
 
+class AbcdeConfigUpdate(BaseModel):
+    content: str
+
+
+@router.get("/settings/abcde")
+async def get_abcde_config():
+    result = await arm_client.get_abcde_config()
+    if result is None:
+        raise HTTPException(status_code=502, detail="ARM service unreachable")
+    return result
+
+
+@router.put("/settings/abcde", responses={400: {"description": "Invalid request"}, 502: {"description": "ARM service unreachable"}})
+async def update_abcde_config(body: AbcdeConfigUpdate):
+    result = await arm_client.update_abcde_config(body.content)
+    if result is None:
+        raise HTTPException(status_code=502, detail="ARM service unreachable")
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Unknown error"))
+    return result
+
+
 @router.get("/settings/test-metadata")
 async def test_metadata_key():
     """Test the currently saved metadata API key (proxied through ARM)."""

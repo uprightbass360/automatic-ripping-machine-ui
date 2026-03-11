@@ -92,12 +92,31 @@ async def test_connection() -> dict[str, Any]:
 
 async def test_webhook(webhook_secret: str) -> dict[str, Any]:
     """Send a test webhook payload to verify the webhook secret."""
+    import asyncio
+    import os
+    import yaml
+
     result: dict[str, Any] = {
         "reachable": False,
         "secret_ok": False,
         "secret_required": False,
         "error": None,
     }
+
+    # Fall back to saved secret from arm.yaml when field is empty
+    if not webhook_secret:
+        def _read_secret() -> str:
+            yaml_path = settings.arm_config_path
+            if yaml_path and os.path.isfile(yaml_path):
+                try:
+                    with open(yaml_path, "r") as f:
+                        arm_cfg = yaml.safe_load(f) or {}
+                    return arm_cfg.get("TRANSCODER_WEBHOOK_SECRET", "") or ""
+                except Exception:
+                    pass
+            return ""
+        webhook_secret = await asyncio.to_thread(_read_secret)
+
     headers: dict[str, str] = {}
     if webhook_secret:
         headers["X-Webhook-Secret"] = webhook_secret
