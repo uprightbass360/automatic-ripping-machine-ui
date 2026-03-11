@@ -3,6 +3,9 @@
 #
 # Set ARM_NEU_PATH in .env if the ARM-neu repo is not at the default location:
 #   ARM_NEU_PATH=../automatic-ripping-machine-neu
+#
+# Set ARM_LOGS_PATH in .env to override the log directory (e.g. for production):
+#   ARM_LOGS_PATH=/nfs/files/Containers/arm/logs
 
 services:
   arm-ui:
@@ -18,7 +21,7 @@ services:
       - ARM_UI_TRANSCODER_API_KEY=
     volumes:
       - arm-db:/data/db:rw
-      - ${ARM_NEU_PATH:-../automatic-ripping-machine-neu}/dev-data/logs:/data/logs:ro
+      - ${ARM_LOGS_PATH:-./dev-data/logs}:/data/logs:ro
       - ${ARM_NEU_PATH:-../automatic-ripping-machine-neu}/dev-data/config:/data/config:rw
     restart: unless-stopped
 
