@@ -39,6 +39,7 @@
 	let savingTrackField = $state<string | null>(null);
 	let togglingAllEnabled = $state(false);
 	let dirtyFilenames = $state<Record<number, string>>({});
+	let errorMessage = $state<string | null>(null);
 
 	let allEnabled = $derived(
 		!!detail?.tracks?.length && detail.tracks.every((t) => t.enabled)
@@ -47,14 +48,15 @@
 	async function handleToggleAllEnabled() {
 		if (!detail?.tracks?.length) return;
 		togglingAllEnabled = true;
+		errorMessage = null;
 		const newVal = !allEnabled;
 		try {
 			await Promise.all(
 				detail.tracks.map((t) => updateTrack(job.job_id, t.track_id, { enabled: newVal }))
 			);
 			loadDetail();
-		} catch {
-			// next refresh will reconcile
+		} catch (e) {
+			errorMessage = `Failed to update tracks: ${e instanceof Error ? e.message : 'Unknown error'}`;
 		} finally {
 			togglingAllEnabled = false;
 		}
@@ -62,12 +64,13 @@
 
 	async function handleTrackFieldUpdate(trackId: number, field: string, value: boolean | string) {
 		savingTrackField = `${trackId}-${field}`;
+		errorMessage = null;
 		try {
 			await updateTrack(job.job_id, trackId, { [field]: value });
 			delete dirtyFilenames[trackId];
 			loadDetail();
-		} catch {
-			// next refresh will reconcile
+		} catch (e) {
+			errorMessage = `Failed to update track: ${e instanceof Error ? e.message : 'Unknown error'}`;
 		} finally {
 			savingTrackField = null;
 		}
@@ -192,15 +195,23 @@
 	}
 
 	async function handleStart() {
+		errorMessage = null;
+		// Prevent starting with zero tracks enabled (video discs only)
+		if (detail?.tracks?.length && detail.tracks.every((t) => !t.enabled)) {
+			errorMessage = 'Cannot start rip — at least one track must be enabled.';
+			return;
+		}
 		starting = true;
 		try {
 			await startWaitingJob(job.job_id);
-		} catch {
-			// next refresh will reconcile
+		} catch (e) {
+			errorMessage = `Failed to start job: ${e instanceof Error ? e.message : 'Unknown error'}`;
 		} finally {
 			starting = false;
-			ondismiss?.();
-			onrefresh?.();
+			if (!errorMessage) {
+				ondismiss?.();
+				onrefresh?.();
+			}
 		}
 	}
 
@@ -369,6 +380,14 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Error banner -->
+	{#if errorMessage}
+		<div class="flex items-center gap-2 border-t border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+			<span class="flex-1">{errorMessage}</span>
+			<button onclick={() => (errorMessage = null)} class="shrink-0 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">&times;</button>
+		</div>
+	{/if}
 
 	<!-- Action buttons -->
 	<div class="flex items-center gap-1.5 border-t border-primary/20 bg-primary-light-bg/50 px-4 py-2 dark:border-primary/20 dark:bg-primary-light-bg-dark/10">

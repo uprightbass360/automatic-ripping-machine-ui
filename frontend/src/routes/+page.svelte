@@ -59,11 +59,12 @@
 
 	function overallProgress(p: RipProgress | undefined): number | null {
 		if (!p || p.progress == null) return null;
-		if (p.tracks_total > 0) {
-			if (p.tracks_ripped >= p.tracks_total) return 100;
-			return ((p.tracks_ripped + p.progress / 100) / p.tracks_total) * 100;
+		const total = p.tracks_total > 0 ? p.tracks_total : (p.no_of_titles ?? 0);
+		if (total > 0) {
+			if (p.tracks_ripped >= total) return 100;
+			return ((p.tracks_ripped + p.progress / 100) / total) * 100;
 		}
-		// No tracks in DB yet (scan/decrypt phase) — show indeterminate bar.
+		// No tracks in DB yet and no title count — show indeterminate bar.
 		// MakeMKV resets PRGV per phase, so raw progress can spike to 100%
 		// during scan completion before any actual ripping starts.
 		return null;
