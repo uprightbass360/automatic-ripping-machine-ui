@@ -140,6 +140,7 @@ export interface RipProgress {
 	stage: string | null;
 	tracks_total: number;
 	tracks_ripped: number;
+	no_of_titles: number | null;
 }
 
 export function fetchJobProgress(id: number): Promise<RipProgress> {

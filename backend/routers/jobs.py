@@ -72,6 +72,9 @@ def get_job_progress(job_id: int):
     else:
         result = progress.get_rip_progress(job.job_id)
     result.update(counts)
+    # Include no_of_titles so the frontend can show title count even before
+    # Track rows are created in the DB (early scan/decrypt phase).
+    result["no_of_titles"] = getattr(job, "no_of_titles", None)
     return result
 
 
