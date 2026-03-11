@@ -73,6 +73,8 @@ export interface Job {
 	episode_manual: string | null;
 	transcode_overrides: Record<string, unknown> | null;
 	multi_title: boolean | null;
+	disc_number: number | null;
+	disc_total: number | null;
 	ejected: boolean | null;
 	pid: number | null;
 	tracks_total: number | null;

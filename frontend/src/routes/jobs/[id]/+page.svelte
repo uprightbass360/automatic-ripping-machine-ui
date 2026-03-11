@@ -23,6 +23,7 @@
 	let showCrcLookup = $state(false);
 	let showRipSettings = $state(false);
 	let showTranscodeOverrides = $state(false);
+	let showDebug = $state(false);
 	let retranscoding = $state(false);
 	let retranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -268,10 +269,12 @@
 						<dt class="text-gray-500 dark:text-gray-400">Status</dt>
 						<dd class="font-medium text-gray-900 dark:text-white">{job.status ?? 'N/A'}</dd>
 					</div>
-					<div>
-						<dt class="text-gray-500 dark:text-gray-400">Stage</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{job.stage ?? 'N/A'}</dd>
-					</div>
+					{#if job.stage}
+						<div>
+							<dt class="text-gray-500 dark:text-gray-400">Stage</dt>
+							<dd class="font-medium text-gray-900 dark:text-white">{job.stage}</dd>
+						</div>
+					{/if}
 					{#if !isMusicDisc}
 						<div>
 							<dt class="text-gray-500 dark:text-gray-400">Video Type</dt>
@@ -282,6 +285,12 @@
 						<dt class="text-gray-500 dark:text-gray-400">Disc Type</dt>
 						<dd class="font-medium text-gray-900 dark:text-white">{discTypeLabel(job.disctype)}</dd>
 					</div>
+					{#if job.disc_number}
+						<div>
+							<dt class="text-gray-500 dark:text-gray-400">Disc</dt>
+							<dd class="font-medium text-gray-900 dark:text-white">{job.disc_number}{#if job.disc_total} of {job.disc_total}{/if}</dd>
+						</div>
+					{/if}
 					{#if isVideoDisc}
 						<div>
 							<dt class="text-gray-500 dark:text-gray-400">Title Mode</dt>
@@ -488,21 +497,24 @@
 		{#if job.tracks.length > 0}
 			<section>
 				<div class="mb-3 flex items-center justify-between">
-					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tracks ({job.tracks.length})</h2>
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+						Tracks ({job.tracks.length})
+						{#if job.disc_number && job.disc_total}
+							<span class="text-sm font-normal text-gray-500 dark:text-gray-400">— Disc {job.disc_number} of {job.disc_total}</span>
+						{/if}
+					</h2>
 				</div>
 				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 					<table class="w-full text-left text-sm">
 						<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 							<tr>
 								<th class="px-4 py-3 font-medium">#</th>
-								<th class="px-4 py-3 font-medium">{isMusicDisc ? 'Title' : 'Filename'}</th>
+								<th class="px-4 py-3 font-medium">{isMusicDisc ? 'Name' : 'Filename'}</th>
 								{#if !isMusicDisc}
 									<th class="px-4 py-3 font-medium">Title Override</th>
 								{/if}
 								<th class="px-4 py-3 font-medium">{isMusicDisc ? 'Duration' : 'Length'}</th>
-								{#if isMusicDisc}
-									<th class="px-4 py-3 font-medium">Format</th>
-								{:else}
+								{#if !isMusicDisc}
 									<th class="px-4 py-3 font-medium">Aspect</th>
 									<th class="px-4 py-3 font-medium">FPS</th>
 									<th class="pl-1 pr-4 py-3 font-medium">
@@ -527,7 +539,7 @@
 								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
 									<td class="px-4 py-3">{track.track_number ?? ''}</td>
 									{#if isMusicDisc}
-										<td class="max-w-[300px] truncate px-4 py-3">{track.filename || track.basename || ''}</td>
+										<td class="max-w-[300px] truncate px-4 py-3">{track.title || track.filename || '--'}</td>
 									{:else}
 										<td class="px-4 py-3">
 											<div class="flex items-center gap-1">
@@ -581,9 +593,7 @@
 										</td>
 									{/if}
 									<td class="px-4 py-3">{track.length != null ? `${Math.floor(track.length / 60)}:${String(track.length % 60).padStart(2, '0')}` : ''}</td>
-									{#if isMusicDisc}
-										<td class="px-4 py-3 uppercase text-xs">{track.source ?? ''}</td>
-									{:else}
+									{#if !isMusicDisc}
 										<td class="px-4 py-3">{track.aspect_ratio ?? ''}</td>
 										<td class="px-4 py-3">{track.fps ?? ''}</td>
 										<td class="pl-1 pr-4 py-3">
@@ -652,22 +662,32 @@
 			</section>
 		{/if}
 
-		<!-- Config -->
+		<!-- Debug -->
 		{#if job.config}
 			<section>
-				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Configuration</h2>
-				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-					<table class="w-full text-left text-sm">
-						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-							{#each Object.entries(job.config) as [key, value]}
-								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
-									<td class="px-4 py-2 font-mono text-xs font-medium text-gray-500 dark:text-gray-400">{key}</td>
-									<td class="px-4 py-2 text-gray-900 dark:text-white">{value ?? ''}</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
+				<button
+					onclick={() => { showDebug = !showDebug; }}
+					class="flex w-full items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white"
+				>
+					<svg class="h-4 w-4 transition-transform {showDebug ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+					</svg>
+					Debug
+				</button>
+				{#if showDebug}
+					<div class="mt-3 overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
+						<table class="w-full text-left text-sm">
+							<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+								{#each Object.entries(job.config) as [key, value]}
+									<tr class="hover:bg-page dark:hover:bg-gray-800/50">
+										<td class="px-4 py-2 font-mono text-xs font-medium text-gray-500 dark:text-gray-400">{key}</td>
+										<td class="px-4 py-2 text-gray-900 dark:text-white">{value ?? ''}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
 			</section>
 		{/if}
 	</div>

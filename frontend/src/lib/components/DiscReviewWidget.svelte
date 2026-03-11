@@ -592,18 +592,18 @@
 					<!-- Tracks table -->
 					{#if detail?.tracks && detail.tracks.length > 0}
 						<div>
-							<h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Tracks ({detail.tracks.length})</h4>
+							<h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+								Tracks ({detail.tracks.length})
+								{#if job.disc_number && job.disc_total}
+									<span class="font-normal text-gray-400 dark:text-gray-500">— Disc {job.disc_number} of {job.disc_total}</span>
+								{/if}
+							</h4>
 							<div class="overflow-x-auto rounded-md border border-primary/15 dark:border-primary/20">
 								<table class="w-full text-left text-xs">
 									<thead class="bg-page text-gray-500 dark:bg-primary/5 dark:text-gray-400">
 										<tr>
 											<th class="px-3 py-1.5 font-medium">#</th>
-											{#if isMusic}
-												<th class="px-3 py-1.5 font-medium">Title</th>
-											{/if}
-											{#if !isMusic}
-												<th class="px-3 py-1.5 font-medium">Title</th>
-											{/if}
+											<th class="px-3 py-1.5 font-medium">{isMusic ? 'Name' : 'Title'}</th>
 											<th class="px-3 py-1.5 font-medium">Length</th>
 											{#if !isMusic}
 												<th class="px-3 py-1.5 font-medium">Aspect</th>
@@ -620,8 +620,8 @@
 														/>
 													</label>
 												</th>
+												<th class="px-3 py-1.5 font-medium">File</th>
 											{/if}
-											<th class="px-3 py-1.5 font-medium">File</th>
 										</tr>
 									</thead>
 									<tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -629,9 +629,8 @@
 											<tr class="{track.enabled && !isMusic ? 'bg-primary-light-bg/50 dark:bg-primary-light-bg-dark/10' : ''}">
 												<td class="px-3 py-1.5 font-mono text-gray-700 dark:text-gray-300">{track.track_number ?? '--'}</td>
 												{#if isMusic}
-													<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{track.basename ?? '--'}</td>
-												{/if}
-												{#if !isMusic}
+													<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{track.title || track.filename || '--'}</td>
+												{:else}
 													<td
 														class="px-3 py-1.5 cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10"
 														onclick={() => { editingTrackId = editingTrackId === track.track_id ? null : track.track_id; }}
@@ -665,34 +664,34 @@
 															class="ml-[22px] h-3.5 w-3.5 rounded-sm border-primary/25 text-primary focus:ring-primary disabled:opacity-50 dark:border-primary/30 dark:bg-primary/10"
 														/>
 													</td>
+													<td class="px-3 py-1.5">
+														<div class="flex items-center gap-1">
+															<input
+																type="text"
+																value={dirtyFilenames[track.track_id] ?? track.filename ?? track.basename ?? ''}
+																oninput={(e) => {
+																	const val = e.currentTarget.value;
+																	if (val !== (track.filename ?? track.basename ?? '')) {
+																		dirtyFilenames[track.track_id] = val;
+																	} else {
+																		delete dirtyFilenames[track.track_id];
+																	}
+																}}
+																onkeydown={(e) => { if (e.key === 'Enter' && dirtyFilenames[track.track_id] != null) handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id]); }}
+																class="w-full min-w-[120px] rounded-sm border bg-transparent px-1 py-0.5 font-mono text-xs text-gray-500 hover:border-primary/25 focus:border-primary focus:bg-primary/5 focus:outline-hidden focus:ring-1 focus:ring-primary dark:text-gray-400 dark:focus:bg-primary/10 {dirtyFilenames[track.track_id] != null ? 'border-amber-400 dark:border-amber-600' : 'border-transparent'}"
+															/>
+															{#if dirtyFilenames[track.track_id] != null}
+																<button
+																	onclick={() => handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id])}
+																	disabled={savingTrackField === `${track.track_id}-filename`}
+																	class="{btnBase} bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-50"
+																>
+																	{savingTrackField === `${track.track_id}-filename` ? '...' : 'Save'}
+																</button>
+															{/if}
+														</div>
+													</td>
 												{/if}
-												<td class="px-3 py-1.5">
-													<div class="flex items-center gap-1">
-														<input
-															type="text"
-															value={dirtyFilenames[track.track_id] ?? track.filename ?? track.basename ?? ''}
-															oninput={(e) => {
-																const val = e.currentTarget.value;
-																if (val !== (track.filename ?? track.basename ?? '')) {
-																	dirtyFilenames[track.track_id] = val;
-																} else {
-																	delete dirtyFilenames[track.track_id];
-																}
-															}}
-															onkeydown={(e) => { if (e.key === 'Enter' && dirtyFilenames[track.track_id] != null) handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id]); }}
-															class="w-full min-w-[120px] rounded-sm border bg-transparent px-1 py-0.5 font-mono text-xs text-gray-500 hover:border-primary/25 focus:border-primary focus:bg-primary/5 focus:outline-hidden focus:ring-1 focus:ring-primary dark:text-gray-400 dark:focus:bg-primary/10 {dirtyFilenames[track.track_id] != null ? 'border-amber-400 dark:border-amber-600' : 'border-transparent'}"
-														/>
-														{#if dirtyFilenames[track.track_id] != null}
-															<button
-																onclick={() => handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id])}
-																disabled={savingTrackField === `${track.track_id}-filename`}
-																class="{btnBase} bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-50"
-															>
-																{savingTrackField === `${track.track_id}-filename` ? '...' : 'Save'}
-															</button>
-														{/if}
-													</div>
-												</td>
 											</tr>
 											{#if editingTrackId === track.track_id}
 												<tr>
