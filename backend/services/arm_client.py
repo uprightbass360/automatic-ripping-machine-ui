@@ -186,6 +186,16 @@ async def dismiss_notification(notify_id: int) -> dict[str, Any] | None:
     return await _request("PATCH", f"/api/v1/notifications/{notify_id}")
 
 
+async def get_abcde_config() -> dict[str, Any] | None:
+    """Fetch abcde.conf contents from ARM. Returns None if unreachable."""
+    return await _request("GET", "/api/v1/settings/abcde")
+
+
+async def update_abcde_config(content: str) -> dict[str, Any] | None:
+    """Write abcde.conf contents via ARM. Returns None if unreachable."""
+    return await _request("PUT", "/api/v1/settings/abcde", json={"content": content})
+
+
 async def naming_preview(pattern: str, variables: dict[str, str]) -> dict[str, Any] | None:
     """Preview a naming pattern with given variables. Returns None if ARM is unreachable."""
     return await _request(

@@ -19,6 +19,23 @@ export function saveTranscoderConfig(config: Record<string, unknown>): Promise<{
 	});
 }
 
+export interface AbcdeConfigData {
+	content: string;
+	path: string;
+	exists: boolean;
+}
+
+export function fetchAbcdeConfig(): Promise<AbcdeConfigData> {
+	return apiFetch<AbcdeConfigData>('/api/settings/abcde');
+}
+
+export function saveAbcdeConfig(content: string): Promise<{ success: boolean }> {
+	return apiFetch('/api/settings/abcde', {
+		method: 'PUT',
+		body: JSON.stringify({ content })
+	});
+}
+
 export function testMetadataKey(): Promise<{ success: boolean; message: string; provider: string }> {
 	return apiFetch('/api/settings/test-metadata');
 }
