@@ -157,3 +157,69 @@ async def test_settings_includes_auth_status(app_client):
     assert auth is not None
     assert auth["require_api_auth"] is True
     assert auth["webhook_secret_configured"] is True
+
+
+# --- GET /api/settings/abcde ---
+
+
+async def test_get_abcde_config_success(app_client):
+    """GET abcde config returns content from ARM."""
+    result = {"content": "# abcde config\nCDDBMETHOD=musicbrainz\n", "success": True}
+    with patch(
+        "backend.routers.settings.arm_client.get_abcde_config",
+        new_callable=AsyncMock,
+        return_value=result,
+    ):
+        resp = await app_client.get("/api/settings/abcde")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["content"] == "# abcde config\nCDDBMETHOD=musicbrainz\n"
+    assert data["success"] is True
+
+
+async def test_get_abcde_config_arm_unreachable(app_client):
+    """GET abcde config returns 502 when ARM is unreachable."""
+    with patch(
+        "backend.routers.settings.arm_client.get_abcde_config",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.get("/api/settings/abcde")
+    assert resp.status_code == 502
+    assert "unreachable" in resp.json()["detail"].lower()
+
+
+# --- PUT /api/settings/abcde ---
+
+
+async def test_put_abcde_config_success(app_client):
+    """PUT abcde config writes content via ARM."""
+    result = {"success": True}
+    with patch(
+        "backend.routers.settings.arm_client.update_abcde_config",
+        new_callable=AsyncMock,
+        return_value=result,
+    ) as mock_fn:
+        resp = await app_client.put(
+            "/api/settings/abcde",
+            json={"content": "CDDBMETHOD=musicbrainz\n"},
+        )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    mock_fn.assert_awaited_once_with("CDDBMETHOD=musicbrainz\n")
+
+
+async def test_put_abcde_config_arm_unreachable(app_client):
+    """PUT abcde config returns 502 when ARM is unreachable."""
+    with patch(
+        "backend.routers.settings.arm_client.update_abcde_config",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.put(
+            "/api/settings/abcde",
+            json={"content": "CDDBMETHOD=musicbrainz\n"},
+        )
+    assert resp.status_code == 502
+    assert "unreachable" in resp.json()["detail"].lower()

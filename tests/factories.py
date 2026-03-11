@@ -93,6 +93,11 @@ def make_track(**overrides) -> MagicMock:
         "status": "success",
         "error": None,
         "source": "/dev/sr0",
+        "title": None,
+        "year": None,
+        "imdb_id": None,
+        "poster_url": None,
+        "video_type": None,
     }
     defaults.update(overrides)
     mock = MagicMock(spec=Track)
