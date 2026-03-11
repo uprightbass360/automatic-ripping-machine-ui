@@ -65,6 +65,8 @@ export function getVideoTypeConfig(videoType: string | null): VideoTypeConfig {
 }
 
 const ACTIVE_STATUSES = new Set([
+	'identifying',
+	'ready',
 	'active',
 	'ripping',
 	'processing',

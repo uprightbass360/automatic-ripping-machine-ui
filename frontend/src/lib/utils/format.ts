@@ -43,6 +43,8 @@ export function elapsedTime(startTime: string | null): string {
 
 export function statusColor(status: string | null): string {
 	switch (status?.toLowerCase()) {
+		case 'identifying':
+		case 'ready':
 		case 'active':
 		case 'ripping':
 		case 'processing':
