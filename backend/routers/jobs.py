@@ -63,8 +63,15 @@ def get_job_progress(job_id: int):
     job = arm_db.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
-    result = progress.get_rip_progress(job.job_id)
-    result.update(arm_db.get_job_track_counts(job_id))
+    counts = arm_db.get_job_track_counts(job_id)
+    if getattr(job, "disctype", None) == "music":
+        result = progress.get_music_progress(
+            getattr(job, "logfile", None),
+            counts.get("tracks_total", 0),
+        )
+    else:
+        result = progress.get_rip_progress(job.job_id)
+    result.update(counts)
     return result
 
 
