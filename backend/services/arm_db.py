@@ -514,9 +514,7 @@ def update_track_fields(job_id: int, track_id: int, fields: dict) -> dict | None
                 return None
             for key, value in clean.items():
                 if key == "enabled":
-                    # API exposes "enabled"; DB column is still "main_feature"
-                    # until the arm-neu migration runs.
-                    setattr(track, "main_feature", value)
+                    setattr(track, "enabled", value)
                 else:
                     setattr(track, key, value)
             session.commit()
