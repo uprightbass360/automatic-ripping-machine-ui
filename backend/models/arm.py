@@ -62,6 +62,8 @@ class Job(Base):
     updated = Column(Boolean)
     pid = Column(Integer)
     pid_hash = Column(Integer)
+    manual_pause = Column(Boolean)
+    wait_start_time = Column(DateTime)
 
     tracks = relationship("Track", back_populates="job", lazy="selectin")
     config = relationship("Config", back_populates="job", uselist=False, lazy="selectin")
@@ -77,6 +79,7 @@ class Track(Base):
     aspect_ratio = Column(String(20))
     fps = Column(Float)
     main_feature = Column(Boolean)
+    enabled = Column(Boolean)
     basename = Column(String(256))
     filename = Column(String(256))
     orig_filename = Column(String(256))

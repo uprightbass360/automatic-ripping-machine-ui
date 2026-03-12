@@ -77,6 +77,8 @@ export interface Job {
 	disc_total: number | null;
 	ejected: boolean | null;
 	pid: number | null;
+	manual_pause: boolean | null;
+	wait_start_time: string | null;
 	tracks_total: number | null;
 	tracks_ripped: number | null;
 }

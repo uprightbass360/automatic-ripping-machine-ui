@@ -85,6 +85,8 @@ class JobSchema(BaseModel):
     multi_title: bool | None = None
     disc_number: int | None = None
     disc_total: int | None = None
+    manual_pause: bool | None = None
+    wait_start_time: datetime | None = None
 
     @field_validator("transcode_overrides", mode="before")
     @classmethod
