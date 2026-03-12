@@ -18,6 +18,7 @@
 	);
 	let minlength = $state(Number(config.MINLENGTH) || 120);
 	let maxlength = $state(Number(config.MAXLENGTH) || 99999);
+	let audioFormat = $state(String(config.AUDIO_FORMAT ?? 'flac').toLowerCase());
 
 	let saving = $state(false);
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -31,7 +32,8 @@
 				DISCTYPE: disctype as 'dvd' | 'bluray' | 'bluray4k' | 'music' | 'data',
 				MAINFEATURE: mainfeature,
 				MINLENGTH: minlength,
-				MAXLENGTH: maxlength
+				MAXLENGTH: maxlength,
+				AUDIO_FORMAT: audioFormat
 			};
 			await updateJobConfig(job.job_id, data);
 			feedback = { type: 'success', message: 'Settings saved' };
@@ -97,6 +99,34 @@
 			</label>
 		{/if}
 	</div>
+
+	{#if isMusic}
+		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+			<label class="space-y-1">
+				<span class={labelClass}>Audio Format</span>
+				<select bind:value={audioFormat} class="{inputClass} w-full">
+					<optgroup label="Common">
+						<option value="flac">FLAC</option>
+						<option value="mp3">MP3</option>
+						<option value="vorbis">Ogg Vorbis</option>
+						<option value="opus">Opus</option>
+						<option value="m4a">AAC (M4A)</option>
+						<option value="wav">WAV</option>
+					</optgroup>
+					<optgroup label="Other">
+						<option value="wv">WavPack</option>
+						<option value="ape">Monkey's Audio</option>
+						<option value="mpc">Musepack</option>
+						<option value="spx">Speex</option>
+						<option value="mp2">MP2</option>
+						<option value="tta">TTA</option>
+						<option value="aiff">AIFF</option>
+						<option value="mka">Matroska Audio</option>
+					</optgroup>
+				</select>
+			</label>
+		</div>
+	{/if}
 
 	<div class="flex items-center gap-2">
 		<button
