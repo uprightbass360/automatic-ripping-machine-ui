@@ -109,3 +109,13 @@ async def retranscode_transcoder_job(job_id: int):
     if not result.get("success"):
         raise HTTPException(status_code=503, detail=result.get("error", "Transcoder unavailable"))
     return {"status": "ok", "message": "Transcode job re-queued"}
+
+
+@router.get("/job-for-arm/{arm_job_id}")
+async def get_transcoder_job_for_arm(arm_job_id: int) -> dict[str, Any]:
+    """Look up the most recent transcoder job for a given ARM job ID."""
+    data = await transcoder_client.get_jobs(arm_job_id=arm_job_id, limit=1)
+    if not data or not data.get("jobs"):
+        return {"found": False}
+    job = data["jobs"][0]
+    return {"found": True, "logfile": job.get("logfile"), "transcoder_job_id": job.get("id"), "status": job.get("status")}

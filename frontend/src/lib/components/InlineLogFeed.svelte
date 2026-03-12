@@ -16,6 +16,7 @@
 			search?: string
 		) => Promise<StructuredLogContent>;
 		logLinkBase?: string;
+		title?: string;
 	}
 
 	let {
@@ -26,6 +27,7 @@
 		containerClass,
 		fetchFn = fetchStructuredLogContent,
 		logLinkBase = '/logs',
+		title = 'Recent Log',
 	}: Props = $props();
 
 	let entries = $state<LogEntry[]>([]);
@@ -104,7 +106,7 @@
 				>
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
 				</svg>
-				<span class="font-medium text-gray-700 dark:text-gray-300">Recent Log</span>
+				<span class="font-medium text-gray-700 dark:text-gray-300">{title}</span>
 				{#if errorCount > 0}
 					<span class="rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
 						{errorCount} error{errorCount !== 1 ? 's' : ''}
