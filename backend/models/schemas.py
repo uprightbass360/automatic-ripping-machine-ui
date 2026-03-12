@@ -83,6 +83,8 @@ class JobSchema(BaseModel):
     transcode_path: str | None = None
     transcode_overrides: dict | None = None
     multi_title: bool | None = None
+    disc_number: int | None = None
+    disc_total: int | None = None
 
     @field_validator("transcode_overrides", mode="before")
     @classmethod
@@ -350,6 +352,7 @@ class JobConfigUpdateRequest(BaseModel):
     MAINFEATURE: bool | None = None
     MINLENGTH: int | None = None
     MAXLENGTH: int | None = None
+    AUDIO_FORMAT: str | None = None
 
 
 class DriveUpdateRequest(BaseModel):
