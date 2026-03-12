@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { fetchJob, retranscodeJob, fetchMusicDetail, toggleMultiTitle, updateTrack } from '$lib/api/jobs';
+	import { fetchStructuredTranscoderLogContent, fetchTranscoderLogForArmJob } from '$lib/api/logs';
 	import type { JobDetail, MusicDetail } from '$lib/types/arm';
 	import JobActions from '$lib/components/JobActions.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
@@ -26,6 +27,7 @@
 	let showDebug = $state(false);
 	let retranscoding = $state(false);
 	let retranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let transcoderLogfile = $state<string | null>(null);
 
 	// MusicBrainz track listing (fetched when DB tracks are empty for music discs)
 	let musicDetail = $state<MusicDetail | null>(null);
@@ -145,6 +147,12 @@
 		const id = Number($page.params.id);
 		try {
 			job = await fetchJob(id);
+			// Look up transcoder log for this ARM job
+			fetchTranscoderLogForArmJob(id).then((info) => {
+				transcoderLogfile = info.found ? (info.logfile ?? null) : null;
+			}).catch(() => {
+				transcoderLogfile = null;
+			});
 		} catch (e) {
 			if (e instanceof Error && e.message.includes('404')) {
 				goto('/jobs');
@@ -336,7 +344,16 @@
 				{/if}
 
 				{#if job.logfile}
-					<InlineLogFeed logfile={job.logfile} maxEntries={15} />
+					<InlineLogFeed logfile={job.logfile} maxEntries={15} title="ARM Ripper Log" />
+				{/if}
+				{#if transcoderLogfile}
+					<InlineLogFeed
+						logfile={transcoderLogfile}
+						maxEntries={15}
+						title="Transcoder Log"
+						fetchFn={fetchStructuredTranscoderLogContent}
+						logLinkBase="/logs/transcoder"
+					/>
 				{/if}
 			</div>
 		</div>

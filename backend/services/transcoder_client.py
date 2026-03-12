@@ -245,11 +245,14 @@ async def get_jobs(
     status: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    arm_job_id: int | None = None,
 ) -> dict[str, Any] | None:
     try:
         params: dict[str, Any] = {"limit": limit, "offset": offset}
         if status:
             params["status"] = status
+        if arm_job_id is not None:
+            params["arm_job_id"] = arm_job_id
         resp = await get_client().get("/jobs", params=params)
         resp.raise_for_status()
         return resp.json()
