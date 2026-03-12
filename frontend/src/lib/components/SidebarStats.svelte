@@ -45,7 +45,11 @@
 		{:else if activePanel === 'transcoder' && !transcoderOnline}
 			<p class="text-xs text-orange-500 dark:text-orange-400">Cannot reach the transcoder service</p>
 		{:else if activeHw}
-			<p class="truncate text-xs text-gray-600 dark:text-gray-400" title={activeHw.cpu ?? undefined}>{activeHw.cpu ?? 'Unknown CPU'}</p>
+			{#if activePanel === 'transcoder' && activeHw.gpu_name}
+				<p class="truncate text-xs text-gray-600 dark:text-gray-400" title={activeHw.gpu_name}>{activeHw.gpu_name}</p>
+			{:else}
+				<p class="truncate text-xs text-gray-600 dark:text-gray-400" title={activeHw.cpu ?? undefined}>{activeHw.cpu ?? 'Unknown CPU'}</p>
+			{/if}
 			<p class="mb-2 text-xs text-gray-600 dark:text-gray-400">
 				{activeHw.memory_total_gb ? `${activeHw.memory_total_gb.toFixed(1)} GB RAM` : 'RAM: N/A'}
 			</p>

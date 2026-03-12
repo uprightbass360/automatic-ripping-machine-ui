@@ -131,6 +131,7 @@ class SystemInfoSchema(BaseModel):
 
 class HardwareInfoSchema(BaseModel):
     cpu: str | None = None
+    gpu_name: str | None = None
     memory_total_gb: float | None = None
 
 

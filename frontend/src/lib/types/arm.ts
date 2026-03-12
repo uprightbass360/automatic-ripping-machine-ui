@@ -95,6 +95,7 @@ export interface SystemInfo {
 
 export interface HardwareInfo {
 	cpu: string | null;
+	gpu_name: string | null;
 	memory_total_gb: number | null;
 }
 
