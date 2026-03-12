@@ -56,6 +56,8 @@ class Job(Base):
     transcode_path = Column(String(256))
     transcode_overrides = Column(Text)
     multi_title = Column(Boolean, default=False)
+    disc_number = Column(Integer)
+    disc_total = Column(Integer)
     ejected = Column(Boolean)
     updated = Column(Boolean)
     pid = Column(Integer)

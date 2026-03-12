@@ -98,6 +98,9 @@
 				{discTypeLabel(job.disctype)}
 			</span>
 		{/if}
+		{#if job.disc_number}
+			<div class="text-xs text-gray-400 dark:text-gray-500">Disc {job.disc_number}{#if job.disc_total} of {job.disc_total}{/if}</div>
+		{/if}
 	</td>
 
 	<!-- Device -->

@@ -121,6 +121,9 @@
 						{discTypeLabel(job.disctype)}
 					</span>
 				{/if}
+				{#if job.disc_number}
+					<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">Disc {job.disc_number}{#if job.disc_total}/{job.disc_total}{/if}</span>
+				{/if}
 				{#if job.devpath}
 					<span>{driveName ?? job.devpath}</span>
 				{/if}
