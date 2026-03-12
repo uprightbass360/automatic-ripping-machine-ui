@@ -51,28 +51,49 @@
 				<p class="truncate text-xs text-gray-600 dark:text-gray-400" title={activeHw.cpu ?? undefined}>{activeHw.cpu ?? 'Unknown CPU'}</p>
 			{/if}
 			<p class="mb-2 text-xs text-gray-600 dark:text-gray-400">
-				{activeHw.memory_total_gb ? `${activeHw.memory_total_gb.toFixed(1)} GB RAM` : 'RAM: N/A'}
+				{#if activePanel === 'transcoder' && activeHw.gpu_vram_gb}
+					{activeHw.gpu_vram_gb.toFixed(1)} GB VRAM
+				{:else}
+					{activeHw.memory_total_gb ? `${activeHw.memory_total_gb.toFixed(1)} GB RAM` : 'RAM: N/A'}
+				{/if}
 			</p>
 		{/if}
 
-		<!-- CPU & Memory -->
+		<!-- CPU / GPU & Memory -->
 		{#if activeStats}
 			<div class="space-y-2">
 				<div>
-					<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
-						<span>CPU</span>
-						<span class="whitespace-nowrap">
-							{activeStats.cpu_percent}%
-							{#if activeStats.cpu_temp > 0}
-								<span class="text-orange-500">&nbsp;{activeStats.cpu_temp.toFixed(0)}&deg;C</span>
-							{/if}
-						</span>
-					</div>
-					<ProgressBar
-						value={activeStats.cpu_percent}
-						color={activeStats.cpu_percent >= 90 ? 'bg-red-500' : activeStats.cpu_percent >= 70 ? 'bg-yellow-500' : 'bg-cyan-500'}
-						showLabel={false}
-					/>
+					{#if activePanel === 'transcoder' && activeStats.gpu_percent !== undefined}
+						<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+							<span>GPU</span>
+							<span class="whitespace-nowrap">
+								{activeStats.gpu_percent}%
+								{#if activeStats.gpu_temp > 0}
+									<span class="text-orange-500">&nbsp;{activeStats.gpu_temp.toFixed(0)}&deg;C</span>
+								{/if}
+							</span>
+						</div>
+						<ProgressBar
+							value={activeStats.gpu_percent}
+							color={activeStats.gpu_percent >= 90 ? 'bg-red-500' : activeStats.gpu_percent >= 70 ? 'bg-yellow-500' : 'bg-cyan-500'}
+							showLabel={false}
+						/>
+					{:else}
+						<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+							<span>CPU</span>
+							<span class="whitespace-nowrap">
+								{activeStats.cpu_percent}%
+								{#if activeStats.cpu_temp > 0}
+									<span class="text-orange-500">&nbsp;{activeStats.cpu_temp.toFixed(0)}&deg;C</span>
+								{/if}
+							</span>
+						</div>
+						<ProgressBar
+							value={activeStats.cpu_percent}
+							color={activeStats.cpu_percent >= 90 ? 'bg-red-500' : activeStats.cpu_percent >= 70 ? 'bg-yellow-500' : 'bg-cyan-500'}
+							showLabel={false}
+						/>
+					{/if}
 				</div>
 
 				{#if activeStats.memory}

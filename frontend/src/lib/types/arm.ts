@@ -96,6 +96,7 @@ export interface SystemInfo {
 export interface HardwareInfo {
 	cpu: string | null;
 	gpu_name: string | null;
+	gpu_vram_gb: number | null;
 	memory_total_gb: number | null;
 }
 
@@ -151,6 +152,8 @@ export interface StoragePath {
 export interface SystemStats {
 	cpu_percent: number;
 	cpu_temp: number;
+	gpu_percent: number;
+	gpu_temp: number;
 	memory: MemoryInfo | null;
 	storage: StoragePath[];
 }
