@@ -37,7 +37,7 @@ async def get_dashboard():
     if db_available:
         active_jobs = arm_db.get_active_jobs()
         drives = arm_db.get_drives()
-        drives_online = len(drives)
+        drives_online = sum(1 for d in drives if not getattr(d, 'stale', False))
         # Normalize mount paths — drives store /mnt/dev/sr0, jobs store /dev/sr0
         drive_names = {}
         for d in drives:
