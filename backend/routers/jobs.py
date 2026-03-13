@@ -207,6 +207,31 @@ async def clear_track_title(job_id: int, track_id: int):
     return result
 
 
+@router.post("/jobs/{job_id}/tvdb-match", responses=_404_502_ARM)
+async def tvdb_match(job_id: int, request: Request):
+    """Run TVDB episode matching for a job (proxied to ARM)."""
+    body = await request.json()
+    result = await arm_client.tvdb_match(job_id, body)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success"):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
+@router.get("/jobs/{job_id}/tvdb-episodes", responses=_404_502_ARM)
+async def tvdb_episodes(job_id: int, season: int = Query(1, ge=1)):
+    """Fetch TVDB episodes for a job's series (proxied to ARM)."""
+    result = await arm_client.tvdb_episodes(job_id, season)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success", True):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
 @router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}})
 async def update_transcode_config(job_id: int, request: Request):
     """Set per-job transcode override settings."""

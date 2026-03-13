@@ -176,6 +176,16 @@ async def set_job_tracks(job_id: int, tracks: list[dict[str, Any]]) -> dict[str,
     return await _request("PUT", f"/api/v1/jobs/{job_id}/tracks", json={"tracks": tracks})
 
 
+async def tvdb_match(job_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
+    """Run TVDB episode matching for a job. Returns None if ARM is unreachable."""
+    return await _request("POST", f"/api/v1/jobs/{job_id}/tvdb-match", json=data)
+
+
+async def tvdb_episodes(job_id: int, season: int) -> dict[str, Any] | None:
+    """Fetch TVDB episodes for a job's series. Returns None if ARM is unreachable."""
+    return await _request("GET", f"/api/v1/jobs/{job_id}/tvdb-episodes", params={"season": str(season)})
+
+
 async def update_drive(drive_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
     """Update a drive's name/description via ARM's REST API. Returns None if unreachable."""
     return await _request("PATCH", f"/api/v1/drives/{drive_id}", json=data)

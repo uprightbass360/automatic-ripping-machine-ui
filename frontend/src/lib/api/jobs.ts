@@ -183,6 +183,62 @@ export function clearTrackTitle(jobId: number, trackId: number): Promise<unknown
 	return apiFetch(`/api/jobs/${jobId}/tracks/${trackId}/title`, { method: 'DELETE' });
 }
 
+// --- TVDB Episode Matching ---
+
+export interface TvdbMatch {
+	track_number: string;
+	episode_number: number;
+	episode_name: string;
+}
+
+export interface TvdbAlternative {
+	season: number;
+	score: number;
+	match_count: number;
+}
+
+export interface TvdbMatchResponse {
+	success: boolean;
+	season: number;
+	matches: TvdbMatch[];
+	match_count: number;
+	score: number;
+	alternatives: TvdbAlternative[];
+	applied?: boolean;
+	error?: string;
+}
+
+export interface TvdbEpisode {
+	number: number;
+	name: string;
+	runtime: number;
+	aired: string;
+}
+
+export interface TvdbEpisodesResponse {
+	episodes: TvdbEpisode[];
+	tvdb_id: number;
+	season: number;
+}
+
+export function tvdbMatch(
+	jobId: number,
+	opts?: { season?: number | null; tolerance?: number | null; apply?: boolean }
+): Promise<TvdbMatchResponse> {
+	return apiFetch<TvdbMatchResponse>(`/api/jobs/${jobId}/tvdb-match`, {
+		method: 'POST',
+		body: JSON.stringify({
+			season: opts?.season ?? null,
+			tolerance: opts?.tolerance ?? null,
+			apply: opts?.apply ?? false
+		})
+	});
+}
+
+export function fetchTvdbEpisodes(jobId: number, season: number): Promise<TvdbEpisodesResponse> {
+	return apiFetch<TvdbEpisodesResponse>(`/api/jobs/${jobId}/tvdb-episodes?season=${season}`);
+}
+
 export interface TrackFieldUpdate {
 	enabled?: boolean;
 	filename?: string;

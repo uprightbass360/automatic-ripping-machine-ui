@@ -64,6 +64,7 @@ class Job(Base):
     pid_hash = Column(Integer)
     manual_pause = Column(Boolean)
     wait_start_time = Column(DateTime)
+    tvdb_id = Column(Integer)
 
     tracks = relationship("Track", back_populates="job", lazy="selectin")
     config = relationship("Config", back_populates="job", uselist=False, lazy="selectin")
@@ -94,6 +95,9 @@ class Track(Base):
     imdb_id = Column(String(15))
     poster_url = Column(String(256))
     video_type = Column(String(20))
+    # TVDB episode matching
+    episode_number = Column(String(10))
+    episode_name = Column(String(256))
 
     job = relationship("Job", back_populates="tracks")
 
