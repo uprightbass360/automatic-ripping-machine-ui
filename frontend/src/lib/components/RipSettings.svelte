@@ -6,10 +6,11 @@
 		job: Job;
 		config: Record<string, string | null>;
 		isMusic?: boolean;
+		multiTitle?: boolean;
 		onsaved?: () => void;
 	}
 
-	let { job, config, isMusic = false, onsaved }: Props = $props();
+	let { job, config, isMusic = false, multiTitle = false, onsaved }: Props = $props();
 
 	let ripmethod = $state(String(config.RIPMETHOD ?? 'mkv').toLowerCase());
 	let disctype = $state(String(config.DISCTYPE ?? job.disctype ?? 'dvd').toLowerCase());
@@ -75,7 +76,7 @@
 			</select>
 		</label>
 
-		{#if !isMusic}
+		{#if !isMusic && !multiTitle}
 			<div class="space-y-1">
 				<label class="flex items-center gap-2">
 					<input
@@ -87,7 +88,9 @@
 				</label>
 				<p class="text-xs text-gray-500 dark:text-gray-400">Auto-enable only the best track; when off, all tracks are enabled</p>
 			</div>
+		{/if}
 
+		{#if !isMusic}
 			<label class="space-y-1">
 				<span class={labelClass}>Min Length (s)</span>
 				<input type="number" bind:value={minlength} min="0" class="{inputClass} w-full" />

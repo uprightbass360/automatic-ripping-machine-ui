@@ -6,10 +6,11 @@
 	interface Props {
 		job: Job;
 		onaction?: () => void;
+		ondelete?: () => void;
 		compact?: boolean;
 	}
 
-	let { job, onaction, compact = false }: Props = $props();
+	let { job, onaction, ondelete, compact = false }: Props = $props();
 
 	let loading = $state<string | null>(null);
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -17,7 +18,7 @@
 	let active = $derived(isJobActive(job.status));
 	let statusLower = $derived(job.status?.toLowerCase() ?? '');
 	let canAbandon = $derived(active);
-	let canDelete = $derived(statusLower === 'success' || statusLower === 'fail');
+	let canDelete = $derived(statusLower === 'success' || statusLower === 'fail' || statusLower === 'waiting_transcode');
 	let canFixPerms = $derived(statusLower === 'success');
 
 	function clearFeedback() {
@@ -46,6 +47,10 @@
 		feedback = null;
 		try {
 			await deleteJob(job.job_id);
+			if (ondelete) {
+				ondelete();
+				return;
+			}
 			feedback = { type: 'success', message: 'Job deleted' };
 			onaction?.();
 		} catch (e) {
