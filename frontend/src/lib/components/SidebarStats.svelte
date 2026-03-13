@@ -27,6 +27,14 @@
 		return barColor;
 	}
 
+	// Dynamic temperature color: green < 60, yellow 60–79, orange 80–89, red 90+
+	function tempColor(deg: number): string {
+		if (deg >= 90) return 'text-red-500';
+		if (deg >= 80) return 'text-orange-500';
+		if (deg >= 60) return 'text-yellow-500';
+		return 'text-green-500';
+	}
+
 	// Round to nearest common memory size for display (2,4,6,8,12,16,24,32,48,64,128)
 	const memSizes = [2, 4, 6, 8, 12, 16, 24, 32, 48, 64, 128];
 	function niceMemSize(gb: number): number {
@@ -92,7 +100,7 @@
 							<span class="whitespace-nowrap">
 								{activeStats.gpu_percent}%
 								{#if activeStats.gpu_temp > 0}
-									<span class="text-orange-500">&nbsp;{activeStats.gpu_temp.toFixed(0)}&deg;C</span>
+									<span class="{tempColor(activeStats.gpu_temp)}">&nbsp;{activeStats.gpu_temp.toFixed(0)}&deg;C</span>
 								{/if}
 							</span>
 						</div>
@@ -107,7 +115,7 @@
 							<span class="whitespace-nowrap">
 								{activeStats.cpu_percent}%
 								{#if activeStats.cpu_temp > 0}
-									<span class="text-orange-500">&nbsp;{activeStats.cpu_temp.toFixed(0)}&deg;C</span>
+									<span class="{tempColor(activeStats.cpu_temp)}">&nbsp;{activeStats.cpu_temp.toFixed(0)}&deg;C</span>
 								{/if}
 							</span>
 						</div>
