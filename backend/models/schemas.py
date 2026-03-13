@@ -34,6 +34,9 @@ class TrackSchema(BaseModel):
     imdb_id: str | None = None
     poster_url: str | None = None
     video_type: str | None = None
+    # TVDB episode matching
+    episode_number: str | None = None
+    episode_name: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -87,6 +90,7 @@ class JobSchema(BaseModel):
     disc_total: int | None = None
     manual_pause: bool | None = None
     wait_start_time: datetime | None = None
+    tvdb_id: int | None = None
 
     @field_validator("transcode_overrides", mode="before")
     @classmethod

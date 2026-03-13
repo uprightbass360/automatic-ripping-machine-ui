@@ -22,6 +22,9 @@ export interface Track {
 	imdb_id: string | null;
 	poster_url: string | null;
 	video_type: string | null;
+	// TVDB episode matching
+	episode_number: string | null;
+	episode_name: string | null;
 }
 
 export interface Job {
@@ -81,6 +84,7 @@ export interface Job {
 	wait_start_time: string | null;
 	tracks_total: number | null;
 	tracks_ripped: number | null;
+	tvdb_id: number | null;
 }
 
 export interface JobDetail extends Job {

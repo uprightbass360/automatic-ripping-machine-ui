@@ -30,6 +30,8 @@
 	let editType = $state<'movie' | 'series'>('movie');
 	let editImdbId = $state('');
 	let editPosterUrl = $state('');
+	let editSeason = $state('');
+	let editEpisode = $state('');
 
 	$effect(() => {
 		if (detail) {
@@ -38,6 +40,9 @@
 			editType = detail.media_type === 'series' ? 'series' : 'movie';
 			editImdbId = detail.imdb_id ?? '';
 			editPosterUrl = detail.poster_url ?? '';
+			// Preserve existing season/episode when switching detail
+			if (!editSeason) editSeason = job.season || job.season_auto || '';
+			if (!editEpisode) editEpisode = job.episode || job.episode_auto || '';
 		}
 	});
 
@@ -119,13 +124,18 @@
 
 	function applyFromDetail() {
 		if (!editTitle.trim()) return;
-		applyTitle({
+		const data: Partial<TitleUpdate> = {
 			title: editTitle.trim(),
 			year: editYear.trim() || undefined,
 			video_type: editType,
 			imdb_id: editImdbId.trim() || undefined,
-			poster_url: editPosterUrl.trim() || undefined
-		});
+			poster_url: editPosterUrl.trim() || undefined,
+		};
+		if (editType === 'series') {
+			if (editSeason.trim()) data.season = editSeason.trim();
+			if (editEpisode.trim()) data.episode = editEpisode.trim();
+		}
+		applyTitle(data);
 		onapplydetail?.({ plot: detail?.plot });
 	}
 
@@ -176,6 +186,9 @@
 		>
 			{searching ? 'Searching...' : 'Search'}
 		</button>
+		<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold bg-gray-100 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400" title="Metadata provider configured in Settings">
+			OMDb/TMDb
+		</span>
 	</div>
 
 	{#if searchError}
@@ -287,6 +300,16 @@
 						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Poster URL</span>
 						<input type="text" bind:value={editPosterUrl} placeholder="https://..." class="w-full {inputBase}" />
 					</label>
+					{#if editType === 'series'}
+						<label>
+							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Season</span>
+							<input type="number" bind:value={editSeason} min="1" placeholder="1" class="w-full {inputBase}" />
+						</label>
+						<label>
+							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Episode</span>
+							<input type="text" bind:value={editEpisode} placeholder="e.g. 1 or 1-6" class="w-full {inputBase}" />
+						</label>
+					{/if}
 				</div>
 				{#if detail.plot}
 					<p class="text-sm text-gray-700 dark:text-gray-300">{detail.plot}</p>
