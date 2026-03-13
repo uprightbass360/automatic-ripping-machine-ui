@@ -651,8 +651,8 @@
 													<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{track.title || track.filename || '--'}</td>
 												{:else}
 													<td
-														class="px-3 py-1.5 cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10"
-														onclick={() => { editingTrackId = editingTrackId === track.track_id ? null : track.track_id; }}
+														class="px-3 py-1.5 {job.multi_title ? 'cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10' : ''}"
+														onclick={() => { if (job.multi_title) editingTrackId = editingTrackId === track.track_id ? null : track.track_id; }}
 													>
 														{#if track.title}
 															<div class="flex items-center gap-1.5">
@@ -712,7 +712,7 @@
 													</td>
 												{/if}
 											</tr>
-											{#if editingTrackId === track.track_id}
+											{#if job.multi_title && editingTrackId === track.track_id}
 												<tr>
 													<td colspan="99" class="px-3 py-2">
 														<TrackTitleSearch jobId={job.job_id} {track} onapply={handleTrackTitleApply} onclose={() => { editingTrackId = null; }} />
@@ -767,7 +767,7 @@
 
 	{#if showRipSettings && detail?.config}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
-			<RipSettings {job} config={detail.config} {isMusic} onsaved={handleConfigSaved} />
+			<RipSettings {job} config={detail.config} {isMusic} multiTitle={!!job.multi_title} onsaved={handleConfigSaved} />
 		</div>
 	{:else if showRipSettings && initialLoading}
 		<div class="border-t border-primary/20 p-4 text-sm text-gray-400 dark:border-primary/20">

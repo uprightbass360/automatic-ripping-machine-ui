@@ -67,3 +67,28 @@ export function statusColor(status: string | null): string {
 			return 'bg-gray-500';
 	}
 }
+
+const STATUS_LABELS: Record<string, string> = {
+	identifying: 'Identifying',
+	ready: 'Ready',
+	active: 'Active',
+	ripping: 'Ripping',
+	processing: 'Processing',
+	transcoding: 'Transcoding',
+	success: 'Success',
+	completed: 'Completed',
+	complete: 'Complete',
+	fail: 'Failed',
+	failed: 'Failed',
+	error: 'Error',
+	waiting: 'Waiting',
+	waiting_transcode: 'Waiting to Transcode',
+	pending: 'Pending',
+	info: 'Scanning',
+	cancelled: 'Cancelled',
+};
+
+export function statusLabel(status: string | null): string {
+	if (!status) return 'Unknown';
+	return STATUS_LABELS[status.toLowerCase()] ?? status;
+}

@@ -73,6 +73,7 @@ const ACTIVE_STATUSES = new Set([
 	'transcoding',
 	'pending',
 	'waiting',
+	'waiting_transcode',
 ]);
 
 const DISC_TYPE_LABELS: Record<string, string> = {

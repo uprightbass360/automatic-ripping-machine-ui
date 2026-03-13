@@ -63,6 +63,7 @@ describe('isJobActive', () => {
 		expect(isJobActive('transcoding')).toBe(true);
 		expect(isJobActive('pending')).toBe(true);
 		expect(isJobActive('waiting')).toBe(true);
+		expect(isJobActive('waiting_transcode')).toBe(true);
 	});
 
 	it('is case-insensitive', () => {
