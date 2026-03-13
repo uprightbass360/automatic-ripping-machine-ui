@@ -41,6 +41,18 @@ _JOB_DEFAULTS: dict = {
     "transcode_path": "/home/arm/transcode",
     "ejected": False,
     "pid": 12345,
+    "artist": None,
+    "artist_auto": None,
+    "artist_manual": None,
+    "album": None,
+    "album_auto": None,
+    "album_manual": None,
+    "season": None,
+    "season_auto": None,
+    "season_manual": None,
+    "episode": None,
+    "episode_auto": None,
+    "episode_manual": None,
 }
 
 
