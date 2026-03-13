@@ -1437,12 +1437,34 @@ body { visibility: visible; }
 
 /* ── LCARS tactical frame (structural wrapper component) ── */
 
-/* Global defaults: frame decorations completely hidden in ALL themes.
-   These rules have NO [data-scheme] prefix — they apply universally,
-   ensuring zero layout/visual impact in default, dark, tactical, craft, etc. */
-.lcars-bar,
-.lcars-sidebar {
+/* Global defaults: sidebar and bottom bar hidden; top bar visible as section header */
+.lcars-sidebar,
+.lcars-bar-bottom {
 	display: none;
+}
+
+.lcars-bar-top {
+	display: flex;
+	align-items: center;
+	height: 32px;
+	padding: 0 14px;
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-on-primary, #fff);
+	background: var(--color-primary, #6366f1);
+	border-radius: 8px 8px 0 0;
+}
+
+.lcars-bar-top:empty,
+.lcars-bar-top:not(:has(span)) {
+	display: none;
+}
+
+.lcars-bar-top + .lcars-sidebar + .lcars-body,
+.lcars-bar-top + .lcars-body {
+	border-radius: 0 0 8px 8px;
 }
 
 /* LCARS theme: activate the frame structure */
@@ -2225,8 +2247,56 @@ body { visibility: visible; }
 	color: #111 !important;
 }
 
+/* ── Hollywood Video: Marquee Frame ── */
+/* Activate frame bars — styled as movie marquee / VHS case header */
+[data-scheme="hollywood-video-v2"] .lcars-bar-top {
+	display: flex;
+	align-items: center;
+	height: 36px;
+	background: linear-gradient(180deg, #D90B1C 0%, #a0080f 100%);
+	border: 3px solid #000;
+	border-bottom: none;
+	padding: 0 16px;
+	font-family: 'Courier New', Courier, monospace;
+	font-weight: 900;
+	font-size: 0.75rem;
+	letter-spacing: 0.15em;
+	text-transform: uppercase;
+	color: #F2B705;
+	text-shadow: 1px 1px 0 #000, 2px 2px 0 rgba(0,0,0,0.3);
+	box-shadow: inset 0 -2px 4px rgba(0,0,0,0.3);
+}
+
+[data-scheme="hollywood-video-v2"] .lcars-bar-top span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+[data-scheme="hollywood-video-v2"] .lcars-bar-bottom {
+	display: block;
+	height: 6px;
+	background: #D90B1C;
+	border: 3px solid #000;
+	border-top: none;
+}
+
+/* Frame body: dark purple interior */
+[data-scheme="hollywood-video-v2"] .lcars-body {
+	background: #160E26;
+	border-left: 3px solid #000;
+	border-right: 3px solid #000;
+	padding: 1rem;
+}
+
+/* Sidebar stays hidden for Hollywood Video */
+
+/* Frame wrapper: offset shadow */
+[data-scheme="hollywood-video-v2"] .lcars-frame {
+	box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
+}
+
 /* Heavy Card Borders + Offset Shadows */
-[data-scheme="hollywood-video-v2"] .lcars-frame,
 [data-scheme="hollywood-video-v2"] section > div[class*="border"] {
 	border-color: #000 !important;
 	box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
