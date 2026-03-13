@@ -47,7 +47,7 @@
 		applyFeedback = null;
 		try {
 			await tvdbMatch(job.job_id, {
-				season: result.season || null,
+				season: result.season ?? null,
 				tolerance: Number(toleranceInput) || 300,
 				apply: true
 			});
@@ -156,19 +156,22 @@
 								<th class="px-4 py-2 font-medium">Track Length</th>
 								<th class="px-4 py-2 font-medium">Episode</th>
 								<th class="px-4 py-2 font-medium">Episode Name</th>
+								<th class="px-4 py-2 font-medium">TVDB Runtime</th>
 								<th class="px-4 py-2 font-medium">Delta</th>
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each result.matches as match}
 								{@const trackLen = trackLengthMap[match.track_number] ?? null}
+								{@const delta = trackLen != null ? Math.abs(trackLen - match.episode_runtime) : null}
 								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
 									<td class="px-4 py-2 font-mono">{match.track_number}</td>
 									<td class="px-4 py-2">{formatRuntime(trackLen)}</td>
 									<td class="px-4 py-2 font-medium">S{String(result.season).padStart(2, '0')}E{String(match.episode_number).padStart(2, '0')}</td>
 									<td class="px-4 py-2 text-gray-900 dark:text-white">{match.episode_name}</td>
-									<td class="px-4 py-2 font-mono text-xs {trackLen && Math.abs(trackLen - 0) < 60 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}">
-										{formatDelta(trackLen, 0)}
+									<td class="px-4 py-2">{formatRuntime(match.episode_runtime)}</td>
+									<td class="px-4 py-2 font-mono text-xs {delta != null && delta < 60 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}">
+										{formatDelta(trackLen, match.episode_runtime)}
 									</td>
 								</tr>
 							{/each}
