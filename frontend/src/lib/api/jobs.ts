@@ -189,6 +189,7 @@ export interface TvdbMatch {
 	track_number: string;
 	episode_number: number;
 	episode_name: string;
+	episode_runtime: number;
 }
 
 export interface TvdbAlternative {
@@ -199,6 +200,7 @@ export interface TvdbAlternative {
 
 export interface TvdbMatchResponse {
 	success: boolean;
+	matcher: string;
 	season: number;
 	matches: TvdbMatch[];
 	match_count: number;
