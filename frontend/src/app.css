@@ -1594,7 +1594,8 @@ body { visibility: visible; }
 	border-bottom: none !important;
 }
 
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] {
+/* ── LCARS tab nav pills (Settings, Logs, Files — all use nav.-mb-px) ── */
+[data-scheme="lcars"] main nav.-mb-px {
 	display: flex;
 	gap: 6px;
 	margin-bottom: 0;
@@ -1602,7 +1603,7 @@ body { visibility: visible; }
 }
 
 /* [type="button"] boosts specificity above .dark\:text-gray-400.text-sm override */
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"] {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"] {
 	flex: 1;
 	border: none !important;
 	border-bottom: none !important;
@@ -1617,59 +1618,21 @@ body { visibility: visible; }
 	transition: all 0.2s;
 }
 
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"]:nth-child(2) {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"]:nth-child(2) {
 	background: #fca !important;
 }
 
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"]:nth-child(3) {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"]:nth-child(3) {
 	background: #c9c !important;
 }
 
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"]:hover {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"]:hover {
 	background: #fff !important;
 	color: #000 !important;
 }
 
 /* Active tab: gold highlight */
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"].border-primary {
-	background: #fc3 !important;
-	color: #000 !important;
-}
-
-/* ── Logs page tab bar: LCARS pills (same style as Settings tabs) ── */
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] {
-	display: flex;
-	gap: 6px;
-	margin-bottom: 0;
-	border-bottom: none !important;
-}
-
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"] {
-	flex: 1;
-	border: none !important;
-	border-bottom: none !important;
-	border-radius: 20px !important;
-	padding: 0.6rem 1.25rem !important;
-	font-weight: bold !important;
-	text-transform: uppercase !important;
-	letter-spacing: 0.1em !important;
-	text-align: center !important;
-	color: #000 !important;
-	background: #99f !important;
-	transition: all 0.2s;
-}
-
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"]:nth-child(2) {
-	background: #fca !important;
-}
-
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"]:hover {
-	background: #fff !important;
-	color: #000 !important;
-}
-
-/* Active log tab: gold highlight */
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"].border-primary {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"].border-primary {
 	background: #fc3 !important;
 	color: #000 !important;
 }
