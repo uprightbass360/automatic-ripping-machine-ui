@@ -239,10 +239,11 @@ def get_drives() -> list[SystemDrives]:
 
 
 def get_drives_with_jobs() -> list[dict]:
-    """Return drives with their current job info attached."""
+    """Return non-stale drives with their current job info attached."""
     try:
         with get_session() as session:
-            drives = list(session.scalars(select(SystemDrives)).all())
+            all_drives = list(session.scalars(select(SystemDrives)).all())
+            drives = [d for d in all_drives if not getattr(d, 'stale', False)]
             result = []
             for drive in drives:
                 drive_dict = {

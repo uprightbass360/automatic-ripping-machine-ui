@@ -139,10 +139,10 @@
 						onclick={toggleRipping}
 						disabled={togglingPause}
 						class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {$dashboard.ripping_enabled
-							? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+							? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark'
 							: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}"
 					>
-						<div class="relative h-5 w-9 rounded-full transition-colors {$dashboard.ripping_enabled ? 'bg-emerald-500' : 'bg-amber-500'}">
+						<div class="relative h-5 w-9 rounded-full transition-colors {$dashboard.ripping_enabled ? 'bg-primary' : 'bg-amber-500'}">
 							<div class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform {$dashboard.ripping_enabled ? 'translate-x-4' : 'translate-x-0.5'}"></div>
 						</div>
 						{$dashboard.ripping_enabled ? 'Auto-Start' : 'Paused'}
