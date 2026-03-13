@@ -98,6 +98,8 @@ def make_track(**overrides) -> MagicMock:
         "imdb_id": None,
         "poster_url": None,
         "video_type": None,
+        "episode_number": None,
+        "episode_name": None,
     }
     defaults.update(overrides)
     mock = MagicMock(spec=Track)
