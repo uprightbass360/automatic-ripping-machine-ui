@@ -959,6 +959,15 @@ body { visibility: visible; }
 	box-shadow: none !important;
 }
 
+/* Dialogs must be opaque — override semi-transparent panel backgrounds */
+[data-dialog] {
+	background: var(--color-surface-dark, #1e1e2e) !important;
+}
+
+[data-scheme="lcars"] [data-dialog] {
+	border: 2px solid #99f !important;
+}
+
 /* ── 3-col stat card accent colors ── */
 [data-scheme="lcars"] main .grid-cols-3 > :nth-child(2) { --lcars-accent: #c9c; }
 [data-scheme="lcars"] main .grid-cols-3 > :nth-child(3) { --lcars-accent: #fca; }
