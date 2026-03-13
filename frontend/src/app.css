@@ -1471,6 +1471,12 @@ body { visibility: visible; }
 	display: none;
 }
 
+.lcars-body {
+	padding: 1rem;
+	border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+	border-top: none;
+}
+
 .lcars-bar-top + .lcars-sidebar + .lcars-body,
 .lcars-bar-top + .lcars-body {
 	border-radius: 0 0 8px 8px;
@@ -1554,6 +1560,8 @@ body { visibility: visible; }
 [data-scheme="lcars"] .lcars-body {
 	margin-top: 5px;
 	min-width: 0;
+	padding: 0;
+	border: none;
 }
 
 /* Compact variant: smaller proportions, no sidebar */
