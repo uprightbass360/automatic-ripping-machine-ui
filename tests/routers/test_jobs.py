@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 from tests.factories import make_job, make_track
 
 
@@ -121,7 +123,7 @@ async def test_get_job_progress_music_branch(app_client):
         resp = await app_client.get("/api/jobs/7/progress")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["progress"] == 66.7
+    assert data["progress"] == pytest.approx(66.7)
     assert "encoding" in data["stage"]
     mock_music.assert_called_once_with("job_7.log", 3)
 

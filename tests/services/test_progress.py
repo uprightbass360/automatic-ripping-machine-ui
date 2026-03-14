@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import pytest
+
 from backend.services.progress import get_music_progress, get_rip_progress
 
 
@@ -26,7 +28,7 @@ class TestGetRipProgress:
         with patch("backend.services.progress.settings") as mock_settings:
             mock_settings.arm_log_path = str(tmp_path)
             result = get_rip_progress(42)
-        assert result["progress"] == 50.0
+        assert result["progress"] == pytest.approx(50.0)
         assert result["stage"] == "Title 3: title_t03.mkv"
 
     def test_missing_progress_file(self, tmp_path):
@@ -90,7 +92,7 @@ class TestGetRipProgress:
         with patch("backend.services.progress.settings") as mock_settings:
             mock_settings.arm_log_path = str(tmp_path)
             result = get_rip_progress(50)
-        assert result["progress"] == 100.0
+        assert result["progress"] == pytest.approx(100.0)
 
     def test_os_error_reading_file(self, tmp_path):
         """OSError when reading progress file returns None/None."""
@@ -117,7 +119,7 @@ class TestGetRipProgress:
         with patch("backend.services.progress.settings") as mock_settings:
             mock_settings.arm_log_path = str(tmp_path)
             result = get_rip_progress(20)
-        assert result["progress"] == 70.0
+        assert result["progress"] == pytest.approx(70.0)
 
 
 # --- get_music_progress ---
@@ -141,7 +143,7 @@ class TestGetMusicProgress:
             mock_settings.arm_log_path = str(tmp_path)
             result = get_music_progress("music.log", total_tracks=3)
         assert result["progress"] is not None
-        assert result["progress"] == round(1 / 3 * 100, 1)
+        assert result["progress"] == pytest.approx(round(1 / 3 * 100, 1))
         assert "tagged" in result["stage"]
         assert "1/3" in result["stage"]
 
@@ -156,7 +158,7 @@ class TestGetMusicProgress:
             mock_settings.arm_log_path = str(tmp_path)
             result = get_music_progress("music.log", total_tracks=5)
         assert "ripping" in result["stage"]
-        assert result["progress"] == 0.0  # 0 tagged / 5 total
+        assert result["progress"] == pytest.approx(0.0)  # 0 tagged / 5 total
 
     def test_grabbing_and_encoding_phase(self, tmp_path):
         """Log with Grabbing + Encoding returns phase='encoding'."""
@@ -170,7 +172,7 @@ class TestGetMusicProgress:
             mock_settings.arm_log_path = str(tmp_path)
             result = get_music_progress("music.log", total_tracks=2)
         assert "encoding" in result["stage"]
-        assert result["progress"] == 0.0
+        assert result["progress"] == pytest.approx(0.0)
 
     def test_empty_log(self, tmp_path):
         """Empty log file returns None/None."""
@@ -207,7 +209,7 @@ class TestGetMusicProgress:
             mock_settings.arm_log_path = str(tmp_path)
             result = get_music_progress("music.log", total_tracks=0)
         # total should be 3 (len of all_seen), 1 tagged
-        assert result["progress"] == round(1 / 3 * 100, 1)
+        assert result["progress"] == pytest.approx(round(1 / 3 * 100, 1))
         assert "1/3" in result["stage"]
 
     def test_os_error_reading_log(self, tmp_path):
