@@ -33,7 +33,6 @@
 	let editingTrackId = $state<number | null>(null);
 	let savingTrackField = $state<string | null>(null);
 	let togglingAllEnabled = $state(false);
-	let dirtyFilenames = $state<Record<number, string>>({});
 
 	let allEnabled = $derived(
 		!!job?.tracks?.length && job.tracks.every((t) => t.enabled)
@@ -60,7 +59,6 @@
 		savingTrackField = `${trackId}-${field}`;
 		try {
 			await updateTrack(job.job_id, trackId, { [field]: value });
-			delete dirtyFilenames[trackId];
 			await loadJob();
 		} catch {
 			// next refresh will reconcile
@@ -112,6 +110,22 @@
 	let hasCrcData = $derived(
 		job?.disctype === 'dvd' || !!job?.crc_id
 	);
+
+	function formatTvEpisodeName(track: { episode_number?: string | null; episode_name?: string | null }): string {
+		if (!job || !track.episode_number) return '--';
+		const pattern = job.config?.TV_TITLE_PATTERN ?? '{title} S{season}E{episode}';
+		const season = String(job.season || job.season_auto || '0').padStart(2, '0');
+		const episode = track.episode_number.padStart(2, '0');
+		const title = job.title || job.label || '';
+		const year = job.year || '';
+		return pattern
+			.replace(/\{title\}/gi, title)
+			.replace(/\{year\}/gi, year)
+			.replace(/\{season\}/gi, season)
+			.replace(/\{episode\}/gi, episode)
+			.replace(/\{episode_name\}/gi, track.episode_name || '')
+			.replace(/\{label\}/gi, job.label || '');
+	}
 
 	let hasAutoManualDiff = $derived(
 		job != null &&
@@ -497,33 +511,7 @@
 									{#if isMusicDisc}
 										<td class="max-w-[300px] truncate px-4 py-3">{track.title || track.filename || '--'}</td>
 									{:else}
-										<td class="px-4 py-3">
-											<div class="flex items-center gap-1">
-												<input
-													type="text"
-													value={dirtyFilenames[track.track_id] ?? track.filename ?? track.basename ?? ''}
-													oninput={(e) => {
-														const val = e.currentTarget.value;
-														if (val !== (track.filename ?? track.basename ?? '')) {
-															dirtyFilenames[track.track_id] = val;
-														} else {
-															delete dirtyFilenames[track.track_id];
-														}
-													}}
-													onkeydown={(e) => { if (e.key === 'Enter' && dirtyFilenames[track.track_id] != null) handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id]); }}
-													class="w-full max-w-[200px] rounded-sm border bg-transparent px-1 py-0.5 font-mono text-xs hover:border-primary/25 focus:border-primary focus:bg-primary/5 focus:outline-hidden focus:ring-1 focus:ring-primary dark:focus:bg-primary/10 {dirtyFilenames[track.track_id] != null ? 'border-amber-400 dark:border-amber-600' : 'border-transparent'}"
-												/>
-												{#if dirtyFilenames[track.track_id] != null}
-													<button
-														onclick={() => handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id])}
-														disabled={savingTrackField === `${track.track_id}-filename`}
-														class="rounded-md px-2 py-0.5 text-xs font-medium bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-50 transition-colors"
-													>
-														{savingTrackField === `${track.track_id}-filename` ? '...' : 'Save'}
-													</button>
-												{/if}
-											</div>
-										</td>
+										<td class="max-w-[250px] truncate px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{track.filename ?? track.basename ?? '--'}</td>
 									{/if}
 									{#if !isMusicDisc}
 										<td
@@ -552,10 +540,10 @@
 									<td class="px-4 py-3">
 										{#if track.episode_number}
 											<span class="font-medium text-blue-700 dark:text-blue-400">
-												S{(job.season || job.season_auto || '?').toString().padStart(2, '0')}E{track.episode_number.padStart(2, '0')}
+												{formatTvEpisodeName(track)}
 											</span>
 											{#if track.episode_name}
-												<span class="ml-1 text-gray-600 dark:text-gray-400">{track.episode_name}</span>
+												<span class="ml-1 text-xs text-gray-500 dark:text-gray-400">{track.episode_name}</span>
 											{/if}
 										{:else}
 											<span class="text-xs text-gray-400">--</span>

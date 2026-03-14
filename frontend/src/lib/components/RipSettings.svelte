@@ -168,7 +168,7 @@
 				{namingPatterns.label} Naming
 			</span>
 			<a
-				href="/settings"
+				href="/settings#ripping/naming-patterns"
 				class="text-[10px] font-medium text-primary hover:underline dark:text-primary"
 			>
 				Edit in Settings

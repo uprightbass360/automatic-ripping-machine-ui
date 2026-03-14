@@ -99,9 +99,9 @@
 			<button
 				onclick={handleFixPerms}
 				disabled={loading !== null}
-				class="{btnBase} bg-primary-light-bg text-primary-text hover:bg-primary/20 dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark dark:hover:bg-primary/20"
+				class="{btnBase} bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
 			>
-				{loading === 'fixperms' ? 'Fixing...' : 'Fix Perms'}
+				{loading === 'fixperms' ? 'Fixing...' : 'Fix Permissions'}
 			</button>
 		{/if}
 		{#if canDelete}
