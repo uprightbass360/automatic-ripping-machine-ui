@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Drive } from '$lib/types/arm';
-	import { updateDrive } from '$lib/api/drives';
+	import { updateDrive, scanDrive } from '$lib/api/drives';
 	import StatusBadge from './StatusBadge.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 
@@ -15,6 +15,22 @@
 	let editName = $state('');
 	let saving = $state(false);
 	let togglingUhd = $state(false);
+	let scanning = $state(false);
+	let scanCooldown = $state(false);
+
+	async function handleScan() {
+		if (scanning || scanCooldown) return;
+		scanning = true;
+		try {
+			await scanDrive(drive.drive_id);
+		} catch {
+			// ignore — scan is fire-and-forget
+		} finally {
+			scanning = false;
+			scanCooldown = true;
+			setTimeout(() => (scanCooldown = false), 10000);
+		}
+	}
 
 	function startEdit() {
 		editName = drive.name || '';
@@ -133,11 +149,23 @@
 		{/if}
 	</div>
 
-	{#if drive.current_job}
-		<div class="mt-3 border-t border-primary/15 pt-3 dark:border-primary/20">
+	<div class="mt-3 flex items-center gap-2 border-t border-primary/15 pt-3 dark:border-primary/20">
+		<button
+			onclick={handleScan}
+			disabled={scanning || scanCooldown}
+			class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors
+				{scanning ? 'bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}
+				disabled:opacity-50 disabled:cursor-not-allowed"
+		>
+			<svg class="h-4 w-4 {scanning ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+			</svg>
+			{scanning ? 'Scanning...' : scanCooldown ? 'Scan Sent' : 'Force Scan'}
+		</button>
+		{#if drive.current_job}
 			<a href="/jobs/{drive.current_job.job_id}" class="text-sm text-primary-text hover:underline dark:text-primary-text-dark">
 				{drive.current_job.title || drive.current_job.label || 'Active Job'}
 			</a>
-		</div>
-	{/if}
+		{/if}
+	</div>
 </div>
