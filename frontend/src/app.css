@@ -2276,10 +2276,16 @@ body { visibility: visible; }
 	box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
 }
 
-/* Heavy Card Borders + Offset Shadows */
-[data-scheme="hollywood-video-v2"] section > div[class*="border"] {
-	border-color: #000 !important;
+/* Heavy Card Borders + Offset Shadows — exempt [data-diag] diagnostic panel */
+[data-scheme="hollywood-video-v2"] section > div[class*="border"]:not([data-diag]) {
+	border-color: #D90B1C !important;
 	box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
+}
+
+/* HR separators — red accent line */
+[data-scheme="hollywood-video-v2"] hr {
+	border-color: #D90B1C !important;
+	opacity: 0.5;
 }
 
 /* Review Panel — purple accent */
