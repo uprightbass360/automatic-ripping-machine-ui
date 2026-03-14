@@ -1119,6 +1119,7 @@
 
 		<!-- Transcoding Tab -->
 		{#if activeTab === 'transcoding'}
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcoding</h2>
 			<div class="rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
 				These settings configure the <strong>dedicated transcoder service</strong>, a separate GPU-accelerated container that handles all transcoding. ARM rips discs and notifies this service to transcode.
 			</div>
@@ -1783,6 +1784,7 @@
 				<div class="py-8 text-center text-gray-400">Loading system info...</div>
 			{:else if systemInfo}
 				<div class="space-y-6">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">System</h2>
 					<!-- Versions -->
 					<section>
 						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
@@ -1934,10 +1936,11 @@
 
 		<!-- Appearance Tab -->
 		{#if activeTab === 'appearance'}
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Appearance</h2>
 			<section class="space-y-6">
 				<!-- Color Scheme -->
 				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-					<h2 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Color Scheme</h2>
+					<h3 class="mb-1 text-base font-semibold text-gray-900 dark:text-white">Color Scheme</h3>
 					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Choose an accent color for buttons, links, and highlights throughout the UI.</p>
 					<div class="flex flex-wrap gap-3">
 						{#each COLOR_SCHEMES as scheme}
@@ -1960,7 +1963,7 @@
 				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 					<div class="flex items-center justify-between">
 						<div>
-							<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Dark Mode</h2>
+							<h3 class="text-base font-semibold text-gray-900 dark:text-white">Dark Mode</h3>
 							{#if $schemeLocksMode}
 								<p class="text-sm text-gray-500 dark:text-gray-400">Locked by theme</p>
 							{:else}
@@ -2002,6 +2005,7 @@
 		{/if}
 
 		{#if activeTab === 'drives'}
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
 			<section class="space-y-6">
 				{#if $driveError}
 					<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
@@ -2018,7 +2022,8 @@
 				{/if}
 
 				<!-- Diagnostics -->
-				<div data-diag class="border-t border-primary/15 pt-4 dark:border-primary/20">
+				<hr class="my-2 opacity-20" />
+				<div data-diag>
 					<div class="flex items-center gap-3">
 						<button
 							onclick={runDiagnostic}
