@@ -50,7 +50,7 @@ def test_retranscode_info_basic():
     job = make_job(
         job_id=1, title="Matrix", year="1999", disctype="dvd",
         video_type="movie", raw_path="/raw/Matrix",
-        poster_url="http://poster.jpg", transcode_overrides=None,
+        poster_url="https://poster.jpg", transcode_overrides=None,
         multi_title=False,
     )
     job.tracks = []

@@ -241,7 +241,7 @@ def _system_info_patches(arm_version_resp, tc_health_resp=None):
             patch("backend.routers.settings.arm_client.get_paths", new_callable=AsyncMock, return_value=[]),
             patch("backend.routers.settings.arm_db.get_drives", return_value=[]),
             patch("backend.routers.settings.arm_db.is_available", return_value=True),
-            patch("backend.routers.settings.app_settings", arm_db_path="/tmp/arm.db", arm_url="http://arm:8080", transcoder_url="http://tc:5000"),
+            patch("backend.routers.settings.app_settings", arm_db_path="/home/arm/db/arm.db", arm_url="https://arm:8080", transcoder_url="https://tc:5000"),
             patch("backend.routers.settings.os.path.isfile", return_value=False),
         ):
             yield

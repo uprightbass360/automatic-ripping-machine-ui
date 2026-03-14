@@ -83,6 +83,9 @@ export interface SystemInfoData {
 		path: string;
 		size_bytes: number | null;
 		available: boolean;
+		migration_current: string | null;
+		migration_head: string | null;
+		up_to_date: boolean | null;
 	};
 	drives: Array<{
 		name: string | null;
