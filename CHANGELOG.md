@@ -1,5 +1,58 @@
 # Changelog
 
+## [13.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v12.0.0...v13.0.0) (2026-03-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* version alignment for v12 release
+
+### Features
+
+* abcde.conf editor, music file browser, webhook test fallback ([383d03e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/383d03ebbf08b47fd3bb9f228005634bfc2efe27))
+* add AUDIO_FORMAT to rip settings UI ([abcfcfd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/abcfcfd4caaeb0b5b8dca4a914586f66113a95da))
+* add Force Scan button and udev diagnostic panel on Drives tab ([0130fa3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0130fa34db67acf5ba1ef81334f39f6897bb0db5))
+* add Force Scan button on drive cards ([d1ecc13](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d1ecc136acba6e9adeebcce4c91918fa37e3a9fa))
+* add per-job transcoder log view on job detail page ([f9eb981](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f9eb98104d587ea46686328fcac49d98b54740bf))
+* add track update API, multi-title backend proxy, and supporting changes ([cea5a74](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cea5a74081f0612b9fa8feb45bb6fa2791894a1e))
+* layout nav, dashboard idle state, LCARS section headers ([d2089e9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d2089e9a10f3b48f00bb83f1265c3a438ac2e80b))
+* multi-title disc support — UI + backend proxy ([8ee4bae](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8ee4baec8f02e43c80c3dcdf64ff4d5d84ab3190))
+* music track display, disc info, collapsible debug, transcoder config ([d02fb70](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d02fb703ab588f72f33c108f1af4ea717bde943c))
+* notifications page with dismiss support ([0ed3e77](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0ed3e778f2466e1df7ad4f32549fd30c3dec7aea))
+* polish TVDB match panel and job detail UX ([d67a6fa](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d67a6fad6513ce560ac8f1904f17177d99a1eec2))
+* replace track enabled buttons with checkboxes and remove Edit column ([77cd4c6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/77cd4c67856853f6f6b5cb99f4d597c86bef56c7))
+* settings deep linking, TVDB config, endpoint popovers, UX polish ([5332a84](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5332a84a7e4ad421e1ef99a21d8a0321b2bf85c6))
+* show DB migration status and fix Hollywood theme borders ([07a47a4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/07a47a423040ffcb0b7de02cc5c9a0036e9d6255))
+* show disc number on dashboard cards and table view ([fb2800e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fb2800e72a504f910d6fd13d1916deda72277c6a))
+* stale drive removal and diagnostic panel improvements ([b7e9623](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b7e96237665b76ef2618a7d60477f60b8c8ed0f1))
+* structured diagnostic panel with table layout ([216398f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/216398f9d1524b50226ba05ab825b0cf407ff7b8))
+* TVDB multi-season matching panel and episode columns ([de0ddaa](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/de0ddaae62047b1d05f25e3cd9327169185898d3))
+* UI polish — status labels, waiting_transcode, component fixes ([c257cd5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c257cd55531843f15ae29628b8d6d14e809acfd5))
+
+
+### Bug Fixes
+
+* add abcde music progress parsing to UI progress endpoint ([828f6fc](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/828f6fc4b792b9dc9824cc4db4e1d39fc018fdce))
+* add border and padding to lcars-body for non-LCARS themes ([4426b4f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4426b4f72a9365f68c8d4436ca58fab896513269))
+* add season/episode/artist/album columns to Job model ([119862a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/119862a60d2fa81c6efcf35a0479c786ee7c41b1))
+* exclude stale drives from drives_online count and fix track mock ([0fbcf0e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0fbcf0eccaa91a8f3d45b0aa9fecd9fd776b7728))
+* Hollywood theme panel borders, hr styling, and tab headings ([9eabe3b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9eabe3b2c456ca6716fa27f3f53f9d273075f056))
+* make confirm dialog opaque in themes with semi-transparent surfaces ([64e0cad](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/64e0cad05af282e498f2ca8320b071895c83fd3a))
+* resolve SonarCloud issues and frontend type errors ([3f69246](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3f6924683d254c73fd77ad2da6f7874c388ee670))
+* resolve test failures and add coverage for abcde config endpoints ([27b75c3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/27b75c3e8f92589a9cab629a1bcd90d3db51a85f))
+* restore VERSION to 12.0.0 (already released) ([478520e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/478520e96b5d492edec380397a0efb59aab37728))
+* support ARM_LOGS_PATH override for production log mount ([3f4aa52](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3f4aa52e3534a7bdb6a16e90b192e62841c953e0))
+* track enabled column + countdown timer start time ([a3ef25d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a3ef25df473da42712588f021109ab7ae6dbf077))
+* TVDB panel delta display and season=0 handling ([6e00596](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6e00596174046f5370d2bb4d1c5396c6e17df0e5))
+* use primary color tokens for files page warning banner ([2ae53ce](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2ae53ce88a59c2b194da0c0e8f0b5430897e24fb))
+* use primary colors for toggle, fix LCARS tab styling, filter stale drives ([b99f8db](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b99f8db83417c2120a236d919ef848331e04824c))
+* zero-track rip guard, error display, progress fallback to no_of_titles ([fea1bdf](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fea1bdf66b112d273252d2970b5144cbb3be9fc2))
+
+
+### Miscellaneous Chores
+
+* set pre-release version for 12.0.0 ([abbcd9b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/abbcd9b34f7db27116295d8c40ca3d91aeaa1c61))
+
 ## [12.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v11.13.3...v12.0.0) (2026-03-09)
 
 
