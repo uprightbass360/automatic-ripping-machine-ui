@@ -14,3 +14,7 @@ export function updateDrive(
 		body: JSON.stringify(data)
 	});
 }
+
+export function scanDrive(driveId: number): Promise<{ success: boolean; drive_id: number; devname: string }> {
+	return apiFetch(`/api/drives/${driveId}/scan`, { method: 'POST' });
+}
