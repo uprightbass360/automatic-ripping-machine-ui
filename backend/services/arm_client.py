@@ -196,6 +196,11 @@ async def scan_drive(drive_id: int) -> dict[str, Any] | None:
     return await _request("POST", f"/api/v1/drives/{drive_id}/scan")
 
 
+async def drive_diagnostic() -> dict[str, Any] | None:
+    """Run udev and device diagnostics. Returns None if ARM is unreachable."""
+    return await _request("GET", "/api/v1/drives/diagnostic")
+
+
 async def dismiss_notification(notify_id: int) -> dict[str, Any] | None:
     """Mark a notification as read. Returns None if ARM is unreachable."""
     return await _request("PATCH", f"/api/v1/notifications/{notify_id}")

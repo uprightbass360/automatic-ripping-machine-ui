@@ -6,7 +6,8 @@
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES, schemeLocksMode } from '$lib/stores/colorScheme';
 	import { createPollingStore } from '$lib/stores/polling';
-	import { fetchDrives } from '$lib/api/drives';
+	import { fetchDrives, fetchDriveDiagnostic } from '$lib/api/drives';
+	import type { DiagnosticResult } from '$lib/api/drives';
 	import DriveCard from '$lib/components/DriveCard.svelte';
 
 	let settings = $state<SettingsData | null>(null);
@@ -45,6 +46,25 @@
 	// --- Drives polling store ---
 	const drives = createPollingStore(fetchDrives, [] as Drive[], 10000);
 	const driveError = drives.error;
+
+	// --- Drive diagnostics ---
+	let diagRunning = $state(false);
+	let diagResult = $state<DiagnosticResult | null>(null);
+	let diagError = $state<string | null>(null);
+
+	async function runDiagnostic() {
+		if (diagRunning) return;
+		diagRunning = true;
+		diagError = null;
+		try {
+			diagResult = await fetchDriveDiagnostic();
+		} catch (e) {
+			diagError = e instanceof Error ? e.message : 'Diagnostic failed';
+			diagResult = null;
+		} finally {
+			diagRunning = false;
+		}
+	}
 
 	// --- Search/filter ---
 	let armSearch = $state('');
@@ -1996,6 +2016,123 @@
 						{/each}
 					</div>
 				{/if}
+
+				<!-- Diagnostics -->
+				<div class="border-t border-primary/15 pt-4 dark:border-primary/20">
+					<div class="flex items-center gap-3">
+						<button
+							onclick={runDiagnostic}
+							disabled={diagRunning}
+							class="inline-flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-200 disabled:opacity-50 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+						>
+							<svg class="h-4 w-4 {diagRunning ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+							</svg>
+							{diagRunning ? 'Running...' : 'Check Udev & Drives'}
+						</button>
+						{#if diagError}
+							<span class="text-sm text-red-600 dark:text-red-400">{diagError}</span>
+						{/if}
+					</div>
+
+					{#if diagResult}
+						<div class="mt-4 space-y-3">
+							<!-- Global issues -->
+							{#if diagResult.issues.length > 0}
+								<div class="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+									<p class="mb-1 text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">System Issues</p>
+									{#each diagResult.issues as issue}
+										<p class="text-sm text-red-700 dark:text-red-300">{issue}</p>
+									{/each}
+								</div>
+							{/if}
+
+							<!-- Global status -->
+							<div class="flex flex-wrap gap-3 text-sm">
+								<span class="inline-flex items-center gap-1.5">
+									<div class="h-2 w-2 rounded-full {diagResult.udevd_running ? 'bg-green-500' : 'bg-red-500'}"></div>
+									<span class="text-gray-700 dark:text-gray-300">udevd {diagResult.udevd_running ? 'running' : 'not running'}</span>
+								</span>
+								<span class="text-gray-500 dark:text-gray-400">
+									Kernel sees: {diagResult.kernel_drives.length > 0 ? diagResult.kernel_drives.join(', ') : 'none'}
+								</span>
+							</div>
+
+							<!-- Per-drive diagnostics -->
+							{#each diagResult.drives as diag}
+								<div class="rounded-lg border p-3 {diag.issues.length > 0
+									? 'border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-900/10'
+									: 'border-green-200 bg-green-50/50 dark:border-green-800/50 dark:bg-green-900/10'}">
+									<div class="flex items-center justify-between">
+										<span class="font-mono text-sm font-semibold text-gray-900 dark:text-white">/dev/{diag.devname}</span>
+										<div class="flex items-center gap-2 text-xs">
+											{#if diag.arm_processing}
+												<span class="rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Processing</span>
+											{/if}
+											<span class="rounded-full px-2 py-0.5 font-medium
+												{diag.tray_status === 4 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+												: diag.tray_status === 1 ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+												: diag.tray_status === 2 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+												: diag.tray_status === 3 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+												: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}">
+												{diag.tray_status_name ?? 'unknown'}
+											</span>
+										</div>
+									</div>
+
+									<div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+										<span class="{diag.dev_node_exists ? '' : 'text-red-600 dark:text-red-400'}">
+											dev: {diag.dev_node_exists ? 'yes' : 'MISSING'}
+										</span>
+										<span class="{diag.sysfs_exists ? '' : 'text-red-600 dark:text-red-400'}">
+											sysfs: {diag.sysfs_exists ? 'yes' : 'MISSING'}
+										</span>
+										<span class="{diag.in_kernel_cdrom ? '' : 'text-amber-600 dark:text-amber-400'}">
+											kernel: {diag.in_kernel_cdrom ? 'yes' : 'no'}
+										</span>
+										<span class="{diag.in_database ? '' : 'text-amber-600 dark:text-amber-400'}">
+											DB: {diag.in_database ? 'yes' : 'no'}
+										</span>
+										{#if diag.major_minor}
+											<span>maj:min {diag.major_minor}</span>
+										{/if}
+										{#if diag.udevadm.ID_BUS}
+											<span>bus: {diag.udevadm.ID_BUS}</span>
+										{/if}
+									</div>
+
+									{#if Object.keys(diag.udevadm).length > 0}
+										<div class="mt-2 flex flex-wrap gap-1.5">
+											{#if diag.udevadm.ID_CDROM_MEDIA === '1'}
+												<span class="rounded-sm bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">MEDIA PRESENT</span>
+											{/if}
+											{#if diag.udevadm.ID_CDROM_MEDIA_DVD === '1'}
+												<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary-text dark:bg-primary/15 dark:text-primary-text-dark">DVD</span>
+											{/if}
+											{#if diag.udevadm.ID_CDROM_MEDIA_BD === '1'}
+												<span class="rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">BD</span>
+											{/if}
+											{#if diag.udevadm.ID_CDROM_MEDIA_CD === '1'}
+												<span class="rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">CD</span>
+											{/if}
+											{#if diag.udevadm.ID_FS_TYPE}
+												<span class="rounded-sm bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">FS: {diag.udevadm.ID_FS_TYPE}</span>
+											{/if}
+										</div>
+									{/if}
+
+									{#if diag.issues.length > 0}
+										<div class="mt-2 space-y-0.5">
+											{#each diag.issues as issue}
+												<p class="text-xs text-amber-700 dark:text-amber-400">{issue}</p>
+											{/each}
+										</div>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</div>
 			</section>
 		{/if}
 	{/if}
