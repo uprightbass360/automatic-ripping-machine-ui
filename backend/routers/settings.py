@@ -96,6 +96,28 @@ async def update_arm_config(body: ArmConfigUpdate):
     return result
 
 
+class AbcdeConfigUpdate(BaseModel):
+    content: str
+
+
+@router.get("/settings/abcde")
+async def get_abcde_config():
+    result = await arm_client.get_abcde_config()
+    if result is None:
+        raise HTTPException(status_code=502, detail="ARM service unreachable")
+    return result
+
+
+@router.put("/settings/abcde", responses={400: {"description": "Invalid request"}, 502: {"description": "ARM service unreachable"}})
+async def update_abcde_config(body: AbcdeConfigUpdate):
+    result = await arm_client.update_abcde_config(body.content)
+    if result is None:
+        raise HTTPException(status_code=502, detail="ARM service unreachable")
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Unknown error"))
+    return result
+
+
 @router.get("/settings/test-metadata")
 async def test_metadata_key():
     """Test the currently saved metadata API key (proxied through ARM)."""
@@ -161,6 +183,11 @@ async def get_system_info():
     ui_version = await asyncio.to_thread(_read_version)
     tc_version = tc_health.get("version") if tc_health else None
 
+    # DB migration info from ARM
+    db_version = arm_versions.get("db_version", "unknown") if arm_versions else "offline"
+    db_head = arm_versions.get("db_head", "unknown") if arm_versions else "offline"
+    db_up_to_date = db_version == db_head if (db_version not in ("unknown", "offline") and db_head not in ("unknown", "offline")) else None
+
     versions = {
         "arm": arm_versions.get("arm_version", "unknown") if arm_versions else "offline",
         "makemkv": arm_versions.get("makemkv_version", "unknown") if arm_versions else "offline",
@@ -189,6 +216,9 @@ async def get_system_info():
             "path": db_path,
             "size_bytes": os.path.getsize(db_path) if os.path.isfile(db_path) else None,
             "available": arm_db.is_available(),
+            "migration_current": db_version,
+            "migration_head": db_head,
+            "up_to_date": db_up_to_date,
         },
         "drives": drive_list,
     }

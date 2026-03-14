@@ -52,7 +52,7 @@ def get_job(job_id: int):
     if not job:
         raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
 
-    tracks = [TrackSchema.model_validate(t) for t in (job.tracks or [])]
+    tracks = [TrackSchema.from_orm_compat(t) for t in (job.tracks or [])]
 
     job_data = JobSchema.model_validate(job).model_dump()
     return JobDetailSchema(**job_data, tracks=tracks, config=config)
@@ -63,8 +63,18 @@ def get_job_progress(job_id: int):
     job = arm_db.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
-    result = progress.get_rip_progress(job.job_id)
-    result.update(arm_db.get_job_track_counts(job_id))
+    counts = arm_db.get_job_track_counts(job_id)
+    if getattr(job, "disctype", None) == "music":
+        result = progress.get_music_progress(
+            getattr(job, "logfile", None),
+            counts.get("tracks_total", 0),
+        )
+    else:
+        result = progress.get_rip_progress(job.job_id)
+    result.update(counts)
+    # Include no_of_titles so the frontend can show title count even before
+    # Track rows are created in the DB (early scan/decrypt phase).
+    result["no_of_titles"] = getattr(job, "no_of_titles", None)
     return result
 
 
@@ -159,6 +169,69 @@ async def get_music_detail(release_id: str):
     return result
 
 
+@router.post("/jobs/{job_id}/multi-title", responses=_404_502_ARM)
+async def toggle_multi_title(job_id: int, request: Request):
+    """Toggle the multi_title flag on a job."""
+    body = await request.json()
+    result = await arm_client.toggle_multi_title(job_id, body)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success"):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
+@router.put("/jobs/{job_id}/tracks/{track_id}/title", responses=_404_502_ARM)
+async def update_track_title(job_id: int, track_id: int, request: Request):
+    """Set per-track title metadata for a multi-title disc."""
+    body = await request.json()
+    result = await arm_client.update_track_title(job_id, track_id, body)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success"):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
+@router.delete("/jobs/{job_id}/tracks/{track_id}/title", responses=_404_502_ARM)
+async def clear_track_title(job_id: int, track_id: int):
+    """Clear per-track title metadata (revert to job-level inheritance)."""
+    result = await arm_client.clear_track_title(job_id, track_id)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success"):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
+@router.post("/jobs/{job_id}/tvdb-match", responses=_404_502_ARM)
+async def tvdb_match(job_id: int, request: Request):
+    """Run TVDB episode matching for a job (proxied to ARM)."""
+    body = await request.json()
+    result = await arm_client.tvdb_match(job_id, body)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success"):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
+@router.get("/jobs/{job_id}/tvdb-episodes", responses=_404_502_ARM)
+async def tvdb_episodes(job_id: int, season: int = Query(1, ge=1)):
+    """Fetch TVDB episodes for a job's series (proxied to ARM)."""
+    result = await arm_client.tvdb_episodes(job_id, season)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success", True):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
 @router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}})
 async def update_transcode_config(job_id: int, request: Request):
     """Set per-job transcode override settings."""
@@ -172,6 +245,21 @@ async def update_transcode_config(job_id: int, request: Request):
     if result is None:
         raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
     return {"success": True, "overrides": result}
+
+
+@router.patch("/jobs/{job_id}/tracks/{track_id}", responses={400: {"description": "Invalid request"}, 404: {"description": "Track not found"}})
+async def update_track_fields(job_id: int, track_id: int, request: Request):
+    """Update editable fields (enabled, filename, ripped) on a track."""
+    body = await request.json()
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+    try:
+        result = arm_db.update_track_fields(job_id, track_id, body)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if result is None:
+        raise HTTPException(status_code=404, detail="Track not found")
+    return {"success": True, "updated": result}
 
 
 @router.post("/jobs/{job_id}/retranscode", responses={404: {"description": "Job not found or not a video disc"}, 503: {"description": "Transcoder unavailable"}})

@@ -35,6 +35,7 @@
 
 	const navItems = [
 		{ href: '/', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+		{ href: '/notifications', label: 'Notifications', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
 		{ href: '/logs', label: 'Logs', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
 		{ href: '/files', label: 'Files', icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
 		{ href: '/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
@@ -69,6 +70,9 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
 						</svg>
 						{item.label}
+						{#if item.href === '/notifications' && $dashboard.notification_count > 0}
+							<span class="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">{$dashboard.notification_count}</span>
+						{/if}
 					</a>
 				{/each}
 			</nav>
@@ -95,62 +99,37 @@
 			<div class="hidden lg:flex items-center gap-3 text-sm">
 				<!-- Service health dots -->
 				<div class="flex items-center gap-3">
-					<div class="flex items-center gap-1.5">
+					<a href="/settings#system" class="flex items-center gap-1.5 hover:opacity-75 transition-opacity">
 						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.arm_online ? 'bg-green-500' : 'bg-red-500'}"></div>
 						<span class="text-gray-700 dark:text-gray-200">ARM</span>
-					</div>
-					<div class="flex items-center gap-1.5">
+					</a>
+					<a href="/settings#system" class="flex items-center gap-1.5 hover:opacity-75 transition-opacity">
 						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.db_available ? 'bg-green-500' : 'bg-yellow-500'}"></div>
 						<span class="text-gray-700 dark:text-gray-200">DB</span>
-					</div>
-					<div class="flex items-center gap-1.5">
+					</a>
+					<a href="/settings#system" class="flex items-center gap-1.5 hover:opacity-75 transition-opacity">
 						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.transcoder_online && ($dashboard.transcoder_stats?.worker_running ?? true) ? 'bg-green-500' : $dashboard.transcoder_online ? 'bg-yellow-500' : 'bg-gray-400'}"></div>
 						<span class="text-gray-700 dark:text-gray-200">Transcode</span>
-					</div>
+					</a>
 				</div>
 				<!-- Divider -->
 				<div class="h-6 w-px bg-black dark:bg-white/30"></div>
-				<!-- Activity counters (mini table) -->
-				<table class="border-separate border-spacing-x-3 border-spacing-y-0 text-xs">
-					<thead>
-						<tr class="text-gray-600 dark:text-gray-300">
-							<th class="font-medium">Rips</th>
-							<th class="font-medium">Transcodes</th>
-							<th class="font-medium">Drives</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr class="text-center">
-							<td class="font-bold text-gray-900 dark:text-white">{$dashboard.db_available ? $dashboard.active_jobs.length : '--'}</td>
-							<td class="font-bold text-gray-900 dark:text-white">{$dashboard.transcoder_online ? $dashboard.active_transcodes.length : '--'}</td>
-							<td class="font-bold text-gray-900 dark:text-white">{$dashboard.db_available ? $dashboard.drives_online : '--'}</td>
-						</tr>
-					</tbody>
-				</table>
-				<!-- Queue breakdown (if transcoder online) -->
-				{#if $dashboard.transcoder_online}
-					<div class="h-6 w-px bg-black dark:bg-white/30"></div>
-					<table class="border-separate border-spacing-x-2 border-spacing-y-0 text-xs">
-						<thead>
-							<tr class="text-gray-600 dark:text-gray-300">
-								<th class="font-medium">Pend</th>
-								<th class="font-medium">Proc</th>
-								<th class="font-medium">Done</th>
-								<th class="font-medium">Fail</th>
-								<th class="font-medium">Canc</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr class="text-center">
-								<td class="font-semibold text-yellow-600 dark:text-yellow-400">{$dashboard.transcoder_stats?.pending ?? 0}</td>
-								<td class="font-semibold text-blue-600 dark:text-blue-400">{$dashboard.transcoder_stats?.processing ?? 0}</td>
-								<td class="font-semibold text-green-600 dark:text-green-400">{$dashboard.transcoder_stats?.completed ?? 0}</td>
-								<td class="font-semibold text-red-600 dark:text-red-400">{$dashboard.transcoder_stats?.failed ?? 0}</td>
-								<td class="font-semibold text-gray-600 dark:text-gray-400">{$dashboard.transcoder_stats?.cancelled ?? 0}</td>
-							</tr>
-						</tbody>
-					</table>
-				{/if}
+				<!-- Live activity -->
+				<div class="flex items-center gap-3 text-xs">
+					<a href="/settings#drives" class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">{$dashboard.db_available ? $dashboard.drives_online : '--'} drive{$dashboard.drives_online !== 1 ? 's' : ''}</a>
+					{#if $dashboard.active_jobs.length > 0}
+						<span class="font-semibold text-blue-600 dark:text-blue-400">{$dashboard.active_jobs.length} ripping</span>
+					{/if}
+					{#if $dashboard.active_transcodes.length > 0}
+						<span class="font-semibold text-indigo-600 dark:text-indigo-400">{$dashboard.active_transcodes.length} transcoding</span>
+					{/if}
+					{#if $dashboard.transcoder_online && (Number($dashboard.transcoder_stats?.pending) || 0) > 0}
+						<span class="font-semibold text-yellow-600 dark:text-yellow-400">{$dashboard.transcoder_stats?.pending} queued</span>
+					{/if}
+					{#if $dashboard.notification_count > 0}
+						<a href="/notifications" class="font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300">{$dashboard.notification_count} notification{$dashboard.notification_count !== 1 ? 's' : ''}</a>
+					{/if}
+				</div>
 			</div>
 
 			<div class="flex items-center gap-4 ml-auto">
@@ -160,10 +139,10 @@
 						onclick={toggleRipping}
 						disabled={togglingPause}
 						class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {$dashboard.ripping_enabled
-							? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+							? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark'
 							: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}"
 					>
-						<div class="relative h-5 w-9 rounded-full transition-colors {$dashboard.ripping_enabled ? 'bg-emerald-500' : 'bg-amber-500'}">
+						<div class="relative h-5 w-9 rounded-full transition-colors {$dashboard.ripping_enabled ? 'bg-primary' : 'bg-amber-500'}">
 							<div class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform {$dashboard.ripping_enabled ? 'translate-x-4' : 'translate-x-0.5'}"></div>
 						</div>
 						{$dashboard.ripping_enabled ? 'Auto-Start' : 'Paused'}
@@ -214,6 +193,9 @@
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
 								</svg>
 								{item.label}
+								{#if item.href === '/notifications' && $dashboard.notification_count > 0}
+									<span class="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">{$dashboard.notification_count}</span>
+								{/if}
 							</a>
 						{/each}
 					</nav>

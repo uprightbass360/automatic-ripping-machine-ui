@@ -41,6 +41,18 @@ _JOB_DEFAULTS: dict = {
     "transcode_path": "/home/arm/transcode",
     "ejected": False,
     "pid": 12345,
+    "artist": None,
+    "artist_auto": None,
+    "artist_manual": None,
+    "album": None,
+    "album_auto": None,
+    "album_manual": None,
+    "season": None,
+    "season_auto": None,
+    "season_manual": None,
+    "episode": None,
+    "episode_auto": None,
+    "episode_manual": None,
 }
 
 
@@ -84,7 +96,7 @@ def make_track(**overrides) -> MagicMock:
         "length": 5400,
         "aspect_ratio": "16:9",
         "fps": 23.976,
-        "main_feature": True,
+        "enabled": True,
         "basename": "title_t01",
         "filename": "title_t01.mkv",
         "orig_filename": "title_t01.mkv",
@@ -93,6 +105,13 @@ def make_track(**overrides) -> MagicMock:
         "status": "success",
         "error": None,
         "source": "/dev/sr0",
+        "title": None,
+        "year": None,
+        "imdb_id": None,
+        "poster_url": None,
+        "video_type": None,
+        "episode_number": None,
+        "episode_name": None,
     }
     defaults.update(overrides)
     mock = MagicMock(spec=Track)

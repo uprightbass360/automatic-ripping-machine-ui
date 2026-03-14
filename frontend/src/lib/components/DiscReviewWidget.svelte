@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Job, JobDetail } from '$lib/types/arm';
-	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle } from '$lib/api/jobs';
+	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle, toggleMultiTitle, updateTrack } from '$lib/api/jobs';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
@@ -11,6 +11,7 @@
 	import CrcLookup from './CrcLookup.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import InlineLogFeed from './InlineLogFeed.svelte';
+	import TrackTitleSearch from './TrackTitleSearch.svelte';
 
 	interface Props {
 		job: Job;
@@ -33,6 +34,47 @@
 	let showTranscodeSettings = $state(false);
 	let cancelling = $state(false);
 	let starting = $state(false);
+	let togglingMultiTitle = $state(false);
+	let editingTrackId = $state<number | null>(null);
+	let savingTrackField = $state<string | null>(null);
+	let togglingAllEnabled = $state(false);
+	let dirtyFilenames = $state<Record<number, string>>({});
+	let errorMessage = $state<string | null>(null);
+
+	let allEnabled = $derived(
+		!!detail?.tracks?.length && detail.tracks.every((t) => t.enabled)
+	);
+
+	async function handleToggleAllEnabled() {
+		if (!detail?.tracks?.length) return;
+		togglingAllEnabled = true;
+		errorMessage = null;
+		const newVal = !allEnabled;
+		try {
+			await Promise.all(
+				detail.tracks.map((t) => updateTrack(job.job_id, t.track_id, { enabled: newVal }))
+			);
+			loadDetail();
+		} catch (e) {
+			errorMessage = `Failed to update tracks: ${e instanceof Error ? e.message : 'Unknown error'}`;
+		} finally {
+			togglingAllEnabled = false;
+		}
+	}
+
+	async function handleTrackFieldUpdate(trackId: number, field: string, value: boolean | string) {
+		savingTrackField = `${trackId}-${field}`;
+		errorMessage = null;
+		try {
+			await updateTrack(job.job_id, trackId, { [field]: value });
+			delete dirtyFilenames[trackId];
+			loadDetail();
+		} catch (e) {
+			errorMessage = `Failed to update track: ${e instanceof Error ? e.message : 'Unknown error'}`;
+		} finally {
+			savingTrackField = null;
+		}
+	}
 
 	// Editable metadata in Disc Info panel
 	let infoTitle = $state(job.title || '');
@@ -153,15 +195,23 @@
 	}
 
 	async function handleStart() {
+		errorMessage = null;
+		// Prevent starting with zero tracks enabled (video discs only)
+		if (detail?.tracks?.length && detail.tracks.every((t) => !t.enabled)) {
+			errorMessage = 'Cannot start rip — at least one track must be enabled.';
+			return;
+		}
 		starting = true;
 		try {
 			await startWaitingJob(job.job_id);
-		} catch {
-			// next refresh will reconcile
+		} catch (e) {
+			errorMessage = `Failed to start job: ${e instanceof Error ? e.message : 'Unknown error'}`;
 		} finally {
 			starting = false;
-			ondismiss?.();
-			onrefresh?.();
+			if (!errorMessage) {
+				ondismiss?.();
+				onrefresh?.();
+			}
 		}
 	}
 
@@ -176,6 +226,25 @@
 			ondismiss?.();
 			onrefresh?.();
 		}
+	}
+
+	async function handleToggleMultiTitle() {
+		togglingMultiTitle = true;
+		try {
+			await toggleMultiTitle(job.job_id, !job.multi_title);
+			onrefresh?.();
+			loadDetail();
+		} catch {
+			// next refresh will reconcile
+		} finally {
+			togglingMultiTitle = false;
+		}
+	}
+
+	function handleTrackTitleApply() {
+		editingTrackId = null;
+		onrefresh?.();
+		loadDetail();
 	}
 
 	function handleCrcApply() {
@@ -231,9 +300,9 @@
 			<div class="h-2 w-2 animate-pulse rounded-full bg-white/80"></div>
 			<span class="text-sm font-semibold text-on-primary">Waiting for Review</span>
 		</div>
-		{#if job.start_time}
+		{#if job.wait_start_time || job.start_time}
 			<CountdownTimer
-			startTime={job.start_time}
+			startTime={job.wait_start_time ?? job.start_time ?? ''}
 			waitSeconds={waitTime}
 			{paused}
 			inverted
@@ -281,6 +350,9 @@
 						<span class="font-normal text-gray-500 dark:text-gray-400">({job.year})</span>
 					{/if}
 				</h3>
+				{#if job.multi_title}
+					<span class="shrink-0 rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
+				{/if}
 				{#if job.imdb_id}
 					<a
 						href="https://www.imdb.com/title/{job.imdb_id}/"
@@ -308,6 +380,14 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Error banner -->
+	{#if errorMessage}
+		<div class="flex items-center gap-2 border-t border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+			<span class="flex-1">{errorMessage}</span>
+			<button onclick={() => (errorMessage = null)} class="shrink-0 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">&times;</button>
+		</div>
+	{/if}
 
 	<!-- Action buttons -->
 	<div class="flex items-center gap-1.5 border-t border-primary/20 bg-primary-light-bg/50 px-4 py-2 dark:border-primary/20 dark:bg-primary-light-bg-dark/10">
@@ -487,7 +567,7 @@
 					<!-- Disc details -->
 					<hr class="border-primary/10 dark:border-primary/15" />
 					<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Disc Details</h4>
-					<div class="grid gap-3 text-sm {isMusic ? 'grid-cols-3' : 'grid-cols-4'}">
+					<div class="grid gap-3 text-sm {isMusic ? 'grid-cols-3' : 'grid-cols-5'}">
 						<label>
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc Type</span>
 							<select bind:value={infoDisctype} onchange={() => { touched.disctype = true; }} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white">
@@ -498,6 +578,20 @@
 								<option value="data">Data</option>
 							</select>
 						</label>
+						{#if !isMusic}
+							<label>
+								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title Mode</span>
+								<select
+									value={job.multi_title ? 'multi' : 'single'}
+									onchange={(e) => { const v = e.currentTarget.value; if ((v === 'multi') !== !!job.multi_title) handleToggleMultiTitle(); }}
+									disabled={togglingMultiTitle}
+									class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+								>
+									<option value="single">Single Title</option>
+									<option value="multi">Multi-Title</option>
+								</select>
+							</label>
+						{/if}
 						<label>
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc Label</span>
 							<input type="text" bind:value={infoLabel} oninput={() => { touched.label = true; }} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
@@ -517,43 +611,114 @@
 					<!-- Tracks table -->
 					{#if detail?.tracks && detail.tracks.length > 0}
 						<div>
-							<h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Tracks ({detail.tracks.length})</h4>
+							<h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+								Tracks ({detail.tracks.length})
+								{#if job.disc_number && job.disc_total}
+									<span class="font-normal text-gray-400 dark:text-gray-500">— Disc {job.disc_number} of {job.disc_total}</span>
+								{/if}
+							</h4>
 							<div class="overflow-x-auto rounded-md border border-primary/15 dark:border-primary/20">
 								<table class="w-full text-left text-xs">
 									<thead class="bg-page text-gray-500 dark:bg-primary/5 dark:text-gray-400">
 										<tr>
 											<th class="px-3 py-1.5 font-medium">#</th>
-											{#if isMusic}
-												<th class="px-3 py-1.5 font-medium">Title</th>
-											{/if}
+											<th class="px-3 py-1.5 font-medium">{isMusic ? 'Name' : 'Title'}</th>
 											<th class="px-3 py-1.5 font-medium">Length</th>
 											{#if !isMusic}
 												<th class="px-3 py-1.5 font-medium">Aspect</th>
 												<th class="px-3 py-1.5 font-medium">FPS</th>
-												<th class="px-3 py-1.5 font-medium">Main</th>
+												<th class="pl-1 pr-3 py-1.5 font-medium">
+													<label class="flex items-center gap-1 cursor-pointer">
+														<span>Rip</span>
+														<input
+															type="checkbox"
+															checked={allEnabled}
+															onchange={handleToggleAllEnabled}
+															disabled={togglingAllEnabled}
+															class="h-3.5 w-3.5 rounded-sm border-primary/25 text-primary focus:ring-primary dark:border-primary/30 dark:bg-primary/10"
+														/>
+													</label>
+												</th>
+												<th class="px-3 py-1.5 font-medium">File</th>
 											{/if}
-											<th class="px-3 py-1.5 font-medium">File</th>
 										</tr>
 									</thead>
 									<tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
 										{#each detail.tracks as track}
-											<tr class="{track.main_feature && !isMusic ? 'bg-primary-light-bg/50 dark:bg-primary-light-bg-dark/10' : ''}">
+											<tr class="{track.enabled && !isMusic ? 'bg-primary-light-bg/50 dark:bg-primary-light-bg-dark/10' : ''}">
 												<td class="px-3 py-1.5 font-mono text-gray-700 dark:text-gray-300">{track.track_number ?? '--'}</td>
 												{#if isMusic}
-													<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{track.basename ?? '--'}</td>
+													<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{track.title || track.filename || '--'}</td>
+												{:else}
+													<td
+														class="px-3 py-1.5 {job.multi_title ? 'cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10' : ''}"
+														onclick={() => { if (job.multi_title) editingTrackId = editingTrackId === track.track_id ? null : track.track_id; }}
+													>
+														{#if track.title}
+															<div class="flex items-center gap-1.5">
+																{#if track.poster_url}
+																	<img src={track.poster_url} alt="" class="h-6 w-4 rounded-sm object-cover" />
+																{/if}
+																<span class="font-medium text-gray-700 dark:text-gray-300">{track.title}</span>
+																{#if track.year}
+																	<span class="text-gray-400">({track.year})</span>
+																{/if}
+																<span class="rounded-sm bg-purple-100 px-1 py-0.5 text-[9px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">CUSTOM</span>
+															</div>
+														{:else}
+															<span class="text-gray-400">{job.title || job.label || 'Untitled'}{#if job.year} ({job.year}){/if}</span>
+														{/if}
+													</td>
 												{/if}
 												<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{formatLength(track.length)}</td>
 												{#if !isMusic}
 													<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.aspect_ratio ?? '--'}</td>
 													<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.fps ?? '--'}</td>
+													<td class="pl-1 pr-3 py-1.5">
+														<input
+															type="checkbox"
+															checked={track.enabled}
+															onchange={() => handleTrackFieldUpdate(track.track_id, 'enabled', !track.enabled)}
+															disabled={savingTrackField === `${track.track_id}-enabled`}
+															class="ml-[22px] h-3.5 w-3.5 rounded-sm border-primary/25 text-primary focus:ring-primary disabled:opacity-50 dark:border-primary/30 dark:bg-primary/10"
+														/>
+													</td>
 													<td class="px-3 py-1.5">
-														{#if track.main_feature}
-															<span class="rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary-text dark:bg-primary/20 dark:text-primary-text-dark">MAIN</span>
-														{/if}
+														<div class="flex items-center gap-1">
+															<input
+																type="text"
+																value={dirtyFilenames[track.track_id] ?? track.filename ?? track.basename ?? ''}
+																oninput={(e) => {
+																	const val = e.currentTarget.value;
+																	if (val !== (track.filename ?? track.basename ?? '')) {
+																		dirtyFilenames[track.track_id] = val;
+																	} else {
+																		delete dirtyFilenames[track.track_id];
+																	}
+																}}
+																onkeydown={(e) => { if (e.key === 'Enter' && dirtyFilenames[track.track_id] != null) handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id]); }}
+																class="w-full min-w-[120px] rounded-sm border bg-transparent px-1 py-0.5 font-mono text-xs text-gray-500 hover:border-primary/25 focus:border-primary focus:bg-primary/5 focus:outline-hidden focus:ring-1 focus:ring-primary dark:text-gray-400 dark:focus:bg-primary/10 {dirtyFilenames[track.track_id] != null ? 'border-amber-400 dark:border-amber-600' : 'border-transparent'}"
+															/>
+															{#if dirtyFilenames[track.track_id] != null}
+																<button
+																	onclick={() => handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id])}
+																	disabled={savingTrackField === `${track.track_id}-filename`}
+																	class="{btnBase} bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-50"
+																>
+																	{savingTrackField === `${track.track_id}-filename` ? '...' : 'Save'}
+																</button>
+															{/if}
+														</div>
 													</td>
 												{/if}
-												<td class="px-3 py-1.5 font-mono text-gray-500 dark:text-gray-400">{track.filename ?? track.basename ?? '--'}</td>
 											</tr>
+											{#if job.multi_title && editingTrackId === track.track_id}
+												<tr>
+													<td colspan="99" class="px-3 py-2">
+														<TrackTitleSearch jobId={job.job_id} {track} onapply={handleTrackTitleApply} onclose={() => { editingTrackId = null; }} />
+													</td>
+												</tr>
+											{/if}
 										{/each}
 									</tbody>
 								</table>
@@ -602,7 +767,7 @@
 
 	{#if showRipSettings && detail?.config}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
-			<RipSettings {job} config={detail.config} {isMusic} onsaved={handleConfigSaved} />
+			<RipSettings {job} config={detail.config} {isMusic} multiTitle={!!job.multi_title} onsaved={handleConfigSaved} />
 		</div>
 	{:else if showRipSettings && initialLoading}
 		<div class="border-t border-primary/20 p-4 text-sm text-gray-400 dark:border-primary/20">

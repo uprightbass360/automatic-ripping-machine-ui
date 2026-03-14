@@ -156,9 +156,34 @@ async def send_to_crc_db(job_id: int) -> dict[str, Any] | None:
     return await _request("POST", f"/api/v1/jobs/{job_id}/send")
 
 
+async def toggle_multi_title(job_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
+    """Toggle the multi_title flag on a job. Returns None if ARM is unreachable."""
+    return await _request("POST", f"/api/v1/jobs/{job_id}/multi-title", json=data)
+
+
+async def update_track_title(job_id: int, track_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
+    """Set per-track title metadata. Returns None if ARM is unreachable."""
+    return await _request("PUT", f"/api/v1/jobs/{job_id}/tracks/{track_id}/title", json=data)
+
+
+async def clear_track_title(job_id: int, track_id: int) -> dict[str, Any] | None:
+    """Clear per-track title metadata. Returns None if ARM is unreachable."""
+    return await _request("DELETE", f"/api/v1/jobs/{job_id}/tracks/{track_id}/title")
+
+
 async def set_job_tracks(job_id: int, tracks: list[dict[str, Any]]) -> dict[str, Any] | None:
     """Replace a job's tracks with MusicBrainz data. Returns None if ARM is unreachable."""
     return await _request("PUT", f"/api/v1/jobs/{job_id}/tracks", json={"tracks": tracks})
+
+
+async def tvdb_match(job_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
+    """Run TVDB episode matching for a job. Returns None if ARM is unreachable."""
+    return await _request("POST", f"/api/v1/jobs/{job_id}/tvdb-match", json=data)
+
+
+async def tvdb_episodes(job_id: int, season: int) -> dict[str, Any] | None:
+    """Fetch TVDB episodes for a job's series. Returns None if ARM is unreachable."""
+    return await _request("GET", f"/api/v1/jobs/{job_id}/tvdb-episodes", params={"season": str(season)})
 
 
 async def update_drive(drive_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
@@ -166,9 +191,34 @@ async def update_drive(drive_id: int, data: dict[str, Any]) -> dict[str, Any] | 
     return await _request("PATCH", f"/api/v1/drives/{drive_id}", json=data)
 
 
+async def scan_drive(drive_id: int) -> dict[str, Any] | None:
+    """Trigger a disc scan on a drive. Returns None if ARM is unreachable."""
+    return await _request("POST", f"/api/v1/drives/{drive_id}/scan")
+
+
+async def drive_diagnostic() -> dict[str, Any] | None:
+    """Run udev and device diagnostics. Returns None if ARM is unreachable."""
+    return await _request("GET", "/api/v1/drives/diagnostic")
+
+
+async def delete_drive(drive_id: int) -> dict[str, Any] | None:
+    """Remove a stale drive from the database. Returns None if ARM is unreachable."""
+    return await _request("DELETE", f"/api/v1/drives/{drive_id}")
+
+
 async def dismiss_notification(notify_id: int) -> dict[str, Any] | None:
     """Mark a notification as read. Returns None if ARM is unreachable."""
     return await _request("PATCH", f"/api/v1/notifications/{notify_id}")
+
+
+async def get_abcde_config() -> dict[str, Any] | None:
+    """Fetch abcde.conf contents from ARM. Returns None if unreachable."""
+    return await _request("GET", "/api/v1/settings/abcde")
+
+
+async def update_abcde_config(content: str) -> dict[str, Any] | None:
+    """Write abcde.conf contents via ARM. Returns None if unreachable."""
+    return await _request("PUT", "/api/v1/settings/abcde", json={"content": content})
 
 
 async def naming_preview(pattern: str, variables: dict[str, str]) -> dict[str, Any] | None:

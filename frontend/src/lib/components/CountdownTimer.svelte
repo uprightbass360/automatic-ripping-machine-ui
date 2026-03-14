@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
 	interface Props {
 		startTime: string;
 		waitSeconds: number;
@@ -48,10 +50,13 @@
 		}
 	}
 
-	$effect(() => {
-		if (effectivePaused) return;
+	// Use onMount to guarantee the interval starts after hydration.
+	// The interval always ticks; it only updates `now` when not paused.
+	onMount(() => {
 		const id = setInterval(() => {
-			now = Date.now();
+			if (!effectivePaused) {
+				now = Date.now();
+			}
 		}, 1000);
 		return () => clearInterval(id);
 	});

@@ -959,6 +959,15 @@ body { visibility: visible; }
 	box-shadow: none !important;
 }
 
+/* Dialogs must be opaque — override semi-transparent panel backgrounds */
+[data-dialog] {
+	background: var(--color-surface-dark, #1e1e2e) !important;
+}
+
+[data-scheme="lcars"] [data-dialog] {
+	border: 2px solid #99f !important;
+}
+
 /* ── 3-col stat card accent colors ── */
 [data-scheme="lcars"] main .grid-cols-3 > :nth-child(2) { --lcars-accent: #c9c; }
 [data-scheme="lcars"] main .grid-cols-3 > :nth-child(3) { --lcars-accent: #fca; }
@@ -1437,12 +1446,40 @@ body { visibility: visible; }
 
 /* ── LCARS tactical frame (structural wrapper component) ── */
 
-/* Global defaults: frame decorations completely hidden in ALL themes.
-   These rules have NO [data-scheme] prefix — they apply universally,
-   ensuring zero layout/visual impact in default, dark, tactical, craft, etc. */
-.lcars-bar,
-.lcars-sidebar {
+/* Global defaults: sidebar and bottom bar hidden; top bar visible as section header */
+.lcars-sidebar,
+.lcars-bar-bottom {
 	display: none;
+}
+
+.lcars-bar-top {
+	display: flex;
+	align-items: center;
+	height: 32px;
+	padding: 0 14px;
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-on-primary, #fff);
+	background: var(--color-primary, #6366f1);
+	border-radius: 8px 8px 0 0;
+}
+
+.lcars-bar-top:empty,
+.lcars-bar-top:not(:has(span)) {
+	display: none;
+}
+
+.lcars-body {
+	padding: 1rem;
+	border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+	border-top: none;
+}
+
+.lcars-bar-top + .lcars-sidebar + .lcars-body,
+.lcars-bar-top + .lcars-body {
+	border-radius: 0 0 8px 8px;
 }
 
 /* LCARS theme: activate the frame structure */
@@ -1523,6 +1560,8 @@ body { visibility: visible; }
 [data-scheme="lcars"] .lcars-body {
 	margin-top: 5px;
 	min-width: 0;
+	padding: 0;
+	border: none;
 }
 
 /* Compact variant: smaller proportions, no sidebar */
@@ -1572,7 +1611,8 @@ body { visibility: visible; }
 	border-bottom: none !important;
 }
 
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] {
+/* ── LCARS tab nav pills (Settings, Logs, Files — all use nav.-mb-px) ── */
+[data-scheme="lcars"] main nav.-mb-px {
 	display: flex;
 	gap: 6px;
 	margin-bottom: 0;
@@ -1580,7 +1620,7 @@ body { visibility: visible; }
 }
 
 /* [type="button"] boosts specificity above .dark\:text-gray-400.text-sm override */
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"] {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"] {
 	flex: 1;
 	border: none !important;
 	border-bottom: none !important;
@@ -1595,59 +1635,21 @@ body { visibility: visible; }
 	transition: all 0.2s;
 }
 
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"]:nth-child(2) {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"]:nth-child(2) {
 	background: #fca !important;
 }
 
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"]:nth-child(3) {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"]:nth-child(3) {
 	background: #c9c !important;
 }
 
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"]:hover {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"]:hover {
 	background: #fff !important;
 	color: #000 !important;
 }
 
 /* Active tab: gold highlight */
-[data-scheme="lcars"] main nav[aria-label="Settings tabs"] button[type="button"].border-primary {
-	background: #fc3 !important;
-	color: #000 !important;
-}
-
-/* ── Logs page tab bar: LCARS pills (same style as Settings tabs) ── */
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] {
-	display: flex;
-	gap: 6px;
-	margin-bottom: 0;
-	border-bottom: none !important;
-}
-
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"] {
-	flex: 1;
-	border: none !important;
-	border-bottom: none !important;
-	border-radius: 20px !important;
-	padding: 0.6rem 1.25rem !important;
-	font-weight: bold !important;
-	text-transform: uppercase !important;
-	letter-spacing: 0.1em !important;
-	text-align: center !important;
-	color: #000 !important;
-	background: #99f !important;
-	transition: all 0.2s;
-}
-
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"]:nth-child(2) {
-	background: #fca !important;
-}
-
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"]:hover {
-	background: #fff !important;
-	color: #000 !important;
-}
-
-/* Active log tab: gold highlight */
-[data-scheme="lcars"] main nav[aria-label="Log tabs"] button[type="button"].border-primary {
+[data-scheme="lcars"] main nav.-mb-px button[type="button"].border-primary {
 	background: #fc3 !important;
 	color: #000 !important;
 }
@@ -2225,11 +2227,79 @@ body { visibility: visible; }
 	color: #111 !important;
 }
 
-/* Heavy Card Borders + Offset Shadows */
-[data-scheme="hollywood-video-v2"] .lcars-frame,
-[data-scheme="hollywood-video-v2"] section > div[class*="border"] {
-	border-color: #000 !important;
+/* ── Hollywood Video: Marquee Frame ── */
+/* Activate frame bars — styled as movie marquee / VHS case header */
+[data-scheme="hollywood-video-v2"] .lcars-bar-top {
+	display: flex;
+	align-items: center;
+	height: 36px;
+	background: linear-gradient(180deg, #D90B1C 0%, #a0080f 100%);
+	border: 3px solid #000;
+	border-bottom: none;
+	padding: 0 16px;
+	font-family: 'Courier New', Courier, monospace;
+	font-weight: 900;
+	font-size: 0.75rem;
+	letter-spacing: 0.15em;
+	text-transform: uppercase;
+	color: #F2B705;
+	text-shadow: 1px 1px 0 #000, 2px 2px 0 rgba(0,0,0,0.3);
+	box-shadow: inset 0 -2px 4px rgba(0,0,0,0.3);
+}
+
+[data-scheme="hollywood-video-v2"] .lcars-bar-top span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+[data-scheme="hollywood-video-v2"] .lcars-bar-bottom {
+	display: block;
+	height: 6px;
+	background: #D90B1C;
+	border: 3px solid #000;
+	border-top: none;
+}
+
+/* Frame body: dark purple interior */
+[data-scheme="hollywood-video-v2"] .lcars-body {
+	background: #160E26;
+	border-left: 3px solid #000;
+	border-right: 3px solid #000;
+	padding: 1rem;
+}
+
+/* Sidebar stays hidden for Hollywood Video */
+
+/* Frame wrapper: offset shadow */
+[data-scheme="hollywood-video-v2"] .lcars-frame {
 	box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
+}
+
+/* Card & panel borders — thin red accent, subtle shadow */
+[data-scheme="hollywood-video-v2"] .lcars-body div[class*="border"]:not([data-diag]):not(.border-transparent) {
+	border-color: rgba(217, 11, 28, 0.5) !important;
+	border-width: 1px !important;
+}
+[data-scheme="hollywood-video-v2"] .lcars-body div[class*="shadow-xs"] {
+	box-shadow: 2px 2px 0px rgba(0,0,0,0.25);
+}
+/* Tab bar bottom border */
+[data-scheme="hollywood-video-v2"] .lcars-body div[class*="border-b"] {
+	border-bottom-color: rgba(217, 11, 28, 0.4) !important;
+}
+/* Input borders stay subtle */
+[data-scheme="hollywood-video-v2"] .lcars-body input[class*="border"],
+[data-scheme="hollywood-video-v2"] .lcars-body select[class*="border"],
+[data-scheme="hollywood-video-v2"] .lcars-body textarea[class*="border"] {
+	border-color: rgba(217, 11, 28, 0.25) !important;
+	border-width: 1px !important;
+}
+
+/* HR separators — red accent line */
+[data-scheme="hollywood-video-v2"] hr {
+	border-color: #D90B1C !important;
+	opacity: 0.5;
 }
 
 /* Review Panel — purple accent */

@@ -56,3 +56,9 @@ export function fetchStructuredTranscoderLogContent(
 		`/api/transcoder/logs/${encodeURIComponent(filename)}/structured?${params}`
 	);
 }
+
+export async function fetchTranscoderLogForArmJob(
+	armJobId: number
+): Promise<{ found: boolean; logfile?: string; transcoder_job_id?: number; status?: string }> {
+	return apiFetch(`/api/transcoder/job-for-arm/${armJobId}`);
+}

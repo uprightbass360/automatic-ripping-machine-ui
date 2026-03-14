@@ -7,7 +7,7 @@ export interface Track {
 	length: number | null;
 	aspect_ratio: string | null;
 	fps: number | null;
-	main_feature: boolean | null;
+	enabled: boolean | null;
 	basename: string | null;
 	filename: string | null;
 	orig_filename: string | null;
@@ -16,6 +16,15 @@ export interface Track {
 	status: string | null;
 	error: string | null;
 	source: string | null;
+	// Per-track title metadata (null = inherits from job)
+	title: string | null;
+	year: string | null;
+	imdb_id: string | null;
+	poster_url: string | null;
+	video_type: string | null;
+	// TVDB episode matching
+	episode_number: string | null;
+	episode_name: string | null;
 }
 
 export interface Job {
@@ -66,10 +75,16 @@ export interface Job {
 	episode_auto: string | null;
 	episode_manual: string | null;
 	transcode_overrides: Record<string, unknown> | null;
+	multi_title: boolean | null;
+	disc_number: number | null;
+	disc_total: number | null;
 	ejected: boolean | null;
 	pid: number | null;
+	manual_pause: boolean | null;
+	wait_start_time: string | null;
 	tracks_total: number | null;
 	tracks_ripped: number | null;
+	tvdb_id: number | null;
 }
 
 export interface JobDetail extends Job {
@@ -248,12 +263,21 @@ export interface TitleUpdate {
 	episode?: string;
 }
 
+export interface TrackTitleUpdate {
+	title?: string;
+	year?: string;
+	video_type?: string;
+	imdb_id?: string;
+	poster_url?: string;
+}
+
 export interface JobConfigUpdate {
 	RIPMETHOD?: 'mkv' | 'backup';
 	DISCTYPE?: 'dvd' | 'bluray' | 'bluray4k' | 'music' | 'data';
 	MAINFEATURE?: boolean;
 	MINLENGTH?: number;
 	MAXLENGTH?: number;
+	AUDIO_FORMAT?: string;
 }
 
 export interface TranscoderConfig {

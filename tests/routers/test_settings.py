@@ -157,3 +157,138 @@ async def test_settings_includes_auth_status(app_client):
     assert auth is not None
     assert auth["require_api_auth"] is True
     assert auth["webhook_secret_configured"] is True
+
+
+# --- GET /api/settings/abcde ---
+
+
+async def test_get_abcde_config_success(app_client):
+    """GET abcde config returns content from ARM."""
+    result = {"content": "# abcde config\nCDDBMETHOD=musicbrainz\n", "success": True}
+    with patch(
+        "backend.routers.settings.arm_client.get_abcde_config",
+        new_callable=AsyncMock,
+        return_value=result,
+    ):
+        resp = await app_client.get("/api/settings/abcde")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["content"] == "# abcde config\nCDDBMETHOD=musicbrainz\n"
+    assert data["success"] is True
+
+
+async def test_get_abcde_config_arm_unreachable(app_client):
+    """GET abcde config returns 502 when ARM is unreachable."""
+    with patch(
+        "backend.routers.settings.arm_client.get_abcde_config",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.get("/api/settings/abcde")
+    assert resp.status_code == 502
+    assert "unreachable" in resp.json()["detail"].lower()
+
+
+# --- PUT /api/settings/abcde ---
+
+
+async def test_put_abcde_config_success(app_client):
+    """PUT abcde config writes content via ARM."""
+    result = {"success": True}
+    with patch(
+        "backend.routers.settings.arm_client.update_abcde_config",
+        new_callable=AsyncMock,
+        return_value=result,
+    ) as mock_fn:
+        resp = await app_client.put(
+            "/api/settings/abcde",
+            json={"content": "CDDBMETHOD=musicbrainz\n"},
+        )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    mock_fn.assert_awaited_once_with("CDDBMETHOD=musicbrainz\n")
+
+
+async def test_put_abcde_config_arm_unreachable(app_client):
+    """PUT abcde config returns 502 when ARM is unreachable."""
+    with patch(
+        "backend.routers.settings.arm_client.update_abcde_config",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.put(
+            "/api/settings/abcde",
+            json={"content": "CDDBMETHOD=musicbrainz\n"},
+        )
+    assert resp.status_code == 502
+    assert "unreachable" in resp.json()["detail"].lower()
+
+
+# --- GET /api/settings/system-info ---
+
+
+def _system_info_patches(arm_version_resp, tc_health_resp=None):
+    """Return a context-manager stack patching all system-info dependencies."""
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _ctx():
+        with (
+            patch("backend.routers.settings.arm_client.get_version", new_callable=AsyncMock, return_value=arm_version_resp),
+            patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=tc_health_resp),
+            patch("backend.routers.settings.asyncio.to_thread", new_callable=AsyncMock, return_value="11.0.0"),
+            patch("backend.routers.settings.arm_client.get_paths", new_callable=AsyncMock, return_value=[]),
+            patch("backend.routers.settings.arm_db.get_drives", return_value=[]),
+            patch("backend.routers.settings.arm_db.is_available", return_value=True),
+            patch("backend.routers.settings.app_settings", arm_db_path="/tmp/arm.db", arm_url="http://arm:8080", transcoder_url="http://tc:5000"),
+            patch("backend.routers.settings.os.path.isfile", return_value=False),
+        ):
+            yield
+
+    return _ctx()
+
+
+async def test_system_info_includes_db_migration(app_client):
+    """system-info includes migration fields; matching versions → up_to_date True."""
+    arm_ver = {"arm_version": "10.2.0", "makemkv_version": "1.18.3", "db_version": "abc123", "db_head": "abc123"}
+    with _system_info_patches(arm_ver):
+        resp = await app_client.get("/api/settings/system-info")
+    assert resp.status_code == 200
+    db = resp.json()["database"]
+    assert db["migration_current"] == "abc123"
+    assert db["migration_head"] == "abc123"
+    assert db["up_to_date"] is True
+
+
+async def test_system_info_db_needs_migration(app_client):
+    """Mismatched db_version and db_head → up_to_date False."""
+    arm_ver = {"arm_version": "10.2.0", "makemkv_version": "1.18.3", "db_version": "abc123", "db_head": "def456"}
+    with _system_info_patches(arm_ver):
+        resp = await app_client.get("/api/settings/system-info")
+    assert resp.status_code == 200
+    db = resp.json()["database"]
+    assert db["migration_current"] == "abc123"
+    assert db["migration_head"] == "def456"
+    assert db["up_to_date"] is False
+
+
+async def test_system_info_db_migration_unknown_when_arm_offline(app_client):
+    """ARM offline → migration fields show 'offline', up_to_date is None."""
+    with _system_info_patches(None):
+        resp = await app_client.get("/api/settings/system-info")
+    assert resp.status_code == 200
+    db = resp.json()["database"]
+    assert db["migration_current"] == "offline"
+    assert db["migration_head"] == "offline"
+    assert db["up_to_date"] is None
+
+
+async def test_system_info_transcoder_version(app_client):
+    """Transcoder version populated from health response."""
+    arm_ver = {"arm_version": "10.2.0", "makemkv_version": "1.18.3", "db_version": "abc", "db_head": "abc"}
+    tc_health = {"version": "10.9.1", "status": "healthy"}
+    with _system_info_patches(arm_ver, tc_health):
+        resp = await app_client.get("/api/settings/system-info")
+    assert resp.status_code == 200
+    assert resp.json()["versions"]["transcoder"] == "10.9.1"

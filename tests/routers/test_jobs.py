@@ -110,3 +110,29 @@ async def test_get_job_progress_404(app_client):
     with patch("backend.routers.jobs.arm_db.get_job", return_value=None):
         resp = await app_client.get("/api/jobs/999/progress")
     assert resp.status_code == 404
+
+
+async def test_get_job_progress_music_branch(app_client):
+    """GET /api/jobs/{id}/progress uses music progress parser for disctype=music."""
+    job = make_job(job_id=7, title="Greatest Hits", disctype="music", logfile="job_7.log")
+    with patch("backend.routers.jobs.arm_db.get_job", return_value=job), \
+         patch("backend.routers.jobs.progress.get_music_progress", return_value={"progress": 66.7, "stage": "2/3 - encoding track 3"}) as mock_music, \
+         patch("backend.routers.jobs.arm_db.get_job_track_counts", return_value={"tracks_total": 3, "tracks_ripped": 2}):
+        resp = await app_client.get("/api/jobs/7/progress")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["progress"] == 66.7
+    assert "encoding" in data["stage"]
+    mock_music.assert_called_once_with("job_7.log", 3)
+
+
+async def test_get_job_progress_includes_no_of_titles(app_client):
+    """GET /api/jobs/{id}/progress includes no_of_titles from the job."""
+    job = make_job(job_id=8, title="Multi Title Disc", no_of_titles=12)
+    with patch("backend.routers.jobs.arm_db.get_job", return_value=job), \
+         patch("backend.routers.jobs.progress.get_rip_progress", return_value={"progress": None, "stage": None}), \
+         patch("backend.routers.jobs.arm_db.get_job_track_counts", return_value={"tracks_total": 0, "tracks_ripped": 0}):
+        resp = await app_client.get("/api/jobs/8/progress")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["no_of_titles"] == 12

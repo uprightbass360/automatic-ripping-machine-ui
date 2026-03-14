@@ -55,16 +55,19 @@ describe('isJobActive', () => {
 	});
 
 	it('returns true for active statuses', () => {
+		expect(isJobActive('identifying')).toBe(true);
+		expect(isJobActive('ready')).toBe(true);
 		expect(isJobActive('active')).toBe(true);
 		expect(isJobActive('ripping')).toBe(true);
 		expect(isJobActive('processing')).toBe(true);
 		expect(isJobActive('transcoding')).toBe(true);
 		expect(isJobActive('pending')).toBe(true);
 		expect(isJobActive('waiting')).toBe(true);
+		expect(isJobActive('waiting_transcode')).toBe(true);
 	});
 
 	it('is case-insensitive', () => {
-		expect(isJobActive('Active')).toBe(true);
+		expect(isJobActive('Identifying')).toBe(true);
 		expect(isJobActive('RIPPING')).toBe(true);
 	});
 

@@ -18,6 +18,7 @@ from backend.models.arm import (
     Notifications,
     SystemDrives,
     SystemInfo,
+    Track,
 )
 
 log = logging.getLogger(__name__)
@@ -84,7 +85,7 @@ def is_available() -> bool:
 
 # --- Query helpers ---
 
-ACTIVE_STATUSES = {"active", "ripping", "transcoding", "waiting", "info", "waiting_transcode"}
+ACTIVE_STATUSES = {"identifying", "ready", "active", "ripping", "transcoding", "waiting", "info", "waiting_transcode"}
 
 
 def get_active_jobs() -> list[dict]:
@@ -238,10 +239,11 @@ def get_drives() -> list[SystemDrives]:
 
 
 def get_drives_with_jobs() -> list[dict]:
-    """Return drives with their current job info attached."""
+    """Return non-stale drives with their current job info attached."""
     try:
         with get_session() as session:
-            drives = list(session.scalars(select(SystemDrives)).all())
+            all_drives = list(session.scalars(select(SystemDrives)).all())
+            drives = [d for d in all_drives if not getattr(d, 'stale', False)]
             result = []
             for drive in drives:
                 drive_dict = {
@@ -382,7 +384,7 @@ def get_job_retranscode_info(job_id: int) -> dict | None:
                 except (ValueError, TypeError):
                     pass
 
-            return {
+            payload = {
                 "title": title,
                 "body": f"{title} ({year})" if year else title,
                 "path": job.raw_path or job.path or "",
@@ -394,6 +396,24 @@ def get_job_retranscode_info(job_id: int) -> dict | None:
                 "poster_url": job.poster_url or job.poster_url_auto or "",
                 "config_overrides": config_overrides,
             }
+
+            # Include per-track metadata for multi-title discs
+            if getattr(job, 'multi_title', False):
+                payload["multi_title"] = True
+                tracks_meta = []
+                for track in (job.tracks or []):
+                    if getattr(track, 'title', None):
+                        tracks_meta.append({
+                            "track_number": str(track.track_number or ''),
+                            "title": str(track.title),
+                            "year": str(getattr(track, 'year', '') or ''),
+                            "video_type": str(getattr(track, 'video_type', '') or ''),
+                            "filename": str(track.filename or ''),
+                        })
+                if tracks_meta:
+                    payload["tracks"] = tracks_meta
+
+            return payload
     except Exception:
         log.exception("Failed to get retranscode info for job %s", job_id)
         return None
@@ -450,4 +470,56 @@ def update_job_transcode_overrides(job_id: int, overrides: dict) -> dict | None:
             return clean
     except Exception:
         log.exception("Failed to update transcode overrides for job %s", job_id)
+        raise
+
+
+TRACK_EDITABLE_FIELDS: dict[str, type] = {
+    "enabled": bool,
+    "filename": str,
+    "ripped": bool,
+}
+
+
+def update_track_fields(job_id: int, track_id: int, fields: dict) -> dict | None:
+    """Update editable fields on a single track.
+
+    Returns the updated field values, or None if the track doesn't exist
+    or doesn't belong to the given job.
+    """
+    invalid = set(fields.keys()) - TRACK_EDITABLE_FIELDS.keys()
+    if invalid:
+        raise ValueError(f"Unknown fields: {', '.join(sorted(invalid))}")
+    if not fields:
+        raise ValueError("No fields to update")
+
+    clean: dict = {}
+    for key, value in fields.items():
+        expected = TRACK_EDITABLE_FIELDS[key]
+        if expected is bool:
+            if isinstance(value, bool):
+                clean[key] = value
+            elif isinstance(value, str):
+                clean[key] = value.lower() in ("true", "1", "yes")
+            else:
+                clean[key] = bool(value)
+        else:
+            clean[key] = str(value)
+
+    try:
+        with get_rw_session() as session:
+            stmt = select(Track).where(
+                Track.track_id == track_id, Track.job_id == job_id
+            )
+            track = session.scalars(stmt).first()
+            if not track:
+                return None
+            for key, value in clean.items():
+                if key == "enabled":
+                    setattr(track, "enabled", value)
+                else:
+                    setattr(track, key, value)
+            session.commit()
+            return clean
+    except Exception:
+        log.exception("Failed to update track %s for job %s", track_id, job_id)
         raise

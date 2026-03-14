@@ -65,12 +65,15 @@ export function getVideoTypeConfig(videoType: string | null): VideoTypeConfig {
 }
 
 const ACTIVE_STATUSES = new Set([
+	'identifying',
+	'ready',
 	'active',
 	'ripping',
 	'processing',
 	'transcoding',
 	'pending',
 	'waiting',
+	'waiting_transcode',
 ]);
 
 const DISC_TYPE_LABELS: Record<string, string> = {

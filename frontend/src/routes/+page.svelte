@@ -59,11 +59,12 @@
 
 	function overallProgress(p: RipProgress | undefined): number | null {
 		if (!p || p.progress == null) return null;
-		if (p.tracks_total > 0) {
-			if (p.tracks_ripped >= p.tracks_total) return 100;
-			return ((p.tracks_ripped + p.progress / 100) / p.tracks_total) * 100;
+		const total = p.tracks_total > 0 ? p.tracks_total : (p.no_of_titles ?? 0);
+		if (total > 0) {
+			if (p.tracks_ripped >= total) return 100;
+			return ((p.tracks_ripped + p.progress / 100) / total) * 100;
 		}
-		// No tracks in DB yet (scan/decrypt phase) — show indeterminate bar.
+		// No tracks in DB yet and no title count — show indeterminate bar.
 		// MakeMKV resets PRGV per phase, so raw progress can spike to 100%
 		// during scan completion before any actual ripping starts.
 		return null;
@@ -241,19 +242,34 @@
 		</section>
 	{/if}
 
+	<!-- Idle state -->
+	{#if dashReady && waitingJobs.length === 0 && nonWaitingActiveJobs.length === 0 && dash.active_transcodes.length === 0}
+		<section>
+			<div class="rounded-lg border border-primary/20 bg-surface p-6 text-center shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+				<svg class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="12" r="10" />
+					<circle cx="12" cy="12" r="3" />
+					<circle cx="12" cy="12" r="6.5" stroke-width="0.75" opacity="0.4" />
+				</svg>
+				<p class="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">No active rips or transcodes</p>
+				<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Insert a disc to get started — {dash.drives_online} drive{dash.drives_online !== 1 ? 's' : ''} online{#if !dash.arm_online}, ARM offline{/if}{#if !dash.transcoder_online}, transcoder offline{/if}</p>
+			</div>
+		</section>
+	{/if}
+
 	<!-- All Jobs -->
 	<section class="space-y-4">
 			<div class="flex flex-wrap items-center justify-between gap-4">
 				<h2 class="text-lg font-semibold text-gray-900 dark:text-white">All Jobs</h2>
 				<div class="flex gap-2">
 					<button
-						onclick={() => viewMode = 'table'}
-						class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'table' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
-					>Table</button>
-					<button
 						onclick={() => viewMode = 'card'}
 						class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'card' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
 					>Cards</button>
+					<button
+						onclick={() => viewMode = 'table'}
+						class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'table' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
+					>Table</button>
 				</div>
 			</div>
 

@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo } from '$lib/api/settings';
+	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo, fetchAbcdeConfig, saveAbcdeConfig } from '$lib/api/settings';
 	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
 	import type { SettingsData, Drive } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES, schemeLocksMode } from '$lib/stores/colorScheme';
 	import { createPollingStore } from '$lib/stores/polling';
-	import { fetchDrives } from '$lib/api/drives';
+	import { fetchDrives, fetchDriveDiagnostic } from '$lib/api/drives';
+	import type { DiagnosticResult } from '$lib/api/drives';
 	import DriveCard from '$lib/components/DriveCard.svelte';
 
 	let settings = $state<SettingsData | null>(null);
@@ -27,11 +28,43 @@
 	let armCollapsed = $state<Record<string, boolean>>({});
 
 	// --- Tab state ---
-	let activeTab = $state<'ripping' | 'transcoding' | 'notifications' | 'appearance' | 'drives' | 'system'>('ripping');
+	const validTabs = ['ripping', 'music', 'transcoding', 'notifications', 'appearance', 'drives', 'system'] as const;
+	type Tab = typeof validTabs[number];
+
+	function parseHash(): { tab: Tab; panel: string | null } {
+		if (typeof window === 'undefined') return { tab: 'ripping', panel: null };
+		const hash = window.location.hash.replace('#', '');
+		const [tabPart, ...panelParts] = hash.split('/');
+		const tab = validTabs.includes(tabPart as Tab) ? (tabPart as Tab) : 'ripping';
+		const panel = panelParts.length > 0 ? decodeURIComponent(panelParts.join('/')) : null;
+		return { tab, panel };
+	}
+
+	let activeTab = $state<Tab>(parseHash().tab);
+	let pendingPanel = $state<string | null>(parseHash().panel);
 
 	// --- Drives polling store ---
 	const drives = createPollingStore(fetchDrives, [] as Drive[], 10000);
 	const driveError = drives.error;
+
+	// --- Drive diagnostics ---
+	let diagRunning = $state(false);
+	let diagResult = $state<DiagnosticResult | null>(null);
+	let diagError = $state<string | null>(null);
+
+	async function runDiagnostic() {
+		if (diagRunning) return;
+		diagRunning = true;
+		diagError = null;
+		try {
+			diagResult = await fetchDriveDiagnostic();
+		} catch (e) {
+			diagError = e instanceof Error ? e.message : 'Diagnostic failed';
+			diagResult = null;
+		} finally {
+			diagRunning = false;
+		}
+	}
 
 	// --- Search/filter ---
 	let armSearch = $state('');
@@ -54,6 +87,87 @@
 	let systemInfoLoading = $state(false);
 	let systemInfoLoaded = $state(false);
 
+	// --- abcde.conf editor state ---
+	let abcdeContent = $state('');
+	let abcdeOriginal = $state('');
+	let abcdePath = $state('');
+	let abcdeExists = $state(false);
+	let abcdeLoading = $state(false);
+	let abcdeSaving = $state(false);
+	let abcdeLoaded = $state(false);
+	let abcdeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let abcdeDirty = $derived(abcdeContent !== abcdeOriginal);
+	let abcdeCollapsed = $state(false);
+
+	async function loadAbcdeConfig() {
+		if (abcdeLoaded) return;
+		abcdeLoading = true;
+		try {
+			const data = await fetchAbcdeConfig();
+			abcdeContent = data.content;
+			abcdeOriginal = data.content;
+			abcdePath = data.path;
+			abcdeExists = data.exists;
+			abcdeLoaded = true;
+		} catch {
+			// silently fail, will show empty state
+		} finally {
+			abcdeLoading = false;
+		}
+	}
+
+	async function handleAbcdeSave() {
+		abcdeSaving = true;
+		abcdeFeedback = null;
+		try {
+			await saveAbcdeConfig(abcdeContent);
+			abcdeOriginal = abcdeContent;
+			abcdeExists = true;
+			abcdeFeedback = { type: 'success', message: 'abcde.conf saved' };
+		} catch (e) {
+			abcdeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to save' };
+		} finally {
+			abcdeSaving = false;
+			clearFeedback(() => (abcdeFeedback = null));
+		}
+	}
+
+	function handleAbcdeDiscard() {
+		abcdeContent = abcdeOriginal;
+	}
+
+	// --- abcde.conf search ---
+	let abcdeSearch = $state('');
+	let abcdeSearchIndex = $state(0);
+	let abcdeTextarea = $state<HTMLTextAreaElement | null>(null);
+
+	let abcdeMatches = $derived.by<number[]>(() => {
+		if (!abcdeSearch) return [];
+		const q = abcdeSearch.toLowerCase();
+		const text = abcdeContent.toLowerCase();
+		const positions: number[] = [];
+		let idx = 0;
+		while ((idx = text.indexOf(q, idx)) !== -1) {
+			positions.push(idx);
+			idx += 1;
+		}
+		return positions;
+	});
+
+	function abcdeSearchNav(delta: number) {
+		if (abcdeMatches.length === 0) return;
+		abcdeSearchIndex = (abcdeSearchIndex + delta + abcdeMatches.length) % abcdeMatches.length;
+		const pos = abcdeMatches[abcdeSearchIndex];
+		if (abcdeTextarea) {
+			abcdeTextarea.focus();
+			abcdeTextarea.setSelectionRange(pos, pos + abcdeSearch.length);
+			// Scroll selection into view by briefly blurring/focusing
+			const linesBefore = abcdeContent.substring(0, pos).split('\n').length;
+			const lineHeight = abcdeTextarea.scrollHeight / abcdeContent.split('\n').length;
+			abcdeTextarea.scrollTop = Math.max(0, (linesBefore - 3) * lineHeight);
+		}
+	}
+
 	async function loadSystemInfo() {
 		if (systemInfoLoaded) return;
 		systemInfoLoading = true;
@@ -67,10 +181,49 @@
 		}
 	}
 
+	function setTab(tab: Tab) {
+		activeTab = tab;
+		pendingPanel = null;
+		window.location.hash = tab;
+		if (tab === 'music') loadAbcdeConfig();
+		if (tab === 'system') loadSystemInfo();
+	}
+
+	function scrollToPanel(label: string) {
+		// Expand the panel first
+		armCollapsed[label] = false;
+		// Scroll to it after DOM update
+		requestAnimationFrame(() => {
+			const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+			el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
+	}
+
 	onMount(() => {
 		drives.start();
-		loadSettings();
-		return () => drives.stop();
+		loadSettings().then(() => {
+			if (pendingPanel) {
+				// Find the panel label case-insensitively
+				const groups = TAB_ARM_GROUPS[activeTab] ?? [];
+				const match = groups.find((g) => g.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') === pendingPanel!.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+				if (match) scrollToPanel(match.label);
+				pendingPanel = null;
+			}
+		});
+		// Handle initial hash tab (trigger side effects)
+		if (activeTab === 'music') loadAbcdeConfig();
+		if (activeTab === 'system') loadSystemInfo();
+		function onHashChange() {
+			const { tab, panel } = parseHash();
+			activeTab = tab;
+			if (panel) {
+				const groups = TAB_ARM_GROUPS[tab] ?? [];
+				const match = groups.find((g) => g.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') === panel.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+				if (match) scrollToPanel(match.label);
+			}
+		}
+		window.addEventListener('hashchange', onHashChange);
+		return () => { drives.stop(); window.removeEventListener('hashchange', onHashChange); };
 	});
 
 	async function loadSettings() {
@@ -354,7 +507,7 @@
 		MANUAL_WAIT_TIME: { label: 'Manual Wait Time', description: 'Seconds to wait for manual identification' },
 		ALLOW_DUPLICATES: { label: 'Allow Duplicates', description: 'Allow ripping a disc that has already been ripped' },
 		MKV_ARGS: { label: 'MakeMKV Arguments', description: 'Extra command-line arguments passed to MakeMKV' },
-		MAKEMKV_PERMA_KEY: { label: 'MakeMKV License Key', description: 'Permanent or beta registration key for MakeMKV' },
+		MAKEMKV_PERMA_KEY: { label: 'MakeMKV License Key', description: 'Permanent key from <a href="https://www.makemkv.com/buy/" target="_blank" rel="noopener" class="underline text-primary hover:text-primary-hover">makemkv.com/buy</a> — free beta keys are also available on the <a href="https://forum.makemkv.com/forum/viewtopic.php?t=1053" target="_blank" rel="noopener" class="underline text-primary hover:text-primary-hover">MakeMKV forum</a>' },
 		DATA_RIP_PARAMETERS: { label: 'Data Rip Parameters', description: 'Extra parameters for data disc ripping' },
 		MAX_CONCURRENT_MAKEMKVINFO: { label: 'Max Concurrent Disc Scans', description: 'Limit parallel makemkvinfo processes (0 = unlimited)' },
 		AUTO_EJECT: { label: 'Auto-Eject After Rip', description: 'Eject the disc when ripping completes' },
@@ -362,9 +515,17 @@
 		MAKEMKV_COMMUNITY_KEYDB: { label: 'Community Key Database', description: 'Download community keydb.cfg at container startup' },
 		ARM_CHILDREN: { label: 'ARM Child Servers', description: 'Comma-delimited list of child ARM server URLs' },
 		DELRAWFILES: { label: 'Delete Raw Files', description: 'Remove raw MakeMKV output after processing' },
+		DRIVE_READY_TIMEOUT: { label: 'Drive Ready Timeout', description: 'Seconds to wait for the drive to become ready after disc insertion' },
+		// TV Series
+		USE_DISC_LABEL_FOR_TV: { label: 'Use Disc Label for TV', description: 'Parse disc label for season/episode info on TV series discs' },
+		GROUP_TV_DISCS_UNDER_SERIES: { label: 'Group TV Discs Under Series', description: 'Group multi-disc TV sets under a single series folder' },
 		// Music Ripping
 		GET_AUDIO_TITLE: { label: 'Audio Metadata Source', description: 'none, musicbrainz, or freecddb for CD track info' },
+		AUDIO_FORMAT: { label: 'Audio Format', description: 'Output format for music CD ripping (passed to abcde -o)' },
 		ABCDE_CONFIG_FILE: { label: 'abcde Config File', description: 'Path to the abcde configuration file for CD ripping' },
+		RIP_SPEED_PROFILE: { label: 'Rip Speed Profile', description: '"safe" = full paranoia (best for scratched discs), "fast" = less paranoia (~2-4x faster), "fastest" = no error correction (pristine discs only)' },
+		MUSIC_MULTI_DISC_SUBFOLDERS: { label: 'Multi-Disc Subfolders', description: 'Create per-disc subfolders for multi-CD sets (e.g. Artist/Album/Disc 1/)' },
+		MUSIC_DISC_FOLDER_PATTERN: { label: 'Disc Folder Pattern', description: 'Folder name for each disc in a multi-disc set. {num} = disc number. Examples: "Disc {num}", "CD {num}"' },
 		// Metadata
 		METADATA_PROVIDER: { label: 'Metadata Provider', description: 'omdb or tmdb for movie/TV lookups' },
 		OMDB_API_KEY: { label: 'OMDb API Key', description: 'API key for the Open Movie Database' },
@@ -382,6 +543,7 @@
 		RAW_PATH: { label: 'Raw Output Path', description: 'Directory where MakeMKV writes ripped files' },
 		TRANSCODE_PATH: { label: 'Transcode Path', description: 'Staging directory for transcoding work' },
 		COMPLETED_PATH: { label: 'Completed Path', description: 'Final destination for finished media files' },
+		MUSIC_PATH: { label: 'Music Path', description: 'Output directory for music CD rips (used by abcde)' },
 		EXTRAS_SUB: { label: 'Extras Subdirectory', description: 'Subfolder name for bonus features and extras' },
 		INSTALLPATH: { label: 'Install Path', description: 'ARM installation directory' },
 		LOGPATH: { label: 'Log Path', description: 'Directory for ARM log files' },
@@ -417,6 +579,10 @@
 		BASH_SCRIPT: { label: 'Notification Script', description: 'Path to a custom bash script run on notifications' },
 		JSON_URL: { label: 'Apprise JSON URL', description: 'Apprise webhook URL for notifications' },
 		APPRISE: { label: 'Apprise Config', description: 'Apprise notification service configuration string' },
+		// TVDB
+		TVDB_API_KEY: { label: 'TVDB API Key', description: 'API key for TheTVDB v4 — get one free at thetvdb.com/dashboard' },
+		TVDB_MATCH_TOLERANCE: { label: 'Match Tolerance (sec)', description: 'Max runtime difference in seconds for a track-to-episode match (default 300)' },
+		TVDB_MAX_SEASON_SCAN: { label: 'Max Season Scan', description: 'How many seasons to scan when auto-detecting season (default 10)' },
 		// Naming Patterns
 		MOVIE_TITLE_PATTERN: { label: 'Movie Title Pattern', description: 'Pattern for movie display titles' },
 		MOVIE_FOLDER_PATTERN: { label: 'Movie Folder Pattern', description: 'Pattern for movie folder names (use / for nested directories)' },
@@ -432,6 +598,7 @@
 	};
 
 	let armInfoKeys = $state<Set<string>>(new Set());
+	let endpointInfoKeys = $state<Set<string>>(new Set());
 
 	function toggleInfo(key: string) {
 		const next = new Set(armInfoKeys);
@@ -440,16 +607,26 @@
 		armInfoKeys = next;
 	}
 
+	function toggleEndpointInfo(name: string) {
+		const next = new Set(endpointInfoKeys);
+		if (next.has(name)) next.delete(name);
+		else next.add(name);
+		endpointInfoKeys = next;
+	}
+
 	// --- ARM config groups, organized by tab ---
 	type ArmGroup = { label: string; subpanels: { label?: string; keys: string[] }[] };
 
 	const TAB_ARM_GROUPS: Record<string, ArmGroup[]> = {
 		ripping: [
 			{ label: 'Disc Identification', subpanels: [
-				{ keys: ['VIDEOTYPE', 'GET_VIDEO_TITLE', 'ARM_CHECK_UDF', 'MANUAL_WAIT', 'MANUAL_WAIT_TIME', 'ARM_CHILDREN'] },
+				{ keys: ['VIDEOTYPE', 'GET_VIDEO_TITLE', 'ARM_CHECK_UDF', 'MANUAL_WAIT', 'MANUAL_WAIT_TIME', 'DRIVE_READY_TIMEOUT', 'ARM_CHILDREN'] },
 			]},
 			{ label: 'Track Selection', subpanels: [
 				{ keys: ['MINLENGTH', 'MAXLENGTH', 'MAINFEATURE', 'PREVENT_99', 'ALLOW_DUPLICATES'] },
+			]},
+			{ label: 'TV Series', subpanels: [
+				{ keys: ['USE_DISC_LABEL_FOR_TV', 'GROUP_TV_DISCS_UNDER_SERIES'] },
 			]},
 			{ label: 'Rip Method', subpanels: [
 				{ keys: ['RIPMETHOD', 'MKV_ARGS', 'DATA_RIP_PARAMETERS'] },
@@ -460,16 +637,35 @@
 			{ label: 'Post-Rip', subpanels: [
 				{ keys: ['AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER'] },
 			]},
-			{ label: 'Music', subpanels: [
-				{ keys: ['GET_AUDIO_TITLE', 'ABCDE_CONFIG_FILE'] },
+			{ label: 'Media Directories', subpanels: [
+				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'MUSIC_PATH', 'EXTRAS_SUB'] },
+			]},
+			{ label: 'File Permissions', subpanels: [
+				{ keys: ['UMASK', 'SET_MEDIA_PERMISSIONS', 'CHMOD_VALUE', 'SET_MEDIA_OWNER', 'CHOWN_USER', 'CHOWN_GROUP'] },
 			]},
 			{ label: 'Naming Patterns', subpanels: [
 				{ label: 'Movie',  keys: ['MOVIE_TITLE_PATTERN', 'MOVIE_FOLDER_PATTERN'] },
 				{ label: 'TV',     keys: ['TV_TITLE_PATTERN', 'TV_FOLDER_PATTERN'] },
-				{ label: 'Music',  keys: ['MUSIC_TITLE_PATTERN', 'MUSIC_FOLDER_PATTERN'] },
 			]},
 			{ label: 'Metadata', subpanels: [
 				{ keys: ['METADATA_PROVIDER', 'OMDB_API_KEY', 'TMDB_API_KEY', 'ARM_API_KEY'] },
+			]},
+			{ label: 'TVDB (TV Episode Matching)', subpanels: [
+				{ keys: ['TVDB_API_KEY', 'TVDB_MATCH_TOLERANCE', 'TVDB_MAX_SEASON_SCAN'] },
+			]},
+		],
+		music: [
+			{ label: 'Metadata', subpanels: [
+				{ keys: ['GET_AUDIO_TITLE'] },
+			]},
+			{ label: 'Rip Speed', subpanels: [
+				{ keys: ['RIP_SPEED_PROFILE'] },
+			]},
+			{ label: 'Naming Patterns', subpanels: [
+				{ keys: ['MUSIC_TITLE_PATTERN', 'MUSIC_FOLDER_PATTERN'] },
+			]},
+			{ label: 'Multi-Disc Sets', subpanels: [
+				{ keys: ['MUSIC_MULTI_DISC_SUBFOLDERS', 'MUSIC_DISC_FOLDER_PATTERN'] },
 			]},
 		],
 		notifications: [
@@ -504,23 +700,21 @@
 			{ label: 'Identity', subpanels: [
 				{ keys: ['ARM_NAME', 'DISABLE_LOGIN', 'DATE_FORMAT'] },
 			]},
-			{ label: 'Media Directories', subpanels: [
-				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'EXTRAS_SUB'] },
-			]},
-			{ label: 'System Paths', subpanels: [
-				{ keys: ['INSTALLPATH', 'LOGPATH', 'DBFILE', 'LOGLEVEL', 'LOGLIFE'] },
-			]},
 			{ label: 'Web Server', subpanels: [
 				{ keys: ['WEBSERVER_IP', 'WEBSERVER_PORT', 'UI_BASE_URL'] },
 			]},
-			{ label: 'File Permissions', subpanels: [
-				{ keys: ['UMASK', 'SET_MEDIA_PERMISSIONS', 'CHMOD_VALUE', 'SET_MEDIA_OWNER', 'CHOWN_USER', 'CHOWN_GROUP'] },
+			{ label: 'System Paths & Logging', subpanels: [
+				{ keys: ['INSTALLPATH', 'LOGPATH', 'DBFILE', 'LOGLEVEL', 'LOGLIFE'] },
 			]},
 		],
 	};
 
 	// All ARM groups flattened (for unmapped key detection)
-	const ALL_ARM_GROUPS = Object.values(TAB_ARM_GROUPS).flat();
+	// Include keys rendered in the abcde.conf panel so they don't appear as "Other"
+	const ALL_ARM_GROUPS = [
+		...Object.values(TAB_ARM_GROUPS).flat(),
+		{ label: '_abcde', subpanels: [{ keys: ['AUDIO_FORMAT', 'ABCDE_CONFIG_FILE'] }] },
+	];
 
 	const HIDDEN_KEYS = new Set([
 		'OMDB_API_KEY',
@@ -534,6 +728,7 @@
 		'PO_APP_KEY',
 		'ARM_API_KEY',
 		'TMDB_API_KEY',
+		'TVDB_API_KEY',
 		'TRANSCODER_WEBHOOK_SECRET',
 	]);
 
@@ -595,6 +790,7 @@
 		LOGLEVEL: ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
 		METADATA_PROVIDER: ['omdb', 'tmdb'],
 		GET_AUDIO_TITLE: ['none', 'musicbrainz', 'freecddb'],
+		AUDIO_FORMAT: ['flac', 'mp3', 'vorbis', 'opus', 'm4a', 'wav', 'mka', 'wv', 'ape', 'mpc', 'spx', 'mp2', 'tta', 'aiff'],
 	};
 
 	// --- Search/filter logic ---
@@ -827,14 +1023,19 @@
 			{/if}
 
 			{#if ARM_LABELS[key]?.description}
-				<p class="mt-1 text-xs text-gray-400">{ARM_LABELS[key].description}</p>
+				<p class="mt-1 text-xs text-gray-400">{@html ARM_LABELS[key].description}</p>
 			{:else if comment}
 				<p class="mt-1 text-xs text-gray-400">{comment}</p>
 			{/if}
 
 			{#if key.endsWith('_PATTERN') && settings?.naming_variables}
+				{@const patternVars = Object.entries(settings.naming_variables).filter(([v]) => {
+					if (key.startsWith('MUSIC_')) return ['title', 'year', 'artist', 'album', 'label'].includes(v);
+					if (key.startsWith('TV_')) return ['title', 'year', 'season', 'episode', 'label', 'video_type'].includes(v);
+					return ['title', 'year', 'label', 'video_type'].includes(v);
+				})}
 				<div class="mt-1.5 flex flex-wrap gap-1">
-					{#each Object.entries(settings.naming_variables) as [varName, varDesc]}
+					{#each patternVars as [varName, varDesc]}
 						<span
 							class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono
 								bg-primary/10 text-gray-600 dark:bg-primary/15 dark:text-gray-300
@@ -906,17 +1107,19 @@
 		{@const tabClass = (tab: string) => `whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors ${activeTab === tab ? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark' : 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}`}
 		<div class="border-b border-primary/20 dark:border-primary/20">
 			<nav class="-mb-px flex gap-4" aria-label="Settings tabs">
-				<button type="button" onclick={() => (activeTab = 'ripping')} class={tabClass('ripping')}>Ripping</button>
-				<button type="button" onclick={() => (activeTab = 'transcoding')} class={tabClass('transcoding')}>Transcoding</button>
-				<button type="button" onclick={() => (activeTab = 'notifications')} class={tabClass('notifications')}>Notifications</button>
-				<button type="button" onclick={() => (activeTab = 'drives')} class={tabClass('drives')}>Drives</button>
-				<button type="button" onclick={() => (activeTab = 'appearance')} class={tabClass('appearance')}>Appearance</button>
-				<button type="button" onclick={() => { activeTab = 'system'; loadSystemInfo(); }} class={tabClass('system')}>System</button>
+				<button type="button" onclick={() => setTab('ripping')} class={tabClass('ripping')}>Ripping</button>
+				<button type="button" onclick={() => setTab('music')} class={tabClass('music')}>Music</button>
+				<button type="button" onclick={() => setTab('transcoding')} class={tabClass('transcoding')}>Transcoding</button>
+				<button type="button" onclick={() => setTab('notifications')} class={tabClass('notifications')}>Notifications</button>
+				<button type="button" onclick={() => setTab('drives')} class={tabClass('drives')}>Drives</button>
+				<button type="button" onclick={() => setTab('appearance')} class={tabClass('appearance')}>Appearance</button>
+				<button type="button" onclick={() => setTab('system')} class={tabClass('system')}>System</button>
 			</nav>
 		</div>
 
 		<!-- Transcoding Tab -->
 		{#if activeTab === 'transcoding'}
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcoding</h2>
 			<div class="rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
 				These settings configure the <strong>dedicated transcoder service</strong>, a separate GPU-accelerated container that handles all transcoding. ARM rips discs and notifies this service to transcode.
 			</div>
@@ -971,7 +1174,7 @@
 								placeholder="Enter secret to test..."
 								bind:value={webhookSecret}
 							/>
-							<p class="mt-1 text-xs text-gray-400">Not saved &mdash; used only for this test.</p>
+							<p class="mt-1 text-xs text-gray-400">Leave empty to test with the saved TRANSCODER_WEBHOOK_SECRET from arm.yaml.</p>
 						</div>
 						<button
 							type="button"
@@ -1341,7 +1544,7 @@
 				{:else}
 					<div class="space-y-2">
 						{#each groups as group}
-							<div class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
+							<div id="panel-{group.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}" class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
 								<button
 									type="button"
 									onclick={() => toggleCollapse(group.label)}
@@ -1430,6 +1633,140 @@
 			</section>
 		{/if}
 
+		<!-- Music Tab -->
+		{#if activeTab === 'music'}
+			<section>
+				<div class="mb-3 flex items-center justify-between gap-3">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Music</h2>
+					{@render armSearchBar()}
+				</div>
+				{@render armSettingsSection('music')}
+			</section>
+
+			<!-- Encoding & abcde.conf -->
+			<section class="mt-2">
+				<div class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
+					<button
+						type="button"
+						onclick={() => (abcdeCollapsed = !abcdeCollapsed)}
+						class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-page dark:text-white dark:hover:bg-primary/10"
+					>
+						<span>Encoding</span>
+						<svg
+							class="h-4 w-4 transform transition-transform {abcdeCollapsed ? '' : 'rotate-180'}"
+							fill="none" stroke="currentColor" viewBox="0 0 24 24"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+						</svg>
+					</button>
+					{#if !abcdeCollapsed}
+						<div class="border-t border-primary/20 px-4 py-3 dark:border-primary/20">
+							<!-- ARM encoding fields -->
+							{#if settings?.arm_config}
+								<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+									{#each ['AUDIO_FORMAT', 'ABCDE_CONFIG_FILE'] as key}
+										{#if settings.arm_config[key] !== undefined}
+											{@render armField(key)}
+										{/if}
+									{/each}
+								</div>
+							{/if}
+
+							<!-- abcde.conf file editor -->
+							<div class="mt-4">
+								<div class="mb-2 flex items-center justify-between gap-3">
+									<h4 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+										abcde.conf
+										{#if abcdePath}
+											<span class="ml-1 font-normal normal-case tracking-normal text-gray-400">{abcdePath}</span>
+										{/if}
+									</h4>
+									{#if abcdeExists || abcdeDirty}
+										<div class="flex items-center gap-1.5">
+											<div class="relative">
+												<svg class="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+												</svg>
+												<input
+													type="text"
+													placeholder="Search..."
+													class="w-44 rounded-md border border-primary/25 bg-primary/5 py-1 pl-7 pr-2 text-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+													bind:value={abcdeSearch}
+													onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); abcdeSearchNav(e.shiftKey ? -1 : 1); } }}
+												/>
+											</div>
+											{#if abcdeSearch}
+												<span class="text-xs text-gray-400 tabular-nums">{abcdeMatches.length > 0 ? `${abcdeSearchIndex + 1}/${abcdeMatches.length}` : '0'}</span>
+												<button type="button" onclick={() => abcdeSearchNav(-1)} disabled={abcdeMatches.length === 0} class="rounded p-0.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300" aria-label="Previous match">
+													<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+												</button>
+												<button type="button" onclick={() => abcdeSearchNav(1)} disabled={abcdeMatches.length === 0} class="rounded p-0.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300" aria-label="Next match">
+													<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+												</button>
+											{/if}
+										</div>
+									{/if}
+								</div>
+								{#if abcdeLoading}
+									<p class="py-4 text-center text-sm text-gray-400">Loading abcde.conf...</p>
+								{:else if !abcdeLoaded}
+									<p class="py-4 text-center text-sm text-gray-400">Failed to load abcde.conf</p>
+								{:else if !abcdeExists && !abcdeDirty}
+									<div class="rounded-md border border-primary/15 bg-page p-6 text-center dark:border-primary/20 dark:bg-primary/5">
+										<p class="text-sm text-gray-500 dark:text-gray-400">
+											No abcde.conf file found at <code class="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs dark:bg-gray-700">{abcdePath}</code>
+										</p>
+										<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Start typing below to create one.</p>
+									</div>
+									<textarea
+										bind:this={abcdeTextarea}
+										class="mt-3 w-full rounded-md border border-primary/25 bg-primary/5 p-3 font-mono text-sm leading-relaxed focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+										rows="10"
+										placeholder="# abcde.conf — paste or type your configuration here"
+										bind:value={abcdeContent}
+									></textarea>
+								{:else}
+									<textarea
+										bind:this={abcdeTextarea}
+										class="w-full rounded-md border border-primary/25 bg-primary/5 p-3 font-mono text-sm leading-relaxed focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+										rows="20"
+										bind:value={abcdeContent}
+									></textarea>
+								{/if}
+
+								{#if abcdeDirty || abcdeFeedback}
+									<div class="mt-3 flex items-center gap-3">
+										{#if abcdeDirty}
+											<button
+												type="button"
+												onclick={handleAbcdeSave}
+												disabled={abcdeSaving}
+												class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-primary/80 disabled:opacity-50"
+											>
+												{abcdeSaving ? 'Saving...' : 'Save'}
+											</button>
+											<button
+												type="button"
+												onclick={handleAbcdeDiscard}
+												class="rounded-md border border-primary/25 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-page dark:border-primary/30 dark:text-gray-300 dark:hover:bg-primary/10"
+											>
+												Discard
+											</button>
+										{/if}
+										{#if abcdeFeedback}
+											<span class="text-sm {abcdeFeedback.type === 'success' ? 'text-green-500' : 'text-red-500'}">
+												{abcdeFeedback.message}
+											</span>
+										{/if}
+									</div>
+								{/if}
+							</div>
+						</div>
+					{/if}
+				</div>
+			</section>
+		{/if}
+
 		<!-- Notifications Tab -->
 		{#if activeTab === 'notifications'}
 			<section>
@@ -1447,6 +1784,7 @@
 				<div class="py-8 text-center text-gray-400">Loading system info...</div>
 			{:else if systemInfo}
 				<div class="space-y-6">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">System</h2>
 					<!-- Versions -->
 					<section>
 						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
@@ -1469,7 +1807,8 @@
 							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Endpoints</h2>
 							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 								{#each Object.entries(systemInfo.endpoints) as [name, ep]}
-									<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+									{@const envVar = name === 'arm' ? 'ARM_UI_ARM_URL' : name === 'transcoder' ? 'ARM_UI_TRANSCODER_URL' : name.toUpperCase() + '_URL'}
+								<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 										<div class="flex items-center justify-between">
 											<p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{name}</p>
 											<span class="inline-flex items-center gap-1.5 text-xs font-medium {ep.reachable ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
@@ -1477,10 +1816,22 @@
 												{ep.reachable ? 'Reachable' : 'Unreachable'}
 											</span>
 										</div>
-										<p class="mt-2 font-mono text-sm text-gray-900 dark:text-white">{ep.url}</p>
-										<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-											{name === 'arm' ? 'ARM_UI_ARM_URL' : name === 'transcoder' ? 'ARM_UI_TRANSCODER_URL' : name.toUpperCase() + '_URL'}
-										</p>
+										<div class="mt-2 flex items-center gap-2">
+											<p class="font-mono text-sm text-gray-900 dark:text-white">{ep.url}</p>
+											<button
+												type="button"
+												onclick={() => toggleEndpointInfo(name)}
+												class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold
+													{endpointInfoKeys.has(name)
+													? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/40 dark:text-primary-text-dark'
+													: 'bg-primary/10 text-gray-500 dark:bg-primary/15 dark:text-gray-400'}
+													hover:bg-primary/20 dark:hover:bg-primary/20"
+												title={envVar}
+											>i</button>
+										</div>
+										{#if endpointInfoKeys.has(name)}
+											<p class="mt-1 font-mono text-xs text-gray-400 dark:text-gray-500">{envVar}</p>
+										{/if}
 									</div>
 								{/each}
 							</div>
@@ -1535,7 +1886,7 @@
 					<section>
 						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Database</h2>
 						<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-							<dl class="grid grid-cols-3 gap-4 text-sm">
+							<dl class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
 								<div>
 									<dt class="text-gray-500 dark:text-gray-400">Path</dt>
 									<dd class="mt-1 font-mono text-xs text-gray-900 dark:text-white">{systemInfo.database.path}</dd>
@@ -1553,46 +1904,46 @@
 										</span>
 									</dd>
 								</div>
+								<div>
+									<dt class="text-gray-500 dark:text-gray-400">Migrations</dt>
+									<dd class="mt-1">
+										{#if systemInfo.database.up_to_date === true}
+											<span class="inline-flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400">
+												<div class="h-2 w-2 rounded-full bg-green-500"></div>
+												Up to date
+											</span>
+										{:else if systemInfo.database.up_to_date === false}
+											<span class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 dark:text-amber-400">
+												<div class="h-2 w-2 rounded-full bg-amber-500"></div>
+												Needs migration
+											</span>
+										{:else}
+											<span class="text-sm text-gray-400">Unknown</span>
+										{/if}
+									</dd>
+								</div>
 							</dl>
+							{#if systemInfo.database.migration_current && systemInfo.database.migration_current !== 'unknown' && systemInfo.database.migration_current !== 'offline'}
+								<div class="mt-3 border-t border-primary/10 pt-3 dark:border-primary/15">
+									<p class="font-mono text-xs text-gray-400 dark:text-gray-500">
+										revision: {systemInfo.database.migration_current}{systemInfo.database.migration_head && systemInfo.database.migration_head !== systemInfo.database.migration_current ? ` → head: ${systemInfo.database.migration_head}` : ''}
+									</p>
+								</div>
+							{/if}
 						</div>
 					</section>
 
-					<!-- Drives -->
-					{#if systemInfo.drives.length > 0}
-						<section>
-							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
-							<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-								<table class="w-full text-left text-sm">
-									<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
-										<tr>
-											<th class="px-4 py-3 font-medium">Name</th>
-											<th class="px-4 py-3 font-medium">Device</th>
-											<th class="px-4 py-3 font-medium">Maker / Model</th>
-											<th class="px-4 py-3 font-medium">Capabilities</th>
-											<th class="px-4 py-3 font-medium">Firmware</th>
-										</tr>
-									</thead>
-									<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-										{#each systemInfo.drives as drive}
-											<tr class="hover:bg-page dark:hover:bg-gray-800/50">
-												<td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{drive.name ?? 'Unnamed'}</td>
-												<td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400">{drive.mount ?? ''}</td>
-												<td class="px-4 py-2 text-gray-900 dark:text-white">{[drive.maker, drive.model].filter(Boolean).join(' ') || 'Unknown'}</td>
-												<td class="px-4 py-2">
-													<div class="flex gap-1">
-														{#each drive.capabilities as cap}
-															<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary-text dark:bg-primary/15 dark:text-primary-text-dark">{cap}</span>
-														{/each}
-													</div>
-												</td>
-												<td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400">{drive.firmware ?? ''}</td>
-											</tr>
-										{/each}
-									</tbody>
-								</table>
-							</div>
-						</section>
-					{/if}
+					<!-- Drives link -->
+					<section class="flex items-center gap-2">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
+						<button
+							type="button"
+							onclick={() => setTab('drives')}
+							class="text-sm text-primary hover:text-primary-hover hover:underline dark:text-primary dark:hover:text-primary-hover"
+						>
+							View in Drives tab
+						</button>
+					</section>
 				</div>
 			{:else}
 				<p class="py-8 text-center text-gray-400">Failed to load system info.</p>
@@ -1610,10 +1961,11 @@
 
 		<!-- Appearance Tab -->
 		{#if activeTab === 'appearance'}
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Appearance</h2>
 			<section class="space-y-6">
 				<!-- Color Scheme -->
 				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-					<h2 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Color Scheme</h2>
+					<h3 class="mb-1 text-base font-semibold text-gray-900 dark:text-white">Color Scheme</h3>
 					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Choose an accent color for buttons, links, and highlights throughout the UI.</p>
 					<div class="flex flex-wrap gap-3">
 						{#each COLOR_SCHEMES as scheme}
@@ -1636,7 +1988,7 @@
 				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 					<div class="flex items-center justify-between">
 						<div>
-							<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Dark Mode</h2>
+							<h3 class="text-base font-semibold text-gray-900 dark:text-white">Dark Mode</h3>
 							{#if $schemeLocksMode}
 								<p class="text-sm text-gray-500 dark:text-gray-400">Locked by theme</p>
 							{:else}
@@ -1678,6 +2030,7 @@
 		{/if}
 
 		{#if activeTab === 'drives'}
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
 			<section class="space-y-6">
 				{#if $driveError}
 					<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
@@ -1692,6 +2045,150 @@
 						{/each}
 					</div>
 				{/if}
+
+				<!-- Diagnostics -->
+				<hr class="my-2 opacity-20" />
+				<div data-diag>
+					<div class="flex items-center gap-3">
+						<button
+							onclick={runDiagnostic}
+							disabled={diagRunning}
+							class="inline-flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-200 disabled:opacity-50 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+						>
+							<svg class="h-4 w-4 {diagRunning ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+							</svg>
+							{diagRunning ? 'Running...' : 'Check Udev & Drives'}
+						</button>
+						{#if diagError}
+							<span class="text-sm text-red-600 dark:text-red-400">{diagError}</span>
+						{/if}
+					</div>
+
+					{#if diagResult}
+						<div class="mt-4 space-y-4">
+							<!-- System summary row -->
+							<div class="flex flex-wrap items-center gap-4 text-sm">
+								<span class="inline-flex items-center gap-1.5">
+									<div class="h-2 w-2 rounded-full {diagResult.udevd_running ? 'bg-green-500' : 'bg-red-500'}"></div>
+									<span class="font-medium text-gray-700 dark:text-gray-300">udevd {diagResult.udevd_running ? 'running' : 'not running'}</span>
+								</span>
+								<span class="text-gray-500 dark:text-gray-400">
+									Kernel: {diagResult.kernel_drives.length > 0 ? diagResult.kernel_drives.join(', ') : 'none'}
+								</span>
+								<span class="text-gray-500 dark:text-gray-400">
+									{diagResult.drives.length} drive{diagResult.drives.length !== 1 ? 's' : ''} checked
+								</span>
+								<span class="font-medium {diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}">
+									{diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'Issues Found' : 'All OK'}
+								</span>
+							</div>
+
+							<!-- System-level issues -->
+							{#if diagResult.issues.length > 0}
+								<div class="rounded-md bg-red-500/10 p-3">
+									{#each diagResult.issues as issue}
+										<p class="text-xs text-red-700 dark:text-red-300">{issue}</p>
+									{/each}
+								</div>
+							{/if}
+
+							<!-- Per-drive cards -->
+							{#if diagResult.drives.length > 0}
+								<div class="grid gap-3 md:grid-cols-2">
+									{#each diagResult.drives as diag}
+										<div class="rounded-lg border border-primary/20 p-3 dark:border-primary/20
+											{diag.issues.length > 0 ? 'bg-amber-500/5' : 'bg-green-500/5'}">
+
+											<!-- Header: device name + tray status -->
+											<div class="flex items-center justify-between">
+												<div>
+													<span class="font-mono text-sm font-semibold text-gray-900 dark:text-white">/dev/{diag.devname}</span>
+													{#if diag.db_name}
+														<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">{diag.db_name}</span>
+													{/if}
+												</div>
+												<div class="flex items-center gap-1.5">
+													{#if diag.arm_processing}
+														<span class="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-400">Ripping</span>
+													{/if}
+													<span class="rounded-full px-2 py-0.5 text-[10px] font-medium
+														{diag.tray_status === 4 ? 'bg-green-500/20 text-green-700 dark:text-green-400'
+														: diag.tray_status === 1 ? 'bg-gray-500/20 text-gray-600 dark:text-gray-400'
+														: diag.tray_status === 2 ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
+														: diag.tray_status === 3 ? 'bg-blue-500/20 text-blue-700 dark:text-blue-400'
+														: 'bg-gray-500/20 text-gray-600 dark:text-gray-400'}">
+														{diag.tray_status_name ?? 'unknown'}
+													</span>
+												</div>
+											</div>
+
+											<!-- Model / connection info -->
+											{#if diag.db_model || diag.db_connection}
+												<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+													{diag.db_model ?? ''}{diag.db_model && diag.db_connection ? ' · ' : ''}{diag.db_connection ?? ''}{diag.major_minor ? ` · ${diag.major_minor}` : ''}
+												</p>
+											{:else if diag.major_minor}
+												<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+													{diag.udevadm.ID_BUS ?? ''}{diag.udevadm.ID_BUS ? ' · ' : ''}{diag.major_minor}
+												</p>
+											{/if}
+
+											<!-- Check pills + media badges -->
+											<div class="mt-2 flex flex-wrap gap-1.5">
+												{#each [
+													{ label: '/dev', ok: diag.dev_node_exists },
+													{ label: 'sysfs', ok: diag.sysfs_exists },
+													{ label: 'kernel', ok: diag.in_kernel_cdrom },
+													{ label: 'DB', ok: diag.in_database },
+												] as check}
+													<span class="rounded-sm px-1.5 py-0.5 text-[10px] font-medium
+														{check.ok
+															? 'bg-green-500/20 text-green-700 dark:text-green-400'
+															: 'bg-red-500/20 text-red-700 dark:text-red-400'}">
+														{check.label}
+													</span>
+												{/each}
+
+												<!-- Media type badges from udevadm -->
+												{#if diag.udevadm.ID_CDROM_MEDIA === '1'}
+													<span class="rounded-sm bg-green-500/20 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-400">DISC</span>
+												{/if}
+												{#if diag.udevadm.ID_CDROM_MEDIA_BD === '1'}
+													<span class="rounded-sm bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 dark:text-purple-400">BD</span>
+												{/if}
+												{#if diag.udevadm.ID_CDROM_MEDIA_DVD === '1'}
+													<span class="rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary-text dark:text-primary-text-dark">DVD</span>
+												{/if}
+												{#if diag.udevadm.ID_CDROM_MEDIA_CD === '1'}
+													<span class="rounded-sm bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-400">CD</span>
+												{/if}
+												{#if diag.udevadm.ID_FS_TYPE}
+													<span class="rounded-sm bg-gray-500/20 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:text-gray-400">{diag.udevadm.ID_FS_TYPE}</span>
+												{/if}
+											</div>
+
+											{#if !Object.keys(diag.udevadm).length}
+												<p class="mt-1 text-[10px] italic text-gray-400 dark:text-gray-500">no udevadm data</p>
+											{/if}
+
+											<!-- Issues -->
+											{#if diag.issues.length > 0}
+												<div class="mt-2 rounded-md bg-amber-500/10 p-2">
+													{#each diag.issues as issue}
+														<p class="text-xs text-amber-700 dark:text-amber-400">{issue}</p>
+													{/each}
+												</div>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							{:else}
+								<p class="text-sm text-gray-400">No optical drives found in kernel, sysfs, /dev, or database.</p>
+							{/if}
+						</div>
+					{/if}
+				</div>
 			</section>
 		{/if}
 	{/if}

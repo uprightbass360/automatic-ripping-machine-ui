@@ -2,6 +2,7 @@
 	import type { Job } from '$lib/types/arm';
 	import StatusBadge from './StatusBadge.svelte';
 	import TimeAgo from './TimeAgo.svelte';
+	import ProgressBar from './ProgressBar.svelte';
 	import { elapsedTime } from '$lib/utils/format';
 	import { getVideoTypeConfig, isJobActive, discTypeLabel } from '$lib/utils/job-type';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
@@ -121,6 +122,9 @@
 						{discTypeLabel(job.disctype)}
 					</span>
 				{/if}
+				{#if job.disc_number}
+					<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">Disc {job.disc_number}{#if job.disc_total}/{job.disc_total}{/if}</span>
+				{/if}
 				{#if job.devpath}
 					<span>{driveName ?? job.devpath}</span>
 				{/if}
@@ -133,17 +137,12 @@
 	{#if active}
 		<div class="mt-3">
 			{#if progress != null && progress > 0}
-				<div class="flex items-center gap-2">
-					<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-primary/15 dark:bg-primary/15">
-						<div class="h-full rounded-full bg-primary transition-all duration-500" style="width: {Math.min(progress, 100)}%"></div>
-					</div>
-					<span class="shrink-0 text-xs font-medium text-primary-text dark:text-primary-text-dark">{progress.toFixed(1)}%</span>
-				</div>
+				<ProgressBar value={progress} color="bg-primary" />
 				{#if progressStage}
 					<p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{progressStage}</p>
 				{/if}
 			{:else}
-				<div class="h-1.5 overflow-hidden rounded-full bg-primary/15 dark:bg-primary/15">
+				<div class="h-2.5 overflow-hidden rounded-full bg-primary/15 dark:bg-primary/15">
 					<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
 				</div>
 			{/if}

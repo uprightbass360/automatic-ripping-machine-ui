@@ -19,7 +19,7 @@ class TrackSchema(BaseModel):
     length: int | None = None
     aspect_ratio: str | None = None
     fps: float | None = None
-    main_feature: bool | None = None
+    enabled: bool | None = None
     basename: str | None = None
     filename: str | None = None
     orig_filename: str | None = None
@@ -28,8 +28,25 @@ class TrackSchema(BaseModel):
     status: str | None = None
     error: str | None = None
     source: str | None = None
+    # Per-track title metadata (null = inherits from job)
+    title: str | None = None
+    year: str | None = None
+    imdb_id: str | None = None
+    poster_url: str | None = None
+    video_type: str | None = None
+    # TVDB episode matching
+    episode_number: str | None = None
+    episode_name: str | None = None
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_orm_compat(cls, track) -> "TrackSchema":
+        """Build from a Track ORM object, falling back main_feature -> enabled."""
+        schema = cls.model_validate(track)
+        if schema.enabled is None:
+            schema.enabled = getattr(track, "main_feature", None)
+        return schema
 
 
 class JobSchema(BaseModel):
@@ -68,6 +85,12 @@ class JobSchema(BaseModel):
     raw_path: str | None = None
     transcode_path: str | None = None
     transcode_overrides: dict | None = None
+    multi_title: bool | None = None
+    disc_number: int | None = None
+    disc_total: int | None = None
+    manual_pause: bool | None = None
+    wait_start_time: datetime | None = None
+    tvdb_id: int | None = None
 
     @field_validator("transcode_overrides", mode="before")
     @classmethod
@@ -335,6 +358,7 @@ class JobConfigUpdateRequest(BaseModel):
     MAINFEATURE: bool | None = None
     MINLENGTH: int | None = None
     MAXLENGTH: int | None = None
+    AUDIO_FORMAT: str | None = None
 
 
 class DriveUpdateRequest(BaseModel):
