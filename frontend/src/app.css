@@ -2276,10 +2276,24 @@ body { visibility: visible; }
 	box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
 }
 
-/* Heavy Card Borders + Offset Shadows — exempt [data-diag] diagnostic panel */
-[data-scheme="hollywood-video-v2"] section > div[class*="border"]:not([data-diag]) {
-	border-color: #D90B1C !important;
-	box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
+/* Card & panel borders — thin red accent, subtle shadow */
+[data-scheme="hollywood-video-v2"] .lcars-body div[class*="border"]:not([data-diag]):not(.border-transparent) {
+	border-color: rgba(217, 11, 28, 0.5) !important;
+	border-width: 1px !important;
+}
+[data-scheme="hollywood-video-v2"] .lcars-body div[class*="shadow-xs"] {
+	box-shadow: 2px 2px 0px rgba(0,0,0,0.25);
+}
+/* Tab bar bottom border */
+[data-scheme="hollywood-video-v2"] .lcars-body div[class*="border-b"] {
+	border-bottom-color: rgba(217, 11, 28, 0.4) !important;
+}
+/* Input borders stay subtle */
+[data-scheme="hollywood-video-v2"] .lcars-body input[class*="border"],
+[data-scheme="hollywood-video-v2"] .lcars-body select[class*="border"],
+[data-scheme="hollywood-video-v2"] .lcars-body textarea[class*="border"] {
+	border-color: rgba(217, 11, 28, 0.25) !important;
+	border-width: 1px !important;
 }
 
 /* HR separators — red accent line */
