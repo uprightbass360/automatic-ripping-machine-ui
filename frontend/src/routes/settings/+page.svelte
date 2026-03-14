@@ -1886,7 +1886,7 @@
 					<section>
 						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Database</h2>
 						<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-							<dl class="grid grid-cols-3 gap-4 text-sm">
+							<dl class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
 								<div>
 									<dt class="text-gray-500 dark:text-gray-400">Path</dt>
 									<dd class="mt-1 font-mono text-xs text-gray-900 dark:text-white">{systemInfo.database.path}</dd>
@@ -1904,7 +1904,32 @@
 										</span>
 									</dd>
 								</div>
+								<div>
+									<dt class="text-gray-500 dark:text-gray-400">Migrations</dt>
+									<dd class="mt-1">
+										{#if systemInfo.database.up_to_date === true}
+											<span class="inline-flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400">
+												<div class="h-2 w-2 rounded-full bg-green-500"></div>
+												Up to date
+											</span>
+										{:else if systemInfo.database.up_to_date === false}
+											<span class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 dark:text-amber-400">
+												<div class="h-2 w-2 rounded-full bg-amber-500"></div>
+												Needs migration
+											</span>
+										{:else}
+											<span class="text-sm text-gray-400">Unknown</span>
+										{/if}
+									</dd>
+								</div>
 							</dl>
+							{#if systemInfo.database.migration_current && systemInfo.database.migration_current !== 'unknown' && systemInfo.database.migration_current !== 'offline'}
+								<div class="mt-3 border-t border-primary/10 pt-3 dark:border-primary/15">
+									<p class="font-mono text-xs text-gray-400 dark:text-gray-500">
+										revision: {systemInfo.database.migration_current}{systemInfo.database.migration_head && systemInfo.database.migration_head !== systemInfo.database.migration_current ? ` → head: ${systemInfo.database.migration_head}` : ''}
+									</p>
+								</div>
+							{/if}
 						</div>
 					</section>
 
