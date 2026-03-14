@@ -374,7 +374,7 @@
 					onclick={() => (activePanel = activePanel === 'title' ? null : 'title')}
 					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePanel === 'title' ? 'bg-indigo-200 text-indigo-800 dark:bg-indigo-800/50 dark:text-indigo-300' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50'}"
 				>
-					Search / Edit Title
+					Identify
 				</button>
 			{/if}
 			{#if isMusicDisc}
@@ -401,7 +401,7 @@
 					Rip Settings
 				</button>
 			{/if}
-			{#if isVideoDisc && job.video_type === 'series'}
+			{#if isVideoDisc && (job.video_type === 'series' || job.imdb_id)}
 				<button
 					onclick={() => (activePanel = activePanel === 'tvdb' ? null : 'tvdb')}
 					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePanel === 'tvdb' ? 'bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-300' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}"
