@@ -19,6 +19,10 @@ export function scanDrive(driveId: number): Promise<{ success: boolean; drive_id
 	return apiFetch(`/api/drives/${driveId}/scan`, { method: 'POST' });
 }
 
+export function deleteDrive(driveId: number): Promise<{ success: boolean; drive_id: number }> {
+	return apiFetch(`/api/drives/${driveId}`, { method: 'DELETE' });
+}
+
 export interface DriveDiagnostic {
 	devname: string;
 	status: 'ok' | 'warning';

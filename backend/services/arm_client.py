@@ -201,6 +201,11 @@ async def drive_diagnostic() -> dict[str, Any] | None:
     return await _request("GET", "/api/v1/drives/diagnostic")
 
 
+async def delete_drive(drive_id: int) -> dict[str, Any] | None:
+    """Remove a stale drive from the database. Returns None if ARM is unreachable."""
+    return await _request("DELETE", f"/api/v1/drives/{drive_id}")
+
+
 async def dismiss_notification(notify_id: int) -> dict[str, Any] | None:
     """Mark a notification as read. Returns None if ARM is unreachable."""
     return await _request("PATCH", f"/api/v1/notifications/{notify_id}")
