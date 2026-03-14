@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Drive } from '$lib/types/arm';
-	import { updateDrive, scanDrive } from '$lib/api/drives';
+	import { updateDrive, scanDrive, deleteDrive } from '$lib/api/drives';
 	import StatusBadge from './StatusBadge.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 
@@ -17,6 +17,9 @@
 	let togglingUhd = $state(false);
 	let scanning = $state(false);
 	let scanCooldown = $state(false);
+	let removing = $state(false);
+
+	let isStale = $derived(!drive.mount || drive.stale === true);
 
 	async function handleScan() {
 		if (scanning || scanCooldown) return;
@@ -29,6 +32,17 @@
 			scanning = false;
 			scanCooldown = true;
 			setTimeout(() => (scanCooldown = false), 10000);
+		}
+	}
+
+	async function handleRemove() {
+		if (!confirm(`Remove "${drive.name || drive.mount || `Drive ${drive.drive_id}`}" from the database? This drive will reappear on the next rescan if it's still connected.`)) return;
+		removing = true;
+		try {
+			await deleteDrive(drive.drive_id);
+			onupdate?.();
+		} catch {
+			removing = false;
 		}
 	}
 
@@ -72,11 +86,16 @@
 	}
 </script>
 
-<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark {isStale ? 'opacity-60' : ''}">
 	<div class="mb-3 flex items-center justify-between">
-		<h3 class="font-semibold text-gray-900 dark:text-white">
-			{drive.name || drive.mount || `Drive ${drive.drive_id}`}
-		</h3>
+		<div class="flex items-center gap-2">
+			<h3 class="font-semibold text-gray-900 dark:text-white">
+				{drive.name || drive.mount || `Drive ${drive.drive_id}`}
+			</h3>
+			{#if isStale}
+				<span class="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">Stale</span>
+			{/if}
+		</div>
 		{#if drive.current_job}
 			<StatusBadge status={drive.current_job.status} />
 		{:else}
@@ -123,17 +142,17 @@
 
 	<div class="mt-3 flex flex-wrap gap-1.5">
 		{#if drive.read_cd}
-			<span class="inline-flex items-center gap-1 rounded-sm bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
+			<span class="inline-flex items-center gap-1 rounded-sm bg-green-500/20 px-1.5 py-0.5 text-xs text-green-700 dark:text-green-400">
 				<DiscTypeIcon disctype="music" size="h-3.5 w-3.5" />CD
 			</span>
 		{/if}
 		{#if drive.read_dvd}
-			<span class="inline-flex items-center gap-1 rounded-sm bg-primary-light-bg px-1.5 py-0.5 text-xs text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark">
+			<span class="inline-flex items-center gap-1 rounded-sm bg-primary/15 px-1.5 py-0.5 text-xs text-primary-text dark:text-primary-text-dark">
 				<DiscTypeIcon disctype="dvd" size="h-3.5 w-3.5" />DVD
 			</span>
 		{/if}
 		{#if drive.read_bd}
-			<span class="inline-flex items-center gap-1 rounded-sm bg-purple-100 px-1.5 py-0.5 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+			<span class="inline-flex items-center gap-1 rounded-sm bg-purple-500/20 px-1.5 py-0.5 text-xs text-purple-700 dark:text-purple-400">
 				<DiscTypeIcon disctype="bluray" size="h-3.5 w-3.5" />Blu-ray
 			</span>
 			<label class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
@@ -154,7 +173,7 @@
 			onclick={handleScan}
 			disabled={scanning || scanCooldown}
 			class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors
-				{scanning ? 'bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}
+				{scanning ? 'bg-blue-500/30 text-blue-800 dark:text-blue-300' : 'bg-blue-500/15 text-blue-700 hover:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/30'}
 				disabled:opacity-50 disabled:cursor-not-allowed"
 		>
 			<svg class="h-4 w-4 {scanning ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,6 +181,15 @@
 			</svg>
 			{scanning ? 'Scanning...' : scanCooldown ? 'Scan Sent' : 'Force Scan'}
 		</button>
+		{#if isStale && !drive.current_job}
+			<button
+				onclick={handleRemove}
+				disabled={removing}
+				class="rounded-lg px-3 py-1.5 text-sm font-medium text-red-700 bg-red-500/15 hover:bg-red-500/25 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-500/30 transition-colors"
+			>
+				{removing ? 'Removing...' : 'Remove'}
+			</button>
+		{/if}
 		{#if drive.current_job}
 			<a href="/jobs/{drive.current_job.job_id}" class="text-sm text-primary-text hover:underline dark:text-primary-text-dark">
 				{drive.current_job.title || drive.current_job.label || 'Active Job'}

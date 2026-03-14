@@ -19,6 +19,18 @@ async def drive_diagnostic():
     return result
 
 
+@router.delete("/drives/{drive_id}", responses={404: {"description": "Drive not found"}, 409: {"description": "Drive has active job"}, 502: {"description": "ARM unreachable"}})
+async def delete_drive(drive_id: int):
+    result = await arm_client.delete_drive(drive_id)
+    if result is None:
+        raise HTTPException(status_code=502, detail="ARM unreachable")
+    if not result.get("success"):
+        error = result.get("error", "Delete failed")
+        status = 409 if "active" in error.lower() else 404
+        raise HTTPException(status_code=status, detail=error)
+    return result
+
+
 @router.post("/drives/{drive_id}/scan", responses={404: {"description": "Drive not found"}, 502: {"description": "ARM unreachable"}})
 async def scan_drive(drive_id: int):
     result = await arm_client.scan_drive(drive_id)

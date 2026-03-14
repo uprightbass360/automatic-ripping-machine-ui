@@ -2018,7 +2018,7 @@
 				{/if}
 
 				<!-- Diagnostics -->
-				<div class="border-t border-primary/15 pt-4 dark:border-primary/20">
+				<div data-diag class="border-t border-primary/15 pt-4 dark:border-primary/20">
 					<div class="flex items-center gap-3">
 						<button
 							onclick={runDiagnostic}
@@ -2037,156 +2037,121 @@
 
 					{#if diagResult}
 						<div class="mt-4 space-y-4">
-							<!-- System-level checks -->
-							<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-								<h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Container Environment</h3>
-								<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-									<div class="space-y-0.5">
-										<p class="text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">udevd</p>
-										<div class="flex items-center gap-1.5">
-											<div class="h-2 w-2 rounded-full {diagResult.udevd_running ? 'bg-green-500' : 'bg-red-500'}"></div>
-											<span class="text-sm font-medium {diagResult.udevd_running ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-												{diagResult.udevd_running ? 'Running' : 'Not Running'}
-											</span>
-										</div>
-									</div>
-									<div class="space-y-0.5">
-										<p class="text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Kernel Drives</p>
-										<p class="text-sm font-medium text-gray-900 dark:text-white">
-											{diagResult.kernel_drives.length > 0 ? diagResult.kernel_drives.join(', ') : 'none'}
-										</p>
-									</div>
-									<div class="space-y-0.5">
-										<p class="text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Total Found</p>
-										<p class="text-sm font-medium text-gray-900 dark:text-white">{diagResult.drives.length} drive{diagResult.drives.length !== 1 ? 's' : ''}</p>
-									</div>
-									<div class="space-y-0.5">
-										<p class="text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Status</p>
-										<span class="text-sm font-medium {diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'text-amber-600 dark:text-amber-400' : 'text-green-700 dark:text-green-400'}">
-											{diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'Issues Found' : 'All OK'}
-										</span>
-									</div>
-								</div>
-								{#if diagResult.issues.length > 0}
-									<div class="mt-3 rounded-md bg-red-50 p-2 dark:bg-red-900/20">
-										{#each diagResult.issues as issue}
-											<p class="text-xs text-red-700 dark:text-red-300">{issue}</p>
-										{/each}
-									</div>
-								{/if}
+							<!-- System summary row -->
+							<div class="flex flex-wrap items-center gap-4 text-sm">
+								<span class="inline-flex items-center gap-1.5">
+									<div class="h-2 w-2 rounded-full {diagResult.udevd_running ? 'bg-green-500' : 'bg-red-500'}"></div>
+									<span class="font-medium text-gray-700 dark:text-gray-300">udevd {diagResult.udevd_running ? 'running' : 'not running'}</span>
+								</span>
+								<span class="text-gray-500 dark:text-gray-400">
+									Kernel: {diagResult.kernel_drives.length > 0 ? diagResult.kernel_drives.join(', ') : 'none'}
+								</span>
+								<span class="text-gray-500 dark:text-gray-400">
+									{diagResult.drives.length} drive{diagResult.drives.length !== 1 ? 's' : ''} checked
+								</span>
+								<span class="font-medium {diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}">
+									{diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'Issues Found' : 'All OK'}
+								</span>
 							</div>
 
-							<!-- Per-drive table -->
+							<!-- System-level issues -->
+							{#if diagResult.issues.length > 0}
+								<div class="rounded-md bg-red-500/10 p-3">
+									{#each diagResult.issues as issue}
+										<p class="text-xs text-red-700 dark:text-red-300">{issue}</p>
+									{/each}
+								</div>
+							{/if}
+
+							<!-- Per-drive cards -->
 							{#if diagResult.drives.length > 0}
-								<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-									<table class="w-full text-sm">
-										<thead>
-											<tr class="bg-primary/5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:bg-primary/10 dark:text-gray-400">
-												<th class="px-3 py-2">Drive</th>
-												<th class="px-3 py-2">Tray</th>
-												<th class="px-3 py-2">Device Checks</th>
-												<th class="px-3 py-2">Media</th>
-												<th class="px-3 py-2">Issues</th>
-											</tr>
-										</thead>
-										<tbody class="divide-y divide-primary/10 dark:divide-primary/15">
-											{#each diagResult.drives as diag}
-												<tr class="{diag.issues.length > 0 ? 'bg-amber-50/30 dark:bg-amber-900/5' : ''}">
-													<!-- Drive identity -->
-													<td class="px-3 py-2.5">
-														<div class="font-mono text-sm font-semibold text-gray-900 dark:text-white">/dev/{diag.devname}</div>
-														{#if diag.db_name || diag.db_model}
-															<div class="text-xs text-gray-500 dark:text-gray-400">
-																{diag.db_name ?? ''}{diag.db_name && diag.db_model ? ' — ' : ''}{diag.db_model ?? ''}
-															</div>
-														{/if}
-														{#if diag.db_connection}
-															<div class="text-[10px] text-gray-400 dark:text-gray-500">{diag.db_connection}{diag.major_minor ? ` (${diag.major_minor})` : ''}</div>
-														{:else if diag.major_minor}
-															<div class="text-[10px] text-gray-400 dark:text-gray-500">{diag.udevadm.ID_BUS ?? ''} ({diag.major_minor})</div>
-														{/if}
-													</td>
+								<div class="grid gap-3 md:grid-cols-2">
+									{#each diagResult.drives as diag}
+										<div class="rounded-lg border border-primary/20 p-3 dark:border-primary/20
+											{diag.issues.length > 0 ? 'bg-amber-500/5' : 'bg-green-500/5'}">
 
-													<!-- Tray status -->
-													<td class="px-3 py-2.5">
-														<div class="flex items-center gap-2">
-															{#if diag.arm_processing}
-																<span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Ripping</span>
-															{/if}
-															<span class="rounded-full px-2 py-0.5 text-[10px] font-medium
-																{diag.tray_status === 4 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-																: diag.tray_status === 1 ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-																: diag.tray_status === 2 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-																: diag.tray_status === 3 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-																: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}">
-																{diag.tray_status_name ?? 'unknown'}
-															</span>
-														</div>
-													</td>
+											<!-- Header: device name + tray status -->
+											<div class="flex items-center justify-between">
+												<div>
+													<span class="font-mono text-sm font-semibold text-gray-900 dark:text-white">/dev/{diag.devname}</span>
+													{#if diag.db_name}
+														<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">{diag.db_name}</span>
+													{/if}
+												</div>
+												<div class="flex items-center gap-1.5">
+													{#if diag.arm_processing}
+														<span class="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-400">Ripping</span>
+													{/if}
+													<span class="rounded-full px-2 py-0.5 text-[10px] font-medium
+														{diag.tray_status === 4 ? 'bg-green-500/20 text-green-700 dark:text-green-400'
+														: diag.tray_status === 1 ? 'bg-gray-500/20 text-gray-600 dark:text-gray-400'
+														: diag.tray_status === 2 ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
+														: diag.tray_status === 3 ? 'bg-blue-500/20 text-blue-700 dark:text-blue-400'
+														: 'bg-gray-500/20 text-gray-600 dark:text-gray-400'}">
+														{diag.tray_status_name ?? 'unknown'}
+													</span>
+												</div>
+											</div>
 
-													<!-- Device checks -->
-													<td class="px-3 py-2.5">
-														<div class="flex flex-wrap gap-1.5">
-															{#each [
-																{ label: '/dev', ok: diag.dev_node_exists },
-																{ label: 'sysfs', ok: diag.sysfs_exists },
-																{ label: 'kernel', ok: diag.in_kernel_cdrom },
-																{ label: 'DB', ok: diag.in_database },
-															] as check}
-																<span class="rounded-sm px-1.5 py-0.5 text-[10px] font-medium
-																	{check.ok
-																		? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-																		: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}">
-																	{check.label}
-																</span>
-															{/each}
-														</div>
-													</td>
+											<!-- Model / connection info -->
+											{#if diag.db_model || diag.db_connection}
+												<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+													{diag.db_model ?? ''}{diag.db_model && diag.db_connection ? ' · ' : ''}{diag.db_connection ?? ''}{diag.major_minor ? ` · ${diag.major_minor}` : ''}
+												</p>
+											{:else if diag.major_minor}
+												<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+													{diag.udevadm.ID_BUS ?? ''}{diag.udevadm.ID_BUS ? ' · ' : ''}{diag.major_minor}
+												</p>
+											{/if}
 
-													<!-- Media (from udevadm) -->
-													<td class="px-3 py-2.5">
-														{#if Object.keys(diag.udevadm).length > 0}
-															<div class="flex flex-wrap gap-1">
-																{#if diag.udevadm.ID_CDROM_MEDIA === '1'}
-																	<span class="rounded-sm bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">DISC</span>
-																{/if}
-																{#if diag.udevadm.ID_CDROM_MEDIA_BD === '1'}
-																	<span class="rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">BD</span>
-																{/if}
-																{#if diag.udevadm.ID_CDROM_MEDIA_DVD === '1'}
-																	<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary-text dark:bg-primary/15 dark:text-primary-text-dark">DVD</span>
-																{/if}
-																{#if diag.udevadm.ID_CDROM_MEDIA_CD === '1'}
-																	<span class="rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">CD</span>
-																{/if}
-																{#if diag.udevadm.ID_FS_TYPE}
-																	<span class="rounded-sm bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">{diag.udevadm.ID_FS_TYPE}</span>
-																{/if}
-																{#if diag.udevadm.ID_CDROM_MEDIA !== '1' && !diag.udevadm.ID_FS_TYPE}
-																	<span class="text-xs text-gray-400">empty</span>
-																{/if}
-															</div>
-														{:else}
-															<span class="text-xs text-gray-400 italic">no udevadm data</span>
-														{/if}
-													</td>
+											<!-- Check pills + media badges -->
+											<div class="mt-2 flex flex-wrap gap-1.5">
+												{#each [
+													{ label: '/dev', ok: diag.dev_node_exists },
+													{ label: 'sysfs', ok: diag.sysfs_exists },
+													{ label: 'kernel', ok: diag.in_kernel_cdrom },
+													{ label: 'DB', ok: diag.in_database },
+												] as check}
+													<span class="rounded-sm px-1.5 py-0.5 text-[10px] font-medium
+														{check.ok
+															? 'bg-green-500/20 text-green-700 dark:text-green-400'
+															: 'bg-red-500/20 text-red-700 dark:text-red-400'}">
+														{check.label}
+													</span>
+												{/each}
 
-													<!-- Issues -->
-													<td class="px-3 py-2.5">
-														{#if diag.issues.length > 0}
-															<div class="space-y-0.5">
-																{#each diag.issues as issue}
-																	<p class="text-xs text-amber-700 dark:text-amber-400">{issue}</p>
-																{/each}
-															</div>
-														{:else}
-															<span class="text-xs text-green-600 dark:text-green-400">OK</span>
-														{/if}
-													</td>
-												</tr>
-											{/each}
-										</tbody>
-									</table>
+												<!-- Media type badges from udevadm -->
+												{#if diag.udevadm.ID_CDROM_MEDIA === '1'}
+													<span class="rounded-sm bg-green-500/20 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-400">DISC</span>
+												{/if}
+												{#if diag.udevadm.ID_CDROM_MEDIA_BD === '1'}
+													<span class="rounded-sm bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 dark:text-purple-400">BD</span>
+												{/if}
+												{#if diag.udevadm.ID_CDROM_MEDIA_DVD === '1'}
+													<span class="rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary-text dark:text-primary-text-dark">DVD</span>
+												{/if}
+												{#if diag.udevadm.ID_CDROM_MEDIA_CD === '1'}
+													<span class="rounded-sm bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-400">CD</span>
+												{/if}
+												{#if diag.udevadm.ID_FS_TYPE}
+													<span class="rounded-sm bg-gray-500/20 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:text-gray-400">{diag.udevadm.ID_FS_TYPE}</span>
+												{/if}
+											</div>
+
+											{#if !Object.keys(diag.udevadm).length}
+												<p class="mt-1 text-[10px] italic text-gray-400 dark:text-gray-500">no udevadm data</p>
+											{/if}
+
+											<!-- Issues -->
+											{#if diag.issues.length > 0}
+												<div class="mt-2 rounded-md bg-amber-500/10 p-2">
+													{#each diag.issues as issue}
+														<p class="text-xs text-amber-700 dark:text-amber-400">{issue}</p>
+													{/each}
+												</div>
+											{/if}
+										</div>
+									{/each}
 								</div>
 							{:else}
 								<p class="text-sm text-gray-400">No optical drives found in kernel, sysfs, /dev, or database.</p>
