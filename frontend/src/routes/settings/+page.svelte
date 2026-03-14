@@ -27,7 +27,20 @@
 	let armCollapsed = $state<Record<string, boolean>>({});
 
 	// --- Tab state ---
-	let activeTab = $state<'ripping' | 'music' | 'transcoding' | 'notifications' | 'appearance' | 'drives' | 'system'>('ripping');
+	const validTabs = ['ripping', 'music', 'transcoding', 'notifications', 'appearance', 'drives', 'system'] as const;
+	type Tab = typeof validTabs[number];
+
+	function parseHash(): { tab: Tab; panel: string | null } {
+		if (typeof window === 'undefined') return { tab: 'ripping', panel: null };
+		const hash = window.location.hash.replace('#', '');
+		const [tabPart, ...panelParts] = hash.split('/');
+		const tab = validTabs.includes(tabPart as Tab) ? (tabPart as Tab) : 'ripping';
+		const panel = panelParts.length > 0 ? decodeURIComponent(panelParts.join('/')) : null;
+		return { tab, panel };
+	}
+
+	let activeTab = $state<Tab>(parseHash().tab);
+	let pendingPanel = $state<string | null>(parseHash().panel);
 
 	// --- Drives polling store ---
 	const drives = createPollingStore(fetchDrives, [] as Drive[], 10000);
@@ -148,10 +161,49 @@
 		}
 	}
 
+	function setTab(tab: Tab) {
+		activeTab = tab;
+		pendingPanel = null;
+		window.location.hash = tab;
+		if (tab === 'music') loadAbcdeConfig();
+		if (tab === 'system') loadSystemInfo();
+	}
+
+	function scrollToPanel(label: string) {
+		// Expand the panel first
+		armCollapsed[label] = false;
+		// Scroll to it after DOM update
+		requestAnimationFrame(() => {
+			const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+			el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
+	}
+
 	onMount(() => {
 		drives.start();
-		loadSettings();
-		return () => drives.stop();
+		loadSettings().then(() => {
+			if (pendingPanel) {
+				// Find the panel label case-insensitively
+				const groups = TAB_ARM_GROUPS[activeTab] ?? [];
+				const match = groups.find((g) => g.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') === pendingPanel!.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+				if (match) scrollToPanel(match.label);
+				pendingPanel = null;
+			}
+		});
+		// Handle initial hash tab (trigger side effects)
+		if (activeTab === 'music') loadAbcdeConfig();
+		if (activeTab === 'system') loadSystemInfo();
+		function onHashChange() {
+			const { tab, panel } = parseHash();
+			activeTab = tab;
+			if (panel) {
+				const groups = TAB_ARM_GROUPS[tab] ?? [];
+				const match = groups.find((g) => g.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') === panel.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+				if (match) scrollToPanel(match.label);
+			}
+		}
+		window.addEventListener('hashchange', onHashChange);
+		return () => { drives.stop(); window.removeEventListener('hashchange', onHashChange); };
 	});
 
 	async function loadSettings() {
@@ -435,7 +487,7 @@
 		MANUAL_WAIT_TIME: { label: 'Manual Wait Time', description: 'Seconds to wait for manual identification' },
 		ALLOW_DUPLICATES: { label: 'Allow Duplicates', description: 'Allow ripping a disc that has already been ripped' },
 		MKV_ARGS: { label: 'MakeMKV Arguments', description: 'Extra command-line arguments passed to MakeMKV' },
-		MAKEMKV_PERMA_KEY: { label: 'MakeMKV License Key', description: 'Permanent or beta registration key for MakeMKV' },
+		MAKEMKV_PERMA_KEY: { label: 'MakeMKV License Key', description: 'Permanent key from <a href="https://www.makemkv.com/buy/" target="_blank" rel="noopener" class="underline text-primary hover:text-primary-hover">makemkv.com/buy</a> — free beta keys are also available on the <a href="https://forum.makemkv.com/forum/viewtopic.php?t=1053" target="_blank" rel="noopener" class="underline text-primary hover:text-primary-hover">MakeMKV forum</a>' },
 		DATA_RIP_PARAMETERS: { label: 'Data Rip Parameters', description: 'Extra parameters for data disc ripping' },
 		MAX_CONCURRENT_MAKEMKVINFO: { label: 'Max Concurrent Disc Scans', description: 'Limit parallel makemkvinfo processes (0 = unlimited)' },
 		AUTO_EJECT: { label: 'Auto-Eject After Rip', description: 'Eject the disc when ripping completes' },
@@ -443,10 +495,17 @@
 		MAKEMKV_COMMUNITY_KEYDB: { label: 'Community Key Database', description: 'Download community keydb.cfg at container startup' },
 		ARM_CHILDREN: { label: 'ARM Child Servers', description: 'Comma-delimited list of child ARM server URLs' },
 		DELRAWFILES: { label: 'Delete Raw Files', description: 'Remove raw MakeMKV output after processing' },
+		DRIVE_READY_TIMEOUT: { label: 'Drive Ready Timeout', description: 'Seconds to wait for the drive to become ready after disc insertion' },
+		// TV Series
+		USE_DISC_LABEL_FOR_TV: { label: 'Use Disc Label for TV', description: 'Parse disc label for season/episode info on TV series discs' },
+		GROUP_TV_DISCS_UNDER_SERIES: { label: 'Group TV Discs Under Series', description: 'Group multi-disc TV sets under a single series folder' },
 		// Music Ripping
 		GET_AUDIO_TITLE: { label: 'Audio Metadata Source', description: 'none, musicbrainz, or freecddb for CD track info' },
 		AUDIO_FORMAT: { label: 'Audio Format', description: 'Output format for music CD ripping (passed to abcde -o)' },
 		ABCDE_CONFIG_FILE: { label: 'abcde Config File', description: 'Path to the abcde configuration file for CD ripping' },
+		RIP_SPEED_PROFILE: { label: 'Rip Speed Profile', description: '"safe" = full paranoia (best for scratched discs), "fast" = less paranoia (~2-4x faster), "fastest" = no error correction (pristine discs only)' },
+		MUSIC_MULTI_DISC_SUBFOLDERS: { label: 'Multi-Disc Subfolders', description: 'Create per-disc subfolders for multi-CD sets (e.g. Artist/Album/Disc 1/)' },
+		MUSIC_DISC_FOLDER_PATTERN: { label: 'Disc Folder Pattern', description: 'Folder name for each disc in a multi-disc set. {num} = disc number. Examples: "Disc {num}", "CD {num}"' },
 		// Metadata
 		METADATA_PROVIDER: { label: 'Metadata Provider', description: 'omdb or tmdb for movie/TV lookups' },
 		OMDB_API_KEY: { label: 'OMDb API Key', description: 'API key for the Open Movie Database' },
@@ -500,6 +559,10 @@
 		BASH_SCRIPT: { label: 'Notification Script', description: 'Path to a custom bash script run on notifications' },
 		JSON_URL: { label: 'Apprise JSON URL', description: 'Apprise webhook URL for notifications' },
 		APPRISE: { label: 'Apprise Config', description: 'Apprise notification service configuration string' },
+		// TVDB
+		TVDB_API_KEY: { label: 'TVDB API Key', description: 'API key for TheTVDB v4 — get one free at thetvdb.com/dashboard' },
+		TVDB_MATCH_TOLERANCE: { label: 'Match Tolerance (sec)', description: 'Max runtime difference in seconds for a track-to-episode match (default 300)' },
+		TVDB_MAX_SEASON_SCAN: { label: 'Max Season Scan', description: 'How many seasons to scan when auto-detecting season (default 10)' },
 		// Naming Patterns
 		MOVIE_TITLE_PATTERN: { label: 'Movie Title Pattern', description: 'Pattern for movie display titles' },
 		MOVIE_FOLDER_PATTERN: { label: 'Movie Folder Pattern', description: 'Pattern for movie folder names (use / for nested directories)' },
@@ -515,6 +578,7 @@
 	};
 
 	let armInfoKeys = $state<Set<string>>(new Set());
+	let endpointInfoKeys = $state<Set<string>>(new Set());
 
 	function toggleInfo(key: string) {
 		const next = new Set(armInfoKeys);
@@ -523,16 +587,26 @@
 		armInfoKeys = next;
 	}
 
+	function toggleEndpointInfo(name: string) {
+		const next = new Set(endpointInfoKeys);
+		if (next.has(name)) next.delete(name);
+		else next.add(name);
+		endpointInfoKeys = next;
+	}
+
 	// --- ARM config groups, organized by tab ---
 	type ArmGroup = { label: string; subpanels: { label?: string; keys: string[] }[] };
 
 	const TAB_ARM_GROUPS: Record<string, ArmGroup[]> = {
 		ripping: [
 			{ label: 'Disc Identification', subpanels: [
-				{ keys: ['VIDEOTYPE', 'GET_VIDEO_TITLE', 'ARM_CHECK_UDF', 'MANUAL_WAIT', 'MANUAL_WAIT_TIME', 'ARM_CHILDREN'] },
+				{ keys: ['VIDEOTYPE', 'GET_VIDEO_TITLE', 'ARM_CHECK_UDF', 'MANUAL_WAIT', 'MANUAL_WAIT_TIME', 'DRIVE_READY_TIMEOUT', 'ARM_CHILDREN'] },
 			]},
 			{ label: 'Track Selection', subpanels: [
 				{ keys: ['MINLENGTH', 'MAXLENGTH', 'MAINFEATURE', 'PREVENT_99', 'ALLOW_DUPLICATES'] },
+			]},
+			{ label: 'TV Series', subpanels: [
+				{ keys: ['USE_DISC_LABEL_FOR_TV', 'GROUP_TV_DISCS_UNDER_SERIES'] },
 			]},
 			{ label: 'Rip Method', subpanels: [
 				{ keys: ['RIPMETHOD', 'MKV_ARGS', 'DATA_RIP_PARAMETERS'] },
@@ -543,6 +617,12 @@
 			{ label: 'Post-Rip', subpanels: [
 				{ keys: ['AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER'] },
 			]},
+			{ label: 'Media Directories', subpanels: [
+				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'MUSIC_PATH', 'EXTRAS_SUB'] },
+			]},
+			{ label: 'File Permissions', subpanels: [
+				{ keys: ['UMASK', 'SET_MEDIA_PERMISSIONS', 'CHMOD_VALUE', 'SET_MEDIA_OWNER', 'CHOWN_USER', 'CHOWN_GROUP'] },
+			]},
 			{ label: 'Naming Patterns', subpanels: [
 				{ label: 'Movie',  keys: ['MOVIE_TITLE_PATTERN', 'MOVIE_FOLDER_PATTERN'] },
 				{ label: 'TV',     keys: ['TV_TITLE_PATTERN', 'TV_FOLDER_PATTERN'] },
@@ -550,13 +630,22 @@
 			{ label: 'Metadata', subpanels: [
 				{ keys: ['METADATA_PROVIDER', 'OMDB_API_KEY', 'TMDB_API_KEY', 'ARM_API_KEY'] },
 			]},
+			{ label: 'TVDB (TV Episode Matching)', subpanels: [
+				{ keys: ['TVDB_API_KEY', 'TVDB_MATCH_TOLERANCE', 'TVDB_MAX_SEASON_SCAN'] },
+			]},
 		],
 		music: [
 			{ label: 'Metadata', subpanels: [
 				{ keys: ['GET_AUDIO_TITLE'] },
 			]},
+			{ label: 'Rip Speed', subpanels: [
+				{ keys: ['RIP_SPEED_PROFILE'] },
+			]},
 			{ label: 'Naming Patterns', subpanels: [
 				{ keys: ['MUSIC_TITLE_PATTERN', 'MUSIC_FOLDER_PATTERN'] },
+			]},
+			{ label: 'Multi-Disc Sets', subpanels: [
+				{ keys: ['MUSIC_MULTI_DISC_SUBFOLDERS', 'MUSIC_DISC_FOLDER_PATTERN'] },
 			]},
 		],
 		notifications: [
@@ -591,17 +680,11 @@
 			{ label: 'Identity', subpanels: [
 				{ keys: ['ARM_NAME', 'DISABLE_LOGIN', 'DATE_FORMAT'] },
 			]},
-			{ label: 'Media Directories', subpanels: [
-				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'MUSIC_PATH', 'EXTRAS_SUB'] },
-			]},
-			{ label: 'System Paths', subpanels: [
-				{ keys: ['INSTALLPATH', 'LOGPATH', 'DBFILE', 'LOGLEVEL', 'LOGLIFE'] },
-			]},
 			{ label: 'Web Server', subpanels: [
 				{ keys: ['WEBSERVER_IP', 'WEBSERVER_PORT', 'UI_BASE_URL'] },
 			]},
-			{ label: 'File Permissions', subpanels: [
-				{ keys: ['UMASK', 'SET_MEDIA_PERMISSIONS', 'CHMOD_VALUE', 'SET_MEDIA_OWNER', 'CHOWN_USER', 'CHOWN_GROUP'] },
+			{ label: 'System Paths & Logging', subpanels: [
+				{ keys: ['INSTALLPATH', 'LOGPATH', 'DBFILE', 'LOGLEVEL', 'LOGLIFE'] },
 			]},
 		],
 	};
@@ -625,6 +708,7 @@
 		'PO_APP_KEY',
 		'ARM_API_KEY',
 		'TMDB_API_KEY',
+		'TVDB_API_KEY',
 		'TRANSCODER_WEBHOOK_SECRET',
 	]);
 
@@ -919,7 +1003,7 @@
 			{/if}
 
 			{#if ARM_LABELS[key]?.description}
-				<p class="mt-1 text-xs text-gray-400">{ARM_LABELS[key].description}</p>
+				<p class="mt-1 text-xs text-gray-400">{@html ARM_LABELS[key].description}</p>
 			{:else if comment}
 				<p class="mt-1 text-xs text-gray-400">{comment}</p>
 			{/if}
@@ -1003,13 +1087,13 @@
 		{@const tabClass = (tab: string) => `whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors ${activeTab === tab ? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark' : 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}`}
 		<div class="border-b border-primary/20 dark:border-primary/20">
 			<nav class="-mb-px flex gap-4" aria-label="Settings tabs">
-				<button type="button" onclick={() => (activeTab = 'ripping')} class={tabClass('ripping')}>Ripping</button>
-				<button type="button" onclick={() => { activeTab = 'music'; loadAbcdeConfig(); }} class={tabClass('music')}>Music</button>
-				<button type="button" onclick={() => (activeTab = 'transcoding')} class={tabClass('transcoding')}>Transcoding</button>
-				<button type="button" onclick={() => (activeTab = 'notifications')} class={tabClass('notifications')}>Notifications</button>
-				<button type="button" onclick={() => (activeTab = 'drives')} class={tabClass('drives')}>Drives</button>
-				<button type="button" onclick={() => (activeTab = 'appearance')} class={tabClass('appearance')}>Appearance</button>
-				<button type="button" onclick={() => { activeTab = 'system'; loadSystemInfo(); }} class={tabClass('system')}>System</button>
+				<button type="button" onclick={() => setTab('ripping')} class={tabClass('ripping')}>Ripping</button>
+				<button type="button" onclick={() => setTab('music')} class={tabClass('music')}>Music</button>
+				<button type="button" onclick={() => setTab('transcoding')} class={tabClass('transcoding')}>Transcoding</button>
+				<button type="button" onclick={() => setTab('notifications')} class={tabClass('notifications')}>Notifications</button>
+				<button type="button" onclick={() => setTab('drives')} class={tabClass('drives')}>Drives</button>
+				<button type="button" onclick={() => setTab('appearance')} class={tabClass('appearance')}>Appearance</button>
+				<button type="button" onclick={() => setTab('system')} class={tabClass('system')}>System</button>
 			</nav>
 		</div>
 
@@ -1439,7 +1523,7 @@
 				{:else}
 					<div class="space-y-2">
 						{#each groups as group}
-							<div class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
+							<div id="panel-{group.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}" class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
 								<button
 									type="button"
 									onclick={() => toggleCollapse(group.label)}
@@ -1701,7 +1785,8 @@
 							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Endpoints</h2>
 							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 								{#each Object.entries(systemInfo.endpoints) as [name, ep]}
-									<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+									{@const envVar = name === 'arm' ? 'ARM_UI_ARM_URL' : name === 'transcoder' ? 'ARM_UI_TRANSCODER_URL' : name.toUpperCase() + '_URL'}
+								<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 										<div class="flex items-center justify-between">
 											<p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{name}</p>
 											<span class="inline-flex items-center gap-1.5 text-xs font-medium {ep.reachable ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
@@ -1709,10 +1794,22 @@
 												{ep.reachable ? 'Reachable' : 'Unreachable'}
 											</span>
 										</div>
-										<p class="mt-2 font-mono text-sm text-gray-900 dark:text-white">{ep.url}</p>
-										<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-											{name === 'arm' ? 'ARM_UI_ARM_URL' : name === 'transcoder' ? 'ARM_UI_TRANSCODER_URL' : name.toUpperCase() + '_URL'}
-										</p>
+										<div class="mt-2 flex items-center gap-2">
+											<p class="font-mono text-sm text-gray-900 dark:text-white">{ep.url}</p>
+											<button
+												type="button"
+												onclick={() => toggleEndpointInfo(name)}
+												class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold
+													{endpointInfoKeys.has(name)
+													? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/40 dark:text-primary-text-dark'
+													: 'bg-primary/10 text-gray-500 dark:bg-primary/15 dark:text-gray-400'}
+													hover:bg-primary/20 dark:hover:bg-primary/20"
+												title={envVar}
+											>i</button>
+										</div>
+										{#if endpointInfoKeys.has(name)}
+											<p class="mt-1 font-mono text-xs text-gray-400 dark:text-gray-500">{envVar}</p>
+										{/if}
 									</div>
 								{/each}
 							</div>
@@ -1789,42 +1886,17 @@
 						</div>
 					</section>
 
-					<!-- Drives -->
-					{#if systemInfo.drives.length > 0}
-						<section>
-							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
-							<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-								<table class="w-full text-left text-sm">
-									<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
-										<tr>
-											<th class="px-4 py-3 font-medium">Name</th>
-											<th class="px-4 py-3 font-medium">Device</th>
-											<th class="px-4 py-3 font-medium">Maker / Model</th>
-											<th class="px-4 py-3 font-medium">Capabilities</th>
-											<th class="px-4 py-3 font-medium">Firmware</th>
-										</tr>
-									</thead>
-									<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-										{#each systemInfo.drives as drive}
-											<tr class="hover:bg-page dark:hover:bg-gray-800/50">
-												<td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{drive.name ?? 'Unnamed'}</td>
-												<td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400">{drive.mount ?? ''}</td>
-												<td class="px-4 py-2 text-gray-900 dark:text-white">{[drive.maker, drive.model].filter(Boolean).join(' ') || 'Unknown'}</td>
-												<td class="px-4 py-2">
-													<div class="flex gap-1">
-														{#each drive.capabilities as cap}
-															<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary-text dark:bg-primary/15 dark:text-primary-text-dark">{cap}</span>
-														{/each}
-													</div>
-												</td>
-												<td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400">{drive.firmware ?? ''}</td>
-											</tr>
-										{/each}
-									</tbody>
-								</table>
-							</div>
-						</section>
-					{/if}
+					<!-- Drives link -->
+					<section class="flex items-center gap-2">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
+						<button
+							type="button"
+							onclick={() => setTab('drives')}
+							class="text-sm text-primary hover:text-primary-hover hover:underline dark:text-primary dark:hover:text-primary-hover"
+						>
+							View in Drives tab
+						</button>
+					</section>
 				</div>
 			{:else}
 				<p class="py-8 text-center text-gray-400">Failed to load system info.</p>
