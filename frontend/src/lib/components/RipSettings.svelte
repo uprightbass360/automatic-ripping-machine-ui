@@ -21,6 +21,36 @@
 	let maxlength = $state(Number(config.MAXLENGTH) || 99999);
 	let audioFormat = $state(String(config.AUDIO_FORMAT ?? 'flac').toLowerCase());
 
+	// Naming patterns for current media type
+	let namingPatterns = $derived.by(() => {
+		const vtype = job.video_type?.toLowerCase();
+		if (isMusic || disctype === 'music') {
+			return {
+				label: 'Music',
+				title: config.MUSIC_TITLE_PATTERN ?? '{artist} - {album}',
+				folder: config.MUSIC_FOLDER_PATTERN ?? '{artist}/{album} ({year})',
+				titleKey: 'MUSIC_TITLE_PATTERN',
+				folderKey: 'MUSIC_FOLDER_PATTERN',
+			};
+		}
+		if (vtype === 'series') {
+			return {
+				label: 'TV',
+				title: config.TV_TITLE_PATTERN ?? '{title} S{season}E{episode}',
+				folder: config.TV_FOLDER_PATTERN ?? '{title}/Season {season}',
+				titleKey: 'TV_TITLE_PATTERN',
+				folderKey: 'TV_FOLDER_PATTERN',
+			};
+		}
+		return {
+			label: 'Movie',
+			title: config.MOVIE_TITLE_PATTERN ?? '{title} ({year})',
+			folder: config.MOVIE_FOLDER_PATTERN ?? '{title} ({year})',
+			titleKey: 'MOVIE_TITLE_PATTERN',
+			folderKey: 'MOVIE_FOLDER_PATTERN',
+		};
+	});
+
 	let saving = $state(false);
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -130,6 +160,31 @@
 			</label>
 		</div>
 	{/if}
+
+	<!-- Naming patterns (read-only, from global settings) -->
+	<div class="rounded-lg border border-primary/15 bg-primary/[0.03] p-3 dark:border-primary/20 dark:bg-primary/5">
+		<div class="mb-2 flex items-center justify-between">
+			<span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+				{namingPatterns.label} Naming
+			</span>
+			<a
+				href="/settings"
+				class="text-[10px] font-medium text-primary hover:underline dark:text-primary"
+			>
+				Edit in Settings
+			</a>
+		</div>
+		<div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+			<div>
+				<span class="text-[10px] font-medium text-gray-400 dark:text-gray-500">Title</span>
+				<p class="font-mono text-xs text-gray-700 dark:text-gray-300">{namingPatterns.title}</p>
+			</div>
+			<div>
+				<span class="text-[10px] font-medium text-gray-400 dark:text-gray-500">Folder</span>
+				<p class="font-mono text-xs text-gray-700 dark:text-gray-300">{namingPatterns.folder}</p>
+			</div>
+		</div>
+	</div>
 
 	<div class="flex items-center gap-2">
 		<button

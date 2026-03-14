@@ -113,7 +113,8 @@
 		feedback = null;
 		try {
 			await updateJobTitle(job.job_id, data);
-			feedback = { type: 'success', message: 'Title updated' };
+			const isSeries = data.video_type === 'series';
+			feedback = { type: 'success', message: isSeries ? 'Title updated — use TVDB Episodes to match tracks' : 'Title updated' };
 			onapply?.();
 		} catch (e) {
 			feedback = { type: 'error', message: e instanceof Error ? e.message : 'Update failed' };
