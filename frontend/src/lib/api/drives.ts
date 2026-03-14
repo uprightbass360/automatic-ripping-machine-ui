@@ -31,6 +31,9 @@ export interface DriveDiagnostic {
 	udevadm: Record<string, string>;
 	arm_processing: boolean;
 	in_database: boolean;
+	db_name?: string;
+	db_model?: string;
+	db_connection?: string;
 	issues: string[];
 }
 
