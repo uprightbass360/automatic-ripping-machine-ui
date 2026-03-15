@@ -6,13 +6,13 @@
 
 # ARM UI
 
-Part of the [Automatic Ripping Machine ecosystem](#related-projects). A modern replacement dashboard for the original ARM Flask/Jinja2 web interface.
+Part of the [Automatic Ripping Machine (neu) ecosystem](#related-projects). A modern replacement dashboard for the original ARM Flask/Jinja2 web interface.
 
 Built with SvelteKit 2 and FastAPI, providing a unified view of ARM ripping jobs and GPU transcoding status in a responsive, dark-mode interface.
 
 ## Related Projects
 
-Part of the Automatic Ripping Machine ecosystem:
+Part of the Automatic Ripping Machine (neu) ecosystem:
 
 | Project | Description |
 |---------|-------------|
@@ -41,18 +41,50 @@ The backend reads ARM's SQLite database directly (read-only) for job data, calls
 
 ## Features
 
-- Real-time dashboard with active rip and transcode job status
-- Job management: view, abandon, delete, fix permissions
+- Real-time dashboard with card and table views, filtering by status/type, and search
+- Active rip progress tracking with title counts and elapsed time
+- Job detail with poster art, metadata, IMDb links, and per-track status
+- Job management: abandon, delete, fix permissions, toggle multi-title mode
 - Metadata search: OMDb/TMDb (video), MusicBrainz (audio) with card flip tracklist preview
-- Disc track comparison with duration match indicators
+- TVDB episode matching for TV series discs with runtime-based track-to-episode mapping
 - Structured metadata editing (artist, album, season, episode)
-- Transcoder integration: job listing, retry, stats
-- Log viewer with per-job log access
+- Transcoder integration: GPU hardware detection, encoder/preset config, job monitoring
+- Structured log viewer with level filtering, search, and tail/full modes
+- File browser with Raw/Completed/Transcode/Music tabs, permissions display, rename, and delete
 - Drive status monitoring with CRC database lookup
-- Service connection status indicators
-- Notification history
-- ARM and transcoder settings management
-- 14 color schemes (including themed dark modes) with responsive layout
+- System stats sidebar: CPU, memory, and storage usage for ripper and transcoder
+- Service health indicators (ARM, DB, Transcoder) in the status bar
+- Notification history with read/unread and bulk actions
+- Full ARM and transcoder settings management from the UI
+- 16 color schemes (Default, Ocean, Forest, Terminal, LCARS, and more) with responsive layout
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Dashboard](screenshots/01-dashboard.png) | ![Dashboard Table View](screenshots/11-dashboard-table.png) |
+| Dashboard with active rips and job cards | Table view with filtering and bulk actions |
+| ![Job Detail - TV Series](screenshots/15-job-detail-tracks.png) | ![Job Detail - Movie](screenshots/04-job-detail-movie.png) |
+| TV series with per-episode track status | Movie detail with poster and metadata |
+| ![Identify Panel](screenshots/16-job-identify-panel.png) | ![Log Viewer](screenshots/10-log-viewer.png) |
+| Title search and re-identification | Structured log viewer with filtering |
+| ![Settings - Transcoding](screenshots/14-settings-transcoding.png) | ![Settings - Drives](screenshots/06-settings-drives.png) |
+| GPU hardware detection and encoder config | Multi-drive management and status |
+| ![Notifications](screenshots/08-notifications.png) | ![Settings - Notifications](screenshots/17-settings-notifications.png) |
+| Notification history | Webhook, Apprise, Pushbullet, and more |
+| ![Files](screenshots/13-files.png) | ![Settings - System](screenshots/07-settings-system.png) |
+| File browser with permissions management | System info, versions, and health checks |
+
+### Themes
+
+16 color schemes available under Settings > Appearance.
+
+| | |
+|---|---|
+| ![Terminal theme](screenshots/19-theme-terminal.png) | ![LCARS theme](screenshots/20-theme-lcars.png) |
+| Terminal | LCARS |
+
+![Theme picker](screenshots/18-settings-appearance.png)
 
 ## Tech Stack
 
