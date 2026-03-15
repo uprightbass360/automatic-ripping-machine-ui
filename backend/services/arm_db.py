@@ -85,7 +85,7 @@ def is_available() -> bool:
 
 # --- Query helpers ---
 
-ACTIVE_STATUSES = {"identifying", "ready", "active", "ripping", "transcoding", "waiting", "info", "waiting_transcode"}
+ACTIVE_STATUSES = {"identifying", "ready", "active", "ripping", "copying", "ejecting", "transcoding", "waiting", "info", "waiting_transcode"}
 
 
 def get_active_jobs() -> list[dict]:

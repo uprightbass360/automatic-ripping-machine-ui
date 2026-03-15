@@ -59,6 +59,8 @@ describe('isJobActive', () => {
 		expect(isJobActive('ready')).toBe(true);
 		expect(isJobActive('active')).toBe(true);
 		expect(isJobActive('ripping')).toBe(true);
+		expect(isJobActive('copying')).toBe(true);
+		expect(isJobActive('ejecting')).toBe(true);
 		expect(isJobActive('processing')).toBe(true);
 		expect(isJobActive('transcoding')).toBe(true);
 		expect(isJobActive('pending')).toBe(true);

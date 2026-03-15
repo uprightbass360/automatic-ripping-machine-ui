@@ -69,6 +69,8 @@ const ACTIVE_STATUSES = new Set([
 	'ready',
 	'active',
 	'ripping',
+	'copying',
+	'ejecting',
 	'processing',
 	'transcoding',
 	'pending',

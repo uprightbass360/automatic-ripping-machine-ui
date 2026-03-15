@@ -2,7 +2,7 @@
 	import type { TranscoderJob } from '$lib/types/transcoder';
 	import StatusBadge from './StatusBadge.svelte';
 	import ProgressBar from './ProgressBar.svelte';
-	import { elapsedTime } from '$lib/utils/format';
+	import { elapsedTime, statusLabel } from '$lib/utils/format';
 
 	interface Props {
 		job: TranscoderJob;
@@ -40,7 +40,7 @@
 
 			<!-- Row 3: Elapsed time -->
 			<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-				<span class="rounded-sm bg-indigo-100 px-1.5 py-0.5 font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">transcoding</span>
+				<span class="rounded-sm bg-indigo-100 px-1.5 py-0.5 font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">{statusLabel(job.status)}</span>
 				{#if job.started_at}
 					<span>{elapsedTime(job.started_at)}</span>
 				{/if}

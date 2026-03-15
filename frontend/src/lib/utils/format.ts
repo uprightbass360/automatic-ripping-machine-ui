@@ -47,9 +47,12 @@ export function statusColor(status: string | null): string {
 		case 'ready':
 		case 'active':
 		case 'ripping':
-		case 'processing':
 			return 'bg-blue-500';
+		case 'copying':
+		case 'ejecting':
+			return 'bg-cyan-500';
 		case 'transcoding':
+		case 'processing':
 			return 'bg-indigo-500';
 		case 'success':
 		case 'completed':
@@ -73,7 +76,9 @@ const STATUS_LABELS: Record<string, string> = {
 	ready: 'Ready',
 	active: 'Active',
 	ripping: 'Ripping',
-	processing: 'Processing',
+	copying: 'Copying Files',
+	ejecting: 'Ejecting',
+	processing: 'Transcoding',
 	transcoding: 'Transcoding',
 	success: 'Success',
 	completed: 'Completed',
