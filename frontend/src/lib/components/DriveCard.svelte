@@ -155,7 +155,10 @@
 			<span class="inline-flex items-center gap-1 rounded-sm bg-purple-500/20 px-1.5 py-0.5 text-xs text-purple-700 dark:text-purple-400">
 				<DiscTypeIcon disctype="bluray" size="h-3.5 w-3.5" />Blu-ray
 			</span>
-			<label class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+			<label
+				class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
+				title="Display only — UHD disc detection and transcoding presets are applied automatically regardless of this setting."
+			>
 				<input
 					type="checkbox"
 					checked={drive.uhd_capable ?? false}
@@ -164,6 +167,9 @@
 					class="h-3.5 w-3.5 rounded-sm border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700"
 				/>
 				UHD Capable
+				<svg class="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+				</svg>
 			</label>
 		{/if}
 	</div>
