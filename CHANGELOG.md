@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.0.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.0.0...v13.0.1) (2026-03-15)
+
+
+### Bug Fixes
+
+* add info tooltip to UHD Capable checkbox ([172491f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/172491fffc468dfa32e96f6ead579cdeb3da5347))
+
 ## [13.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v12.0.0...v13.0.0) (2026-03-14)
 
 
