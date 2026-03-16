@@ -179,7 +179,7 @@
 			onclick={handleScan}
 			disabled={scanning || scanCooldown}
 			class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors
-				{scanning ? 'bg-blue-500/30 text-blue-800 dark:text-blue-300' : 'bg-blue-500/15 text-blue-700 hover:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/30'}
+				{scanning ? 'bg-primary/30 text-primary-text dark:text-primary-text-dark' : 'bg-primary/15 text-primary-text hover:bg-primary/25 dark:text-primary-text-dark dark:hover:bg-primary/30'}
 				disabled:opacity-50 disabled:cursor-not-allowed"
 		>
 			<svg class="h-4 w-4 {scanning ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
