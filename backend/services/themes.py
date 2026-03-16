@@ -11,11 +11,17 @@ _BUILTIN_DIR = Path(__file__).parent.parent / "themes" / "builtin"
 
 
 def _load_theme_file(path: Path) -> dict[str, Any] | None:
-    """Load and validate a single theme JSON file."""
+    """Load a theme JSON file and its optional sidecar CSS."""
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         if not _validate_theme(data):
             return None
+        # Read sidecar CSS if it exists (new split format)
+        css_path = path.with_suffix(".css")
+        if css_path.is_file():
+            data["css"] = css_path.read_text(encoding="utf-8")
+        else:
+            data.setdefault("css", "")
         return data
     except (json.JSONDecodeError, OSError):
         return None
@@ -76,22 +82,29 @@ def get_theme(theme_id: str) -> dict[str, Any] | None:
     return themes.get(theme_id)
 
 
-def save_user_theme(data: dict[str, Any]) -> dict[str, Any]:
-    """Save a user theme to the themes directory. Returns the saved theme."""
+def save_user_theme(data: dict[str, Any], css: str = "") -> dict[str, Any]:
+    """Save a user theme. JSON and CSS are written as separate files."""
     if not _validate_theme(data):
         raise ValueError("Invalid theme: missing required fields (id, label, tokens)")
 
-    # Ensure standard fields
     data.setdefault("version", 1)
-    data.setdefault("css", "")
     data.setdefault("swatch", "#888888")
 
     user_dir = _user_themes_dir()
-    path = user_dir / f"{data['id']}.json"
+    json_path = user_dir / f"{data['id']}.json"
+    css_path = user_dir / f"{data['id']}.css"
 
-    # Don't include runtime-only fields in saved file
-    save_data = {k: v for k, v in data.items() if k != "builtin"}
-    path.write_text(json.dumps(save_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    # Save JSON without css or builtin fields
+    save_data = {k: v for k, v in data.items() if k not in ("builtin", "css")}
+    json_path.write_text(json.dumps(save_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    # Save or remove CSS sidecar
+    if css.strip():
+        css_path.write_text(css, encoding="utf-8")
+        data["css"] = css
+    else:
+        css_path.unlink(missing_ok=True)
+        data["css"] = ""
 
     data["builtin"] = False
     return data
@@ -99,15 +112,17 @@ def save_user_theme(data: dict[str, Any]) -> dict[str, Any]:
 
 def delete_user_theme(theme_id: str) -> bool:
     """Delete a user theme. Returns False if it's a built-in or doesn't exist."""
-    # Check if it's a built-in
     builtin_path = _BUILTIN_DIR / f"{theme_id}.json"
     if builtin_path.exists():
         return False
 
     user_dir = _user_themes_dir()
-    path = user_dir / f"{theme_id}.json"
-    if not path.exists():
+    json_path = user_dir / f"{theme_id}.json"
+    if not json_path.exists():
         return False
 
-    path.unlink()
+    json_path.unlink()
+    # Also remove sidecar CSS
+    css_path = user_dir / f"{theme_id}.css"
+    css_path.unlink(missing_ok=True)
     return True
