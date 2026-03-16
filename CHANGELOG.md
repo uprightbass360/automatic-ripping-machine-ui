@@ -1,5 +1,29 @@
 # Changelog
 
+## [13.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.0.1...v13.1.0) (2026-03-16)
+
+
+### Features
+
+* add copying/ejecting statuses, fix transcoder status label ([e25b6fe](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e25b6fe0230f65666a74e1cafe909190a184c9f7))
+* add theme name field to upload form ([9b4f00a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9b4f00a2aa186f812d8224e0a4bd17863bb787c8))
+* extractable theme system with runtime CSS injection ([4ec7906](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4ec7906d41dcc80814876e62d42cde8b01696407))
+* improve metadata error messaging and test-with-unsaved-key ([14e9325](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/14e9325dfbef22780d05de2b08fe46c092aedd14))
+* load theme CSS from sidecar files, save as split files ([02db072](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/02db0720904fc7b7a3ce5b877fa4558485d7adcc))
+* multipart theme upload and CSS download in API client ([3ec182a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3ec182a0d41570e2ff7b167e684e2c8d79d0eedb))
+* multipart theme upload, separate CSS download endpoint ([912c95f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/912c95f48d9d36a96195e9c5dacacb04f873e06b))
+* two-field theme upload UI (JSON + CSS) ([aed7025](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/aed702507686904cd961c7f760393b8e615633bd))
+
+
+### Bug Fixes
+
+* address SonarCloud issues in theme code ([bf36830](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bf36830cd3eb52f32283378a2e092e60dcc397b1))
+* export downloads both JSON and CSS as separate files ([015db27](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/015db27bbb832273984c5bb9a7717e1ee4f289fe))
+* inline resolve() path containment checks for SonarCloud taint analysis ([4d95033](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4d95033cb0ef6e39936090df81dbe79e462819b6))
+* update tests for metadata error passthrough and params changes ([2a4feb9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2a4feb9bac61e38b40e9f9aa07588284f4f3c057))
+* use resolve()-based path containment check for theme file writes ([6b4a575](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6b4a575e1c4f838f2f17d5d4694ee95f3cea7995))
+* use yellow status color for copying/ejecting statuses ([a801aa5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a801aa50004eeed9f1c12d09b55e027448e14744))
+
 ## [13.0.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.0.0...v13.0.1) (2026-03-15)
 
 
