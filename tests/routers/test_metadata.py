@@ -19,10 +19,11 @@ from tests.factories import make_job
 # Helper: create an HTTPStatusError with a given status code
 # ---------------------------------------------------------------------------
 
-def _make_status_error(status_code: int, text: str = "error") -> httpx.HTTPStatusError:
+def _make_status_error(status_code: int, text: str = "error", detail: str = "") -> httpx.HTTPStatusError:
     resp = MagicMock(spec=httpx.Response)
     resp.status_code = status_code
     resp.text = text
+    resp.json.return_value = {"detail": detail} if detail else {}
     return httpx.HTTPStatusError("error", request=MagicMock(), response=resp)
 
 

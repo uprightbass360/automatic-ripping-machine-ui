@@ -337,7 +337,7 @@ async def test_metadata_key_success():
     with patch.object(arm_client, "get_client", return_value=mock_client):
         result = await arm_client.test_metadata_key()
     assert result["success"] is True
-    mock_client.get.assert_awaited_once_with("/api/v1/metadata/test-key")
+    mock_client.get.assert_awaited_once_with("/api/v1/metadata/test-key", params={})
 
 
 async def test_metadata_key_raises_on_error():
