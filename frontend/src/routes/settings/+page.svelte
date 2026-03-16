@@ -104,22 +104,34 @@
 	let themeUploading = $state(false);
 	let themeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 	let themeJsonFile = $state<File | null>(null);
+	let themeName = $state('');
 	let themeCssText = $state('');
 
 	async function handleThemeUpload() {
 		if (!themeJsonFile) return;
+		const name = themeName.trim();
+		if (!name) {
+			themeFeedback = { type: 'error', message: 'Theme name is required' };
+			return;
+		}
 		themeUploading = true;
 		themeFeedback = null;
 		try {
 			const text = await themeJsonFile.text();
 			const data = JSON.parse(text);
-			if (!data.id || !data.label || !data.tokens) {
-				throw new Error('Invalid theme: missing required fields (id, label, tokens)');
+			// Override label and derive id from the name field
+			data.label = name;
+			data.id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+			if (!data.id || !data.tokens) {
+				throw new Error('Invalid theme: missing required fields (tokens)');
 			}
-			await uploadTheme(themeJsonFile, themeCssText);
+			// Re-create the file with patched data
+			const patched = new File([JSON.stringify(data)], `${data.id}.json`, { type: 'application/json' });
+			await uploadTheme(patched, themeCssText);
 			await loadThemesFromApi();
 			themeFeedback = { type: 'success', message: `Theme "${data.label}" uploaded` };
 			themeJsonFile = null;
+			themeName = '';
 			themeCssText = '';
 		} catch (e) {
 			themeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Upload failed' };
@@ -2129,6 +2141,18 @@
 					<h3 class="mb-1 text-base font-semibold text-gray-900 dark:text-white">Import Theme</h3>
 					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Upload a theme JSON file and optional custom CSS.</p>
 					<div class="space-y-4">
+						<!-- Theme name -->
+						<div>
+							<label for="theme-name-input" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Theme Name <span class="text-red-500">*</span></label>
+							<input
+								id="theme-name-input"
+								type="text"
+								bind:value={themeName}
+								placeholder="My Theme"
+								disabled={themeUploading}
+								class="w-full rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+							/>
+						</div>
 						<!-- JSON file picker -->
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Theme JSON <span class="text-red-500">*</span></label>
@@ -2155,7 +2179,7 @@
 							<button
 								type="button"
 								onclick={handleThemeUpload}
-								disabled={!themeJsonFile || themeUploading}
+								disabled={!themeJsonFile || !themeName.trim() || themeUploading}
 								class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary transition-colors hover:bg-primary-hover disabled:opacity-50"
 							>
 								{themeUploading ? 'Uploading...' : 'Upload Theme'}
