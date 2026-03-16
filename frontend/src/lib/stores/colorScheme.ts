@@ -1,7 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import { fetchThemes, fetchTheme } from '$lib/api/themes';
-import type { ThemeMeta, ThemeFull } from '$lib/api/themes';
 
 export interface ColorScheme {
 	id: string;

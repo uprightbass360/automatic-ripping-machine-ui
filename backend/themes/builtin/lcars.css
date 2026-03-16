@@ -687,6 +687,7 @@
 
 [data-scheme="lcars"] main .bg-yellow-500 {
 	background: #f90 !important;
+	color: #000 !important;
 }
 
 [data-scheme="lcars"] main .text-yellow-600,
@@ -802,11 +803,7 @@
 
 [data-scheme="lcars"] main .bg-indigo-500 { background: #c9c !important; color: #000 !important; }
 
-[data-scheme="lcars"] main .bg-green-500 { background: #8bd3c2 !important; }
-
 [data-scheme="lcars"] main .bg-red-500 { background: #ff8b8b !important; }
-
-[data-scheme="lcars"] main .bg-yellow-500 { background: #f90 !important; color: #000 !important; }
 
 [data-scheme="lcars"] main .bg-gray-500 { background: #666 !important; }
 
