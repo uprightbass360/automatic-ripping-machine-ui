@@ -1,7 +1,9 @@
 """Theme management API endpoints."""
 
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
+import json
+
+from fastapi import APIRouter, Form, HTTPException, UploadFile, File
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from backend.services import themes as theme_service
 
@@ -25,28 +27,46 @@ async def get_theme(theme_id: str):
 
 @router.get("/{theme_id}/download")
 async def download_theme(theme_id: str):
-    """Download a theme as a JSON file."""
+    """Download theme JSON (without CSS — CSS is a separate file)."""
     theme = theme_service.get_theme(theme_id)
     if not theme:
         raise HTTPException(status_code=404, detail=f"Theme '{theme_id}' not found")
-    # Remove runtime-only fields
-    download = {k: v for k, v in theme.items() if k != "builtin"}
+    download = {k: v for k, v in theme.items() if k not in ("builtin", "css")}
     return JSONResponse(
         content=download,
         headers={"Content-Disposition": f'attachment; filename="{theme_id}.json"'},
     )
 
 
+@router.get("/{theme_id}/css")
+async def download_theme_css(theme_id: str):
+    """Download theme CSS file. Returns 404 if theme has no custom CSS."""
+    theme = theme_service.get_theme(theme_id)
+    if not theme:
+        raise HTTPException(status_code=404, detail=f"Theme '{theme_id}' not found")
+    css = theme.get("css", "")
+    if not css.strip():
+        raise HTTPException(status_code=404, detail=f"Theme '{theme_id}' has no custom CSS")
+    return PlainTextResponse(
+        content=css,
+        headers={"Content-Disposition": f'attachment; filename="{theme_id}.css"'},
+    )
+
+
 @router.post("", status_code=201)
-async def upload_theme(request: Request):
-    """Upload a user theme."""
+async def upload_theme(
+    theme_json: UploadFile = File(..., description="Theme JSON file"),
+    theme_css: str = Form("", description="Optional custom CSS"),
+):
+    """Upload a user theme (JSON file + optional CSS text)."""
     try:
-        data = await request.json()
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid JSON body")
+        content = await theme_json.read()
+        data = json.loads(content)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise HTTPException(status_code=400, detail="Invalid JSON file")
 
     try:
-        saved = theme_service.save_user_theme(data)
+        saved = theme_service.save_user_theme(data, css=theme_css)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
