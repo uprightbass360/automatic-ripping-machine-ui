@@ -3,7 +3,7 @@
   "label": "Default",
   "version": 1,
   "author": "ARM Team",
-  "description": "Classic blue theme \u2014 the ARM default",
+  "description": "Classic blue theme — the ARM default",
   "swatch": "#3b82f6",
   "tokens": {
     "--color-primary": "rgb(37, 99, 235)",
@@ -19,6 +19,5 @@
     "--color-page-dark": "rgb(13, 16, 28)",
     "--color-surface": "rgb(241, 247, 255)",
     "--color-surface-dark": "rgb(22, 28, 45)"
-  },
-  "css": ""
+  }
 }

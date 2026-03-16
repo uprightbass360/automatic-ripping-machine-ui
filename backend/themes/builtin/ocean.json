@@ -19,6 +19,5 @@
     "--color-page-dark": "rgb(12, 19, 20)",
     "--color-surface": "rgb(238, 252, 249)",
     "--color-surface-dark": "rgb(9, 69, 79)"
-  },
-  "css": ""
+  }
 }
