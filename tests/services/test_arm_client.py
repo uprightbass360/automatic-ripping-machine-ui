@@ -340,6 +340,18 @@ async def test_metadata_key_success():
     mock_client.get.assert_awaited_once_with("/api/v1/metadata/test-key", params={})
 
 
+async def test_metadata_key_with_key_and_provider():
+    """test_metadata_key includes key and provider in params when provided."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(
+        {"success": True, "message": "Key valid", "provider": "tmdb"})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.test_metadata_key(key="abc123", provider="tmdb")
+    assert result["success"] is True
+    mock_client.get.assert_awaited_once_with(
+        "/api/v1/metadata/test-key", params={"key": "abc123", "provider": "tmdb"})
+
+
 async def test_metadata_key_raises_on_error():
     """test_metadata_key raises HTTPStatusError on failure."""
     mock_client = AsyncMock(spec=httpx.AsyncClient)

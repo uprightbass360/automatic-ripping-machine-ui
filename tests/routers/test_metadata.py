@@ -55,6 +55,14 @@ class TestMetadataSearch:
             resp = await app_client.get("/api/metadata/search?q=matrix")
         assert resp.status_code == 503
 
+    async def test_http_status_error_with_detail(self, app_client):
+        with patch("backend.routers.jobs.arm_client.search_metadata",
+                   new_callable=AsyncMock,
+                   side_effect=_make_status_error(503, detail="Missing API key")):
+            resp = await app_client.get("/api/metadata/search?q=matrix")
+        assert resp.status_code == 503
+        assert resp.json()["detail"] == "Missing API key"
+
     async def test_connect_error_returns_502(self, app_client):
         with patch("backend.routers.jobs.arm_client.search_metadata",
                    new_callable=AsyncMock, side_effect=httpx.ConnectError("offline")):
@@ -95,6 +103,14 @@ class TestMediaDetail:
                    new_callable=AsyncMock, side_effect=_make_status_error(503)):
             resp = await app_client.get("/api/metadata/tt0133093")
         assert resp.status_code == 503
+
+    async def test_http_status_error_with_detail(self, app_client):
+        with patch("backend.routers.jobs.arm_client.get_media_detail",
+                   new_callable=AsyncMock,
+                   side_effect=_make_status_error(503, detail="Upstream error")):
+            resp = await app_client.get("/api/metadata/tt0133093")
+        assert resp.status_code == 503
+        assert resp.json()["detail"] == "Upstream error"
 
     async def test_connect_error_returns_502(self, app_client):
         with patch("backend.routers.jobs.arm_client.get_media_detail",
@@ -258,6 +274,16 @@ class TestSettingsTestMetadata:
         data = resp.json()
         assert data["success"] is False
         assert "failed" in data["message"].lower()
+
+    async def test_http_status_error_with_detail(self, app_client):
+        with patch("backend.routers.settings.arm_client.test_metadata_key",
+                   new_callable=AsyncMock,
+                   side_effect=_make_status_error(500, detail="Invalid OMDb key")):
+            resp = await app_client.get("/api/settings/test-metadata")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["success"] is False
+        assert data["message"] == "Invalid OMDb key"
 
     async def test_connect_error(self, app_client):
         with patch("backend.routers.settings.arm_client.test_metadata_key",
