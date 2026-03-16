@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { page } from '$app/stores';
 	import { theme, toggleTheme } from '$lib/stores/theme';
-	import { colorScheme, schemeLocksMode } from '$lib/stores/colorScheme';
+	import { colorScheme, schemeLocksMode, loadThemesFromApi } from '$lib/stores/colorScheme';
 	import { dashboard } from '$lib/stores/dashboard';
 	import { setRippingEnabled } from '$lib/api/dashboard';
 	import SidebarStats from '$lib/components/SidebarStats.svelte';
@@ -28,6 +28,8 @@
 	}
 
 	onMount(() => {
+		// Load themes from API (falls back to built-in if backend unreachable)
+		loadThemesFromApi();
 		// Start dashboard polling (provides sidebar stats on all pages)
 		dashboard.start();
 		return () => dashboard.stop();

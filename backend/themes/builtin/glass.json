@@ -1,0 +1,25 @@
+{
+  "id": "glass",
+  "label": "Glass",
+  "version": 1,
+  "author": "ARM Team",
+  "description": "Frosted glass with gradient backdrop",
+  "swatch": "#818cf8",
+  "mode": "dark",
+  "tokens": {
+    "--color-primary": "rgb(129, 140, 248)",
+    "--color-primary-hover": "rgb(99, 102, 241)",
+    "--color-primary-dark": "rgb(67, 56, 202)",
+    "--color-primary-light-bg": "rgb(49, 46, 129)",
+    "--color-primary-light-bg-dark": "rgb(49, 46, 129)",
+    "--color-primary-text": "rgb(165, 180, 252)",
+    "--color-primary-text-dark": "rgb(165, 180, 252)",
+    "--color-primary-border": "rgb(129, 140, 248)",
+    "--color-on-primary": "rgb(255, 255, 255)",
+    "--color-page": "rgb(15, 23, 42)",
+    "--color-page-dark": "rgb(15, 23, 42)",
+    "--color-surface": "rgb(30, 27, 75)",
+    "--color-surface-dark": "rgb(30, 27, 75)"
+  },
+  "css": "[data-scheme=\"glass\"] body {\n\tbackground: linear-gradient(45deg, #0f172a, #1e1b4b, #581c87) !important;\n\tbackground-attachment: fixed !important;\n}\n\n[data-scheme=\"glass\"] aside {\n\tbackground: rgba(255, 255, 255, 0.05) !important;\n\tbackdrop-filter: blur(20px);\n\t-webkit-backdrop-filter: blur(20px);\n\tborder-color: rgba(255, 255, 255, 0.1) !important;\n\tbox-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);\n}\n\n[data-scheme=\"glass\"] header {\n\tbackground: rgba(255, 255, 255, 0.03) !important;\n\tbackdrop-filter: blur(20px);\n\t-webkit-backdrop-filter: blur(20px);\n\tborder-color: rgba(255, 255, 255, 0.1) !important;\n}\n\n[data-scheme=\"glass\"] main {\n\tbackground: transparent;\n}\n\n[data-scheme=\"glass\"] aside [data-logo] {\n\ttext-shadow: 0 0 10px rgba(255, 255, 255, 0.5);\n}\n\n[data-scheme=\"glass\"] aside nav a {\n\tborder-radius: 9999px;\n\tborder: 1px solid transparent;\n}\n\n[data-scheme=\"glass\"] aside nav a:hover {\n\tbackground: rgba(255, 255, 255, 0.1) !important;\n}\n\n[data-scheme=\"glass\"] aside nav a[data-active=\"true\"] {\n\tbackground: rgba(255, 255, 255, 0.15) !important;\n\tborder-color: rgba(255, 255, 255, 0.2);\n\tbox-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);\n}\n\n[data-scheme=\"glass\"] aside [data-stats] {\n\tbackground: rgba(0, 0, 0, 0.2);\n\tborder: 1px solid rgba(255, 255, 255, 0.1);\n\tborder-radius: 1rem;\n\tmargin: 0.5rem;\n\tpadding: 1rem;\n}\n\n[data-scheme=\"glass\"] [data-progress-fill] {\n\tbackground: linear-gradient(90deg, #38bdf8, #818cf8) !important;\n\tbox-shadow: 0 0 15px rgba(56, 189, 248, 0.5);\n}\n\n[data-scheme=\"glass\"] [data-progress-track] {\n\tbackground: rgba(255, 255, 255, 0.1) !important;\n}\n\n[data-scheme=\"glass\"] main .bg-surface,\n\n[data-scheme=\"glass\"] main .dark\\:bg-surface-dark {\n\tbackground: rgba(255, 255, 255, 0.05) !important;\n\tbackdrop-filter: blur(12px);\n\t-webkit-backdrop-filter: blur(12px);\n\tborder-color: rgba(255, 255, 255, 0.1) !important;\n}"
+}

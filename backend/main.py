@@ -17,6 +17,7 @@ from backend.routers import (
     logs,
     notifications,
     settings,
+    themes,
     transcoder,
 )
 from backend.services import arm_client, transcoder_client
@@ -52,6 +53,7 @@ app.include_router(drives.router)
 app.include_router(logs.router)
 app.include_router(settings.router)
 app.include_router(notifications.router)
+app.include_router(themes.router)
 app.include_router(files.router)
 
 # Serve static frontend build if it exists
