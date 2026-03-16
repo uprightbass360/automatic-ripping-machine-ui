@@ -261,6 +261,7 @@ async def test_test_metadata_key_success(app_client):
 async def test_test_metadata_key_http_error(app_client):
     mock_resp = MagicMock(spec=httpx.Response)
     mock_resp.status_code = 502
+    mock_resp.json.return_value = {"detail": "Upstream error"}
     with patch(
         "backend.routers.settings.arm_client.test_metadata_key",
         new_callable=AsyncMock,
@@ -270,7 +271,7 @@ async def test_test_metadata_key_http_error(app_client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["success"] is False
-    assert "failed" in data["message"].lower()
+    assert data["message"] == "Upstream error"
 
 
 async def test_test_metadata_key_connect_error(app_client):
