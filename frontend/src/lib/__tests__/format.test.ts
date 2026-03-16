@@ -30,9 +30,9 @@ describe('statusColor', () => {
 		expect(statusColor('error')).toBe('bg-red-500');
 	});
 
-	it('returns cyan for post-rip statuses', () => {
-		expect(statusColor('copying')).toBe('bg-cyan-500');
-		expect(statusColor('ejecting')).toBe('bg-cyan-500');
+	it('returns yellow for post-rip statuses', () => {
+		expect(statusColor('copying')).toBe('bg-yellow-500');
+		expect(statusColor('ejecting')).toBe('bg-yellow-500');
 	});
 
 	it('returns gray for unknown statuses', () => {

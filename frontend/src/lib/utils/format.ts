@@ -50,7 +50,7 @@ export function statusColor(status: string | null): string {
 			return 'bg-blue-500';
 		case 'copying':
 		case 'ejecting':
-			return 'bg-cyan-500';
+			return 'bg-yellow-500';
 		case 'transcoding':
 		case 'processing':
 			return 'bg-indigo-500';
