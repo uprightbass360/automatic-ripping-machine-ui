@@ -6,7 +6,7 @@
 		showLabel?: boolean;
 	}
 
-	let { value, max = 100, color = 'bg-blue-500', showLabel = true }: Props = $props();
+	let { value, max = 100, color = 'bg-primary', showLabel = true }: Props = $props();
 	let pct = $derived(Math.min(100, Math.max(0, (value / max) * 100)));
 </script>
 
