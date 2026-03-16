@@ -97,6 +97,18 @@ def test_validate_theme_not_dict():
     assert theme_service._validate_theme("not a dict") is False
 
 
+# --- _safe_path ---
+
+def test_safe_path_valid(tmp_path):
+    result = theme_service._safe_path(tmp_path, "test.json")
+    assert result == (tmp_path / "test.json").resolve()
+
+
+def test_safe_path_traversal(tmp_path):
+    with pytest.raises(ValueError, match="Path traversal"):
+        theme_service._safe_path(tmp_path, "../../etc/passwd")
+
+
 # --- get_all_themes / get_theme ---
 
 def test_get_all_themes():
