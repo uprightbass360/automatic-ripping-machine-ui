@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, apiFormPost } from './client';
 
 export interface ThemeMeta {
 	id: string;
@@ -24,11 +24,19 @@ export function fetchTheme(id: string): Promise<ThemeFull> {
 	return apiFetch<ThemeFull>(`/api/themes/${encodeURIComponent(id)}`);
 }
 
-export function uploadTheme(theme: ThemeFull): Promise<ThemeFull> {
-	return apiFetch<ThemeFull>('/api/themes', {
-		method: 'POST',
-		body: JSON.stringify(theme)
-	});
+export function uploadTheme(themeJson: File, css: string = ''): Promise<ThemeFull> {
+	const form = new FormData();
+	form.append('theme_json', themeJson);
+	form.append('theme_css', css);
+	return apiFormPost<ThemeFull>('/api/themes', form);
+}
+
+export async function fetchThemeCss(id: string): Promise<string> {
+	const res = await fetch(`/api/themes/${encodeURIComponent(id)}/css`);
+	if (!res.ok) {
+		throw new Error(`No CSS for theme '${id}'`);
+	}
+	return res.text();
 }
 
 export function deleteTheme(id: string): Promise<void> {
