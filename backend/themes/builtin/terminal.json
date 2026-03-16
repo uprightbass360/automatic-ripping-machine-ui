@@ -1,0 +1,25 @@
+{
+  "id": "terminal",
+  "label": "Terminal",
+  "version": 1,
+  "author": "ARM Team",
+  "description": "Retro green-on-black CRT terminal",
+  "swatch": "#4ade80",
+  "mode": "dark",
+  "tokens": {
+    "--color-primary": "rgb(57, 255, 20)",
+    "--color-primary-hover": "rgb(45, 200, 16)",
+    "--color-primary-dark": "rgb(10, 26, 5)",
+    "--color-primary-light-bg": "rgb(10, 26, 5)",
+    "--color-primary-light-bg-dark": "rgb(10, 26, 5)",
+    "--color-primary-text": "rgb(57, 255, 20)",
+    "--color-primary-text-dark": "rgb(57, 255, 20)",
+    "--color-primary-border": "rgb(57, 255, 20)",
+    "--color-on-primary": "rgb(5, 5, 5)",
+    "--color-page": "rgb(5, 5, 5)",
+    "--color-page-dark": "rgb(5, 5, 5)",
+    "--color-surface": "rgb(8, 8, 8)",
+    "--color-surface-dark": "rgb(8, 8, 8)"
+  },
+  "css": "[data-scheme=\"terminal\"] {\n\tfont-family: 'Courier New', Courier, monospace;\n\tcursor: crosshair;\n}\n\n[data-scheme=\"terminal\"] aside::before {\n\tcontent: \"\";\n\tdisplay: block;\n\tposition: absolute;\n\tinset: 0;\n\tbackground:\n\t\tlinear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.12) 50%),\n\t\tlinear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));\n\tbackground-size: 100% 3px, 2px 100%;\n\tpointer-events: none;\n\tz-index: 10;\n\tanimation: crt-flicker 0.15s infinite;\n}\n\n[data-scheme=\"terminal\"] aside {\n\tposition: relative;\n\ttext-shadow: 0 0 5px rgb(57 255 20 / 0.4);\n\tbox-shadow: 10px 0 30px rgba(0, 0, 0, 0.5), inset -2px 0 10px rgb(57 255 20 / 0.15);\n}\n\n[data-scheme=\"terminal\"] aside nav a {\n\ttext-transform: uppercase;\n\tletter-spacing: 0.1em;\n\tborder-radius: 0;\n\tfont-size: 0.8rem;\n}\n\n[data-scheme=\"terminal\"] aside nav a::before {\n\tcontent: \"> \";\n\tflex-shrink: 0;\n}\n\n[data-scheme=\"terminal\"] aside nav a svg {\n\tdisplay: none;\n}\n\n[data-scheme=\"terminal\"] aside nav a[data-active=\"true\"] {\n\tborder: 1px solid rgb(57 255 20);\n\tbackground: rgb(10 26 5) !important;\n\ttext-shadow: 0 0 8px rgb(57 255 20 / 0.6);\n}\n\n[data-scheme=\"terminal\"] aside nav a:hover {\n\tbackground: rgb(57 255 20) !important;\n\tcolor: rgb(5 5 5) !important;\n\ttext-shadow: none;\n\tbox-shadow: 0 0 15px rgb(57 255 20 / 0.5);\n}\n\n[data-scheme=\"terminal\"] aside [data-logo] {\n\tborder: 1px solid rgb(57 255 20);\n\ttext-shadow: 0 0 5px rgb(57 255 20 / 0.4);\n\tmargin-left: 0.75rem;\n\tmargin-right: 0.75rem;\n\tpadding: 0.5rem;\n}\n\n[data-scheme=\"terminal\"] aside [data-stats] {\n\tborder: 1px solid rgb(57 255 20);\n\tbackground: rgb(57 255 20 / 0.05);\n}\n\n[data-scheme=\"terminal\"] [data-progress-fill] {\n\tbackground: repeating-linear-gradient(\n\t\t90deg,\n\t\trgb(57 255 20),\n\t\trgb(57 255 20) 6px,\n\t\trgb(5 5 5) 6px,\n\t\trgb(5 5 5) 9px\n\t) !important;\n\tbox-shadow: 0 0 10px rgb(57 255 20 / 0.4);\n\tborder-radius: 0 !important;\n}\n\n[data-scheme=\"terminal\"] [data-progress-track] {\n\tborder: 1px solid rgb(57 255 20);\n\tborder-radius: 0 !important;\n\tbackground: rgb(0 0 0) !important;\n}\n\n[data-scheme=\"terminal\"] header {\n\tborder-color: rgb(57 255 20) !important;\n}\n\n[data-scheme=\"terminal\"] .text-gray-400,\n\n[data-scheme=\"terminal\"] .text-gray-500,\n\n[data-scheme=\"terminal\"] .text-gray-600,\n\n[data-scheme=\"terminal\"] .text-gray-700,\n\n[data-scheme=\"terminal\"] .dark\\:text-gray-300,\n\n[data-scheme=\"terminal\"] .dark\\:text-gray-400,\n\n[data-scheme=\"terminal\"] .dark\\:text-gray-500 {\n\tcolor: rgb(57 255 20) !important;\n}\n\n[data-scheme=\"terminal\"] .text-orange-500 {\n\tcolor: rgb(57 255 20) !important;\n}"
+}

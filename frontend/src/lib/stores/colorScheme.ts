@@ -1,25 +1,36 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
+import { fetchThemes, fetchTheme } from '$lib/api/themes';
+import type { ThemeMeta, ThemeFull } from '$lib/api/themes';
 
 export interface ColorScheme {
 	id: string;
 	label: string;
-	/** Tailwind color name for the swatch preview */
+	/** Hex color for the swatch preview */
 	swatch: string;
 	/** Lock the theme to light or dark mode when this scheme is active */
 	mode?: 'light' | 'dark';
 	tokens: Record<string, string>;
+	/** Custom CSS injected at runtime */
+	css?: string;
+	/** Theme author */
+	author?: string;
+	/** Theme description */
+	description?: string;
+	/** Whether this is a built-in theme */
+	builtin?: boolean;
 }
 
 /**
  * Color tokens applied as CSS custom properties on :root.
  * Tailwind v4 references them via `color-mix()` for opacity modifiers.
+ * These are the compiled-in fallbacks that work even when the backend is down.
  */
 export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'blue',
 		label: 'Default',
-		swatch: 'bg-blue-500',
+		swatch: '#3b82f6',
 		tokens: {
 			'--color-primary': 'rgb(37, 99, 235)',          // blue-600
 			'--color-primary-hover': 'rgb(29, 78, 216)',    // blue-700
@@ -39,7 +50,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'ocean',
 		label: 'Ocean',
-		swatch: 'bg-teal-500',
+		swatch: '#14b8a6',
 		tokens: {
 			'--color-primary': 'rgb(13, 148, 136)',         // teal-600
 			'--color-primary-hover': 'rgb(15, 118, 110)',   // teal-700
@@ -59,7 +70,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'forest',
 		label: 'Forest',
-		swatch: 'bg-emerald-500',
+		swatch: '#10b981',
 		tokens: {
 			'--color-primary': 'rgb(5, 150, 105)',          // emerald-600
 			'--color-primary-hover': 'rgb(4, 120, 87)',     // emerald-700
@@ -79,7 +90,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'sunset',
 		label: 'Red Alert',
-		swatch: 'bg-red-500',
+		swatch: '#ef4444',
 		tokens: {
 			'--color-primary': 'rgb(220, 38, 38)',          // red-600
 			'--color-primary-hover': 'rgb(185, 28, 28)',    // red-700
@@ -99,7 +110,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'rose',
 		label: 'Rose',
-		swatch: 'bg-pink-500',
+		swatch: '#ec4899',
 		tokens: {
 			'--color-primary': 'rgb(219, 39, 119)',         // pink-600
 			'--color-primary-hover': 'rgb(190, 24, 93)',    // pink-700
@@ -119,7 +130,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'violet',
 		label: 'Grape',
-		swatch: 'bg-purple-500',
+		swatch: '#a855f7',
 		tokens: {
 			'--color-primary': 'rgb(147, 51, 234)',         // purple-600
 			'--color-primary-hover': 'rgb(126, 34, 206)',   // purple-700
@@ -139,7 +150,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'glass',
 		label: 'Glass',
-		swatch: 'bg-indigo-400',
+		swatch: '#818cf8',
 		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(129, 140, 248)',        // indigo-400
@@ -160,7 +171,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'cinema',
 		label: 'Cinema',
-		swatch: 'bg-yellow-600',
+		swatch: '#ca8a04',
 		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(212, 175, 55)',          // gold
@@ -181,10 +192,10 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'gaming',
 		label: 'Gaming',
-		swatch: 'bg-fuchsia-500',
+		swatch: '#d946ef',
 		mode: 'dark',
 		tokens: {
-			'--color-primary': 'rgb(0, 210, 255)',            // neon blue
+			'--color-primary': 'rgb(0, 135, 164)',            // darker neon blue (headers)
 			'--color-primary-hover': 'rgb(188, 19, 254)',     // neon purple
 			'--color-primary-dark': 'rgb(27, 27, 47)',        // border dark
 			'--color-primary-light-bg': 'rgb(0, 210, 255)',   // blue (unused in dark)
@@ -192,7 +203,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-primary-text': 'rgb(0, 210, 255)',       // neon blue
 			'--color-primary-text-dark': 'rgb(0, 210, 255)',  // neon blue
 			'--color-primary-border': 'rgb(0, 210, 255)',     // neon blue
-			'--color-on-primary': 'rgb(5, 5, 10)',            // bg dark
+			'--color-on-primary': 'rgb(255, 255, 255)',       // white
 			'--color-page': 'rgb(5, 5, 10)',                  // bg dark
 			'--color-page-dark': 'rgb(5, 5, 10)',             // bg dark
 			'--color-surface': 'rgb(12, 12, 18)',             // surface
@@ -202,7 +213,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'royale',
 		label: 'Royale',
-		swatch: 'bg-yellow-400',
+		swatch: '#facc15',
 		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(0, 123, 255)',            // fortnite blue
@@ -213,7 +224,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-primary-text': 'rgb(248, 251, 17)',      // yellow
 			'--color-primary-text-dark': 'rgb(248, 251, 17)', // yellow
 			'--color-primary-border': 'rgb(17, 42, 94)',      // deep blue
-			'--color-on-primary': 'rgb(0, 0, 0)',             // black
+			'--color-on-primary': 'rgb(255, 255, 255)',       // white
 			'--color-page': 'rgb(5, 5, 5)',                   // near-black
 			'--color-page-dark': 'rgb(5, 5, 5)',              // near-black
 			'--color-surface': 'rgb(2, 11, 36)',              // dark blue
@@ -223,7 +234,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'lcars',
 		label: 'LCARS',
-		swatch: 'bg-orange-400',
+		swatch: '#fb923c',
 		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(255, 153, 0)',            // lcars orange
@@ -244,10 +255,10 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'tactical',
 		label: 'Tactical',
-		swatch: 'bg-teal-400',
+		swatch: '#2dd4bf',
 		mode: 'dark',
 		tokens: {
-			'--color-primary': 'rgb(100, 255, 218)',          // tactical teal
+			'--color-primary': 'rgb(0, 120, 100)',            // darker teal (readable headers)
 			'--color-primary-hover': 'rgb(80, 200, 175)',     // dimmer teal
 			'--color-primary-dark': 'rgb(10, 25, 47)',        // navy
 			'--color-primary-light-bg': 'rgb(10, 25, 47)',    // navy
@@ -255,7 +266,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-primary-text': 'rgb(100, 255, 218)',     // teal
 			'--color-primary-text-dark': 'rgb(100, 255, 218)',
 			'--color-primary-border': 'rgb(100, 255, 218)',   // teal
-			'--color-on-primary': 'rgb(2, 6, 23)',            // deep navy
+			'--color-on-primary': 'rgb(255, 255, 255)',       // white
 			'--color-page': 'rgb(2, 6, 23)',                  // deep navy
 			'--color-page-dark': 'rgb(2, 6, 23)',
 			'--color-surface': 'rgb(10, 25, 47)',             // navy
@@ -265,10 +276,10 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'craft',
 		label: 'Craft',
-		swatch: 'bg-green-500',
+		swatch: '#22c55e',
 		mode: 'dark',
 		tokens: {
-			'--color-primary': 'rgb(56, 255, 56)',            // MC green
+			'--color-primary': 'rgb(30, 130, 30)',            // darker MC green (readable headers)
 			'--color-primary-hover': 'rgb(128, 128, 255)',    // MC hover blue
 			'--color-primary-dark': 'rgb(34, 34, 34)',        // dark stone
 			'--color-primary-light-bg': 'rgb(74, 74, 74)',    // pressed button
@@ -276,7 +287,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-primary-text': 'rgb(56, 255, 56)',       // MC green
 			'--color-primary-text-dark': 'rgb(56, 255, 56)',
 			'--color-primary-border': 'rgb(0, 0, 0)',         // black
-			'--color-on-primary': 'rgb(224, 224, 224)',       // light gray
+			'--color-on-primary': 'rgb(255, 255, 255)',       // white
 			'--color-page': 'rgb(30, 30, 30)',                // dark bg
 			'--color-page-dark': 'rgb(30, 30, 30)',
 			'--color-surface': 'rgb(49, 49, 49)',             // stone
@@ -286,7 +297,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'terminal',
 		label: 'Terminal',
-		swatch: 'bg-green-400',
+		swatch: '#4ade80',
 		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(57, 255, 20)',          // terminal green
@@ -307,7 +318,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'blockbuster',
 		label: 'Blockbuster Video',
-		swatch: 'bg-blue-600',
+		swatch: '#2563eb',
 		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(255, 235, 0)',            // vibrant yellow
@@ -328,7 +339,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 	{
 		id: 'hollywood-video-v2',
 		label: 'Hollywood Video',
-		swatch: 'bg-violet-900',
+		swatch: '#4c1d95',
 		mode: 'dark',
 		tokens: {
 			'--color-primary': 'rgb(217, 11, 28)',             // #D90B1C Red
@@ -350,6 +361,12 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 
 const DEFAULT_SCHEME = COLOR_SCHEMES[0];
 
+/** Writable store of all available schemes (built-in + API-loaded) */
+export const allSchemes = writable<ColorScheme[]>([...COLOR_SCHEMES]);
+
+/** Cache of full theme data (with CSS) fetched from the API */
+const cssCache = new Map<string, string>();
+
 function getInitialScheme(): string {
 	if (!browser) return DEFAULT_SCHEME.id;
 	return localStorage.getItem('colorScheme') ?? DEFAULT_SCHEME.id;
@@ -357,12 +374,17 @@ function getInitialScheme(): string {
 
 function applyScheme(id: string) {
 	if (!browser) return;
-	const scheme = COLOR_SCHEMES.find((s) => s.id === id) ?? DEFAULT_SCHEME;
+	const schemes = get(allSchemes);
+	const scheme = schemes.find((s) => s.id === id) ?? DEFAULT_SCHEME;
 	const root = document.documentElement;
 	for (const [prop, value] of Object.entries(scheme.tokens)) {
 		root.style.setProperty(prop, value);
 	}
 	root.dataset.scheme = scheme.id;
+
+	// Inject theme CSS into a managed <style> element
+	injectThemeCss(scheme);
+
 	if (scheme.mode === 'dark') {
 		root.classList.add('dark');
 	} else if (scheme.mode === 'light') {
@@ -375,17 +397,111 @@ function applyScheme(id: string) {
 	}
 }
 
+function injectThemeCss(scheme: ColorScheme) {
+	const styleId = 'arm-theme-css';
+	let el = document.getElementById(styleId) as HTMLStyleElement | null;
+
+	// Get CSS from scheme object or cache
+	const css = scheme.css ?? cssCache.get(scheme.id) ?? '';
+
+	if (!css) {
+		// No custom CSS — remove any existing injected style
+		el?.remove();
+		return;
+	}
+
+	if (!el) {
+		el = document.createElement('style');
+		el.id = styleId;
+		document.head.appendChild(el);
+	}
+	el.textContent = css;
+}
+
 export const colorScheme = writable<string>(getInitialScheme());
 
 /** True when the active color scheme locks the mode (light or dark) */
 export const schemeLocksMode = derived(colorScheme, (id) => {
-	const scheme = COLOR_SCHEMES.find((s) => s.id === id);
+	const schemes = get(allSchemes);
+	const scheme = schemes.find((s) => s.id === id);
 	return scheme?.mode != null;
 });
 
-if (browser) {
-	colorScheme.subscribe((id) => {
-		localStorage.setItem('colorScheme', id);
+/**
+ * Load themes from the API, merging with built-in fallbacks.
+ * Call this on app startup. Falls back silently if backend is unreachable.
+ */
+export async function loadThemesFromApi(): Promise<void> {
+	try {
+		const apiThemes = await fetchThemes();
+		if (!apiThemes?.length) return;
+
+		// Build merged list: API themes take precedence, keep built-in order
+		const merged = new Map<string, ColorScheme>();
+
+		// Start with built-in fallbacks
+		for (const s of COLOR_SCHEMES) {
+			merged.set(s.id, { ...s, builtin: true });
+		}
+
+		// Overlay API themes
+		for (const t of apiThemes) {
+			merged.set(t.id, {
+				id: t.id,
+				label: t.label,
+				swatch: t.swatch,
+				mode: t.mode,
+				tokens: t.tokens,
+				author: t.author,
+				description: t.description,
+				builtin: t.builtin ?? false
+			});
+		}
+
+		allSchemes.set(Array.from(merged.values()));
+
+		// Fetch full CSS for the currently active scheme
+		const currentId = get(colorScheme);
+		await loadThemeCss(currentId);
+	} catch {
+		// Backend unreachable — built-in themes are already loaded
+	}
+}
+
+/**
+ * Fetch and cache full theme CSS from the API, then re-apply the scheme.
+ */
+export async function loadThemeCss(id: string): Promise<void> {
+	if (cssCache.has(id)) {
+		// Already cached — update the scheme object and re-apply
+		const schemes = get(allSchemes);
+		const scheme = schemes.find((s) => s.id === id);
+		if (scheme) {
+			scheme.css = cssCache.get(id);
+			applyScheme(id);
+		}
+		return;
+	}
+
+	try {
+		const full = await fetchTheme(id);
+		if (full?.css) {
+			cssCache.set(id, full.css);
+			// Update the scheme in the store
+			allSchemes.update((schemes) =>
+				schemes.map((s) => (s.id === id ? { ...s, css: full.css } : s))
+			);
+		}
 		applyScheme(id);
+	} catch {
+		// Fetch failed — apply without CSS
+		applyScheme(id);
+	}
+}
+
+if (browser) {
+	colorScheme.subscribe(async (id) => {
+		localStorage.setItem('colorScheme', id);
+		await loadThemeCss(id);
 	});
 }

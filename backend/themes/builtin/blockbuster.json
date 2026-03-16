@@ -1,0 +1,25 @@
+{
+  "id": "blockbuster",
+  "label": "Blockbuster Video",
+  "version": 1,
+  "author": "ARM Team",
+  "description": "Yellow and blue nostalgia from the video rental era",
+  "swatch": "#2563eb",
+  "mode": "dark",
+  "tokens": {
+    "--color-primary": "rgb(255, 235, 0)",
+    "--color-primary-hover": "rgb(215, 200, 0)",
+    "--color-primary-dark": "rgb(180, 160, 0)",
+    "--color-primary-light-bg": "rgb(0, 51, 153)",
+    "--color-primary-light-bg-dark": "rgb(0, 31, 103)",
+    "--color-primary-text": "rgb(255, 235, 0)",
+    "--color-primary-text-dark": "rgb(255, 235, 0)",
+    "--color-primary-border": "rgb(255, 235, 0)",
+    "--color-on-primary": "rgb(0, 0, 0)",
+    "--color-page": "rgb(0, 41, 123)",
+    "--color-page-dark": "rgb(0, 41, 123)",
+    "--color-surface": "rgb(0, 51, 153)",
+    "--color-surface-dark": "rgb(0, 51, 153)"
+  },
+  "css": "[data-scheme=\"blockbuster\"] {\n\tfont-family: \"ITC Eras\", \"Eras Bold ITC\", \"Arial Black\", \"Arial\", sans-serif;\n\tletter-spacing: -0.02em;\n}\n\n[data-scheme=\"blockbuster\"] body {\n\tbackground-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),\n\t                  linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));\n\tbackground-size: 100% 4px, 3px 100%;\n}\n\n[data-scheme=\"blockbuster\"] aside {\n\tborder-right: 4px solid rgb(255, 235, 0) !important;\n}\n\n[data-scheme=\"blockbuster\"] aside nav a {\n\ttext-transform: uppercase;\n\tfont-weight: 900;\n\tfont-style: italic;\n\tmargin: 4px 8px;\n\tborder-radius: 4px;\n\ttransition: transform 0.1s ease;\n}\n\n[data-scheme=\"blockbuster\"] aside nav a:hover {\n\tbackground-color: rgb(255, 235, 0) !important;\n\tcolor: rgb(0, 51, 153) !important;\n\ttransform: scale(1.05);\n}\n\n[data-scheme=\"blockbuster\"] aside nav a[data-active=\"true\"] {\n\tbackground-color: rgb(255, 235, 0) !important;\n\tcolor: rgb(0, 51, 153) !important;\n\tbox-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);\n}\n\n[data-scheme=\"blockbuster\"] aside [data-logo] img {\n\tfilter: drop-shadow(3px 3px 0px #000);\n}\n\n[data-scheme=\"blockbuster\"] [data-progress-track] {\n\tbackground: #fff !important;\n\tborder: 2px solid #000 !important;\n\tborder-radius: 0px !important;\n\theight: 12px !important;\n}\n\n[data-scheme=\"blockbuster\"] [data-progress-fill] {\n\tbackground: rgb(0, 51, 153) !important;\n\tborder-right: 2px solid #000;\n}\n\n[data-scheme=\"blockbuster\"] aside [data-stats] {\n\tbackground: #fff !important;\n\tcolor: #000 !important;\n\tborder: 2px dashed #666 !important;\n\tfont-family: \"Courier New\", Courier, monospace;\n\tfont-weight: bold;\n\ttransform: rotate(-1deg);\n\tmargin: 1rem;\n}\n\n[data-scheme=\"blockbuster\"] aside [data-stats] > div:first-child {\n\tbackground: rgb(255, 235, 0) !important;\n}\n\n[data-scheme=\"blockbuster\"] aside [data-stats] button {\n\tcolor: #000 !important;\n\tbackground: transparent !important;\n\tbox-shadow: none !important;\n}\n\n[data-scheme=\"blockbuster\"] aside [data-stats] button.shadow-xs {\n\tbackground: rgb(0, 51, 153) !important;\n\tcolor: rgb(255, 235, 0) !important;\n}\n\n[data-scheme=\"blockbuster\"] aside [data-stats] span,\n\n[data-scheme=\"blockbuster\"] aside [data-stats] p {\n\tcolor: #333 !important;\n}\n\n[data-scheme=\"blockbuster\"] header {\n\tborder-bottom: 4px solid rgb(255, 235, 0) !important;\n}\n\n[data-scheme=\"blockbuster\"] .card,\n\n[data-scheme=\"blockbuster\"] [data-surface] {\n\tborder: 2px solid rgb(255, 235, 0) !important;\n\tbox-shadow: 8px 8px 0px rgba(0, 0, 0, 0.3);\n}"
+}

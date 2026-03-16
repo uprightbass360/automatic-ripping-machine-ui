@@ -4,7 +4,9 @@
 	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
 	import type { SettingsData, Drive } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
-	import { colorScheme, COLOR_SCHEMES, schemeLocksMode } from '$lib/stores/colorScheme';
+	import { colorScheme, COLOR_SCHEMES, schemeLocksMode, allSchemes, loadThemesFromApi } from '$lib/stores/colorScheme';
+	import { uploadTheme, deleteTheme as deleteThemeApi } from '$lib/api/themes';
+	import type { ThemeFull } from '$lib/api/themes';
 	import { createPollingStore } from '$lib/stores/polling';
 	import { fetchDrives, fetchDriveDiagnostic } from '$lib/api/drives';
 	import type { DiagnosticResult } from '$lib/api/drives';
@@ -98,6 +100,50 @@
 	let abcdeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 	let abcdeDirty = $derived(abcdeContent !== abcdeOriginal);
 	let abcdeCollapsed = $state(false);
+
+	// --- Theme management ---
+	let themeUploading = $state(false);
+	let themeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	async function handleThemeUpload(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+		themeUploading = true;
+		themeFeedback = null;
+		try {
+			const text = await file.text();
+			const data = JSON.parse(text) as ThemeFull;
+			if (!data.id || !data.label || !data.tokens) {
+				throw new Error('Invalid theme: missing required fields (id, label, tokens)');
+			}
+			await uploadTheme(data);
+			await loadThemesFromApi();
+			themeFeedback = { type: 'success', message: `Theme "${data.label}" uploaded` };
+		} catch (e) {
+			themeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Upload failed' };
+		} finally {
+			themeUploading = false;
+			input.value = '';
+		}
+	}
+
+	async function handleThemeDelete(id: string, label: string) {
+		if (!confirm(`Delete user theme "${label}"?`)) return;
+		themeFeedback = null;
+		try {
+			await deleteThemeApi(id);
+			await loadThemesFromApi();
+			if ($colorScheme === id) $colorScheme = 'blue';
+			themeFeedback = { type: 'success', message: `Theme "${label}" deleted` };
+		} catch (e) {
+			themeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Delete failed' };
+		}
+	}
+
+	function handleThemeDownload(id: string) {
+		window.open(`/api/themes/${encodeURIComponent(id)}/download`, '_blank');
+	}
 
 	async function loadAbcdeConfig() {
 		if (abcdeLoaded) return;
@@ -1963,25 +2009,102 @@
 		{#if activeTab === 'appearance'}
 			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Appearance</h2>
 			<section class="space-y-6">
-				<!-- Color Scheme -->
+				<!-- Feedback toast -->
+				{#if themeFeedback}
+					<div class="rounded-lg border p-3 text-sm {themeFeedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400' : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'}">
+						{themeFeedback.message}
+					</div>
+				{/if}
+
+				<!-- Built-in Themes -->
 				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 					<h3 class="mb-1 text-base font-semibold text-gray-900 dark:text-white">Color Scheme</h3>
 					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Choose an accent color for buttons, links, and highlights throughout the UI.</p>
 					<div class="flex flex-wrap gap-3">
-						{#each COLOR_SCHEMES as scheme}
+						{#each $allSchemes.filter(s => s.builtin !== false) as scheme}
 							<button
 								type="button"
 								onclick={() => ($colorScheme = scheme.id)}
-								class="flex flex-col items-center gap-1.5 rounded-lg border-2 px-4 py-3 transition-colors
+								class="group relative flex flex-col items-center gap-1.5 rounded-lg border-2 px-4 py-3 transition-colors
 									{$colorScheme === scheme.id
 									? 'border-primary bg-primary-light-bg dark:border-primary-text-dark dark:bg-primary-light-bg-dark/20'
 									: 'border-primary/15 hover:border-primary/30 dark:border-primary/15 dark:hover:border-primary/30'}"
 							>
-								<span class="h-8 w-8 rounded-full {scheme.swatch}"></span>
+								<span class="h-8 w-8 rounded-full" style="background-color: {scheme.swatch}"></span>
 								<span class="text-xs font-medium text-gray-700 dark:text-gray-300">{scheme.label}</span>
+								{#if scheme.description}
+									<span class="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">{scheme.description}</span>
+								{/if}
 							</button>
 						{/each}
 					</div>
+					<div class="mt-3 flex gap-2">
+						<button
+							type="button"
+							onclick={() => handleThemeDownload($colorScheme)}
+							class="inline-flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary-text transition-colors hover:bg-primary/20 dark:text-primary-text-dark"
+						>
+							<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+							Export current theme
+						</button>
+					</div>
+				</div>
+
+				<!-- User Themes -->
+				{#if $allSchemes.filter(s => s.builtin === false).length > 0}
+					<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+						<h3 class="mb-1 text-base font-semibold text-gray-900 dark:text-white">User Themes</h3>
+						<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Custom themes loaded from your themes directory.</p>
+						<div class="flex flex-wrap gap-3">
+							{#each $allSchemes.filter(s => s.builtin === false) as scheme}
+								<div class="relative">
+									<button
+										type="button"
+										onclick={() => ($colorScheme = scheme.id)}
+										class="flex flex-col items-center gap-1.5 rounded-lg border-2 px-4 py-3 transition-colors
+											{$colorScheme === scheme.id
+											? 'border-primary bg-primary-light-bg dark:border-primary-text-dark dark:bg-primary-light-bg-dark/20'
+											: 'border-primary/15 hover:border-primary/30 dark:border-primary/15 dark:hover:border-primary/30'}"
+									>
+										<span class="h-8 w-8 rounded-full" style="background-color: {scheme.swatch}"></span>
+										<span class="text-xs font-medium text-gray-700 dark:text-gray-300">{scheme.label}</span>
+										{#if scheme.author}
+											<span class="text-[10px] text-gray-400">by {scheme.author}</span>
+										{/if}
+									</button>
+									<div class="absolute -right-1 -top-1 flex gap-0.5">
+										<button
+											type="button"
+											onclick={() => handleThemeDownload(scheme.id)}
+											class="rounded-full bg-gray-200 p-0.5 text-gray-500 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
+											title="Download"
+										>
+											<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+										</button>
+										<button
+											type="button"
+											onclick={() => handleThemeDelete(scheme.id, scheme.label)}
+											class="rounded-full bg-red-100 p-0.5 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+											title="Delete"
+										>
+											<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+										</button>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
+				<!-- Upload Theme -->
+				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+					<h3 class="mb-1 text-base font-semibold text-gray-900 dark:text-white">Import Theme</h3>
+					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Upload a theme JSON file or drop one into your themes directory.</p>
+					<label class="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-4 py-2 text-sm font-medium text-primary-text transition-colors hover:bg-primary/20 dark:text-primary-text-dark {themeUploading ? 'opacity-50' : ''}">
+						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+						{themeUploading ? 'Uploading...' : 'Upload .json theme'}
+						<input type="file" accept=".json" class="hidden" onchange={handleThemeUpload} disabled={themeUploading} />
+					</label>
 				</div>
 
 				<!-- Dark Mode -->

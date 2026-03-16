@@ -1,0 +1,25 @@
+{
+  "id": "gaming",
+  "label": "Gaming",
+  "version": 1,
+  "author": "ARM Team",
+  "description": "Neon cyberpunk glow for night sessions",
+  "swatch": "#d946ef",
+  "mode": "dark",
+  "tokens": {
+    "--color-primary": "rgb(0, 135, 164)",
+    "--color-primary-hover": "rgb(188, 19, 254)",
+    "--color-primary-dark": "rgb(27, 27, 47)",
+    "--color-primary-light-bg": "rgb(0, 210, 255)",
+    "--color-primary-light-bg-dark": "rgb(0, 30, 50)",
+    "--color-primary-text": "rgb(0, 210, 255)",
+    "--color-primary-text-dark": "rgb(0, 210, 255)",
+    "--color-primary-border": "rgb(0, 210, 255)",
+    "--color-on-primary": "rgb(255, 255, 255)",
+    "--color-page": "rgb(5, 5, 10)",
+    "--color-page-dark": "rgb(5, 5, 10)",
+    "--color-surface": "rgb(12, 12, 18)",
+    "--color-surface-dark": "rgb(12, 12, 18)"
+  },
+  "css": "[data-scheme=\"gaming\"] {\n\tfont-family: 'Rajdhani', sans-serif;\n}\n\n[data-scheme=\"gaming\"] aside::before {\n\tcontent: '';\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\tright: 0;\n\theight: 4px;\n\tbackground: linear-gradient(90deg, #bc13fe, #00d2ff);\n\tbox-shadow: 0 0 15px #bc13fe;\n\tz-index: 10;\n}\n\n[data-scheme=\"gaming\"] aside {\n\tposition: relative;\n\tborder-color: #1b1b2f !important;\n\tbox-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);\n}\n\n[data-scheme=\"gaming\"] aside [data-logo] img {\n\tfilter: drop-shadow(0 0 10px #00d2ff) drop-shadow(0 0 2px #bc13fe);\n\ttransition: transform 0.3s ease;\n}\n\n[data-scheme=\"gaming\"] aside [data-logo] img:hover {\n\ttransform: scale(1.1) rotate(5deg);\n}\n\n[data-scheme=\"gaming\"] aside nav a {\n\ttext-transform: uppercase;\n\tfont-weight: 700;\n\tfont-size: 0.95rem;\n\tletter-spacing: 0.1em;\n\tborder-radius: 0;\n\tcolor: #8b8ba9;\n\tclip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%);\n\tborder-left: 0px solid transparent;\n\ttransition: all 0.2s ease-in-out;\n}\n\n[data-scheme=\"gaming\"] aside nav a:hover {\n\tbackground: rgba(188, 19, 254, 0.1) !important;\n\tcolor: #fff !important;\n\tborder-left: 4px solid #bc13fe !important;\n\tpadding-left: 1.5rem;\n}\n\n[data-scheme=\"gaming\"] aside nav a[data-active=\"true\"] {\n\tbackground: rgba(0, 210, 255, 0.15) !important;\n\tborder-left: 4px solid #00d2ff !important;\n\tcolor: #00d2ff !important;\n\ttext-shadow: 0 0 10px #00d2ff;\n\tanimation: gaming-breathe 3s infinite ease-in-out;\n}\n\n[data-scheme=\"gaming\"] aside [data-stats] {\n\tborder-color: #1b1b2f;\n\tbackground: #08080e;\n}\n\n[data-scheme=\"gaming\"] [data-progress-fill] {\n\tbackground: linear-gradient(90deg, #bc13fe, #00d2ff) !important;\n\tbox-shadow: 0 0 10px rgba(0, 210, 255, 0.4);\n\tborder-radius: 2px !important;\n\tposition: relative;\n\toverflow: hidden;\n}\n\n[data-scheme=\"gaming\"] [data-progress-fill]::after {\n\tcontent: '';\n\tposition: absolute;\n\ttop: 0;\n\tleft: -100px;\n\twidth: 50px;\n\theight: 100%;\n\tbackground: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);\n\tanimation: gaming-scan 2s infinite linear;\n}\n\n[data-scheme=\"gaming\"] [data-progress-track] {\n\tbackground: #11111d !important;\n\tborder-radius: 2px !important;\n}\n\n[data-scheme=\"gaming\"] aside hr {\n\tborder: none;\n\theight: 1px;\n\tbackground: linear-gradient(90deg, transparent, #bc13fe, #00d2ff, transparent);\n\topacity: 0.6;\n\tmargin-left: 10px;\n\tmargin-right: 10px;\n}\n\n[data-scheme=\"gaming\"] header {\n\tborder-color: #1b1b2f !important;\n}\n\n[data-scheme=\"gaming\"] aside .text-gray-400,\n\n[data-scheme=\"gaming\"] aside .text-gray-500,\n\n[data-scheme=\"gaming\"] aside .text-gray-600,\n\n[data-scheme=\"gaming\"] aside .dark\\:text-gray-300,\n\n[data-scheme=\"gaming\"] aside .dark\\:text-gray-400,\n\n[data-scheme=\"gaming\"] aside .dark\\:text-gray-500 {\n\tcolor: #6a6a8a !important;\n\ttext-transform: uppercase;\n\tletter-spacing: 0.1em;\n\tfont-weight: 700;\n}\n\n[data-scheme=\"gaming\"] aside .text-orange-500 {\n\tcolor: #bc13fe !important;\n\tfont-weight: bold;\n}"
+}
