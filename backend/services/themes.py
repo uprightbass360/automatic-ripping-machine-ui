@@ -111,8 +111,11 @@ def save_user_theme(data: dict[str, Any], css: str = "") -> dict[str, Any]:
     data.setdefault("swatch", "#888888")
 
     user_dir = _user_themes_dir()
-    json_path = _safe_path(user_dir, f"{theme_id}.json")
-    css_path = _safe_path(user_dir, f"{theme_id}.css")
+    resolved_dir = user_dir.resolve()
+    json_path = (user_dir / f"{theme_id}.json").resolve()
+    css_path = (user_dir / f"{theme_id}.css").resolve()
+    if not str(json_path).startswith(str(resolved_dir)) or not str(css_path).startswith(str(resolved_dir)):
+        raise ValueError(f"Path traversal detected: {theme_id!r}")
 
     # Save JSON without css or builtin fields
     save_data = {k: v for k, v in data.items() if k not in ("builtin", "css")}
@@ -133,17 +136,22 @@ def save_user_theme(data: dict[str, Any], css: str = "") -> dict[str, Any]:
 def delete_user_theme(theme_id: str) -> bool:
     """Delete a user theme. Returns False if it's a built-in or doesn't exist."""
     theme_id = _safe_theme_id(theme_id)
-    builtin_path = _safe_path(_BUILTIN_DIR, f"{theme_id}.json")
+    builtin_path = (_BUILTIN_DIR / f"{theme_id}.json").resolve()
+    if not str(builtin_path).startswith(str(_BUILTIN_DIR.resolve())):
+        raise ValueError(f"Path traversal detected: {theme_id!r}")
     if builtin_path.exists():
         return False
 
     user_dir = _user_themes_dir()
-    json_path = _safe_path(user_dir, f"{theme_id}.json")
+    resolved_dir = user_dir.resolve()
+    json_path = (user_dir / f"{theme_id}.json").resolve()
+    css_path = (user_dir / f"{theme_id}.css").resolve()
+    if not str(json_path).startswith(str(resolved_dir)) or not str(css_path).startswith(str(resolved_dir)):
+        raise ValueError(f"Path traversal detected: {theme_id!r}")
     if not json_path.exists():
         return False
 
     json_path.unlink()
     # Also remove sidecar CSS
-    css_path = _safe_path(user_dir, f"{theme_id}.css")
     css_path.unlink(missing_ok=True)
     return True
