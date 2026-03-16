@@ -1,6 +1,7 @@
 """Theme management API endpoints."""
 
 import json
+from typing import Annotated
 
 from fastapi import APIRouter, Form, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -9,6 +10,9 @@ from backend.services import themes as theme_service
 
 router = APIRouter(prefix="/api/themes", tags=["themes"])
 
+_404 = {404: {"description": "Theme not found"}}
+_400 = {400: {"description": "Invalid request"}}
+
 
 @router.get("")
 async def list_themes():
@@ -16,7 +20,7 @@ async def list_themes():
     return theme_service.get_all_themes()
 
 
-@router.get("/{theme_id}")
+@router.get("/{theme_id}", responses=_404)
 async def get_theme(theme_id: str):
     """Get full theme data including CSS."""
     theme = theme_service.get_theme(theme_id)
@@ -25,7 +29,7 @@ async def get_theme(theme_id: str):
     return theme
 
 
-@router.get("/{theme_id}/download")
+@router.get("/{theme_id}/download", responses=_404)
 async def download_theme(theme_id: str):
     """Download theme JSON (without CSS — CSS is a separate file)."""
     theme = theme_service.get_theme(theme_id)
@@ -38,7 +42,7 @@ async def download_theme(theme_id: str):
     )
 
 
-@router.get("/{theme_id}/css")
+@router.get("/{theme_id}/css", responses=_404)
 async def download_theme_css(theme_id: str):
     """Download theme CSS file. Returns 404 if theme has no custom CSS."""
     theme = theme_service.get_theme(theme_id)
@@ -53,10 +57,10 @@ async def download_theme_css(theme_id: str):
     )
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, responses=_400)
 async def upload_theme(
-    theme_json: UploadFile = File(..., description="Theme JSON file"),
-    theme_css: str = Form("", description="Optional custom CSS"),
+    theme_json: Annotated[UploadFile, File(description="Theme JSON file")],
+    theme_css: Annotated[str, Form(description="Optional custom CSS")] = "",
 ):
     """Upload a user theme (JSON file + optional CSS text)."""
     try:
@@ -73,7 +77,7 @@ async def upload_theme(
     return saved
 
 
-@router.delete("/{theme_id}")
+@router.delete("/{theme_id}", responses=_400)
 async def delete_theme(theme_id: str):
     """Delete a user theme. Built-in themes cannot be deleted."""
     deleted = theme_service.delete_user_theme(theme_id)

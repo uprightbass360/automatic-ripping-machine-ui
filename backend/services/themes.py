@@ -1,6 +1,7 @@
 """Theme loading and management service."""
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,16 @@ def _load_theme_file(path: Path) -> dict[str, Any] | None:
         return data
     except (json.JSONDecodeError, OSError):
         return None
+
+
+_SAFE_ID = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
+
+
+def _safe_theme_id(theme_id: str) -> str:
+    """Validate a theme ID is safe for use as a filename. Raises ValueError if not."""
+    if not _SAFE_ID.match(theme_id) or ".." in theme_id:
+        raise ValueError(f"Invalid theme id: {theme_id!r}")
+    return theme_id
 
 
 def _validate_theme(data: Any) -> bool:
@@ -87,12 +98,13 @@ def save_user_theme(data: dict[str, Any], css: str = "") -> dict[str, Any]:
     if not _validate_theme(data):
         raise ValueError("Invalid theme: missing required fields (id, label, tokens)")
 
+    theme_id = _safe_theme_id(data["id"])
     data.setdefault("version", 1)
     data.setdefault("swatch", "#888888")
 
     user_dir = _user_themes_dir()
-    json_path = user_dir / f"{data['id']}.json"
-    css_path = user_dir / f"{data['id']}.css"
+    json_path = user_dir / f"{theme_id}.json"
+    css_path = user_dir / f"{theme_id}.css"
 
     # Save JSON without css or builtin fields
     save_data = {k: v for k, v in data.items() if k not in ("builtin", "css")}
@@ -112,6 +124,7 @@ def save_user_theme(data: dict[str, Any], css: str = "") -> dict[str, Any]:
 
 def delete_user_theme(theme_id: str) -> bool:
     """Delete a user theme. Returns False if it's a built-in or doesn't exist."""
+    theme_id = _safe_theme_id(theme_id)
     builtin_path = _BUILTIN_DIR / f"{theme_id}.json"
     if builtin_path.exists():
         return False

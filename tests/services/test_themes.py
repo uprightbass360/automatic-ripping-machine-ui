@@ -165,8 +165,19 @@ def test_save_user_theme_invalid():
         theme_service.save_user_theme({"id": "x"})
 
 
+def test_save_user_theme_path_traversal():
+    data = {"id": "../../../etc/evil", "label": "Evil", "tokens": {}}
+    with pytest.raises(ValueError, match="Invalid theme id"):
+        theme_service.save_user_theme(data)
+
+
+def test_delete_user_theme_path_traversal():
+    with pytest.raises(ValueError, match="Invalid theme id"):
+        theme_service.delete_user_theme("../../../etc/passwd")
+
+
 def test_save_user_theme_defaults(tmp_themes):
-    _, user = tmp_themes
+    _builtin, _user = tmp_themes
     data = {"id": "minimal", "label": "Min", "tokens": {}}
     saved = theme_service.save_user_theme(data)
     assert saved["version"] == 1
@@ -199,7 +210,7 @@ def test_delete_nonexistent_returns_false():
 # --- User themes override built-ins ---
 
 def test_user_theme_overrides_builtin(tmp_themes):
-    _, user = tmp_themes
+    _builtin, _user = tmp_themes
     # Save a user theme with same id as builtin
     data = {"id": "blue", "label": "My Blue", "tokens": {"--color-primary": "rgb(0,0,255)"}}
     theme_service.save_user_theme(data)

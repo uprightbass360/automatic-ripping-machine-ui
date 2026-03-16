@@ -41,7 +41,8 @@ export function testMetadataKey(key?: string, provider?: string): Promise<{ succ
 	if (key) params.set('key', key);
 	if (provider) params.set('provider', provider);
 	const qs = params.toString();
-	return apiFetch(`/api/settings/test-metadata${qs ? `?${qs}` : ''}`);
+	const url = qs ? '/api/settings/test-metadata?' + qs : '/api/settings/test-metadata';
+	return apiFetch(url);
 }
 
 export interface ConnectionTestResult {
