@@ -146,8 +146,31 @@
 		}
 	}
 
-	function handleThemeDownload(id: string) {
-		window.open(`/api/themes/${encodeURIComponent(id)}/download`, '_blank');
+	function triggerDownload(blob: Blob, filename: string) {
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = filename;
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
+	async function handleThemeDownload(id: string) {
+		const enc = encodeURIComponent(id);
+		try {
+			// Download JSON
+			const jsonRes = await fetch(`/api/themes/${enc}/download`);
+			if (jsonRes.ok) {
+				const jsonBlob = await jsonRes.blob();
+				triggerDownload(jsonBlob, `${id}.json`);
+			}
+			// Download CSS if the theme has any
+			const cssRes = await fetch(`/api/themes/${enc}/css`);
+			if (cssRes.ok) {
+				const cssBlob = await cssRes.blob();
+				triggerDownload(cssBlob, `${id}.css`);
+			}
+		} catch { /* download failed silently */ }
 	}
 
 	async function loadAbcdeConfig() {
