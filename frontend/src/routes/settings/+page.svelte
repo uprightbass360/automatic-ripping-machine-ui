@@ -6,7 +6,6 @@
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES, schemeLocksMode, allSchemes, loadThemesFromApi } from '$lib/stores/colorScheme';
 	import { uploadTheme, deleteTheme as deleteThemeApi } from '$lib/api/themes';
-	import type { ThemeFull } from '$lib/api/themes';
 	import { createPollingStore } from '$lib/stores/polling';
 	import { fetchDrives, fetchDriveDiagnostic } from '$lib/api/drives';
 	import type { DiagnosticResult } from '$lib/api/drives';
@@ -104,28 +103,34 @@
 	// --- Theme management ---
 	let themeUploading = $state(false);
 	let themeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let themeJsonFile = $state<File | null>(null);
+	let themeCssText = $state('');
 
-	async function handleThemeUpload(event: Event) {
-		const input = event.target as HTMLInputElement;
-		const file = input.files?.[0];
-		if (!file) return;
+	async function handleThemeUpload() {
+		if (!themeJsonFile) return;
 		themeUploading = true;
 		themeFeedback = null;
 		try {
-			const text = await file.text();
-			const data = JSON.parse(text) as ThemeFull;
+			const text = await themeJsonFile.text();
+			const data = JSON.parse(text);
 			if (!data.id || !data.label || !data.tokens) {
 				throw new Error('Invalid theme: missing required fields (id, label, tokens)');
 			}
-			await uploadTheme(data);
+			await uploadTheme(themeJsonFile, themeCssText);
 			await loadThemesFromApi();
 			themeFeedback = { type: 'success', message: `Theme "${data.label}" uploaded` };
+			themeJsonFile = null;
+			themeCssText = '';
 		} catch (e) {
 			themeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Upload failed' };
 		} finally {
 			themeUploading = false;
-			input.value = '';
 		}
+	}
+
+	function handleJsonFileSelect(event: Event) {
+		const input = event.target as HTMLInputElement;
+		themeJsonFile = input.files?.[0] ?? null;
 	}
 
 	async function handleThemeDelete(id: string, label: string) {
@@ -580,7 +585,7 @@
 		ARM_NAME: { label: 'Machine Name', description: 'Friendly name for this ARM instance, used in notifications' },
 		DISABLE_LOGIN: { label: 'Disable Login', description: 'Skip authentication — leave all pages open' },
 		DATE_FORMAT: { label: 'Date Format', description: 'strftime format string for timestamps' },
-		ARM_API_KEY: { label: 'ARM API Key', description: 'API key for the ARM disc CRC lookup service' },
+		ARM_API_KEY: { label: 'CRC Lookup API Key', description: 'API key for the ARM disc CRC lookup service' },
 		// Web Server
 		WEBSERVER_IP: { label: 'Web Server IP', description: 'IP address the ARM web UI binds to' },
 		WEBSERVER_PORT: { label: 'Web Server Port', description: 'Port the ARM web UI listens on' },
@@ -694,10 +699,7 @@
 				{ label: 'TV',     keys: ['TV_TITLE_PATTERN', 'TV_FOLDER_PATTERN'] },
 			]},
 			{ label: 'Metadata', subpanels: [
-				{ keys: ['METADATA_PROVIDER', 'OMDB_API_KEY', 'TMDB_API_KEY', 'ARM_API_KEY'] },
-			]},
-			{ label: 'TVDB (TV Episode Matching)', subpanels: [
-				{ keys: ['TVDB_API_KEY', 'TVDB_MATCH_TOLERANCE', 'TVDB_MAX_SEASON_SCAN'] },
+				{ keys: ['METADATA_PROVIDER', 'OMDB_API_KEY', 'TMDB_API_KEY', 'TVDB_API_KEY', 'TVDB_MATCH_TOLERANCE', 'TVDB_MAX_SEASON_SCAN', 'ARM_API_KEY'] },
 			]},
 		],
 		music: [
@@ -797,7 +799,10 @@
 		metadataTesting = true;
 		metadataTestResult = null;
 		try {
-			metadataTestResult = await testMetadataKey();
+			const provider = (armForm['METADATA_PROVIDER'] ?? 'omdb').toString().toLowerCase();
+			const keyField = provider === 'tmdb' ? 'TMDB_API_KEY' : 'OMDB_API_KEY';
+			const currentKey = armForm[keyField]?.toString().trim() || undefined;
+			metadataTestResult = await testMetadataKey(currentKey, provider);
 		} catch {
 			metadataTestResult = { success: false, message: 'Failed to reach test endpoint' };
 		} finally {
@@ -2099,12 +2104,46 @@
 				<!-- Upload Theme -->
 				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 					<h3 class="mb-1 text-base font-semibold text-gray-900 dark:text-white">Import Theme</h3>
-					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Upload a theme JSON file or drop one into your themes directory.</p>
-					<label class="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-4 py-2 text-sm font-medium text-primary-text transition-colors hover:bg-primary/20 dark:text-primary-text-dark {themeUploading ? 'opacity-50' : ''}">
-						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-						{themeUploading ? 'Uploading...' : 'Upload .json theme'}
-						<input type="file" accept=".json" class="hidden" onchange={handleThemeUpload} disabled={themeUploading} />
-					</label>
+					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Upload a theme JSON file and optional custom CSS.</p>
+					<div class="space-y-4">
+						<!-- JSON file picker -->
+						<div>
+							<label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Theme JSON <span class="text-red-500">*</span></label>
+							<label class="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-4 py-2 text-sm font-medium text-primary-text transition-colors hover:bg-primary/20 dark:text-primary-text-dark">
+								<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+								{themeJsonFile ? themeJsonFile.name : 'Choose .json file'}
+								<input type="file" accept=".json" class="hidden" onchange={handleJsonFileSelect} disabled={themeUploading} />
+							</label>
+						</div>
+						<!-- CSS textarea -->
+						<div>
+							<label for="theme-css-input" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Custom CSS <span class="text-xs text-gray-400">(optional)</span></label>
+							<textarea
+								id="theme-css-input"
+								bind:value={themeCssText}
+								placeholder={'[data-scheme="my-theme"] {\n  /* custom styles */\n}'}
+								rows="6"
+								disabled={themeUploading}
+								class="w-full rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 font-mono text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+							></textarea>
+						</div>
+						<!-- Upload button -->
+						<div class="flex items-center gap-3">
+							<button
+								type="button"
+								onclick={handleThemeUpload}
+								disabled={!themeJsonFile || themeUploading}
+								class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary transition-colors hover:bg-primary-hover disabled:opacity-50"
+							>
+								{themeUploading ? 'Uploading...' : 'Upload Theme'}
+							</button>
+							{#if themeFeedback}
+								<span class="text-sm {themeFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+									{themeFeedback.message}
+								</span>
+							{/if}
+						</div>
+					</div>
 				</div>
 
 				<!-- Dark Mode -->
