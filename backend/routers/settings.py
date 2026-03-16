@@ -119,13 +119,20 @@ async def update_abcde_config(body: AbcdeConfigUpdate):
 
 
 @router.get("/settings/test-metadata")
-async def test_metadata_key():
-    """Test the currently saved metadata API key (proxied through ARM)."""
+async def test_metadata_key(key: str | None = None, provider: str | None = None):
+    """Test a metadata API key (proxied through ARM). Tests the field value if provided, else saved config."""
     try:
-        return await arm_client.test_metadata_key()
+        return await arm_client.test_metadata_key(key=key, provider=provider)
     except httpx.HTTPStatusError as exc:
         log.warning("Metadata key test failed: %d", exc.response.status_code)
-        return {"success": False, "message": "Metadata key test failed", "provider": "unknown"}
+        upstream_msg = "Metadata key test failed"
+        try:
+            body = exc.response.json()
+            if body.get("detail"):
+                upstream_msg = body["detail"]
+        except Exception:
+            pass
+        return {"success": False, "message": upstream_msg, "provider": "unknown"}
     except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError) as exc:
         log.error("Metadata key test unreachable: %s", exc)
         return {"success": False, "message": "ARM service unreachable", "provider": "unknown"}

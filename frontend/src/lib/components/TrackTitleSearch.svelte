@@ -163,7 +163,14 @@
 	</div>
 
 	{#if searchError}
-		<p class="text-xs text-gray-500 dark:text-gray-400">{searchError}</p>
+		{#if searchError.toLowerCase().includes('api key')}
+			<div class="rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs text-amber-800 dark:border-amber-600/40 dark:bg-amber-900/20 dark:text-amber-300">
+				<p>{searchError}</p>
+				<p class="mt-0.5 text-amber-600 dark:text-amber-400">Configure API keys in <a href="/settings" class="underline hover:no-underline">Settings</a>.</p>
+			</div>
+		{:else}
+			<p class="text-xs text-gray-500 dark:text-gray-400">{searchError}</p>
+		{/if}
 	{/if}
 
 	<!-- Results -->

@@ -282,9 +282,14 @@ async def lookup_crc(crc64: str) -> dict[str, Any]:
     return resp.json()
 
 
-async def test_metadata_key() -> dict[str, Any]:
-    """Test the configured metadata API key via ARM."""
-    resp = await get_client().get("/api/v1/metadata/test-key")
+async def test_metadata_key(key: str | None = None, provider: str | None = None) -> dict[str, Any]:
+    """Test a metadata API key via ARM. Uses saved config if overrides are omitted."""
+    params: dict[str, str] = {}
+    if key:
+        params["key"] = key
+    if provider:
+        params["provider"] = provider
+    resp = await get_client().get("/api/v1/metadata/test-key", params=params)
     resp.raise_for_status()
     return resp.json()
 

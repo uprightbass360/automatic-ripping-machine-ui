@@ -106,7 +106,15 @@ async def search_metadata(
         return await arm_client.search_metadata(q, year)
     except httpx.HTTPStatusError as exc:
         log.warning("Metadata search failed for q=%r: %d", q, exc.response.status_code)
-        raise HTTPException(status_code=exc.response.status_code, detail="Metadata search failed")
+        # Pass through ARM's detail message (e.g. missing API key guidance)
+        upstream_detail = "Metadata search failed"
+        try:
+            body = exc.response.json()
+            if body.get("detail"):
+                upstream_detail = body["detail"]
+        except Exception:
+            pass
+        raise HTTPException(status_code=exc.response.status_code, detail=upstream_detail)
     except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError) as exc:
         log.error("Metadata search unreachable for q=%r: %s", q, exc)
         raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
@@ -119,7 +127,14 @@ async def get_media_detail(imdb_id: str):
         result = await arm_client.get_media_detail(imdb_id)
     except httpx.HTTPStatusError as exc:
         log.warning("Metadata detail failed: %d", exc.response.status_code)
-        raise HTTPException(status_code=exc.response.status_code, detail="Metadata detail failed")
+        upstream_detail = "Metadata detail failed"
+        try:
+            body = exc.response.json()
+            if body.get("detail"):
+                upstream_detail = body["detail"]
+        except Exception:
+            pass
+        raise HTTPException(status_code=exc.response.status_code, detail=upstream_detail)
     except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         log.error("Metadata detail unreachable")
         raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)

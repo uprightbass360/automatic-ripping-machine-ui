@@ -193,7 +193,14 @@
 	</div>
 
 	{#if searchError}
-		<p class="text-sm text-gray-500 dark:text-gray-400">{searchError}</p>
+		{#if searchError.toLowerCase().includes('api key')}
+			<div class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-600/40 dark:bg-amber-900/20 dark:text-amber-300">
+				<p class="font-medium">{searchError}</p>
+				<p class="mt-1 text-xs text-amber-600 dark:text-amber-400">Configure API keys in <a href="/settings" class="underline hover:no-underline">Settings</a>.</p>
+			</div>
+		{:else}
+			<p class="text-sm text-gray-500 dark:text-gray-400">{searchError}</p>
+		{/if}
 	{/if}
 
 	<!-- Results grid (hidden when detail is shown) -->

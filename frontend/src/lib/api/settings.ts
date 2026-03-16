@@ -36,8 +36,12 @@ export function saveAbcdeConfig(content: string): Promise<{ success: boolean }> 
 	});
 }
 
-export function testMetadataKey(): Promise<{ success: boolean; message: string; provider: string }> {
-	return apiFetch('/api/settings/test-metadata');
+export function testMetadataKey(key?: string, provider?: string): Promise<{ success: boolean; message: string; provider: string }> {
+	const params = new URLSearchParams();
+	if (key) params.set('key', key);
+	if (provider) params.set('provider', provider);
+	const qs = params.toString();
+	return apiFetch(`/api/settings/test-metadata${qs ? `?${qs}` : ''}`);
 }
 
 export interface ConnectionTestResult {
