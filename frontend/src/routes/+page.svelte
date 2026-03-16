@@ -10,7 +10,7 @@
 	import JobRow from '$lib/components/JobRow.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
-	import LcarsFrame from '$lib/components/LcarsFrame.svelte';
+	import SectionFrame from '$lib/components/SectionFrame.svelte';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -206,39 +206,39 @@
 	<!-- Disc review (waiting jobs) -->
 	{#if waitingJobs.length > 0}
 		<section>
-			<LcarsFrame variant="full" accent="#f90" label="WAITING FOR REVIEW — {waitingJobs.length} DISC{waitingJobs.length > 1 ? 'S' : ''}">
+			<SectionFrame variant="full" accent="#f90" label="WAITING FOR REVIEW — {waitingJobs.length} DISC{waitingJobs.length > 1 ? 'S' : ''}">
 				<div class="grid gap-4">
 					{#each waitingJobs as job (job.job_id)}
 						<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
 					{/each}
 				</div>
-			</LcarsFrame>
+			</SectionFrame>
 		</section>
 	{/if}
 
 	<!-- Active rips -->
 	{#if nonWaitingActiveJobs.length > 0}
 		<section>
-			<LcarsFrame variant="full" accent="#99f" label="ACTIVE RIPS — {nonWaitingActiveJobs.length} IN PROGRESS">
+			<SectionFrame variant="full" accent="#99f" label="ACTIVE RIPS — {nonWaitingActiveJobs.length} IN PROGRESS">
 				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 					{#each nonWaitingActiveJobs as job (job.job_id)}
 						<JobCard {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} />
 					{/each}
 				</div>
-			</LcarsFrame>
+			</SectionFrame>
 		</section>
 	{/if}
 
 	<!-- Active transcodes -->
 	{#if dash.active_transcodes.length > 0}
 		<section>
-			<LcarsFrame variant="full" accent="#c9c" label="TRANSCODING — {dash.active_transcodes.length} ACTIVE">
+			<SectionFrame variant="full" accent="#c9c" label="TRANSCODING — {dash.active_transcodes.length} ACTIVE">
 				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 					{#each dash.active_transcodes as tc}
 						<TranscodeCard job={tc} />
 					{/each}
 				</div>
-			</LcarsFrame>
+			</SectionFrame>
 		</section>
 	{/if}
 
