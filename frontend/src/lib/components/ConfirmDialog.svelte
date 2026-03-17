@@ -21,8 +21,8 @@
 
 	let confirmClasses = $derived(
 		variant === 'danger'
-			? 'bg-red-600 hover:bg-red-700 text-white'
-			: 'bg-primary hover:bg-primary/90 text-on-primary'
+			? 'confirm-btn-danger'
+			: 'confirm-btn-primary'
 	);
 </script>
 
