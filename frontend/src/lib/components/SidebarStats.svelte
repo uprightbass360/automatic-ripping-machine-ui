@@ -65,7 +65,7 @@
 			onclick={() => activePanel = 'transcoder'}
 			class="flex-1 rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-all duration-500
 				{activePanel === 'transcoder'
-					? 'bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+					? 'bg-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
 					: 'text-gray-500 hover:text-gray-300'}"
 		>Transcoder</button>
 	</div>
