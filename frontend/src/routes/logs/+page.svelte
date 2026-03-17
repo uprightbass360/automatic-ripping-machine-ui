@@ -33,36 +33,14 @@ async function confirmDelete() {
 		}
 	} catch (e) {
 		feedback = { type: 'error', message: e instanceof Error ? e.message : 'Delete failed' };
-let deleteDialog = { open: false, filename: '', tab: '' };
-let feedback: { type: 'success' | 'error'; message: string } | null = null;
-		deleteDialog = { open: false, filename: '', tab: '' };
-function handleDeleteRequest(filename: string, tab: 'arm' | 'transcoder') {
-    deleteDialog.open = true;
-    deleteDialog.filename = filename;
-    deleteDialog.tab = tab;
-}
-
-async function confirmDelete() {
-    try {
-        await deleteLog(deleteDialog.filename);
-        feedback = { type: 'success', message: `Deleted ${deleteDialog.filename}` };
-        deleteDialog.open = false;
-        deleteDialog.filename = '';
-        deleteDialog.tab = '';
-        // Refresh logs
-        if (deleteDialog.tab === 'arm') {
-            armLogs = await fetchLogs();
-        } else {
-            transcoderLogs = await fetchTranscoderLogs();
-        }
-    } catch (e) {
-        feedback = { type: 'error', message: e instanceof Error ? e.message : 'Delete failed' };
-        deleteDialog.open = false;
-        deleteDialog.filename = '';
-        deleteDialog.tab = '';
-    }
-}
-
+function sortLogFiles(files: LogFile[]): LogFile[] {
+	return [...files].sort((a, b) => {
+		const av = a[fileSortKey];
+		const bv = b[fileSortKey];
+		let cmp: number;
+		if (fileSortKey === 'size') {
+			cmp = (av as number) - (bv as number);
+		} else {
 			cmp = String(av).localeCompare(String(bv));
 		}
 		return fileSortDir === 'asc' ? cmp : -cmp;
@@ -90,38 +68,7 @@ onMount(async () => {
 		transcoderError = e instanceof Error ? e.message : 'Failed to load transcoder logs';
 	}
 });
-</script>
-
-<svelte:head>
-	<title>ARM - Logs</title>
-</svelte:head>
-
-<div class="space-y-4">
-	<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Log Files</h1>
-
-	<!-- Tab Bar -->
-	<div class="border-b border-primary/20 dark:border-primary/20">
-		<nav class="-mb-px flex gap-4" aria-label="Log tabs">
-			<button
-				onclick={() => switchTab('arm')}
-				class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
-					{activeTab === 'arm'
-						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
-						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
-			>
-				ARM Ripper
-			</button>
-			<button
-				onclick={() => switchTab('transcoder')}
-				class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
-					{activeTab === 'transcoder'
-						? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
-						: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
-			>
-				Transcoder
-			</button>
-		</nav>
-	</div>
+// ...existing code...
 
 	{#if activeTab === 'arm'}
 		{#if armError}
@@ -212,25 +159,26 @@ onMount(async () => {
 							</tr>
 						{/each}
 					</tbody>
-				{#if deleteDialog.open}
-					<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-						<div class="rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
-							<h2 class="mb-4 text-lg font-bold">Delete Log File</h2>
-							<p>Are you sure you want to delete <span class="font-mono text-red-500">{deleteDialog.filename}</span>?</p>
-							<div class="mt-6 flex gap-4">
-								<button class="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700" onclick={confirmDelete}>Delete</button>
-								<button class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600" onclick={() => deleteDialog = { open: false, filename: '', tab: '' }}>Cancel</button>
-							</div>
-						</div>
-					</div>
-				{/if}
-				{#if feedback}
-					<div class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded bg-gray-900 px-4 py-2 text-white shadow-lg">
-						{feedback.message}
-					</div>
-				{/if}
-				</table>
-			</div>
-		{/if}
+			</tbody>
+		</table>
+	</div>
 	{/if}
-</div>
+	{/if}
+	{#if deleteDialog.open}
+		<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+			<div class="rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
+				<h2 class="mb-4 text-lg font-bold">Delete Log File</h2>
+				<p>Are you sure you want to delete <span class="font-mono text-red-500">{deleteDialog.filename}</span>?</p>
+				<div class="mt-6 flex gap-4">
+					<button class="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700" onclick={confirmDelete}>Delete</button>
+					<button class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600" onclick={() => deleteDialog = { open: false, filename: '', tab: '' }}>Cancel</button>
+				</div>
+			</div>
+		</div>
+	{/if}
+	{#if feedback}
+		<div class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded bg-gray-900 px-4 py-2 text-white shadow-lg">
+			{feedback.message}
+		</div>
+	{/if}
+// ...existing code...

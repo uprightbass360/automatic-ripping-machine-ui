@@ -20,7 +20,7 @@
 	const activeStats = $derived(activePanel === 'ripper' ? (armOnline ? systemStats : null) : (transcoderOnline ? transcoderStats : null));
 
 	// Unified theme: blue for ripper, cyan for transcoder
-	const barColor = $derived(activePanel === 'ripper' ? 'bg-blue-500' : activePanel === 'transcoder' ? 'bg-purple-500' : 'bg-cyan-500');
+	const barColor = $derived(activePanel === 'ripper' ? 'bg-blue-500' : 'bg-cyan-500');
 	function themedBar(percent: number): string {
 		if (percent >= 90) return 'bg-red-500';
 		if (percent >= 70) return 'bg-yellow-500';
@@ -50,9 +50,7 @@
 	class="border-t px-3 py-3 transition-colors duration-500
 		{activePanel === 'ripper'
 			? 'border-blue-500/20 bg-blue-500/[0.04]'
-			: activePanel === 'transcoder'
-				? 'border-purple-500/20 bg-purple-500/[0.04]'
-				: 'border-cyan-500/20 bg-cyan-500/[0.04]'}"
+			: 'border-cyan-500/20 bg-cyan-500/[0.04]'}"
 >
 	<!-- Panel switcher — always visible -->
 	<div class="mb-2 flex rounded-sm bg-primary/10 p-0.5 dark:bg-primary/10">
@@ -67,7 +65,7 @@
 			onclick={() => activePanel = 'transcoder'}
 			class="flex-1 rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-all duration-500
 				{activePanel === 'transcoder'
-					? 'bg-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(128,0,128,0.3)]'
+					? 'bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
 					: 'text-gray-500 hover:text-gray-300'}"
 		>Transcoder</button>
 	</div>
