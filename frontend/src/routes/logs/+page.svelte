@@ -68,7 +68,6 @@ onMount(async () => {
 		transcoderError = e instanceof Error ? e.message : 'Failed to load transcoder logs';
 	}
 });
-// ...existing code...
 
 	{#if activeTab === 'arm'}
 		{#if armError}
