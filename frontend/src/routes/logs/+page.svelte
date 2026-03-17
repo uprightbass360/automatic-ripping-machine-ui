@@ -15,8 +15,6 @@ let fileSortDir = $state<'asc' | 'desc'>('desc');
 
 let deleteDialog = { open: false, filename: '', tab: '' };
 let feedback: { type: 'success' | 'error'; message: string } | null = null;
-	}
-}
 </script>
 	deleteDialog = { open: true, filename, tab };
 }
