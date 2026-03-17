@@ -1,6 +1,21 @@
-import { deleteLog } from '$lib/api/logs';
+<script lang="ts">
+import { onMount } from 'svelte';
+import { fetchLogs, fetchTranscoderLogs, deleteLog } from '$lib/api/logs';
+import type { LogFile } from '$lib/types/arm';
+import { formatBytes, formatDateTime } from '$lib/utils/format';
+
+let activeTab = $state<'arm' | 'transcoder'>('arm');
+let armLogs = $state<LogFile[]>([]);
+let transcoderLogs = $state<LogFile[]>([]);
+let armError = $state<string | null>(null);
+let transcoderError = $state<string | null>(null);
+
+let fileSortKey = $state<keyof LogFile>('modified');
+let fileSortDir = $state<'asc' | 'desc'>('desc');
+
 let deleteDialog = { open: false, filename: '', tab: '' };
 let feedback: { type: 'success' | 'error'; message: string } | null = null;
+
 function handleDeleteRequest(filename: string, tab: 'arm' | 'transcoder') {
 	deleteDialog = { open: true, filename, tab };
 }
@@ -18,68 +33,63 @@ async function confirmDelete() {
 		}
 	} catch (e) {
 		feedback = { type: 'error', message: e instanceof Error ? e.message : 'Delete failed' };
+let deleteDialog = { open: false, filename: '', tab: '' };
+let feedback: { type: 'success' | 'error'; message: string } | null = null;
 		deleteDialog = { open: false, filename: '', tab: '' };
-	}
+function handleDeleteRequest(filename: string, tab: 'arm' | 'transcoder') {
+    deleteDialog.open = true;
+    deleteDialog.filename = filename;
+    deleteDialog.tab = tab;
 }
-<script lang="ts">
-	import { onMount } from 'svelte';
-	import { fetchLogs, fetchTranscoderLogs } from '$lib/api/logs';
-	import type { LogFile } from '$lib/types/arm';
-	import { formatBytes, formatDateTime } from '$lib/utils/format';
 
-	let activeTab = $state<'arm' | 'transcoder'>('arm');
-	let armLogs = $state<LogFile[]>([]);
-	let transcoderLogs = $state<LogFile[]>([]);
-	let armError = $state<string | null>(null);
-	let transcoderError = $state<string | null>(null);
+async function confirmDelete() {
+    try {
+        await deleteLog(deleteDialog.filename);
+        feedback = { type: 'success', message: `Deleted ${deleteDialog.filename}` };
+        deleteDialog.open = false;
+        deleteDialog.filename = '';
+        deleteDialog.tab = '';
+        // Refresh logs
+        if (deleteDialog.tab === 'arm') {
+            armLogs = await fetchLogs();
+        } else {
+            transcoderLogs = await fetchTranscoderLogs();
+        }
+    } catch (e) {
+        feedback = { type: 'error', message: e instanceof Error ? e.message : 'Delete failed' };
+        deleteDialog.open = false;
+        deleteDialog.filename = '';
+        deleteDialog.tab = '';
+    }
+}
 
-	let fileSortKey = $state<keyof LogFile>('modified');
-	let fileSortDir = $state<'asc' | 'desc'>('desc');
-
-	function toggleFileSort(key: keyof LogFile) {
-		if (fileSortKey === key) {
-			fileSortDir = fileSortDir === 'asc' ? 'desc' : 'asc';
-		} else {
-			fileSortKey = key;
-			fileSortDir = key === 'modified' ? 'desc' : 'asc';
+			cmp = String(av).localeCompare(String(bv));
 		}
-	}
-
-	function sortLogFiles(files: LogFile[]): LogFile[] {
-		return [...files].sort((a, b) => {
-			const av = a[fileSortKey];
-			const bv = b[fileSortKey];
-			let cmp: number;
-			if (fileSortKey === 'size') {
-				cmp = (av as number) - (bv as number);
-			} else {
-				cmp = String(av).localeCompare(String(bv));
-			}
-			return fileSortDir === 'asc' ? cmp : -cmp;
-		});
-	}
-
-	let sortedArmLogs = $derived(sortLogFiles(armLogs));
-	let sortedTranscoderLogs = $derived(sortLogFiles(transcoderLogs));
-
-	function switchTab(tab: 'arm' | 'transcoder') {
-		activeTab = tab;
-		fileSortKey = 'modified';
-		fileSortDir = 'desc';
-	}
-
-	onMount(async () => {
-		try {
-			armLogs = await fetchLogs();
-		} catch (e) {
-			armError = e instanceof Error ? e.message : 'Failed to load ARM logs';
-		}
-		try {
-			transcoderLogs = await fetchTranscoderLogs();
-		} catch (e) {
-			transcoderError = e instanceof Error ? e.message : 'Failed to load transcoder logs';
-		}
+		return fileSortDir === 'asc' ? cmp : -cmp;
 	});
+}
+
+let sortedArmLogs = $derived(sortLogFiles(armLogs));
+let sortedTranscoderLogs = $derived(sortLogFiles(transcoderLogs));
+
+function switchTab(tab: 'arm' | 'transcoder') {
+	activeTab = tab;
+	fileSortKey = 'modified';
+	fileSortDir = 'desc';
+}
+
+onMount(async () => {
+	try {
+		armLogs = await fetchLogs();
+	} catch (e) {
+		armError = e instanceof Error ? e.message : 'Failed to load ARM logs';
+	}
+	try {
+		transcoderLogs = await fetchTranscoderLogs();
+	} catch (e) {
+		transcoderError = e instanceof Error ? e.message : 'Failed to load transcoder logs';
+	}
+});
 </script>
 
 <svelte:head>
