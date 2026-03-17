@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { renderComponent, screen } from '$lib/test-utils';
+import { describe, it, expect, afterEach } from 'vitest';
+import { renderComponent, screen, cleanup } from '$lib/test-utils';
 import StatusBadge from './StatusBadge.svelte';
 
 describe('StatusBadge', () => {
+	afterEach(() => cleanup());
 	describe('rendering', () => {
 		it('renders with a known status', () => {
 			renderComponent(StatusBadge, { props: { status: 'ripping' } });
