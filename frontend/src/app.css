@@ -97,6 +97,18 @@
 		border-left: 2px solid color-mix(in srgb, var(--_accent) 30%, transparent);
 		border-right: 2px solid color-mix(in srgb, var(--_accent) 30%, transparent);
 	}
+
+	/* Status badge semantic colors */
+	.status-active     { @apply bg-blue-500; }
+	.status-warning    { @apply bg-yellow-500; }
+	.status-processing { @apply bg-indigo-500; }
+	.status-success    { @apply bg-green-500; }
+	.status-error      { @apply bg-red-500; }
+	.status-unknown    { @apply bg-gray-500; }
+
+	/* Confirm dialog button variants */
+	.confirm-btn-danger  { @apply bg-red-600 text-white hover:bg-red-700; }
+	.confirm-btn-primary { @apply bg-primary text-on-primary hover:bg-primary/90; }
 }
 
 /* FOUC prevention: overrides the inline visibility:hidden in app.html.
