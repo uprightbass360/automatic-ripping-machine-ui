@@ -36,5 +36,8 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 
+# Worktrees
+.worktrees/
+
 # Logs
 *.log
