@@ -18,26 +18,41 @@ describe('formatBytes', () => {
 });
 
 describe('statusColor', () => {
-	it('returns green for success statuses', () => {
-		expect(statusColor('success')).toBe('bg-green-500');
-		expect(statusColor('completed')).toBe('bg-green-500');
-		expect(statusColor('complete')).toBe('bg-green-500');
+	it('returns status-success for success statuses', () => {
+		expect(statusColor('success')).toBe('status-success');
+		expect(statusColor('completed')).toBe('status-success');
+		expect(statusColor('complete')).toBe('status-success');
 	});
 
-	it('returns red for failure statuses', () => {
-		expect(statusColor('fail')).toBe('bg-red-500');
-		expect(statusColor('failed')).toBe('bg-red-500');
-		expect(statusColor('error')).toBe('bg-red-500');
+	it('returns status-error for failure statuses', () => {
+		expect(statusColor('fail')).toBe('status-error');
+		expect(statusColor('failed')).toBe('status-error');
+		expect(statusColor('error')).toBe('status-error');
 	});
 
-	it('returns yellow for post-rip statuses', () => {
-		expect(statusColor('copying')).toBe('bg-yellow-500');
-		expect(statusColor('ejecting')).toBe('bg-yellow-500');
+	it('returns status-warning for post-rip and waiting statuses', () => {
+		expect(statusColor('copying')).toBe('status-warning');
+		expect(statusColor('ejecting')).toBe('status-warning');
+		expect(statusColor('waiting')).toBe('status-warning');
+		expect(statusColor('waiting_transcode')).toBe('status-warning');
+		expect(statusColor('pending')).toBe('status-warning');
 	});
 
-	it('returns gray for unknown statuses', () => {
-		expect(statusColor('unknown')).toBe('bg-gray-500');
-		expect(statusColor(null)).toBe('bg-gray-500');
+	it('returns status-active for active statuses', () => {
+		expect(statusColor('identifying')).toBe('status-active');
+		expect(statusColor('ready')).toBe('status-active');
+		expect(statusColor('active')).toBe('status-active');
+		expect(statusColor('ripping')).toBe('status-active');
+	});
+
+	it('returns status-processing for transcode statuses', () => {
+		expect(statusColor('transcoding')).toBe('status-processing');
+		expect(statusColor('processing')).toBe('status-processing');
+	});
+
+	it('returns status-unknown for unknown statuses and null', () => {
+		expect(statusColor('unknown')).toBe('status-unknown');
+		expect(statusColor(null)).toBe('status-unknown');
 	});
 });
 

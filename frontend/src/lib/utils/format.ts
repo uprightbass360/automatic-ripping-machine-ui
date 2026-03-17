@@ -47,27 +47,27 @@ export function statusColor(status: string | null): string {
 		case 'ready':
 		case 'active':
 		case 'ripping':
-			return 'bg-blue-500';
+			return 'status-active';
 		case 'copying':
 		case 'ejecting':
-			return 'bg-yellow-500';
+			return 'status-warning';
 		case 'transcoding':
 		case 'processing':
-			return 'bg-indigo-500';
+			return 'status-processing';
 		case 'success':
 		case 'completed':
 		case 'complete':
-			return 'bg-green-500';
+			return 'status-success';
 		case 'fail':
 		case 'failed':
 		case 'error':
-			return 'bg-red-500';
+			return 'status-error';
 		case 'waiting':
 		case 'waiting_transcode':
 		case 'pending':
-			return 'bg-yellow-500';
+			return 'status-warning';
 		default:
-			return 'bg-gray-500';
+			return 'status-unknown';
 	}
 }
 
