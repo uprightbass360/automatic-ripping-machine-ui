@@ -10,8 +10,11 @@ vi.mock('$lib/api/jobs', () => ({
 	clearTrackTitle: vi.fn(() => Promise.resolve())
 }));
 
-import { searchMetadata } from '$lib/api/jobs';
+import { searchMetadata, fetchMediaDetail, updateTrackTitle, clearTrackTitle } from '$lib/api/jobs';
 const mockSearchMetadata = vi.mocked(searchMetadata);
+const mockFetchDetail = vi.mocked(fetchMediaDetail);
+const mockUpdateTrackTitle = vi.mocked(updateTrackTitle);
+const mockClearTrackTitle = vi.mocked(clearTrackTitle);
 
 function createTrack(overrides: Partial<Track> = {}): Track {
 	return {
@@ -82,6 +85,82 @@ describe('TrackTitleSearch', () => {
 			await waitFor(() => {
 				expect(screen.getByText('Found Title')).toBeInTheDocument();
 			});
+		});
+
+		it('shows no results message', async () => {
+			mockSearchMetadata.mockResolvedValue([]);
+			renderComponent(TrackTitleSearch, {
+				props: { jobId: 1, track: createTrack() }
+			});
+			await fireEvent.click(screen.getByText('Search'));
+			await waitFor(() => {
+				expect(screen.getByText(/No results found/)).toBeInTheDocument();
+			});
+		});
+
+		it('shows error on search failure', async () => {
+			mockSearchMetadata.mockRejectedValue(new Error('Search failed'));
+			renderComponent(TrackTitleSearch, {
+				props: { jobId: 1, track: createTrack() }
+			});
+			await fireEvent.click(screen.getByText('Search'));
+			await waitFor(() => {
+				expect(screen.getByText('Search failed')).toBeInTheDocument();
+			});
+		});
+
+		it('fetches detail when result is selected', async () => {
+			mockSearchMetadata.mockResolvedValue([
+				{ title: 'Result', year: '2024', imdb_id: 'tt3333', poster_url: null, media_type: 'movie', plot: null, background_url: null }
+			]);
+			mockFetchDetail.mockResolvedValue({
+				title: 'Result', year: '2024', imdb_id: 'tt3333', poster_url: null,
+				media_type: 'movie', plot: 'A plot', background_url: null
+			});
+			renderComponent(TrackTitleSearch, {
+				props: { jobId: 1, track: createTrack() }
+			});
+			await fireEvent.click(screen.getByText('Search'));
+			await waitFor(() => expect(screen.getByText('Result')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Result'));
+			await waitFor(() => {
+				expect(mockFetchDetail).toHaveBeenCalledWith('tt3333');
+			});
+		});
+
+		it('renders close button when onclose provided', () => {
+			const onclose = vi.fn();
+			renderComponent(TrackTitleSearch, {
+				props: { jobId: 1, track: createTrack(), onclose }
+			});
+			const closeBtn = screen.getByTitle('Close');
+			expect(closeBtn).toBeInTheDocument();
+		});
+
+		it('renders Clear Override button when track has title', () => {
+			renderComponent(TrackTitleSearch, {
+				props: { jobId: 1, track: createTrack({ title: 'Override Title' }) }
+			});
+			expect(screen.getByText('Clear Override')).toBeInTheDocument();
+		});
+
+		it('calls clearTrackTitle on Clear Override click', async () => {
+			const onapply = vi.fn();
+			renderComponent(TrackTitleSearch, {
+				props: { jobId: 1, track: createTrack({ title: 'Override' }), onapply }
+			});
+			await fireEvent.click(screen.getByText('Clear Override'));
+			await waitFor(() => {
+				expect(mockClearTrackTitle).toHaveBeenCalledWith(1, 1);
+				expect(onapply).toHaveBeenCalled();
+			});
+		});
+
+		it('renders year input with pre-filled value', () => {
+			renderComponent(TrackTitleSearch, {
+				props: { jobId: 1, track: createTrack({ year: '2023' }) }
+			});
+			expect(screen.getByDisplayValue('2023')).toBeInTheDocument();
 		});
 	});
 });
