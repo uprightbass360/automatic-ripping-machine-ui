@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { renderComponent, screen, fireEvent, cleanup } from '$lib/test-utils';
+import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import JobActions from './JobActions.svelte';
 import { createJob } from './__fixtures__/job';
 
@@ -10,8 +10,20 @@ vi.mock('$lib/api/jobs', () => ({
 	fixJobPermissions: vi.fn(() => Promise.resolve())
 }));
 
+import { abandonJob, deleteJob, fixJobPermissions } from '$lib/api/jobs';
+const mockAbandon = vi.mocked(abandonJob);
+const mockDelete = vi.mocked(deleteJob);
+const mockFixPerms = vi.mocked(fixJobPermissions);
+
+// Mock window.confirm
+vi.stubGlobal('confirm', vi.fn(() => true));
+
 describe('JobActions', () => {
-	afterEach(() => cleanup());
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+		vi.mocked(confirm).mockReturnValue(true);
+	});
 
 	describe('rendering', () => {
 		it('shows Abandon button for active jobs', () => {
@@ -64,6 +76,93 @@ describe('JobActions', () => {
 			expect(screen.queryByText('Abandon')).not.toBeInTheDocument();
 			expect(screen.queryByText('Delete')).not.toBeInTheDocument();
 			expect(screen.queryByText('Fix Permissions')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('interactions', () => {
+		it('calls abandonJob when Abandon is clicked and confirmed', async () => {
+			const onaction = vi.fn();
+			renderComponent(JobActions, {
+				props: { job: createJob({ status: 'ripping' }), onaction }
+			});
+			await fireEvent.click(screen.getByText('Abandon'));
+			await waitFor(() => {
+				expect(mockAbandon).toHaveBeenCalledWith(1);
+				expect(onaction).toHaveBeenCalled();
+			});
+		});
+
+		it('calls deleteJob when Delete is clicked and confirmed', async () => {
+			const onaction = vi.fn();
+			renderComponent(JobActions, {
+				props: { job: createJob({ status: 'success' }), onaction }
+			});
+			await fireEvent.click(screen.getByText('Delete'));
+			await waitFor(() => {
+				expect(mockDelete).toHaveBeenCalledWith(1);
+			});
+		});
+
+		it('calls fixJobPermissions when Fix Permissions is clicked', async () => {
+			const onaction = vi.fn();
+			renderComponent(JobActions, {
+				props: { job: createJob({ status: 'success' }), onaction }
+			});
+			await fireEvent.click(screen.getByText('Fix Permissions'));
+			await waitFor(() => {
+				expect(mockFixPerms).toHaveBeenCalledWith(1);
+				expect(onaction).toHaveBeenCalled();
+			});
+		});
+
+		it('shows success feedback after action', async () => {
+			renderComponent(JobActions, {
+				props: { job: createJob({ status: 'ripping' }) }
+			});
+			await fireEvent.click(screen.getByText('Abandon'));
+			await waitFor(() => {
+				expect(screen.getByText('Job abandoned')).toBeInTheDocument();
+			});
+		});
+
+		it('shows error feedback on API failure', async () => {
+			mockAbandon.mockRejectedValueOnce(new Error('Server error'));
+			renderComponent(JobActions, {
+				props: { job: createJob({ status: 'ripping' }) }
+			});
+			await fireEvent.click(screen.getByText('Abandon'));
+			await waitFor(() => {
+				expect(screen.getByText('Server error')).toBeInTheDocument();
+			});
+		});
+
+		it('does not call API when confirm is cancelled', async () => {
+			vi.mocked(confirm).mockReturnValueOnce(false);
+			renderComponent(JobActions, {
+				props: { job: createJob({ status: 'ripping' }) }
+			});
+			await fireEvent.click(screen.getByText('Abandon'));
+			expect(mockAbandon).not.toHaveBeenCalled();
+		});
+
+		it('shows Delete button for waiting_transcode status', () => {
+			renderComponent(JobActions, {
+				props: { job: createJob({ status: 'waiting_transcode' }) }
+			});
+			expect(screen.getByText('Delete')).toBeInTheDocument();
+		});
+
+		it('calls ondelete callback instead of onaction when deleting', async () => {
+			const ondelete = vi.fn();
+			const onaction = vi.fn();
+			renderComponent(JobActions, {
+				props: { job: createJob({ status: 'success' }), ondelete, onaction }
+			});
+			await fireEvent.click(screen.getByText('Delete'));
+			await waitFor(() => {
+				expect(ondelete).toHaveBeenCalled();
+				expect(onaction).not.toHaveBeenCalled();
+			});
 		});
 	});
 
