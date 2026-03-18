@@ -1,0 +1,97 @@
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { renderComponent, screen, cleanup, waitFor } from '$lib/test-utils';
+import JobDetailPage from '../[id]/+page.svelte';
+
+vi.mock('$app/stores', () => {
+	const { readable } = require('svelte/store');
+	return { page: readable({ params: { id: '1' } }) };
+});
+
+vi.mock('$app/navigation', () => ({
+	goto: vi.fn()
+}));
+
+vi.mock('$lib/api/jobs', () => ({
+	fetchJob: vi.fn(() => Promise.resolve({
+		job_id: 1, title: 'Test Movie', status: 'success', video_type: 'movie',
+		year: '2024', disctype: 'bluray', label: 'TEST_MOVIE', start_time: '2025-06-15T10:00:00Z',
+		stop_time: '2025-06-15T11:00:00Z', job_length: '1h 0m', devpath: '/dev/sr0',
+		imdb_id: 'tt1234567', poster_url: null, errors: null, stage: null,
+		no_of_titles: 3, logfile: 'job_1.log', crc_id: 'abc123', multi_title: false,
+		tracks: [
+			{ track_id: 1, job_id: 1, track_number: '1', length: 7200, aspect_ratio: '16:9', fps: 24, enabled: true, basename: 'title_01', filename: 'title_01.mkv', orig_filename: 'title_01.mkv', new_filename: null, ripped: true, status: 'success', error: null, source: null, title: null, year: null, imdb_id: null, poster_url: null, video_type: null, episode_number: null, episode_name: null }
+		],
+		config: {}
+	})),
+	retranscodeJob: vi.fn(() => Promise.resolve({ status: 'ok', message: 'Queued' })),
+	fetchMusicDetail: vi.fn(),
+	toggleMultiTitle: vi.fn(() => Promise.resolve()),
+	updateTrack: vi.fn(() => Promise.resolve()),
+	abandonJob: vi.fn(),
+	deleteJob: vi.fn(),
+	fixJobPermissions: vi.fn(),
+	searchMetadata: vi.fn(),
+	fetchMediaDetail: vi.fn(),
+	searchMusicMetadata: vi.fn(),
+	fetchMusicDetail: vi.fn(),
+	setJobTracks: vi.fn(),
+	fetchCrcLookup: vi.fn(() => Promise.resolve({ no_crc: true })),
+	submitToCrcDb: vi.fn(),
+	updateJobTitle: vi.fn(() => Promise.resolve()),
+	updateJobConfig: vi.fn(() => Promise.resolve()),
+	updateJobTranscodeConfig: vi.fn(() => Promise.resolve()),
+	updateTrackTitle: vi.fn(() => Promise.resolve()),
+	clearTrackTitle: vi.fn(() => Promise.resolve()),
+	tvdbMatch: vi.fn(() => Promise.resolve({ success: true, matches: [] })),
+	fetchTvdbEpisodes: vi.fn(() => Promise.resolve({ episodes: [] }))
+}));
+
+vi.mock('$lib/api/logs', () => ({
+	fetchStructuredLogContent: vi.fn(() => Promise.resolve({ entries: [] })),
+	fetchStructuredTranscoderLogContent: vi.fn(() => Promise.resolve({ entries: [] })),
+	fetchTranscoderLogForArmJob: vi.fn(() => Promise.resolve(null))
+}));
+
+vi.mock('$lib/api/settings', () => ({
+	fetchSettings: vi.fn(() => Promise.resolve({ transcoder_config: { config: {} } }))
+}));
+
+describe('Job Detail Page', () => {
+	afterEach(() => cleanup());
+
+	describe('rendering', () => {
+		it('renders job title after loading', async () => {
+			renderComponent(JobDetailPage);
+			await waitFor(() => {
+				expect(screen.getByText('Test Movie')).toBeInTheDocument();
+			});
+		});
+
+		it('renders status badge', async () => {
+			renderComponent(JobDetailPage);
+			await waitFor(() => {
+				const matches = screen.getAllByText('Success');
+				expect(matches.length).toBeGreaterThanOrEqual(1);
+			});
+		});
+
+		it('renders disc type', async () => {
+			renderComponent(JobDetailPage);
+			await waitFor(() => {
+				expect(screen.getByText('Blu-ray')).toBeInTheDocument();
+			});
+		});
+
+		it('renders tracks table', async () => {
+			renderComponent(JobDetailPage);
+			await waitFor(() => {
+				expect(screen.getByText('title_01.mkv')).toBeInTheDocument();
+			});
+		});
+
+		it('renders without crashing', () => {
+			const { container } = renderComponent(JobDetailPage);
+			expect(container).toBeInTheDocument();
+		});
+	});
+});
