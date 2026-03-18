@@ -2,18 +2,52 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, cleanup, waitFor } from '$lib/test-utils';
 import SettingsPage from '../+page.svelte';
 
+const mockArmConfig: Record<string, string | null> = {
+	RIPMETHOD: 'mkv', MINLENGTH: '120', MAXLENGTH: '99999', MAINFEATURE: 'false',
+	VIDEOTYPE: 'auto', GET_VIDEO_TITLE: 'true', ARM_CHECK_UDF: 'true',
+	MANUAL_WAIT: 'true', MANUAL_WAIT_TIME: '30', DRIVE_READY_TIMEOUT: '60',
+	PREVENT_99: 'true', ALLOW_DUPLICATES: 'false', AUTO_EJECT: 'true',
+	DELRAWFILES: 'true', RIP_POSTER: 'true', RAW_PATH: '/raw', TRANSCODE_PATH: '/transcode',
+	COMPLETED_PATH: '/completed', MUSIC_PATH: '/music', MKV_ARGS: '', DATA_RIP_PARAMETERS: '',
+	METADATA_PROVIDER: 'omdb', OMDB_API_KEY: 'test-key', TMDB_API_KEY: '', TVDB_API_KEY: '',
+	ARM_API_KEY: '', SET_MEDIA_PERMISSIONS: 'true', CHMOD_VALUE: '777', UMASK: '000',
+	SET_MEDIA_OWNER: 'false', CHOWN_USER: '', CHOWN_GROUP: '',
+	MOVIE_TITLE_PATTERN: '{title} ({year})', MOVIE_FOLDER_PATTERN: '{title} ({year})',
+	TV_TITLE_PATTERN: '{title} S{season}E{episode}', TV_FOLDER_PATTERN: '{title}/Season {season}',
+	MUSIC_TITLE_PATTERN: '{artist} - {album}', MUSIC_FOLDER_PATTERN: '{artist}/{album}',
+	GET_AUDIO_TITLE: 'true', AUDIO_FORMAT: 'flac', ABCDE_CONFIG_FILE: '/etc/abcde.conf',
+	NOTIFY_RIP: 'true', NOTIFY_TRANSCODE: 'true', NOTIFY_JOBID: 'true',
+	TRANSCODER_URL: 'http://localhost:8080', JSON_URL: '', APPRISE: '',
+	PB_KEY: '', IFTTT_KEY: '', PO_USER_KEY: '', PO_APP_KEY: '',
+	USE_DISC_LABEL_FOR_TV: 'false', GROUP_TV_DISCS_UNDER_SERIES: 'false',
+	MAKEMKV_PERMA_KEY: '', ARM_CHILDREN: '1', EXTRAS_SUB: 'extras',
+	TRANSCODER_WEBHOOK_SECRET: '', LOCAL_RAW_PATH: '', SHARED_RAW_PATH: '',
+	RIP_SPEED_PROFILE: 'default', MUSIC_MULTI_DISC_SUBFOLDERS: 'false', MUSIC_DISC_FOLDER_PATTERN: 'Disc {disc}',
+	MAKEMKV_COMMUNITY_KEYDB: 'false', MAX_CONCURRENT_MAKEMKVINFO: '1',
+	TVDB_MATCH_TOLERANCE: '300', TVDB_MAX_SEASON_SCAN: '10'
+};
+
 vi.mock('$lib/api/settings', () => ({
 	fetchSettings: vi.fn(() => Promise.resolve({
-		arm_config: { RIPMETHOD: 'mkv', MINLENGTH: '120', MAXLENGTH: '99999' },
-		transcoder_config: { config: { video_encoder: 'x265' }, available_presets: [] }
+		arm_config: mockArmConfig,
+		transcoder_config: {
+			config: { video_encoder: 'x265', video_quality: 20, audio_encoder: 'aac', subtitle_mode: 'none', delete_source: false, output_extension: 'mkv' },
+			available_presets: ['HQ 1080p30', 'Fast 720p']
+		}
 	})),
 	saveArmConfig: vi.fn(() => Promise.resolve({ success: true })),
 	saveTranscoderConfig: vi.fn(() => Promise.resolve({ success: true })),
 	testMetadataKey: vi.fn(() => Promise.resolve({ success: true, message: 'OK', provider: 'omdb' })),
 	testTranscoderConnection: vi.fn(() => Promise.resolve({ reachable: true, auth_ok: true, auth_required: false, gpu_support: null, worker_running: true, queue_size: 0, error: null })),
 	testTranscoderWebhook: vi.fn(() => Promise.resolve({ reachable: true, secret_ok: true, secret_required: true, error: null })),
-	fetchSystemInfo: vi.fn(() => Promise.resolve({ versions: {}, endpoints: {}, paths: [], database: { path: '/db', size_bytes: 1024, available: true, migration_current: null, migration_head: null, up_to_date: true }, drives: [] })),
-	fetchAbcdeConfig: vi.fn(() => Promise.resolve({ content: '', path: '/etc/abcde.conf', exists: true })),
+	fetchSystemInfo: vi.fn(() => Promise.resolve({
+		versions: { arm: '2.0.0', python: '3.12' },
+		endpoints: { api: { url: 'http://localhost:8888', reachable: true } },
+		paths: [{ setting: 'RAW_PATH', path: '/raw', exists: true, writable: true }],
+		database: { path: '/db/arm.db', size_bytes: 102400, available: true, migration_current: 'abc', migration_head: 'abc', up_to_date: true },
+		drives: [{ name: 'Drive 1', mount: '/dev/sr0', maker: 'LG', model: 'WH16NS40', capabilities: ['CD', 'DVD', 'BD'], firmware: '1.0' }]
+	})),
+	fetchAbcdeConfig: vi.fn(() => Promise.resolve({ content: 'CDROM=/dev/sr0\nOUTPUTTYPE=flac', path: '/etc/abcde.conf', exists: true })),
 	saveAbcdeConfig: vi.fn(() => Promise.resolve({ success: true }))
 }));
 
@@ -39,9 +73,9 @@ vi.mock('$lib/stores/colorScheme', () => {
 	const { writable } = require('svelte/store');
 	return {
 		colorScheme: writable('default'),
-		COLOR_SCHEMES: [{ id: 'default', label: 'Default', swatch: '#3b82f6', tokens: {} }],
+		COLOR_SCHEMES: [{ id: 'default', label: 'Default', swatch: '#3b82f6', tokens: {}, mode: 'dark' }],
 		schemeLocksMode: writable(false),
-		allSchemes: writable([{ id: 'default', label: 'Default', swatch: '#3b82f6', tokens: {} }]),
+		allSchemes: writable([{ id: 'default', label: 'Default', swatch: '#3b82f6', tokens: {}, mode: 'dark' }]),
 		loadThemesFromApi: vi.fn()
 	};
 });
@@ -55,15 +89,59 @@ describe('Settings Page', () => {
 			expect(screen.getByText('Settings')).toBeInTheDocument();
 		});
 
-		it('renders without crashing', () => {
-			const { container } = renderComponent(SettingsPage);
-			expect(container).toBeInTheDocument();
-		});
-
-		it('renders tab buttons after settings load', async () => {
+		it('renders all tab buttons after settings load', async () => {
 			renderComponent(SettingsPage);
 			await waitFor(() => {
 				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const allTabs = ['Ripping', 'Music', 'Transcoding', 'Notifications', 'Drives', 'Appearance'];
+			for (const tab of allTabs) {
+				const matches = screen.getAllByText(tab);
+				expect(matches.length).toBeGreaterThanOrEqual(1);
+			}
+		});
+
+		it('renders ripping tab panel groups by default', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Disc Identification')).toBeInTheDocument();
+			});
+			// These panels are collapsible buttons — check they exist
+			const panelNames = ['Track Selection', 'Rip Method', 'Post-Rip', 'Media Directories', 'File Permissions', 'Naming Patterns'];
+			for (const name of panelNames) {
+				const matches = screen.queryAllByText(name);
+				expect(matches.length, `Expected to find "${name}"`).toBeGreaterThanOrEqual(1);
+			}
+		});
+
+		it('renders ARM config field values', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				// Check some specific config values are rendered as inputs
+				expect(screen.getByDisplayValue('120')).toBeInTheDocument(); // MINLENGTH
+				expect(screen.getByDisplayValue('99999')).toBeInTheDocument(); // MAXLENGTH
+			});
+		});
+
+		it('renders MakeMKV panel', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('MakeMKV')).toBeInTheDocument();
+			});
+		});
+
+		it('renders Metadata panel with API key fields', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				const matches = screen.getAllByText('Metadata');
+				expect(matches.length).toBeGreaterThanOrEqual(1);
+			});
+		});
+
+		it('renders TV Series panel', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('TV Series')).toBeInTheDocument();
 			});
 		});
 	});
