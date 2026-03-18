@@ -64,13 +64,13 @@ vi.mock('$lib/api/themes', () => ({
 	deleteTheme: vi.fn(() => Promise.resolve())
 }));
 
-vi.mock('$lib/stores/theme', () => {
-	const { writable } = require('svelte/store');
+vi.mock('$lib/stores/theme', async () => {
+	const { writable } = await import('svelte/store');
 	return { theme: writable('dark'), toggleTheme: vi.fn() };
 });
 
-vi.mock('$lib/stores/colorScheme', () => {
-	const { writable } = require('svelte/store');
+vi.mock('$lib/stores/colorScheme', async () => {
+	const { writable } = await import('svelte/store');
 	return {
 		colorScheme: writable('default'),
 		COLOR_SCHEMES: [{ id: 'default', label: 'Default', swatch: '#3b82f6', tokens: {}, mode: 'dark' }],

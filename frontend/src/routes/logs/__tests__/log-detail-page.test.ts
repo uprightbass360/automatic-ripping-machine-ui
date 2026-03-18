@@ -2,8 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, cleanup } from '$lib/test-utils';
 import LogDetailPage from '../[filename]/+page.svelte';
 
-vi.mock('$app/stores', () => {
-	const { readable } = require('svelte/store');
+vi.mock('$app/stores', async () => {
+	const { readable } = await import('svelte/store');
 	return {
 		page: readable({ params: { filename: 'job_001.log' } })
 	};

@@ -46,7 +46,7 @@ describe('CrcLookup', () => {
 		});
 
 		it('shows no CRC message for non-applicable discs', async () => {
-			mockFetchCrcLookup.mockResolvedValue({ no_crc: true });
+			mockFetchCrcLookup.mockResolvedValue({ found: false, results: [], no_crc: true });
 			renderComponent(CrcLookup, {
 				props: { job: createJob() }
 			});
@@ -56,7 +56,7 @@ describe('CrcLookup', () => {
 		});
 
 		it('shows error from lookup response', async () => {
-			mockFetchCrcLookup.mockResolvedValue({ error: 'Service unavailable' });
+			mockFetchCrcLookup.mockResolvedValue({ found: false, results: [], error: 'Service unavailable' });
 			renderComponent(CrcLookup, {
 				props: { job: createJob({ crc_id: 'abc123' }) }
 			});
@@ -86,8 +86,9 @@ describe('CrcLookup', () => {
 					disctype: 'bluray',
 					label: 'FOUND_MOVIE',
 					imdb_id: 'tt9999999',
-					tmdb_id: null,
-					poster_url: null,
+					tmdb_id: '',
+					poster_url: '',
+					hasnicetitle: 'True',
 					validated: 'True',
 					date_added: '2025-01-01T00:00:00.000'
 				}]

@@ -2,8 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, cleanup, waitFor } from '$lib/test-utils';
 import JobDetailPage from '../[id]/+page.svelte';
 
-vi.mock('$app/stores', () => {
-	const { readable } = require('svelte/store');
+vi.mock('$app/stores', async () => {
+	const { readable } = await import('svelte/store');
 	return { page: readable({ params: { id: '1' } }) };
 });
 
@@ -33,7 +33,6 @@ vi.mock('$lib/api/jobs', () => ({
 	searchMetadata: vi.fn(),
 	fetchMediaDetail: vi.fn(),
 	searchMusicMetadata: vi.fn(),
-	fetchMusicDetail: vi.fn(),
 	setJobTracks: vi.fn(),
 	fetchCrcLookup: vi.fn(() => Promise.resolve({ no_crc: true })),
 	submitToCrcDb: vi.fn(),
