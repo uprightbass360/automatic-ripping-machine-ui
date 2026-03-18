@@ -34,9 +34,9 @@ describe('ProgressBar', () => {
 		});
 
 		it('applies custom color class to fill bar', () => {
-			const { container } = renderComponent(ProgressBar, { props: { value: 50, color: 'bg-red-500' } });
+			const { container } = renderComponent(ProgressBar, { props: { value: 50, color: 'custom-bar-color' } });
 			const fill = container.querySelector('[data-progress-fill]');
-			expect(fill).toHaveClass('bg-red-500');
+			expect(fill).toHaveClass('custom-bar-color');
 		});
 
 		it('sets fill width style based on percentage', () => {

@@ -106,6 +106,15 @@
 	.status-error      { @apply bg-red-500; }
 	.status-unknown    { @apply bg-gray-500; }
 
+	/* File icon category colors */
+	.file-icon-directory { @apply text-amber-500; }
+	.file-icon-video     { @apply text-purple-500; }
+	.file-icon-audio     { @apply text-green-500; }
+	.file-icon-image     { @apply text-blue-500; }
+	.file-icon-text      { @apply text-gray-500 dark:text-gray-400; }
+	.file-icon-archive   { @apply text-yellow-600 dark:text-yellow-500; }
+	.file-icon-other     { @apply text-gray-400 dark:text-gray-500; }
+
 	/* Confirm dialog button variants */
 	.confirm-btn-danger  { @apply bg-red-600 text-white hover:bg-red-700; }
 	.confirm-btn-primary { @apply bg-primary text-on-primary hover:bg-primary/90; }
