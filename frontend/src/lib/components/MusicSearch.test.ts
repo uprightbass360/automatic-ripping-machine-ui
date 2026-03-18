@@ -10,8 +10,10 @@ vi.mock('$lib/api/jobs', () => ({
 	setJobTracks: vi.fn(() => Promise.resolve())
 }));
 
-import { searchMusicMetadata } from '$lib/api/jobs';
+import { searchMusicMetadata, fetchMusicDetail, updateJobTitle } from '$lib/api/jobs';
 const mockSearchMusicMetadata = vi.mocked(searchMusicMetadata);
+const mockFetchMusicDetail = vi.mocked(fetchMusicDetail);
+const mockUpdateJobTitle = vi.mocked(updateJobTitle);
 
 describe('MusicSearch', () => {
 	afterEach(() => {
@@ -67,6 +69,58 @@ describe('MusicSearch', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/No results found/)).toBeInTheDocument();
 			});
+		});
+
+		it('shows error on search failure', async () => {
+			mockSearchMusicMetadata.mockRejectedValue(new Error('MusicBrainz error'));
+			renderComponent(MusicSearch, {
+				props: { job: createJob({ album: 'Test' }) }
+			});
+			await fireEvent.click(screen.getByText('Search'));
+			await waitFor(() => {
+				expect(screen.getByText('MusicBrainz error')).toBeInTheDocument();
+			});
+		});
+
+		it('renders result cards with artist and year', async () => {
+			mockSearchMusicMetadata.mockResolvedValue({
+				results: [
+					{ id: 'r1', title: 'Album One', artist: 'Band A', year: '2024', country: 'US', format: 'CD', track_count: 10, status: 'Official', release_type: 'Album', poster_url: null },
+					{ id: 'r2', title: 'Album Two', artist: 'Band B', year: '2023', country: 'UK', format: 'Vinyl', track_count: 8, status: 'Official', release_type: 'Album', poster_url: null }
+				],
+				total: 2
+			});
+			renderComponent(MusicSearch, {
+				props: { job: createJob({ album: 'Test' }) }
+			});
+			await fireEvent.click(screen.getByText('Search'));
+			await waitFor(() => {
+				expect(screen.getByText('Album One')).toBeInTheDocument();
+				expect(screen.getByText('Album Two')).toBeInTheDocument();
+				expect(screen.getByText('Band A')).toBeInTheDocument();
+				expect(screen.getByText('Band B')).toBeInTheDocument();
+			});
+		});
+
+		it('renders result count', async () => {
+			mockSearchMusicMetadata.mockResolvedValue({
+				results: [{ id: 'r1', title: 'Album', artist: 'A', year: '2024', country: 'US', format: 'CD', track_count: 10, status: 'Official', release_type: 'Album', poster_url: null }],
+				total: 25
+			});
+			renderComponent(MusicSearch, {
+				props: { job: createJob({ album: 'Test' }) }
+			});
+			await fireEvent.click(screen.getByText('Search'));
+			await waitFor(() => {
+				expect(screen.getByText(/25/)).toBeInTheDocument();
+			});
+		});
+
+		it('falls back to title when no album', () => {
+			renderComponent(MusicSearch, {
+				props: { job: createJob({ album: null, title: 'Fallback Title' }) }
+			});
+			expect(screen.getByDisplayValue('Fallback Title')).toBeInTheDocument();
 		});
 	});
 });

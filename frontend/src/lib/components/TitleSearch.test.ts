@@ -9,8 +9,10 @@ vi.mock('$lib/api/jobs', () => ({
 	updateJobTitle: vi.fn(() => Promise.resolve())
 }));
 
-import { searchMetadata } from '$lib/api/jobs';
+import { searchMetadata, fetchMediaDetail, updateJobTitle } from '$lib/api/jobs';
 const mockSearchMetadata = vi.mocked(searchMetadata);
+const mockFetchDetail = vi.mocked(fetchMediaDetail);
+const mockUpdateTitle = vi.mocked(updateJobTitle);
 
 describe('TitleSearch', () => {
 	afterEach(() => {
@@ -75,6 +77,57 @@ describe('TitleSearch', () => {
 			await fireEvent.click(screen.getByText('Search'));
 			await waitFor(() => {
 				expect(screen.getByText('API error')).toBeInTheDocument();
+			});
+		});
+
+		it('renders IMDb ID input field', () => {
+			renderComponent(TitleSearch, {
+				props: { job: createJob() }
+			});
+			expect(screen.getByPlaceholderText('IMDb ID (tt...)')).toBeInTheDocument();
+		});
+
+		it('does direct IMDb lookup when IMDb ID is entered', async () => {
+			mockFetchDetail.mockResolvedValue({
+				title: 'Direct Movie', year: '2024', imdb_id: 'tt9999', poster_url: null,
+				media_type: 'movie', plot: 'Found directly', background_url: null
+			});
+			renderComponent(TitleSearch, {
+				props: { job: createJob({ title: 'Test' }) }
+			});
+			const imdbInput = screen.getByPlaceholderText('IMDb ID (tt...)');
+			await fireEvent.input(imdbInput, { target: { value: 'tt9999' } });
+			await fireEvent.click(screen.getByText('Search'));
+			await waitFor(() => {
+				expect(mockFetchDetail).toHaveBeenCalledWith('tt9999');
+			});
+		});
+
+		it('renders multiple search results', async () => {
+			mockSearchMetadata.mockResolvedValue([
+				{ title: 'Movie A', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie', plot: null, background_url: null },
+				{ title: 'Movie B', year: '2023', imdb_id: 'tt2222', poster_url: null, media_type: 'series', plot: null, background_url: null }
+			]);
+			renderComponent(TitleSearch, {
+				props: { job: createJob({ title: 'Movie', year: '2024' }) }
+			});
+			await fireEvent.click(screen.getByText('Search'));
+			await waitFor(() => {
+				expect(screen.getByText('Movie A')).toBeInTheDocument();
+				expect(screen.getByText('Movie B')).toBeInTheDocument();
+			});
+		});
+
+		it('renders result year and media type', async () => {
+			mockSearchMetadata.mockResolvedValue([
+				{ title: 'Movie A', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie', plot: null, background_url: null }
+			]);
+			renderComponent(TitleSearch, {
+				props: { job: createJob({ title: 'Movie', year: '2024' }) }
+			});
+			await fireEvent.click(screen.getByText('Search'));
+			await waitFor(() => {
+				expect(screen.getByText('Movie A')).toBeInTheDocument();
 			});
 		});
 	});

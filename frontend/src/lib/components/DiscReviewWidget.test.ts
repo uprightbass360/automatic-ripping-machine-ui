@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { renderComponent, screen, cleanup, waitFor } from '$lib/test-utils';
+import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import DiscReviewWidget from './DiscReviewWidget.svelte';
 import { createJob } from './__fixtures__/job';
 
@@ -35,8 +35,18 @@ vi.mock('$lib/api/logs', () => ({
 	fetchLogContent: vi.fn(() => Promise.resolve({ content: '' }))
 }));
 
+import { startWaitingJob, cancelWaitingJob } from '$lib/api/jobs';
+const mockStart = vi.mocked(startWaitingJob);
+const mockCancel = vi.mocked(cancelWaitingJob);
+
+vi.stubGlobal('confirm', vi.fn(() => true));
+
 describe('DiscReviewWidget', () => {
-	afterEach(() => cleanup());
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+		vi.mocked(confirm).mockReturnValue(true);
+	});
 
 	describe('rendering', () => {
 		it('renders job title after loading', async () => {
@@ -70,6 +80,87 @@ describe('DiscReviewWidget', () => {
 			});
 			await waitFor(() => {
 				expect(screen.getByText('Blu-ray')).toBeInTheDocument();
+			});
+		});
+
+		it('renders drive name from driveNames prop', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', devpath: '/dev/sr0' }),
+					driveNames: { '/dev/sr0': 'Main Drive' }
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Main Drive')).toBeInTheDocument();
+			});
+		});
+
+		it('renders disc label', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', label: 'MOVIE_DISC' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('MOVIE_DISC')).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('interactions', () => {
+		it('calls startWaitingJob when Start is clicked', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z' })
+				}
+			});
+			await waitFor(() => expect(screen.getByText('Start')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Start'));
+			await waitFor(() => {
+				expect(mockStart).toHaveBeenCalledWith(1);
+			});
+		});
+
+		it('calls cancelWaitingJob when Cancel is clicked', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z' })
+				}
+			});
+			await waitFor(() => expect(screen.getByText('Cancel')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Cancel'));
+			await waitFor(() => {
+				expect(mockCancel).toHaveBeenCalledWith(1);
+			});
+		});
+
+		it('calls ondismiss after cancel', async () => {
+			const ondismiss = vi.fn();
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z' }),
+					ondismiss
+				}
+			});
+			await waitFor(() => expect(screen.getByText('Cancel')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Cancel'));
+			await waitFor(() => {
+				expect(ondismiss).toHaveBeenCalled();
+			});
+		});
+
+		it('calls onrefresh after start', async () => {
+			const onrefresh = vi.fn();
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z' }),
+					onrefresh
+				}
+			});
+			await waitFor(() => expect(screen.getByText('Start')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Start'));
+			await waitFor(() => {
+				expect(onrefresh).toHaveBeenCalled();
 			});
 		});
 	});
