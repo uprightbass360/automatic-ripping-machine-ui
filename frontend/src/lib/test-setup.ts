@@ -2,7 +2,7 @@ import '@testing-library/jest-dom/vitest';
 
 // jsdom doesn't implement window.matchMedia — stub it for stores that
 // check prefers-color-scheme on the client side.
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
 	writable: true,
 	value: (query: string) => ({
 		matches: false,

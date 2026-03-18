@@ -15,6 +15,15 @@ const mockSearchMusicMetadata = vi.mocked(searchMusicMetadata);
 const mockFetchMusicDetail = vi.mocked(fetchMusicDetail);
 const mockUpdateJobTitle = vi.mocked(updateJobTitle);
 
+function createMusicResult(overrides: Record<string, unknown> = {}) {
+	return {
+		release_id: 'r1', title: 'Album', artist: 'Artist', year: '2024',
+		country: 'US', format: 'CD', track_count: 10, release_type: 'Album',
+		poster_url: null, media_type: 'release', label: null,
+		...overrides
+	};
+}
+
 describe('MusicSearch', () => {
 	afterEach(() => {
 		cleanup();
@@ -47,7 +56,7 @@ describe('MusicSearch', () => {
 	describe('interactions', () => {
 		it('calls searchMusicMetadata on search', async () => {
 			mockSearchMusicMetadata.mockResolvedValue({
-				results: [{ release_id: 'r1', title: 'Found Album', artist: 'Artist', year: '2024', country: 'US', format: 'CD', track_count: 12, release_type: 'Album', poster_url: null, media_type: 'release', label: null }],
+				results: [createMusicResult({ title: 'Found Album', track_count: 12 })],
 				total: 1
 			});
 			renderComponent(MusicSearch, {
@@ -85,8 +94,8 @@ describe('MusicSearch', () => {
 		it('renders result cards with artist and year', async () => {
 			mockSearchMusicMetadata.mockResolvedValue({
 				results: [
-					{ release_id: 'r1', title: 'Album One', artist: 'Band A', year: '2024', country: 'US', format: 'CD', track_count: 10, release_type: 'Album', poster_url: null, media_type: 'release', label: null },
-					{ release_id: 'r2', title: 'Album Two', artist: 'Band B', year: '2023', country: 'UK', format: 'Vinyl', track_count: 8, release_type: 'Album', poster_url: null, media_type: 'release', label: null }
+					createMusicResult({ release_id: 'r1', title: 'Album One', artist: 'Band A' }),
+					createMusicResult({ release_id: 'r2', title: 'Album Two', artist: 'Band B', year: '2023', country: 'UK', format: 'Vinyl', track_count: 8 })
 				],
 				total: 2
 			});
@@ -104,7 +113,7 @@ describe('MusicSearch', () => {
 
 		it('renders result count', async () => {
 			mockSearchMusicMetadata.mockResolvedValue({
-				results: [{ release_id: 'r1', title: 'Album', artist: 'A', year: '2024', country: 'US', format: 'CD', track_count: 10, release_type: 'Album', poster_url: null, media_type: 'release', label: null }],
+				results: [createMusicResult()],
 				total: 25
 			});
 			renderComponent(MusicSearch, {

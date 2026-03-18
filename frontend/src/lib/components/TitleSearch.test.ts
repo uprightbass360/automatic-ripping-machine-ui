@@ -14,6 +14,14 @@ const mockSearchMetadata = vi.mocked(searchMetadata);
 const mockFetchDetail = vi.mocked(fetchMediaDetail);
 const mockUpdateTitle = vi.mocked(updateJobTitle);
 
+function createSearchResult(overrides: Record<string, unknown> = {}) {
+	return {
+		title: 'Result', year: '2024', imdb_id: 'tt1111',
+		poster_url: null, media_type: 'movie',
+		...overrides
+	};
+}
+
 describe('TitleSearch', () => {
 	afterEach(() => {
 		cleanup();
@@ -46,7 +54,7 @@ describe('TitleSearch', () => {
 	describe('interactions', () => {
 		it('calls searchMetadata on search', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Result 1', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie' }
+				createSearchResult({ title: 'Result 1' })
 			]);
 			renderComponent(TitleSearch, {
 				props: { job: createJob({ title: 'Test', year: '2024' }) }
@@ -105,8 +113,8 @@ describe('TitleSearch', () => {
 
 		it('renders multiple search results', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Movie A', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie' },
-				{ title: 'Movie B', year: '2023', imdb_id: 'tt2222', poster_url: null, media_type: 'series' }
+				createSearchResult({ title: 'Movie A' }),
+				createSearchResult({ title: 'Movie B', year: '2023', imdb_id: 'tt2222', media_type: 'series' })
 			]);
 			renderComponent(TitleSearch, {
 				props: { job: createJob({ title: 'Movie', year: '2024' }) }
@@ -120,7 +128,7 @@ describe('TitleSearch', () => {
 
 		it('renders result year and media type', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Movie A', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie' }
+				createSearchResult({ title: 'Movie A' })
 			]);
 			renderComponent(TitleSearch, {
 				props: { job: createJob({ title: 'Movie', year: '2024' }) }

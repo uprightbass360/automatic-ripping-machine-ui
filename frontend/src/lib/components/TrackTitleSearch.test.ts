@@ -16,6 +16,14 @@ const mockFetchDetail = vi.mocked(fetchMediaDetail);
 const mockUpdateTrackTitle = vi.mocked(updateTrackTitle);
 const mockClearTrackTitle = vi.mocked(clearTrackTitle);
 
+function createSearchResult(overrides: Record<string, unknown> = {}) {
+	return {
+		title: 'Result', year: '2024', imdb_id: 'tt1111',
+		poster_url: null, media_type: 'movie',
+		...overrides
+	};
+}
+
 function createTrack(overrides: Partial<Track> = {}): Track {
 	return {
 		track_id: 1,
@@ -76,7 +84,7 @@ describe('TrackTitleSearch', () => {
 	describe('interactions', () => {
 		it('calls searchMetadata on search', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Found Title', year: '2024', imdb_id: 'tt2222', poster_url: null, media_type: 'movie' }
+				createSearchResult({ title: 'Found Title', imdb_id: 'tt2222' })
 			]);
 			renderComponent(TrackTitleSearch, {
 				props: { jobId: 1, track: createTrack() }
@@ -111,7 +119,7 @@ describe('TrackTitleSearch', () => {
 
 		it('fetches detail when result is selected', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Result', year: '2024', imdb_id: 'tt3333', poster_url: null, media_type: 'movie' }
+				createSearchResult({ imdb_id: 'tt3333' })
 			]);
 			mockFetchDetail.mockResolvedValue({
 				title: 'Result', year: '2024', imdb_id: 'tt3333', poster_url: null,
