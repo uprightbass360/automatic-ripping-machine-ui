@@ -62,7 +62,7 @@ describe('JobActions', () => {
 		});
 
 		it('renders nothing for jobs with no available actions', () => {
-			const { container } = renderComponent(JobActions, {
+			renderComponent(JobActions, {
 				props: { job: createJob({ status: 'identifying' }) }
 			});
 			// identifying is active, so Abandon should show
@@ -70,7 +70,7 @@ describe('JobActions', () => {
 		});
 
 		it('does not show any buttons for cancelled status', () => {
-			const { container } = renderComponent(JobActions, {
+			renderComponent(JobActions, {
 				props: { job: createJob({ status: 'cancelled' }) }
 			});
 			expect(screen.queryByText('Abandon')).not.toBeInTheDocument();

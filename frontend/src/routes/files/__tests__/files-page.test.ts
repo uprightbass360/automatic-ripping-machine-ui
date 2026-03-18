@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import FilesPage from '../+page.svelte';
 
-import { fetchRoots, fetchDirectory, deleteFile, fixPermissions } from '$lib/api/files';
+import { fetchRoots, fetchDirectory } from '$lib/api/files';
 
 vi.mock('$lib/api/files', () => ({
 	fetchRoots: vi.fn(() => Promise.resolve([

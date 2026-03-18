@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup } from '$lib/test-utils';
 import SidebarStats from './SidebarStats.svelte';
 
-const hwInfo = { cpu: 'Intel i7-12700', memory_total_gb: 32.0 };
+const hwInfo = { cpu: 'Intel i7-12700', memory_total_gb: 32 };
 const stats = {
 	cpu_percent: 45,
 	cpu_temp: 55,
@@ -57,7 +57,7 @@ describe('SidebarStats', () => {
 				props: {
 					systemInfo: hwInfo,
 					systemStats: stats,
-					transcoderInfo: { cpu: 'AMD Ryzen 9', memory_total_gb: 64.0 },
+					transcoderInfo: { cpu: 'AMD Ryzen 9', memory_total_gb: 64 },
 					transcoderStats: { ...stats, cpu_percent: 80 }
 				}
 			});

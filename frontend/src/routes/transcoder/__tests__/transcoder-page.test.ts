@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { renderComponent, screen, cleanup, waitFor } from '$lib/test-utils';
+import { renderComponent, screen, cleanup } from '$lib/test-utils';
 import TranscoderPage from '../+page.svelte';
 
 vi.mock('$lib/api/transcoder', () => ({
