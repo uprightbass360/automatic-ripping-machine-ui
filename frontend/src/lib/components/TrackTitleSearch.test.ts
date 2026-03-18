@@ -76,7 +76,7 @@ describe('TrackTitleSearch', () => {
 	describe('interactions', () => {
 		it('calls searchMetadata on search', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Found Title', year: '2024', imdb_id: 'tt2222', poster_url: null, media_type: 'movie', plot: null, background_url: null }
+				{ title: 'Found Title', year: '2024', imdb_id: 'tt2222', poster_url: null, media_type: 'movie' }
 			]);
 			renderComponent(TrackTitleSearch, {
 				props: { jobId: 1, track: createTrack() }
@@ -111,7 +111,7 @@ describe('TrackTitleSearch', () => {
 
 		it('fetches detail when result is selected', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Result', year: '2024', imdb_id: 'tt3333', poster_url: null, media_type: 'movie', plot: null, background_url: null }
+				{ title: 'Result', year: '2024', imdb_id: 'tt3333', poster_url: null, media_type: 'movie' }
 			]);
 			mockFetchDetail.mockResolvedValue({
 				title: 'Result', year: '2024', imdb_id: 'tt3333', poster_url: null,

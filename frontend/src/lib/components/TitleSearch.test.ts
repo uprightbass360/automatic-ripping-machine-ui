@@ -46,7 +46,7 @@ describe('TitleSearch', () => {
 	describe('interactions', () => {
 		it('calls searchMetadata on search', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Result 1', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie', plot: null, background_url: null }
+				{ title: 'Result 1', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie' }
 			]);
 			renderComponent(TitleSearch, {
 				props: { job: createJob({ title: 'Test', year: '2024' }) }
@@ -105,8 +105,8 @@ describe('TitleSearch', () => {
 
 		it('renders multiple search results', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Movie A', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie', plot: null, background_url: null },
-				{ title: 'Movie B', year: '2023', imdb_id: 'tt2222', poster_url: null, media_type: 'series', plot: null, background_url: null }
+				{ title: 'Movie A', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie' },
+				{ title: 'Movie B', year: '2023', imdb_id: 'tt2222', poster_url: null, media_type: 'series' }
 			]);
 			renderComponent(TitleSearch, {
 				props: { job: createJob({ title: 'Movie', year: '2024' }) }
@@ -120,7 +120,7 @@ describe('TitleSearch', () => {
 
 		it('renders result year and media type', async () => {
 			mockSearchMetadata.mockResolvedValue([
-				{ title: 'Movie A', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie', plot: null, background_url: null }
+				{ title: 'Movie A', year: '2024', imdb_id: 'tt1111', poster_url: null, media_type: 'movie' }
 			]);
 			renderComponent(TitleSearch, {
 				props: { job: createJob({ title: 'Movie', year: '2024' }) }

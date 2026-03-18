@@ -47,7 +47,7 @@ describe('MusicSearch', () => {
 	describe('interactions', () => {
 		it('calls searchMusicMetadata on search', async () => {
 			mockSearchMusicMetadata.mockResolvedValue({
-				results: [{ id: 'r1', title: 'Found Album', artist: 'Artist', year: '2024', country: 'US', format: 'CD', track_count: 12, status: 'Official', release_type: 'Album', poster_url: null }],
+				results: [{ release_id: 'r1', title: 'Found Album', artist: 'Artist', year: '2024', country: 'US', format: 'CD', track_count: 12, release_type: 'Album', poster_url: null, media_type: 'release', label: null }],
 				total: 1
 			});
 			renderComponent(MusicSearch, {
@@ -85,8 +85,8 @@ describe('MusicSearch', () => {
 		it('renders result cards with artist and year', async () => {
 			mockSearchMusicMetadata.mockResolvedValue({
 				results: [
-					{ id: 'r1', title: 'Album One', artist: 'Band A', year: '2024', country: 'US', format: 'CD', track_count: 10, status: 'Official', release_type: 'Album', poster_url: null },
-					{ id: 'r2', title: 'Album Two', artist: 'Band B', year: '2023', country: 'UK', format: 'Vinyl', track_count: 8, status: 'Official', release_type: 'Album', poster_url: null }
+					{ release_id: 'r1', title: 'Album One', artist: 'Band A', year: '2024', country: 'US', format: 'CD', track_count: 10, release_type: 'Album', poster_url: null, media_type: 'release', label: null },
+					{ release_id: 'r2', title: 'Album Two', artist: 'Band B', year: '2023', country: 'UK', format: 'Vinyl', track_count: 8, release_type: 'Album', poster_url: null, media_type: 'release', label: null }
 				],
 				total: 2
 			});
@@ -104,7 +104,7 @@ describe('MusicSearch', () => {
 
 		it('renders result count', async () => {
 			mockSearchMusicMetadata.mockResolvedValue({
-				results: [{ id: 'r1', title: 'Album', artist: 'A', year: '2024', country: 'US', format: 'CD', track_count: 10, status: 'Official', release_type: 'Album', poster_url: null }],
+				results: [{ release_id: 'r1', title: 'Album', artist: 'A', year: '2024', country: 'US', format: 'CD', track_count: 10, release_type: 'Album', poster_url: null, media_type: 'release', label: null }],
 				total: 25
 			});
 			renderComponent(MusicSearch, {

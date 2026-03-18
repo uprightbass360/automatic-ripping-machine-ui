@@ -3,18 +3,18 @@ import { renderComponent, screen, cleanup } from '$lib/test-utils';
 import Layout from '../+layout.svelte';
 import { createRawSnippet } from 'svelte';
 
-vi.mock('$app/stores', () => {
-	const { readable } = require('svelte/store');
+vi.mock('$app/stores', async () => {
+	const { readable } = await import('svelte/store');
 	return { page: readable({ url: { pathname: '/' }, params: {} }) };
 });
 
-vi.mock('$lib/stores/theme', () => {
-	const { writable } = require('svelte/store');
+vi.mock('$lib/stores/theme', async () => {
+	const { writable } = await import('svelte/store');
 	return { theme: writable('dark'), toggleTheme: vi.fn() };
 });
 
-vi.mock('$lib/stores/colorScheme', () => {
-	const { writable } = require('svelte/store');
+vi.mock('$lib/stores/colorScheme', async () => {
+	const { writable } = await import('svelte/store');
 	return {
 		colorScheme: writable('default'),
 		schemeLocksMode: writable(false),
@@ -22,8 +22,8 @@ vi.mock('$lib/stores/colorScheme', () => {
 	};
 });
 
-vi.mock('$lib/stores/dashboard', () => {
-	const { writable } = require('svelte/store');
+vi.mock('$lib/stores/dashboard', async () => {
+	const { writable } = await import('svelte/store');
 	const store = writable({
 		db_available: true, arm_online: true, active_jobs: [], system_info: null,
 		drives_online: 0, drive_names: {}, notification_count: 0, ripping_enabled: true,
