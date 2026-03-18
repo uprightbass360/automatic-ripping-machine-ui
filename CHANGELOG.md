@@ -1,5 +1,19 @@
 # Changelog
 
+## [13.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.1.0...v13.2.0) (2026-03-18)
+
+
+### Features
+
+* add semantic CSS classes for status badges and confirm dialog ([9fee794](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9fee794fd17a0c3c09477cfcf42f9c4e96cb4e66))
+
+
+### Bug Fixes
+
+* address SonarCloud warnings and reduce code duplication ([c96a6be](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c96a6be9fd55164a45de8aa66bcdcf3412b4ef6c))
+* remove accidentally committed node_modules and lock file ([ff42c4c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ff42c4c8e0f1cbff779f48c4cdf5039b48028447))
+* resolve TypeScript errors in test files for CI ([497039e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/497039e07becacaf5b78540f5e05a503a74b585b))
+
 ## [13.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.0.1...v13.1.0) (2026-03-16)
 
 
