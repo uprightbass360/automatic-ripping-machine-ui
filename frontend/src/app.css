@@ -115,6 +115,12 @@
 	.file-icon-archive   { @apply text-yellow-600 dark:text-yellow-500; }
 	.file-icon-other     { @apply text-gray-400 dark:text-gray-500; }
 
+	/* Setup wizard status text */
+	.setup-status-ok   { @apply text-green-600 dark:text-green-400; }
+	.setup-status-warn { @apply text-red-600 dark:text-red-400; }
+	.setup-status-off  { @apply text-gray-500 dark:text-gray-400; }
+	.setup-status-wait { @apply text-gray-400; }
+
 	/* Confirm dialog button variants */
 	.confirm-btn-danger  { @apply bg-red-600 text-white hover:bg-red-700; }
 	.confirm-btn-primary { @apply bg-primary text-on-primary hover:bg-primary/90; }
