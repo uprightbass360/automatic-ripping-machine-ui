@@ -12,6 +12,8 @@
 	let sidebarOpen = $state(false);
 	let togglingPause = $state(false);
 
+	let isSetupPage = $derived($page.url.pathname.startsWith('/setup'));
+
 	async function toggleRipping() {
 		if (togglingPause) return;
 		togglingPause = true;
@@ -49,6 +51,11 @@
 	}
 </script>
 
+{#if isSetupPage}
+	<div class={$theme}>
+		{@render children()}
+	</div>
+{:else}
 <div class="flex h-screen overflow-hidden">
 	<!-- Sidebar -->
 	<aside class="hidden w-64 shrink-0 border-r border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark lg:block">
@@ -213,3 +220,4 @@
 		</main>
 	</div>
 </div>
+{/if}
