@@ -1,5 +1,20 @@
 # Changelog
 
+## [13.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.2.0...v13.3.0) (2026-03-19)
+
+
+### Features
+
+* add setup wizard with first-run redirect ([9dacd9c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9dacd9cedcb4d9a23ecbee06bf524455fdbde733))
+* hide sidebar on setup wizard page ([440dcd0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/440dcd01d3b542bce74338f14221e8ed8a995eb7))
+* show transcoder and transcoder DB status in setup wizard ([534d8a8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/534d8a814ffb4fc8ffe24cf153b34a89802c4a62))
+
+
+### Bug Fixes
+
+* catch RemoteProtocolError in arm_client to prevent 500 on stale connections ([3ef921a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3ef921afb405f93da28876483d863e2f2c35736b))
+* re-throw SvelteKit redirect in layout guard catch block ([99af364](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/99af36456cdc6c34eea2e274354a78af8ca8b1c7))
+
 ## [13.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.1.0...v13.2.0) (2026-03-18)
 
 
