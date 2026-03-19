@@ -5,9 +5,16 @@ export function fetchDrives(): Promise<Drive[]> {
 	return apiFetch<Drive[]>('/api/drives');
 }
 
+export function ejectDrive(
+	driveId: number,
+	method: 'eject' | 'close' | 'toggle' = 'toggle'
+): Promise<{ success: boolean; drive_id: number; method: string }> {
+	return apiFetch(`/api/drives/${driveId}/eject?method=${method}`, { method: 'POST' });
+}
+
 export function updateDrive(
 	driveId: number,
-	data: { name?: string; description?: string; uhd_capable?: boolean }
+	data: { name?: string; description?: string; uhd_capable?: boolean; drive_mode?: string }
 ): Promise<{ success: boolean; drive_id: number }> {
 	return apiFetch(`/api/drives/${driveId}`, {
 		method: 'PATCH',
