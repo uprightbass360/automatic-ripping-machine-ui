@@ -21,7 +21,7 @@
     "jsdom": "^29",
     "svelte": "^5",
     "svelte-check": "^4",
-    "tailwindcss": "^4.2.1",
+    "tailwindcss": "^4.2.2",
     "typescript": "^5",
     "vite": "^7",
     "vitest": "^4.0.18"
