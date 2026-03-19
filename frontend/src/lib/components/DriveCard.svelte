@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Drive } from '$lib/types/arm';
-	import { updateDrive, scanDrive, deleteDrive } from '$lib/api/drives';
+	import { updateDrive, scanDrive, deleteDrive, ejectDrive } from '$lib/api/drives';
 	import StatusBadge from './StatusBadge.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 
@@ -18,6 +18,8 @@
 	let scanning = $state(false);
 	let scanCooldown = $state(false);
 	let removing = $state(false);
+	let ejecting = $state(false);
+	let togglingMode = $state(false);
 
 	let isStale = $derived(!drive.mount || drive.stale === true);
 
@@ -83,6 +85,30 @@
 	function onKeydown(e: KeyboardEvent) {
 		if (e.key === 'Enter') saveEdit();
 		if (e.key === 'Escape') cancelEdit();
+	}
+
+	async function handleEject(method: 'eject' | 'close') {
+		ejecting = true;
+		try {
+			await ejectDrive(drive.drive_id, method);
+		} catch {
+			// ignore — tray action is best-effort
+		} finally {
+			ejecting = false;
+		}
+	}
+
+	async function toggleMode() {
+		togglingMode = true;
+		const newMode = drive.drive_mode === 'manual' ? 'auto' : 'manual';
+		try {
+			await updateDrive(drive.drive_id, { drive_mode: newMode });
+			onupdate?.();
+		} catch {
+			// ignore
+		} finally {
+			togglingMode = false;
+		}
 	}
 </script>
 
@@ -174,7 +200,48 @@
 		{/if}
 	</div>
 
+	<!-- Drive mode badge -->
 	<div class="mt-3 flex items-center gap-2 border-t border-primary/15 pt-3 dark:border-primary/20">
+		<button
+			onclick={toggleMode}
+			disabled={togglingMode}
+			class="rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors
+				{drive.drive_mode === 'manual'
+					? 'bg-amber-500/20 text-amber-700 hover:bg-amber-500/30 dark:text-amber-400'
+					: 'bg-primary/10 text-primary-text hover:bg-primary/20 dark:text-primary-text-dark'}
+				disabled:opacity-50"
+			title="Toggle between auto and manual rip mode"
+		>
+			{drive.drive_mode === 'manual' ? 'Manual' : 'Auto'}
+		</button>
+
+		<div class="ml-auto flex items-center gap-1.5">
+			<!-- Eject -->
+			<button
+				onclick={() => handleEject('eject')}
+				disabled={ejecting}
+				class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300 disabled:opacity-50 transition-colors"
+				title="Eject tray"
+			>
+				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7M5 19h14" />
+				</svg>
+			</button>
+			<!-- Close tray -->
+			<button
+				onclick={() => handleEject('close')}
+				disabled={ejecting}
+				class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300 disabled:opacity-50 transition-colors"
+				title="Close tray"
+			>
+				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7M5 5h14" />
+				</svg>
+			</button>
+		</div>
+	</div>
+
+	<div class="mt-2 flex items-center gap-2">
 		<button
 			onclick={handleScan}
 			disabled={scanning || scanCooldown}

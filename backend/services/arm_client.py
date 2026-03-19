@@ -342,3 +342,18 @@ async def get_setup_status() -> dict[str, Any] | None:
 async def complete_setup() -> dict[str, Any] | None:
     """Mark first-run setup as complete. Returns None if ARM is unreachable."""
     return await _request("POST", "/api/v1/setup/complete")
+
+
+async def eject_drive(drive_id: int, method: str = "toggle") -> dict[str, Any] | None:
+    """Eject, close, or toggle a drive tray. Returns None if ARM is unreachable."""
+    return await _request("POST", f"/api/v1/drives/{drive_id}/eject", json={"method": method})
+
+
+async def get_job_stats() -> dict[str, Any] | None:
+    """Fetch job counts by status and type. Returns None if ARM is unreachable."""
+    return await _request("GET", "/api/v1/system/stats/jobs")
+
+
+async def restart_arm() -> dict[str, Any] | None:
+    """Restart the ARM service. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/system/restart")

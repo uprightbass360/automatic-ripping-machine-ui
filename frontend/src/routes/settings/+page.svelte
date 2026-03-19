@@ -2043,6 +2043,26 @@
 				</div>
 				{@render armSettingsSection('system', true)}
 			</section>
+
+			<!-- Restart ARM Service -->
+			<section class="mt-6">
+				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Control</h2>
+				<div class="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-800 dark:bg-red-900/10">
+					<div class="flex items-center justify-between">
+						<div>
+							<p class="text-sm font-medium text-gray-900 dark:text-white">Restart ARM Service</p>
+							<p class="text-xs text-gray-500 dark:text-gray-400">Restarts the ARM ripping service. Active rips will be interrupted.</p>
+						</div>
+						<button
+							type="button"
+							onclick={() => { if (confirm('Restart the ARM ripping service? Active rips will be interrupted.')) { fetch('/api/system/restart', { method: 'POST' }); } }}
+							class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+						>
+							Restart
+						</button>
+					</div>
+				</div>
+			</section>
 		{/if}
 
 		<!-- Appearance Tab -->

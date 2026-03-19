@@ -365,6 +365,7 @@ class DriveUpdateRequest(BaseModel):
     name: str | None = None
     description: str | None = None
     uhd_capable: bool | None = None
+    drive_mode: str | None = None
 
 
 class NamingPreviewRequest(BaseModel):

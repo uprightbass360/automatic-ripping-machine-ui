@@ -42,6 +42,18 @@ async def scan_drive(drive_id: int):
     return result
 
 
+@router.post("/drives/{drive_id}/eject", responses={404: {"description": "Drive not found"}, 502: {"description": "ARM unreachable"}})
+async def eject_drive(drive_id: int, method: str = "toggle"):
+    """Eject, close, or toggle the drive tray."""
+    result = await arm_client.eject_drive(drive_id, method)
+    if result is None:
+        raise HTTPException(status_code=502, detail="ARM unreachable")
+    if not result.get("success"):
+        status = 404 if "not found" in result.get("error", "").lower() else 500
+        raise HTTPException(status_code=status, detail=result.get("error", "Eject failed"))
+    return result
+
+
 @router.patch("/drives/{drive_id}", responses={400: {"description": "No fields to update"}, 404: {"description": "Update failed"}, 502: {"description": "ARM unreachable"}})
 async def update_drive(drive_id: int, body: DriveUpdateRequest):
     data = body.model_dump(exclude_none=True)

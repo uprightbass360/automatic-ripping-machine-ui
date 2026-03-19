@@ -404,3 +404,59 @@ async def test_complete_setup_unreachable():
     with patch.object(arm_client, "get_client", return_value=mock_client):
         result = await arm_client.complete_setup()
     assert result is None
+
+
+# --- eject_drive ---
+
+
+async def test_eject_drive_success():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({"success": True, "method": "eject"})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.eject_drive(1, "eject")
+    assert result["success"] is True
+    mock_client.request.assert_awaited_once()
+
+
+async def test_eject_drive_unreachable():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.side_effect = httpx.ConnectError("refused")
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        assert await arm_client.eject_drive(1) is None
+
+
+# --- get_job_stats ---
+
+
+async def test_get_job_stats_success():
+    data = {"by_status": {"success": 5}, "by_type": {"movie": 3}, "total": 5}
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response(data)
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.get_job_stats()
+    assert result["total"] == 5
+
+
+async def test_get_job_stats_unreachable():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.side_effect = httpx.ConnectError("refused")
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        assert await arm_client.get_job_stats() is None
+
+
+# --- restart_arm ---
+
+
+async def test_restart_arm_success():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({"success": True})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.restart_arm()
+    assert result["success"] is True
+
+
+async def test_restart_arm_unreachable():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.side_effect = httpx.ConnectError("refused")
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        assert await arm_client.restart_arm() is None

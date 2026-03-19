@@ -11,6 +11,7 @@
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
 	import SectionFrame from '$lib/components/SectionFrame.svelte';
+	import JobStatsCard from '$lib/components/JobStatsCard.svelte';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -256,6 +257,9 @@
 			</div>
 		</section>
 	{/if}
+
+	<!-- Ripping Statistics -->
+	<JobStatsCard />
 
 	<!-- All Jobs -->
 	<section class="space-y-4">
