@@ -65,7 +65,7 @@ async def _request(
         if resp.is_success:
             return resp.json()
         return _parse_error_response(resp)
-    except (httpx.ConnectError, httpx.TimeoutException, RuntimeError, OSError) as exc:
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError, RuntimeError, OSError) as exc:
         log.debug("ARM unreachable (%s %s): %s", method, url, exc)
         return None
 
