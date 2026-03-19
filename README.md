@@ -22,6 +22,34 @@ Part of the Automatic Ripping Machine (neu) ecosystem:
 
 The original upstream project: [automatic-ripping-machine/automatic-ripping-machine](https://github.com/automatic-ripping-machine/automatic-ripping-machine)
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Dashboard](screenshots/01-dashboard.png) | ![Dashboard Table View](screenshots/11-dashboard-table.png) |
+| Dashboard with active rips and job cards | Table view with filtering and bulk actions |
+| ![Job Detail - TV Series](screenshots/15-job-detail-tracks.png) | ![Job Detail - Movie](screenshots/04-job-detail-movie.png) |
+| TV series with per-episode track status | Movie detail with poster and metadata |
+| ![Identify Panel](screenshots/16-job-identify-panel.png) | ![Log Viewer](screenshots/10-log-viewer.png) |
+| Title search and re-identification | Structured log viewer with filtering |
+| ![Settings - Transcoding](screenshots/14-settings-transcoding.png) | ![Settings - Drives](screenshots/06-settings-drives.png) |
+| GPU hardware detection and encoder config | Multi-drive management and status |
+| ![Notifications](screenshots/08-notifications.png) | ![Settings - Notifications](screenshots/17-settings-notifications.png) |
+| Notification history | Webhook, Apprise, Pushbullet, and more |
+| ![Files](screenshots/13-files.png) | ![Settings - System](screenshots/07-settings-system.png) |
+| File browser with permissions management | System info, versions, and health checks |
+
+### Themes
+
+16 color schemes available under Settings > Appearance.
+
+| | |
+|---|---|
+| ![Terminal theme](screenshots/19-theme-terminal.png) | ![LCARS theme](screenshots/20-theme-lcars.png) |
+| Terminal | LCARS |
+
+![Theme picker](screenshots/18-settings-appearance.png)
+
 ## Architecture
 
 ```mermaid
@@ -57,34 +85,6 @@ The backend reads ARM's SQLite database directly (read-only) for job data, calls
 - Notification history with read/unread and bulk actions
 - Full ARM and transcoder settings management from the UI
 - 16 color schemes (Default, Ocean, Forest, Terminal, LCARS, and more) with responsive layout
-
-## Screenshots
-
-| | |
-|---|---|
-| ![Dashboard](screenshots/01-dashboard.png) | ![Dashboard Table View](screenshots/11-dashboard-table.png) |
-| Dashboard with active rips and job cards | Table view with filtering and bulk actions |
-| ![Job Detail - TV Series](screenshots/15-job-detail-tracks.png) | ![Job Detail - Movie](screenshots/04-job-detail-movie.png) |
-| TV series with per-episode track status | Movie detail with poster and metadata |
-| ![Identify Panel](screenshots/16-job-identify-panel.png) | ![Log Viewer](screenshots/10-log-viewer.png) |
-| Title search and re-identification | Structured log viewer with filtering |
-| ![Settings - Transcoding](screenshots/14-settings-transcoding.png) | ![Settings - Drives](screenshots/06-settings-drives.png) |
-| GPU hardware detection and encoder config | Multi-drive management and status |
-| ![Notifications](screenshots/08-notifications.png) | ![Settings - Notifications](screenshots/17-settings-notifications.png) |
-| Notification history | Webhook, Apprise, Pushbullet, and more |
-| ![Files](screenshots/13-files.png) | ![Settings - System](screenshots/07-settings-system.png) |
-| File browser with permissions management | System info, versions, and health checks |
-
-### Themes
-
-16 color schemes available under Settings > Appearance.
-
-| | |
-|---|---|
-| ![Terminal theme](screenshots/19-theme-terminal.png) | ![LCARS theme](screenshots/20-theme-lcars.png) |
-| Terminal | LCARS |
-
-![Theme picker](screenshots/18-settings-appearance.png)
 
 ## Tech Stack
 
