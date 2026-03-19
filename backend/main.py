@@ -17,6 +17,7 @@ from backend.routers import (
     logs,
     notifications,
     settings,
+    setup,
     themes,
     transcoder,
 )
@@ -55,6 +56,7 @@ app.include_router(settings.router)
 app.include_router(notifications.router)
 app.include_router(themes.router)
 app.include_router(files.router)
+app.include_router(setup.router)
 
 # Serve static frontend build if it exists
 static_dir = Path(__file__).parent.parent / "frontend" / "build"
