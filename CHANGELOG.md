@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.3.0...v13.4.0) (2026-03-19)
+
+
+### Features
+
+* add drive controls and system controls ([51cc98b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/51cc98bd2575ad0eb726f125b555fea1678c30aa))
+
 ## [13.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.2.0...v13.3.0) (2026-03-19)
 
 
