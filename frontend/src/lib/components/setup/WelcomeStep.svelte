@@ -47,7 +47,7 @@
 		<InfoCard label="Database">
 			<span class="flex items-center gap-2">
 				<StatusIcon ok={status.db_initialized} />
-				<span class="text-lg font-medium {status.db_initialized ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+				<span class="text-lg font-medium {status.db_initialized ? 'setup-status-ok' : 'setup-status-warn'}">
 					{status.db_initialized ? 'Initialized' : 'Not initialized'}
 				</span>
 			</span>
@@ -75,11 +75,11 @@
 
 		<InfoCard label="Transcoder">
 			{#if transcoderOnline === null}
-				<span class="text-sm text-gray-400">Checking...</span>
+				<span class="text-sm setup-status-wait">Checking...</span>
 			{:else}
 				<span class="flex items-center gap-2">
 					<StatusIcon ok={transcoderOnline} />
-					<span class="text-sm font-medium {transcoderOnline ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}">
+					<span class="text-sm font-medium {transcoderOnline ? 'setup-status-ok' : 'setup-status-off'}">
 						{transcoderOnline ? 'Online' : 'Offline'}
 					</span>
 				</span>
@@ -88,11 +88,11 @@
 
 		<InfoCard label="Transcoder DB">
 			{#if transcoderOnline === null}
-				<span class="text-sm text-gray-400">Checking...</span>
+				<span class="text-sm setup-status-wait">Checking...</span>
 			{:else}
 				<span class="flex items-center gap-2">
 					<StatusIcon ok={!!(transcoderOnline && transcoderStats)} />
-					<span class="text-sm font-medium {transcoderOnline && transcoderStats ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}">
+					<span class="text-sm font-medium {transcoderOnline && transcoderStats ? 'setup-status-ok' : 'setup-status-off'}">
 						{transcoderOnline && transcoderStats ? 'Ready' : 'Unavailable'}
 					</span>
 				</span>
