@@ -359,3 +359,48 @@ async def test_metadata_key_raises_on_error():
     with patch.object(arm_client, "get_client", return_value=mock_client):
         with pytest.raises(httpx.HTTPStatusError):
             await arm_client.test_metadata_key()
+
+
+# --- get_setup_status ---
+
+
+async def test_get_setup_status_success():
+    """get_setup_status returns JSON on success."""
+    data = {"first_run": True, "db_initialized": True}
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response(data)
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.get_setup_status()
+    assert result == data
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/setup/status")
+
+
+async def test_get_setup_status_unreachable():
+    """get_setup_status returns None on ConnectError."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.side_effect = httpx.ConnectError("refused")
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.get_setup_status()
+    assert result is None
+
+
+# --- complete_setup ---
+
+
+async def test_complete_setup_success():
+    """complete_setup returns JSON on success."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({"success": True})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.complete_setup()
+    assert result == {"success": True}
+    mock_client.request.assert_awaited_once_with("POST", "/api/v1/setup/complete")
+
+
+async def test_complete_setup_unreachable():
+    """complete_setup returns None on ConnectError."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.side_effect = httpx.ConnectError("refused")
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.complete_setup()
+    assert result is None
