@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, cleanup, waitFor } from '$lib/test-utils';
 import SettingsReviewStep from './SettingsReviewStep.svelte';
 
-const mockSettings = {
+const mockConfig = {
 	arm_config: {
 		RAW_PATH: '/home/arm/media/raw/',
 		COMPLETED_PATH: '/home/arm/media/completed/',
@@ -12,21 +12,17 @@ const mockSettings = {
 	}
 };
 
-describe('SettingsReviewStep', () => {
-	afterEach(() => {
-		cleanup();
-		vi.restoreAllMocks();
-	});
+function stubSettings(data = mockConfig) {
+	vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(data) })));
+}
 
-	it('renders heading', () => {
-		vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) })));
+describe('SettingsReviewStep', () => {
+	afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+
+	it('renders heading and config values', async () => {
+		stubSettings();
 		renderComponent(SettingsReviewStep);
 		expect(screen.getByText('Review Settings')).toBeInTheDocument();
-	});
-
-	it('shows config values after loading', async () => {
-		vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) })));
-		renderComponent(SettingsReviewStep);
 		await waitFor(() => {
 			expect(screen.getByText('/home/arm/media/raw/')).toBeInTheDocument();
 			expect(screen.getByText('/home/arm/media/completed/')).toBeInTheDocument();
@@ -36,7 +32,7 @@ describe('SettingsReviewStep', () => {
 	});
 
 	it('shows edit settings link', async () => {
-		vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(mockSettings) })));
+		stubSettings();
 		renderComponent(SettingsReviewStep);
 		await waitFor(() => {
 			const link = screen.getByText(/Edit all settings/);
@@ -47,8 +43,6 @@ describe('SettingsReviewStep', () => {
 	it('shows error when settings fail to load', async () => {
 		vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('fail'))));
 		renderComponent(SettingsReviewStep);
-		await waitFor(() => {
-			expect(screen.getByText('Could not load settings.')).toBeInTheDocument();
-		});
+		await waitFor(() => expect(screen.getByText('Could not load settings.')).toBeInTheDocument());
 	});
 });
