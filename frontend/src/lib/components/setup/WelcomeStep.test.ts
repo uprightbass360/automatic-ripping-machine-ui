@@ -28,19 +28,12 @@ vi.stubGlobal('fetch', vi.fn((url: string) => {
 describe('WelcomeStep', () => {
 	afterEach(() => cleanup());
 
-	it('renders welcome heading', () => {
+	it('renders heading, version, database status, and drives', () => {
 		renderComponent(WelcomeStep, { props: { status: mockStatus } });
 		expect(screen.getByText('Welcome to ARM')).toBeInTheDocument();
-	});
-
-	it('shows ARM version', () => {
-		renderComponent(WelcomeStep, { props: { status: mockStatus } });
 		expect(screen.getByText('13.3.0')).toBeInTheDocument();
-	});
-
-	it('shows database initialized', () => {
-		renderComponent(WelcomeStep, { props: { status: mockStatus } });
 		expect(screen.getByText('Initialized')).toBeInTheDocument();
+		expect(screen.getByText('2 detected')).toBeInTheDocument();
 	});
 
 	it('shows not initialized when db_initialized is false', () => {
@@ -48,28 +41,11 @@ describe('WelcomeStep', () => {
 		expect(screen.getByText('Not initialized')).toBeInTheDocument();
 	});
 
-	it('shows drives count', () => {
-		renderComponent(WelcomeStep, { props: { status: mockStatus } });
-		expect(screen.getByText('2 detected')).toBeInTheDocument();
-	});
-
-	it('shows transcoder status after loading', async () => {
+	it('shows transcoder, transcoder DB, and CPU after loading', async () => {
 		renderComponent(WelcomeStep, { props: { status: mockStatus } });
 		await waitFor(() => {
 			expect(screen.getByText('Online')).toBeInTheDocument();
-		});
-	});
-
-	it('shows transcoder DB ready after loading', async () => {
-		renderComponent(WelcomeStep, { props: { status: mockStatus } });
-		await waitFor(() => {
 			expect(screen.getByText('Ready')).toBeInTheDocument();
-		});
-	});
-
-	it('shows CPU info after loading', async () => {
-		renderComponent(WelcomeStep, { props: { status: mockStatus } });
-		await waitFor(() => {
 			expect(screen.getByText('Test CPU')).toBeInTheDocument();
 		});
 	});
