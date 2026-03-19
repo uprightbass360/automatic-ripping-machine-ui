@@ -332,3 +332,13 @@ async def fix_file_permissions(path: str) -> dict[str, Any] | None:
 async def delete_file(path: str) -> dict[str, Any] | None:
     """Delete a file or directory. Returns None if ARM is unreachable."""
     return await _request("DELETE", "/api/v1/files/delete", json={"path": path})
+
+
+async def get_setup_status() -> dict[str, Any] | None:
+    """Fetch setup wizard status. Returns None if ARM is unreachable."""
+    return await _request("GET", "/api/v1/setup/status")
+
+
+async def complete_setup() -> dict[str, Any] | None:
+    """Mark first-run setup as complete. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/setup/complete")
