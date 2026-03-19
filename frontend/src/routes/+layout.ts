@@ -16,7 +16,9 @@ export const load: LayoutLoad = async ({ url, fetch }) => {
 				redirect(307, '/setup');
 			}
 		}
-	} catch {
+	} catch (e) {
+		// Re-throw SvelteKit redirects (they use throw internally)
+		if (e && typeof e === 'object' && 'status' in e && 'location' in e) throw e;
 		// ARM unreachable — don't redirect, let the normal UI handle it
 	}
 
