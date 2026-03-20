@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.5.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.4.0...v13.5.0) (2026-03-20)
+
+
+### Features
+
+* improve restart UX and add transcoder restart button ([9a68f2f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9a68f2f623c424279c80f9290fed46e78ce59af0))
+
 ## [13.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.3.0...v13.4.0) (2026-03-19)
 
 
