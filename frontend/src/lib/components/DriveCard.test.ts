@@ -6,7 +6,8 @@ import type { Drive } from '$lib/types/arm';
 vi.mock('$lib/api/drives', () => ({
 	updateDrive: vi.fn(() => Promise.resolve()),
 	scanDrive: vi.fn(() => Promise.resolve()),
-	deleteDrive: vi.fn(() => Promise.resolve())
+	deleteDrive: vi.fn(() => Promise.resolve()),
+	ejectDrive: vi.fn(() => Promise.resolve())
 }));
 
 function createDrive(overrides: Partial<Drive> = {}): Drive {
@@ -28,17 +29,34 @@ describe('DriveCard', () => {
 	afterEach(() => cleanup());
 
 	describe('rendering', () => {
-		it('renders drive name, maker/model, capabilities, and controls', () => {
+		it('renders drive name, maker/model, capabilities, and action bar', () => {
 			renderDrive();
 			expect(screen.getByText('Main Drive')).toBeInTheDocument();
-			expect(screen.getByText('LG WH16NS40')).toBeInTheDocument();
 			expect(screen.getByText('Idle')).toBeInTheDocument();
 			expect(screen.getByText('CD')).toBeInTheDocument();
 			expect(screen.getByText('DVD')).toBeInTheDocument();
 			expect(screen.getByText('Blu-ray')).toBeInTheDocument();
-			expect(screen.getByText('UHD Capable')).toBeInTheDocument();
-			expect(screen.getByText('Force Scan')).toBeInTheDocument();
+			// Action bar buttons
+			expect(screen.getByText('Eject')).toBeInTheDocument();
+			expect(screen.getByText('Insert')).toBeInTheDocument();
+			expect(screen.getByText('Scan')).toBeInTheDocument();
 			expect(screen.queryByText('Remove')).not.toBeInTheDocument();
+		});
+
+		it('shows drive info fields when available', () => {
+			renderDrive({ connection: 'USB 3.0', firmware: '1.03' });
+			expect(screen.getByText(/USB 3\.0/)).toBeInTheDocument();
+			expect(screen.getByText(/FW 1\.03/)).toBeInTheDocument();
+		});
+
+		it('shows 4K tag for Blu-ray drives', () => {
+			renderDrive({ read_bd: true });
+			expect(screen.getByText('4K')).toBeInTheDocument();
+		});
+
+		it('hides 4K tag for non-Blu-ray drives', () => {
+			renderDrive({ read_bd: false });
+			expect(screen.queryByText('4K')).not.toBeInTheDocument();
 		});
 
 		it('falls back to mount path when no name', () => {
@@ -60,13 +78,13 @@ describe('DriveCard', () => {
 	});
 
 	describe('interactions', () => {
-		it('enters and exits edit mode', async () => {
+		it('enters and exits edit mode via Rename button', async () => {
 			renderDrive();
-			await fireEvent.click(screen.getByText('Change Name'));
+			await fireEvent.click(screen.getByText('Rename'));
 			expect(screen.getByDisplayValue('Main Drive')).toBeInTheDocument();
 			expect(screen.getByText('Save')).toBeInTheDocument();
 			await fireEvent.click(screen.getByText('Cancel'));
-			expect(screen.getByText('Change Name')).toBeInTheDocument();
+			expect(screen.getByText('Rename')).toBeInTheDocument();
 		});
 	});
 });
