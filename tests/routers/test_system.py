@@ -31,6 +31,19 @@ async def test_restart_unreachable(app_client):
     assert resp.status_code == 503
 
 
+async def test_restart_transcoder_success(app_client):
+    with patch("backend.routers.system.transcoder_client.restart_transcoder", new_callable=AsyncMock, return_value={"success": True, "message": "Transcoder is restarting"}):
+        resp = await app_client.post("/api/system/restart-transcoder")
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+
+
+async def test_restart_transcoder_unreachable(app_client):
+    with patch("backend.routers.system.transcoder_client.restart_transcoder", new_callable=AsyncMock, return_value=None):
+        resp = await app_client.post("/api/system/restart-transcoder")
+    assert resp.status_code == 503
+
+
 async def test_eject_drive_success(app_client):
     result = {"success": True, "drive_id": 1, "method": "eject"}
     with patch("backend.routers.drives.arm_client.eject_drive", new_callable=AsyncMock, return_value=result):

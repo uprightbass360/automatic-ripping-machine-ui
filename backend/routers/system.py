@@ -3,7 +3,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from backend.services import arm_client
+from backend.services import arm_client, transcoder_client
 
 router = APIRouter(prefix="/api", tags=["system"])
 
@@ -23,4 +23,13 @@ async def restart_arm() -> dict[str, Any]:
     result = await arm_client.restart_arm()
     if result is None:
         raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+    return result
+
+
+@router.post("/system/restart-transcoder", responses={503: {"description": "Transcoder unreachable"}})
+async def restart_transcoder() -> dict[str, Any]:
+    """Restart the transcoder service."""
+    result = await transcoder_client.restart_transcoder()
+    if result is None:
+        raise HTTPException(status_code=503, detail="Transcoder is unreachable")
     return result

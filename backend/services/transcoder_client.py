@@ -332,3 +332,14 @@ async def read_structured_log(
         return resp.json()
     except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
+
+
+async def restart_transcoder() -> dict[str, Any] | None:
+    """Restart the transcoder service. Returns None if unreachable."""
+    try:
+        resp = await get_client().post("/system/restart")
+        if resp.is_success:
+            return resp.json()
+        return {"success": False, "error": f"Transcoder returned HTTP {resp.status_code}"}
+    except (httpx.ConnectError, httpx.TimeoutException, RuntimeError, OSError):
+        return None
