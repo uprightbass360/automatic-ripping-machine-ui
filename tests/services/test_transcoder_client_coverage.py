@@ -547,3 +547,37 @@ async def test_test_webhook_http_error():
 
     assert result["reachable"] is True
     assert "failed" in result["error"].lower()
+
+
+# --- restart_transcoder ---
+
+
+async def test_restart_transcoder_success():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    resp = MagicMock(spec=httpx.Response)
+    resp.is_success = True
+    resp.json.return_value = {"success": True, "message": "Transcoder is restarting"}
+    mock_client.post.return_value = resp
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.restart_transcoder()
+    assert result["success"] is True
+    mock_client.post.assert_awaited_once_with("/system/restart")
+
+
+async def test_restart_transcoder_http_error():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    resp = MagicMock(spec=httpx.Response)
+    resp.is_success = False
+    resp.status_code = 500
+    mock_client.post.return_value = resp
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.restart_transcoder()
+    assert result["success"] is False
+
+
+async def test_restart_transcoder_unreachable():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.post.side_effect = httpx.ConnectError("refused")
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.restart_transcoder()
+    assert result is None

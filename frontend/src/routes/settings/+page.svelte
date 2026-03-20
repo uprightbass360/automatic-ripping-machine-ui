@@ -10,6 +10,7 @@
 	import { fetchDrives, fetchDriveDiagnostic } from '$lib/api/drives';
 	import type { DiagnosticResult } from '$lib/api/drives';
 	import DriveCard from '$lib/components/DriveCard.svelte';
+	import { restartArm, restartTranscoder } from '$lib/api/system';
 
 	let settings = $state<SettingsData | null>(null);
 	let error = $state<string | null>(null);
@@ -27,6 +28,44 @@
 	let armFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 	let armRevealedKeys = $state<Set<string>>(new Set());
 	let armCollapsed = $state<Record<string, boolean>>({});
+
+	// --- Restart state ---
+	let armRestarting = $state(false);
+	let armRestartFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let tcRestarting = $state(false);
+	let tcRestartFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	async function handleRestart(service: 'arm' | 'transcoder') {
+		const label = service === 'arm' ? 'ARM ripping service' : 'Transcoder service';
+		const warning = service === 'arm'
+			? 'Restart the ARM ripping service? Active rips will be interrupted.'
+			: 'Restart the transcoder service? Active transcodes will be interrupted.';
+		if (!confirm(warning)) return;
+
+		if (service === 'arm') {
+			armRestarting = true;
+			armRestartFeedback = null;
+		} else {
+			tcRestarting = true;
+			tcRestartFeedback = null;
+		}
+
+		try {
+			const fn = service === 'arm' ? restartArm : restartTranscoder;
+			await fn();
+			const fb = { type: 'success' as const, message: `${label} is restarting` };
+			if (service === 'arm') armRestartFeedback = fb;
+			else tcRestartFeedback = fb;
+			setTimeout(() => {
+				if (service === 'arm') { armRestarting = false; armRestartFeedback = null; }
+				else { tcRestarting = false; tcRestartFeedback = null; }
+			}, 5000);
+		} catch {
+			const fb = { type: 'error' as const, message: `Failed to restart ${label}` };
+			if (service === 'arm') { armRestartFeedback = fb; armRestarting = false; }
+			else { tcRestartFeedback = fb; tcRestarting = false; }
+		}
+	}
 
 	// --- Tab state ---
 	const validTabs = ['ripping', 'music', 'transcoding', 'notifications', 'appearance', 'drives', 'system'] as const;
@@ -2044,22 +2083,49 @@
 				{@render armSettingsSection('system', true)}
 			</section>
 
-			<!-- Restart ARM Service -->
+			<!-- Service Control -->
 			<section class="mt-6">
 				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Control</h2>
-				<div class="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-800 dark:bg-red-900/10">
-					<div class="flex items-center justify-between">
-						<div>
-							<p class="text-sm font-medium text-gray-900 dark:text-white">Restart ARM Service</p>
-							<p class="text-xs text-gray-500 dark:text-gray-400">Restarts the ARM ripping service. Active rips will be interrupted.</p>
+				<div class="space-y-3">
+					<!-- ARM Restart -->
+					<div class="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-800 dark:bg-red-900/10">
+						<div class="flex items-center justify-between">
+							<div>
+								<p class="text-sm font-medium text-gray-900 dark:text-white">Restart ARM Service</p>
+								<p class="text-xs text-gray-500 dark:text-gray-400">Restarts the ARM ripping service. Active rips will be interrupted.</p>
+								{#if armRestartFeedback}
+									<p class="mt-1 text-xs {armRestartFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">{armRestartFeedback.message}</p>
+								{/if}
+							</div>
+							<button
+								type="button"
+								disabled={armRestarting}
+								onclick={() => handleRestart('arm')}
+								class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{armRestarting ? 'Restarting...' : 'Restart'}
+							</button>
 						</div>
-						<button
-							type="button"
-							onclick={() => { if (confirm('Restart the ARM ripping service? Active rips will be interrupted.')) { fetch('/api/system/restart', { method: 'POST' }); } }}
-							class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
-						>
-							Restart
-						</button>
+					</div>
+					<!-- Transcoder Restart -->
+					<div class="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-800 dark:bg-red-900/10">
+						<div class="flex items-center justify-between">
+							<div>
+								<p class="text-sm font-medium text-gray-900 dark:text-white">Restart Transcoder Service</p>
+								<p class="text-xs text-gray-500 dark:text-gray-400">Restarts the transcoder service. Active transcodes will be interrupted.</p>
+								{#if tcRestartFeedback}
+									<p class="mt-1 text-xs {tcRestartFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">{tcRestartFeedback.message}</p>
+								{/if}
+							</div>
+							<button
+								type="button"
+								disabled={tcRestarting}
+								onclick={() => handleRestart('transcoder')}
+								class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{tcRestarting ? 'Restarting...' : 'Restart'}
+							</button>
+						</div>
 					</div>
 				</div>
 			</section>
