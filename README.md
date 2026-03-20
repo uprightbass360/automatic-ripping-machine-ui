@@ -68,6 +68,23 @@ Pre-built multi-platform images (`amd64`, `arm64`) are published to Docker Hub o
 docker pull uprightbass360/arm-ui:latest
 ```
 
+### Local GHCR Build/Push
+
+To avoid GitHub Actions usage, build and publish from your machine:
+
+```bash
+cd automatic-ripping-machine-ui
+export GHCR_TOKEN=ghp_your_token_here
+./scripts/build-and-push-ghcr.sh
+```
+
+Optional environment overrides:
+
+- `GHCR_OWNER` (default: `jakespocket`)
+- `GHCR_IMAGE_NAME` (default: `arm-ui`)
+- `PLATFORMS` (default: `linux/amd64,linux/arm64`)
+- `BUILDX_BUILDER_NAME` (default: `arm-ui-builder`)
+
 For the full ecosystem quick start (ARM + UI + Transcoder), see the [ARM-neu README](https://github.com/uprightbass360/automatic-ripping-machine-neu#quick-start).
 
 ## Standalone Quick Start
