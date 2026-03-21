@@ -13,15 +13,27 @@
 		maintenanceClearJob,
 		maintenanceDeleteJobLogs,
 		maintenanceDeleteJobRaw,
-		maintenancePurgeJob
+		maintenancePurgeJob,
+		fetchMaintenanceLogFiles,
+		fetchMaintenanceFolders,
+		maintenanceDeleteLogPath,
+		maintenanceDeleteFolderPath
 	} from '$lib/api/settings';
-	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData, FailedJobSummary } from '$lib/api/settings';
+	import type {
+		ConnectionTestResult,
+		WebhookTestResult,
+		SystemInfoData,
+		FailedJobSummary,
+		MaintenanceLogFile,
+		MaintenanceFolder
+	} from '$lib/api/settings';
 	import type { SettingsData, Drive } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES, schemeLocksMode } from '$lib/stores/colorScheme';
 	import { createPollingStore } from '$lib/stores/polling';
 	import { fetchDrives } from '$lib/api/drives';
 	import DriveCard from '$lib/components/DriveCard.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let settings = $state<SettingsData | null>(null);
 	let error = $state<string | null>(null);
@@ -74,6 +86,18 @@
 	let maintenanceBusy = $state(false);
 	let maintenanceFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 	let selectedFailedJobId = $state<number | null>(null);
+	let maintenanceLogs = $state<MaintenanceLogFile[]>([]);
+	let maintenanceFolders = $state<MaintenanceFolder[]>([]);
+	let selectedLogPath = $state<string>('');
+	let selectedFolderPath = $state<string>('');
+	let logsLoading = $state(false);
+	let foldersLoading = $state(false);
+	let confirmOpen = $state(false);
+	let confirmTitle = $state('');
+	let confirmMessage = $state('');
+	let confirmLabel = $state('Confirm');
+	let confirmVariant = $state<'danger' | 'primary'>('danger');
+	let confirmAction = $state<(() => Promise<void>) | null>(null);
 
 	async function loadSystemInfo() {
 		if (systemInfoLoaded) return;
@@ -101,6 +125,49 @@
 		} finally {
 			failedJobsLoading = false;
 		}
+	}
+
+	async function loadMaintenanceLogs() {
+		logsLoading = true;
+		try {
+			const resp = await fetchMaintenanceLogFiles();
+			maintenanceLogs = resp.files ?? [];
+			if (!selectedLogPath && maintenanceLogs.length > 0) selectedLogPath = maintenanceLogs[0].path;
+		} catch (e) {
+			maintenanceFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to load logs' };
+		} finally {
+			logsLoading = false;
+		}
+	}
+
+	async function loadMaintenanceFolders() {
+		foldersLoading = true;
+		try {
+			const resp = await fetchMaintenanceFolders();
+			maintenanceFolders = resp.folders ?? [];
+			if (!selectedFolderPath && maintenanceFolders.length > 0) selectedFolderPath = maintenanceFolders[0].path;
+		} catch (e) {
+			maintenanceFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to load folders' };
+		} finally {
+			foldersLoading = false;
+		}
+	}
+
+	function openConfirm(title: string, message: string, action: () => Promise<void>, label = 'Confirm', variant: 'danger' | 'primary' = 'danger') {
+		confirmTitle = title;
+		confirmMessage = message;
+		confirmAction = action;
+		confirmLabel = label;
+		confirmVariant = variant;
+		confirmOpen = true;
+	}
+
+	async function handleConfirmAccept() {
+		const action = confirmAction;
+		confirmOpen = false;
+		confirmAction = null;
+		if (!action) return;
+		await action();
 	}
 
 	function selectedFailedJob(): FailedJobSummary | null {
@@ -134,47 +201,115 @@
 	async function handleMaintenanceDeleteLogs() {
 		const selected = selectedFailedJob();
 		if (!selected) return;
-		if (!confirm(`Delete logs for job #${selected.job_id}?`)) return;
-		await runMaintenanceAction(async () => {
-			const res = await maintenanceDeleteJobLogs(selected.job_id);
-			const details = [`Removed: ${res.removed.length}`, `Missing: ${res.missing.length}`, `Errors: ${res.errors.length}`].join(' · ');
-			maintenanceFeedback = { type: res.errors.length ? 'error' : 'success', message: `Logs cleanup #${selected.job_id} · ${details}` };
-		}, `Deleted logs for job #${selected.job_id}`);
+		openConfirm(
+			'Delete Job Logs',
+			`Delete logs for job #${selected.job_id}?`,
+			async () => {
+				await runMaintenanceAction(async () => {
+					const res = await maintenanceDeleteJobLogs(selected.job_id);
+					const details = [`Removed: ${res.removed.length}`, `Missing: ${res.missing.length}`, `Errors: ${res.errors.length}`].join(' · ');
+					maintenanceFeedback = { type: res.errors.length ? 'error' : 'success', message: `Logs cleanup #${selected.job_id} · ${details}` };
+					await loadMaintenanceLogs();
+				}, `Deleted logs for job #${selected.job_id}`);
+			},
+			'Delete Logs',
+			'danger'
+		);
 	}
 
 	async function handleMaintenanceDeleteRaw() {
 		const selected = selectedFailedJob();
 		if (!selected) return;
-		if (!confirm(`Delete raw output for job #${selected.job_id}? This cannot be undone.`)) return;
-		await runMaintenanceAction(async () => {
-			const res = await maintenanceDeleteJobRaw(selected.job_id);
-			const details = [`Removed: ${res.removed.length}`, `Missing: ${res.missing.length}`, `Errors: ${res.errors.length}`].join(' · ');
-			maintenanceFeedback = { type: res.errors.length ? 'error' : 'success', message: `Folder cleanup #${selected.job_id} · ${details}` };
-		}, `Deleted raw output for job #${selected.job_id}`);
+		openConfirm(
+			'Delete Job Folders',
+			`Delete raw/completed folders for job #${selected.job_id}? This cannot be undone.`,
+			async () => {
+				await runMaintenanceAction(async () => {
+					const res = await maintenanceDeleteJobRaw(selected.job_id);
+					const details = [`Removed: ${res.removed.length}`, `Missing: ${res.missing.length}`, `Errors: ${res.errors.length}`].join(' · ');
+					maintenanceFeedback = { type: res.errors.length ? 'error' : 'success', message: `Folder cleanup #${selected.job_id} · ${details}` };
+					await loadMaintenanceFolders();
+				}, `Deleted raw output for job #${selected.job_id}`);
+			},
+			'Delete Folders',
+			'danger'
+		);
 	}
 
 	async function handleMaintenanceClearJob() {
 		const selected = selectedFailedJob();
 		if (!selected) return;
-		if (!confirm(`Clear failed job #${selected.job_id} from the ARM database?`)) return;
-		await runMaintenanceAction(async () => {
-			await maintenanceClearJob(selected.job_id);
-		}, `Cleared failed job #${selected.job_id} from database`);
+		openConfirm(
+			'Clear Job DB Entry',
+			`Clear failed job #${selected.job_id} from the ARM database?`,
+			async () => {
+				await runMaintenanceAction(async () => {
+					await maintenanceClearJob(selected.job_id);
+				}, `Cleared failed job #${selected.job_id} from database`);
+			},
+			'Clear Entry',
+			'danger'
+		);
 	}
 
 	async function handleMaintenanceFullCleanup() {
 		const selected = selectedFailedJob();
 		if (!selected) return;
-		if (!confirm(`Run FULL cleanup for job #${selected.job_id}? This will try logs + raw/completed folders + DB entry.`)) return;
-		await runMaintenanceAction(async () => {
-			const res = await maintenancePurgeJob(selected.job_id);
-			maintenanceFeedback = {
-				type: res.errors.length ? 'error' : 'success',
-				message: res.errors.length
-					? `Full cleanup #${selected.job_id} completed with ${res.errors.length} error(s)`
-					: `Full cleanup #${selected.job_id} completed`
-			};
-		}, `Full cleanup finished for job #${selected.job_id}`);
+		openConfirm(
+			'Full Cleanup',
+			`Run FULL cleanup for job #${selected.job_id}? This will try logs + raw/completed folders + DB entry.`,
+			async () => {
+				await runMaintenanceAction(async () => {
+					const res = await maintenancePurgeJob(selected.job_id);
+					maintenanceFeedback = {
+						type: res.errors.length ? 'error' : 'success',
+						message: res.errors.length
+							? `Full cleanup #${selected.job_id} completed with ${res.errors.length} error(s)`
+							: `Full cleanup #${selected.job_id} completed`
+					};
+					await loadMaintenanceLogs();
+					await loadMaintenanceFolders();
+				}, `Full cleanup finished for job #${selected.job_id}`);
+			},
+			'Run Full Cleanup',
+			'danger'
+		);
+	}
+
+	async function handleDeleteSelectedLog() {
+		if (!selectedLogPath) return;
+		openConfirm(
+			'Delete Log File',
+			`Delete selected log file?\n${selectedLogPath}`,
+			async () => {
+				await runMaintenanceAction(async () => {
+					const res = await maintenanceDeleteLogPath(selectedLogPath);
+					const details = [`Removed: ${res.removed.length}`, `Missing: ${res.missing.length}`, `Errors: ${res.errors.length}`].join(' · ');
+					maintenanceFeedback = { type: res.errors.length ? 'error' : 'success', message: `Log delete · ${details}` };
+					await loadMaintenanceLogs();
+				}, 'Deleted selected log');
+			},
+			'Delete Log',
+			'danger'
+		);
+	}
+
+	async function handleDeleteSelectedFolder() {
+		if (!selectedFolderPath) return;
+		openConfirm(
+			'Delete Folder',
+			`Delete selected folder and all contents?\n${selectedFolderPath}`,
+			async () => {
+				await runMaintenanceAction(async () => {
+					const res = await maintenanceDeleteFolderPath(selectedFolderPath);
+					const details = [`Removed: ${res.removed.length}`, `Missing: ${res.missing.length}`, `Errors: ${res.errors.length}`].join(' · ');
+					maintenanceFeedback = { type: res.errors.length ? 'error' : 'success', message: `Folder delete · ${details}` };
+					await loadMaintenanceFolders();
+				}, 'Deleted selected folder');
+			},
+			'Delete Folder',
+			'danger'
+		);
 	}
 
 	onMount(() => {
@@ -1020,7 +1155,7 @@
 				<button type="button" onclick={() => (activeTab = 'transcoding')} class={tabClass('transcoding')}>Transcoding</button>
 				<button type="button" onclick={() => (activeTab = 'notifications')} class={tabClass('notifications')}>Notifications</button>
 				<button type="button" onclick={() => (activeTab = 'drives')} class={tabClass('drives')}>Drives</button>
-				<button type="button" onclick={() => { activeTab = 'maintenance'; loadFailedJobs(); }} class={tabClass('maintenance')}>Maintenance</button>
+				<button type="button" onclick={() => { activeTab = 'maintenance'; loadFailedJobs(); loadMaintenanceLogs(); loadMaintenanceFolders(); }} class={tabClass('maintenance')}>Maintenance</button>
 				<button type="button" onclick={() => (activeTab = 'appearance')} class={tabClass('appearance')}>Appearance</button>
 				<button type="button" onclick={() => { activeTab = 'system'; loadSystemInfo(); }} class={tabClass('system')}>System</button>
 			</nav>
@@ -1919,10 +2054,99 @@
 						</div>
 					</div>
 				</div>
+
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+						<div class="mb-2 flex items-center justify-between">
+							<h3 class="text-sm font-semibold text-gray-900 dark:text-white">Logs (independent)</h3>
+							<button
+								type="button"
+								onclick={loadMaintenanceLogs}
+								disabled={logsLoading || maintenanceBusy}
+								class="rounded-lg bg-primary px-2 py-1 text-xs font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+							>
+								{logsLoading ? 'Loading...' : 'Refresh'}
+							</button>
+						</div>
+						{#if maintenanceLogs.length === 0}
+							<p class="text-xs text-gray-500 dark:text-gray-400">No log files found.</p>
+						{:else}
+							<select
+								class={inputClass}
+								bind:value={selectedLogPath}
+								disabled={maintenanceBusy}
+							>
+								{#each maintenanceLogs as lf}
+									<option value={lf.path}>{lf.relative_path} ({Math.round(lf.size / 1024)} KB)</option>
+								{/each}
+							</select>
+						{/if}
+						<div class="mt-2">
+							<button
+								type="button"
+								onclick={handleDeleteSelectedLog}
+								disabled={maintenanceBusy || !selectedLogPath}
+								class="rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+							>
+								Delete Selected Log
+							</button>
+						</div>
+					</div>
+
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+						<div class="mb-2 flex items-center justify-between">
+							<h3 class="text-sm font-semibold text-gray-900 dark:text-white">Folders (independent)</h3>
+							<button
+								type="button"
+								onclick={loadMaintenanceFolders}
+								disabled={foldersLoading || maintenanceBusy}
+								class="rounded-lg bg-primary px-2 py-1 text-xs font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+							>
+								{foldersLoading ? 'Loading...' : 'Refresh'}
+							</button>
+						</div>
+						{#if maintenanceFolders.length === 0}
+							<p class="text-xs text-gray-500 dark:text-gray-400">No folders found in raw/completed movies roots.</p>
+						{:else}
+							<select
+								class={inputClass}
+								bind:value={selectedFolderPath}
+								disabled={maintenanceBusy}
+							>
+								{#each maintenanceFolders as f}
+									<option value={f.path}>[{f.category}] {f.name}</option>
+								{/each}
+							</select>
+						{/if}
+						<div class="mt-2">
+							<button
+								type="button"
+								onclick={handleDeleteSelectedFolder}
+								disabled={maintenanceBusy || !selectedFolderPath}
+								class="rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+							>
+								Delete Selected Folder
+							</button>
+						</div>
+					</div>
+				</div>
 			</section>
 		{/if}
 	{/if}
 </div>
+
+<ConfirmDialog
+	open={confirmOpen}
+	title={confirmTitle}
+	message={confirmMessage}
+	confirmLabel={confirmLabel}
+	variant={confirmVariant}
+	onconfirm={handleConfirmAccept}
+	oncancel={() => {
+		confirmOpen = false;
+		confirmAction = null;
+	}}
+/>
 
 <!-- Sticky save bar -->
 {#if anyDirty}

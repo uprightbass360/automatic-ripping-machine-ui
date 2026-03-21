@@ -91,8 +91,28 @@ export interface FailedJobSummary {
 	start_time: string | null;
 }
 
+export interface MaintenanceLogFile {
+	path: string;
+	relative_path: string;
+	size: number;
+}
+
+export interface MaintenanceFolder {
+	path: string;
+	name: string;
+	category: 'raw' | 'completed_movies';
+}
+
 export function fetchFailedJobs(): Promise<{ jobs: FailedJobSummary[] }> {
 	return apiFetch<{ jobs: FailedJobSummary[] }>('/api/settings/maintenance/failed-jobs');
+}
+
+export function fetchMaintenanceLogFiles(): Promise<{ root: string; files: MaintenanceLogFile[] }> {
+	return apiFetch('/api/settings/maintenance/log-files');
+}
+
+export function fetchMaintenanceFolders(): Promise<{ roots: { raw: string; completed_movies: string }; folders: MaintenanceFolder[] }> {
+	return apiFetch('/api/settings/maintenance/folders');
 }
 
 export function maintenanceRescanDrives(): Promise<{ success?: boolean; drive_count?: number; drives_changed?: boolean; error?: string }> {
@@ -126,5 +146,19 @@ export function maintenancePurgeJob(jobId: number): Promise<{ success: boolean; 
 	return apiFetch('/api/settings/maintenance/purge-job', {
 		method: 'POST',
 		body: JSON.stringify({ job_id: jobId })
+	});
+}
+
+export function maintenanceDeleteLogPath(path: string): Promise<{ success: boolean; removed: string[]; missing: string[]; errors: string[] }> {
+	return apiFetch('/api/settings/maintenance/delete-log-path', {
+		method: 'POST',
+		body: JSON.stringify({ path })
+	});
+}
+
+export function maintenanceDeleteFolderPath(path: string): Promise<{ success: boolean; removed: string[]; missing: string[]; errors: string[] }> {
+	return apiFetch('/api/settings/maintenance/delete-folder-path', {
+		method: 'POST',
+		body: JSON.stringify({ path })
 	});
 }

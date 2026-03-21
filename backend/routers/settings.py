@@ -203,6 +203,10 @@ class MaintenanceJobRequest(BaseModel):
     job_id: int
 
 
+class MaintenancePathRequest(BaseModel):
+    path: str
+
+
 def _path_is_within(path: Path, parent: Path) -> bool:
     try:
         path.resolve().relative_to(parent.resolve())
@@ -264,6 +268,58 @@ def _title_candidates(title: str | None, label: str | None, year: str | None) ->
         if year:
             out.append(f"{name} ({year})")
     return out
+
+
+@router.get("/settings/maintenance/log-files")
+async def list_log_files():
+    root = Path(app_settings.arm_log_path).resolve()
+    files = []
+    try:
+        if root.exists():
+            for p in root.rglob("*"):
+                if not p.is_file():
+                    continue
+                if p.suffix.lower() not in (".log", ".txt"):
+                    continue
+                rel = str(p.relative_to(root))
+                files.append(
+                    {
+                        "path": str(p),
+                        "relative_path": rel,
+                        "size": p.stat().st_size,
+                    }
+                )
+        files.sort(key=lambda x: x["relative_path"])
+        return {"root": str(root), "files": files[:1000]}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to list logs: {exc}") from exc
+
+
+@router.get("/settings/maintenance/folders")
+async def list_folders():
+    raw_root = _resolve_raw_root()
+    completed_movies_root = (_resolve_completed_root() / "movies").resolve()
+    folders = []
+    try:
+        for root in (raw_root, completed_movies_root):
+            if not root.exists() or not root.is_dir():
+                continue
+            for p in root.iterdir():
+                if p.is_dir():
+                    folders.append(
+                        {
+                            "path": str(p.resolve()),
+                            "name": p.name,
+                            "category": "raw" if root == raw_root else "completed_movies",
+                        }
+                    )
+        folders.sort(key=lambda x: (x["category"], x["name"].lower()))
+        return {
+            "roots": {"raw": str(raw_root), "completed_movies": str(completed_movies_root)},
+            "folders": folders,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to list folders: {exc}") from exc
 
 
 @router.get("/settings/maintenance/failed-jobs")
@@ -443,3 +499,24 @@ async def maintenance_purge_job(body: MaintenanceJobRequest):
         "db": db_result,
         "errors": errors,
     }
+
+
+@router.post("/settings/maintenance/delete-log-path")
+async def maintenance_delete_log_path(body: MaintenancePathRequest):
+    removed: list[str] = []
+    missing: list[str] = []
+    errors: list[str] = []
+    root = Path(app_settings.arm_log_path).resolve()
+    _delete_path_safe(Path(body.path), [root], removed, missing, errors)
+    return {"success": len(errors) == 0, "removed": removed, "missing": missing, "errors": errors}
+
+
+@router.post("/settings/maintenance/delete-folder-path")
+async def maintenance_delete_folder_path(body: MaintenancePathRequest):
+    removed: list[str] = []
+    missing: list[str] = []
+    errors: list[str] = []
+    raw_root = _resolve_raw_root()
+    completed_root = _resolve_completed_root()
+    _delete_path_safe(Path(body.path), [raw_root, completed_root], removed, missing, errors)
+    return {"success": len(errors) == 0, "removed": removed, "missing": missing, "errors": errors}
