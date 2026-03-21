@@ -12,7 +12,7 @@
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
 	import SectionFrame from '$lib/components/SectionFrame.svelte';
 	import FolderImportWizard from '$lib/components/FolderImportWizard.svelte';
-	import { page as pageStore } from '$app/stores';
+	import { showImportWizard } from '$lib/stores/importWizard';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -33,19 +33,6 @@
 	});
 	let dashReady = $state(false);
 	let dashError = $state<string | null>(null);
-
-	let showImportWizard = $state(false);
-
-	// Open import wizard if navigated with ?import=1
-	$effect(() => {
-		if ($pageStore.url.searchParams.get('import') === '1') {
-			showImportWizard = true;
-			// Clean up the URL param
-			const url = new URL(window.location.href);
-			url.searchParams.delete('import');
-			window.history.replaceState({}, '', url.pathname);
-		}
-	});
 
 	let dismissedJobIds = $state(new Set<number>());
 	let waitingJobs = $derived(
@@ -396,7 +383,7 @@
 </div>
 
 <FolderImportWizard
-	open={showImportWizard}
-	onclose={() => showImportWizard = false}
-	oncreated={() => { showImportWizard = false; refreshDashboard(); }}
+	open={$showImportWizard}
+	onclose={() => showImportWizard.set(false)}
+	oncreated={() => { showImportWizard.set(false); refreshDashboard(); }}
 />
