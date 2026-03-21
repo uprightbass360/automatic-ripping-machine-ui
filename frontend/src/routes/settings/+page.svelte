@@ -646,6 +646,7 @@
 		ARM_CHILDREN: { label: 'ARM Child Servers', description: 'Comma-delimited list of child ARM server URLs' },
 		DELRAWFILES: { label: 'Delete Raw Files', description: 'Remove raw MakeMKV output after processing' },
 		DRIVE_READY_TIMEOUT: { label: 'Drive Ready Timeout', description: 'Seconds to wait for the drive to become ready after disc insertion' },
+		PRESCAN_TIMEOUT: { label: 'Pre-Scan Timeout', description: 'Seconds to wait for MakeMKV pre-scan to complete per attempt. Large discs (40+ titles) may need 600s or more.' },
 		// TV Series
 		USE_DISC_LABEL_FOR_TV: { label: 'Use Disc Label for TV', description: 'Parse disc label for season/episode info on TV series discs' },
 		GROUP_TV_DISCS_UNDER_SERIES: { label: 'Group TV Discs Under Series', description: 'Group multi-disc TV sets under a single series folder' },
@@ -674,6 +675,7 @@
 		TRANSCODE_PATH: { label: 'Transcode Path', description: 'Staging directory for transcoding work' },
 		COMPLETED_PATH: { label: 'Completed Path', description: 'Final destination for finished media files' },
 		MUSIC_PATH: { label: 'Music Path', description: 'Output directory for music CD rips (used by abcde)' },
+		INGRESS_PATH: { label: 'Folder Import Path', description: 'Root directory for disc folder imports (BDMV/VIDEO_TS). The Import Folder wizard browses this path.' },
 		EXTRAS_SUB: { label: 'Extras Subdirectory', description: 'Subfolder name for bonus features and extras' },
 		INSTALLPATH: { label: 'Install Path', description: 'ARM installation directory' },
 		LOGPATH: { label: 'Log Path', description: 'Directory for ARM log files' },
