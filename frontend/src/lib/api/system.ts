@@ -14,6 +14,6 @@ export function restartArm(): Promise<{ success: boolean }> {
 	return apiFetch('/api/system/restart', { method: 'POST' });
 }
 
-export function restartTranscoder(): Promise<{ success: boolean }> {
+export function restartTranscoder(): Promise<{ success: boolean; message: string }> {
 	return apiFetch('/api/system/restart-transcoder', { method: 'POST' });
 }
