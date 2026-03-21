@@ -15,6 +15,7 @@
 	let entries = $state<FileEntry[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
+	let needsConfig = $state(false);
 	let selectedPath = $state<string | null>(null);
 
 	let directories = $derived(entries.filter((e) => e.type === 'directory'));
@@ -72,7 +73,7 @@
 			const roots = await fetchIngressRoot();
 			const ingress = roots.find((r) => r.key === 'ingress');
 			if (!ingress) {
-				error = 'Ingress path is not configured. Set INGRESS in ARM settings.';
+				needsConfig = true;
 				loading = false;
 				return;
 			}
@@ -86,7 +87,12 @@
 </script>
 
 <div class="space-y-3">
-	{#if error}
+	{#if needsConfig}
+		<div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
+			<p class="font-medium">Folder Import Path is not configured</p>
+			<p class="mt-1">Set the <strong>Folder Import Path</strong> in <a href="/settings#ripping/media-directories" class="underline hover:text-amber-900 dark:hover:text-amber-300">Settings &rarr; Ripping &rarr; Media Directories</a> to the directory containing your BDMV/VIDEO_TS folders.</p>
+		</div>
+	{:else if error}
 		<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
 			{error}
 		</div>
