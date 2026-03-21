@@ -4,10 +4,7 @@
 	import type { FolderScanResult, SearchResult, MediaDetail, FolderCreateRequest } from '$lib/types/arm';
 	import FolderBrowser from '$lib/components/FolderBrowser.svelte';
 
-	function posterSrc(url: string | null | undefined): string {
-		if (!url) return '';
-		return `/api/jobs/folder/poster-proxy?url=${encodeURIComponent(url)}`;
-	}
+	import { posterSrc } from '$lib/utils/poster';
 
 	interface Props {
 		open: boolean;

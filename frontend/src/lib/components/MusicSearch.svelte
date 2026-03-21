@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Job, Track, MusicSearchResult, MusicDetail, TitleUpdate } from '$lib/types/arm';
 	import { searchMusicMetadata, fetchMusicDetail, updateJobTitle, setJobTracks } from '$lib/api/jobs';
+	import { posterSrc } from '$lib/utils/poster';
 
 	interface Props {
 		job: Job;
@@ -373,7 +374,7 @@
 								<div class="relative aspect-square w-full">
 									{#if hasValidPoster(result.poster_url)}
 										<img
-											src={result.poster_url}
+											src={posterSrc(result.poster_url)}
 											alt={result.title}
 											class="aspect-square w-full object-cover"
 											loading="lazy"
@@ -460,7 +461,7 @@
 								<!-- Compact header -->
 								<div class="flex items-center gap-2 border-b border-primary/15 p-2 dark:border-primary/20">
 									{#if hasValidPoster(flipData.poster_url)}
-										<img src={flipData.poster_url} alt="" class="h-8 w-8 shrink-0 rounded object-cover" />
+										<img src={posterSrc(flipData.poster_url)} alt="" class="h-8 w-8 shrink-0 rounded object-cover" />
 									{/if}
 									<div class="min-w-0 flex-1">
 										<p class="truncate text-xs font-semibold text-gray-900 dark:text-white">{flipData.title}</p>
@@ -556,7 +557,7 @@
 					<div class="relative h-28 w-28 shrink-0 overflow-hidden rounded-md">
 						{#if hasValidPoster(detail.poster_url)}
 							<img
-								src={detail.poster_url}
+								src={posterSrc(detail.poster_url)}
 								alt={detail.title}
 								class="h-full w-full object-cover"
 								onerror={() => handleImgError(detail!.poster_url!)}

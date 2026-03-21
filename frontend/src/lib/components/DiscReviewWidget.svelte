@@ -3,6 +3,7 @@
 	import type { Job, JobDetail } from '$lib/types/arm';
 	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle, toggleMultiTitle, updateTrack } from '$lib/api/jobs';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
+	import { posterSrc } from '$lib/utils/poster';
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
 	import MusicSearch from './MusicSearch.svelte';
@@ -323,7 +324,7 @@
 		<!-- Poster -->
 		{#if job.poster_url}
 			<img
-				src={job.poster_url}
+				src={posterSrc(job.poster_url)}
 				alt={job.title ?? 'Poster'}
 				class="h-24 shrink-0 rounded-sm object-cover {isMusic ? 'w-24' : 'w-16'}"
 			/>
@@ -657,7 +658,7 @@
 														{#if track.title}
 															<div class="flex items-center gap-1.5">
 																{#if track.poster_url}
-																	<img src={track.poster_url} alt="" class="h-6 w-4 rounded-sm object-cover" />
+																	<img src={posterSrc(track.poster_url)} alt="" class="h-6 w-4 rounded-sm object-cover" />
 																{/if}
 																<span class="font-medium text-gray-700 dark:text-gray-300">{track.title}</span>
 																{#if track.year}

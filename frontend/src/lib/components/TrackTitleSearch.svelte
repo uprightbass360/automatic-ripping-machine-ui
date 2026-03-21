@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Track, TrackTitleUpdate, SearchResult, MediaDetail } from '$lib/types/arm';
 	import { searchMetadata, fetchMediaDetail, updateTrackTitle, clearTrackTitle } from '$lib/api/jobs';
+	import { posterSrc } from '$lib/utils/poster';
 
 	interface Props {
 		jobId: number;
@@ -179,7 +180,7 @@
 			{#each results as result}
 				<button onclick={() => handleSelect(result)} class="flex items-center gap-2 rounded-md border border-primary/15 px-2 py-1 text-left text-xs hover:border-primary/40 dark:border-primary/20">
 					{#if result.poster_url}
-						<img src={result.poster_url} alt="" class="h-10 w-7 rounded-sm object-cover" loading="lazy" />
+						<img src={posterSrc(result.poster_url)} alt="" class="h-10 w-7 rounded-sm object-cover" loading="lazy" />
 					{/if}
 					<div>
 						<p class="font-medium text-gray-900 dark:text-white">{result.title}</p>
