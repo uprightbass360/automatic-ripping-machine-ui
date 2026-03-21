@@ -1,12 +1,5 @@
-from fastapi import APIRouter, HTTPException, Query, Body
-from fastapi.responses import JSONResponse
-@router.delete("/logs/{filename}")
-def delete_log(filename: str):
-    success = log_reader.delete_log(filename)
-    if not success:
-        raise HTTPException(status_code=404, detail="Log file not found or could not be deleted")
-    return JSONResponse(content={"success": True})
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import JSONResponse
 
 from backend.models.schemas import LogContentResponse, LogFileSchema, StructuredLogResponse
 from backend.services import log_reader
@@ -17,6 +10,14 @@ router = APIRouter(prefix="/api", tags=["logs"])
 @router.get("/logs", response_model=list[LogFileSchema])
 def list_logs():
     return log_reader.list_logs()
+
+
+@router.delete("/logs/{filename}")
+def delete_log(filename: str):
+    success = log_reader.delete_log(filename)
+    if not success:
+        raise HTTPException(status_code=404, detail="Log file not found or could not be deleted")
+    return JSONResponse(content={"success": True})
 
 
 @router.get("/logs/{filename}/structured", response_model=StructuredLogResponse, responses={404: {"description": "Log file not found"}})
