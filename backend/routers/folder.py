@@ -1,7 +1,10 @@
 """Folder import proxy — routes folder scan/create through the ARM backend."""
 from typing import Any
+from urllib.parse import urlparse
 
-from fastapi import APIRouter, HTTPException
+import httpx
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from backend.services import arm_client
@@ -45,3 +48,32 @@ async def scan_folder(req: FolderScanRequest) -> dict[str, Any]:
 async def create_folder_job(req: FolderCreateRequest) -> dict[str, Any]:
     """Create a folder import job."""
     return _check_result(await arm_client.create_folder_job(req.model_dump()))
+
+
+_ALLOWED_IMAGE_HOSTS = {
+    "m.media-amazon.com",
+    "image.tmdb.org",
+    "images-na.ssl-images-amazon.com",
+    "coverartarchive.org",
+    "ia.media-imdb.com",
+}
+
+
+@router.get("/poster-proxy")
+async def poster_proxy(url: str = Query(..., description="Poster image URL")) -> Response:
+    """Proxy external poster images to avoid browser ORB/CORS blocking."""
+    parsed = urlparse(url)
+    if parsed.hostname not in _ALLOWED_IMAGE_HOSTS:
+        raise HTTPException(400, "Image host not allowed")
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            content_type = resp.headers.get("content-type", "image/jpeg")
+            return Response(
+                content=resp.content,
+                media_type=content_type,
+                headers={"Cache-Control": "public, max-age=86400"},
+            )
+    except httpx.HTTPError:
+        raise HTTPException(502, "Failed to fetch poster image")
