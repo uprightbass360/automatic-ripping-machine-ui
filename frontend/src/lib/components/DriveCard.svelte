@@ -112,77 +112,86 @@
 	}
 </script>
 
-<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark {isStale ? 'opacity-60' : ''}">
-	<div class="mb-3 flex items-center justify-between">
-		<div class="flex items-center gap-2">
-			<h3 class="font-semibold text-gray-900 dark:text-white">
+<div class="rounded-lg border border-primary/20 bg-surface p-2.5 shadow-xs dark:border-primary/20 dark:bg-surface-dark {isStale ? 'opacity-60' : ''}">
+	<!-- Header: name + rename + status -->
+	<div class="mb-1 flex items-center justify-between">
+		<div class="flex min-w-0 items-center gap-1.5">
+			<h3 class="truncate font-semibold text-gray-900 dark:text-white">
 				{drive.name || drive.mount || `Drive ${drive.drive_id}`}
 			</h3>
 			{#if isStale}
-				<span class="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">Stale</span>
+				<span class="flex-shrink-0 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">Stale</span>
+			{:else if !editing}
+				<button
+					onclick={startEdit}
+					class="flex-shrink-0 rounded border border-primary/15 px-1.5 py-0 text-[10px] text-gray-500 hover:bg-primary/10 dark:border-primary/20 dark:text-gray-400 dark:hover:bg-primary/15"
+				>Rename</button>
 			{/if}
 		</div>
 		{#if drive.current_job}
 			<StatusBadge status={drive.current_job.status} />
 		{:else}
-			<span class="text-xs text-gray-400">Idle</span>
-		{/if}
-	</div>
-	<div class="mb-3">
-		{#if editing}
-			<div class="flex items-center gap-2">
-				<input
-					type="text"
-					bind:value={editName}
-					onkeydown={onKeydown}
-					class="rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm font-semibold text-gray-900 dark:border-primary/30 dark:bg-primary/10 dark:text-white"
-					disabled={saving}
-				/>
-				<button
-					onclick={saveEdit}
-					disabled={saving}
-					class="rounded-sm bg-primary px-2 py-1 text-xs text-on-primary hover:bg-primary-hover disabled:opacity-50"
-				>Save</button>
-				<button
-					onclick={cancelEdit}
-					disabled={saving}
-					class="rounded-sm px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-				>Cancel</button>
-			</div>
-		{:else}
-			<button
-				onclick={startEdit}
-				class="rounded-md px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15"
-			>Change Name</button>
+			<span class="flex-shrink-0 text-xs text-gray-400">Idle</span>
 		{/if}
 	</div>
 
-	<div class="space-y-1 text-sm text-gray-500 dark:text-gray-400">
+	<!-- Name editing -->
+	{#if editing}
+		<div class="mb-2 flex items-center gap-2">
+			<input
+				type="text"
+				bind:value={editName}
+				onkeydown={onKeydown}
+				class="rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm font-semibold text-gray-900 dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+				disabled={saving}
+			/>
+			<button
+				onclick={saveEdit}
+				disabled={saving}
+				class="rounded-sm bg-primary px-2 py-1 text-xs text-on-primary hover:bg-primary-hover disabled:opacity-50"
+			>Save</button>
+			<button
+				onclick={cancelEdit}
+				disabled={saving}
+				class="rounded-sm px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+			>Cancel</button>
+		</div>
+	{/if}
+
+	<!-- Drive info -->
+	<div class="mb-1.5 text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
 		{#if drive.maker || drive.model}
-			<p>{[drive.maker, drive.model].filter(Boolean).join(' ')}</p>
+			<span>{[drive.maker, drive.model].filter(Boolean).join(' ')}</span>
 		{/if}
 		{#if drive.mount}
-			<p class="font-mono text-xs">{drive.mount}</p>
+			{#if drive.maker || drive.model} · {/if}<span class="font-mono text-[10px]">{drive.mount}</span>
+		{/if}
+		{#if drive.connection || drive.firmware}
+			<br/>
+			{#if drive.connection}<span>{drive.connection}</span>{/if}
+			{#if drive.connection && drive.firmware} · {/if}
+			{#if drive.firmware}<span class="font-mono text-[10px]">FW {drive.firmware}</span>{/if}
 		{/if}
 	</div>
 
-	<div class="mt-3 flex flex-wrap gap-1.5">
+	<!-- Disc type badges + 4K -->
+	<div class="mb-2 flex flex-wrap items-center gap-1">
 		{#if drive.read_cd}
-			<span class="inline-flex items-center gap-1 rounded-sm bg-green-500/20 px-1.5 py-0.5 text-xs text-green-700 dark:text-green-400">
+			<span class="inline-flex items-center gap-1 rounded-sm bg-green-500/20 px-1.5 py-0.5 text-[10px] text-green-700 dark:text-green-400">
 				<DiscTypeIcon disctype="music" size="h-3.5 w-3.5" />CD
 			</span>
 		{/if}
 		{#if drive.read_dvd}
-			<span class="inline-flex items-center gap-1 rounded-sm bg-primary/15 px-1.5 py-0.5 text-xs text-primary-text dark:text-primary-text-dark">
+			<span class="inline-flex items-center gap-1 rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] text-primary-text dark:text-primary-text-dark">
 				<DiscTypeIcon disctype="dvd" size="h-3.5 w-3.5" />DVD
 			</span>
 		{/if}
 		{#if drive.read_bd}
-			<span class="inline-flex items-center gap-1 rounded-sm bg-purple-500/20 px-1.5 py-0.5 text-xs text-purple-700 dark:text-purple-400">
+			<span class="inline-flex items-center gap-1 rounded-sm bg-purple-500/20 px-1.5 py-0.5 text-[10px] text-purple-700 dark:text-purple-400">
 				<DiscTypeIcon disctype="bluray" size="h-3.5 w-3.5" />Blu-ray
 			</span>
 			<label
-				class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
+				class="inline-flex items-center gap-1 rounded-sm bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-400"
 				title="Display only — UHD disc detection and transcoding presets are applied automatically regardless of this setting."
 			>
 				<input
@@ -190,22 +199,22 @@
 					checked={drive.uhd_capable ?? false}
 					disabled={togglingUhd}
 					onchange={toggleUhd}
-					class="h-3.5 w-3.5 rounded-sm border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700"
+					class="h-3 w-3 rounded-sm border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700"
 				/>
-				UHD Capable
-				<svg class="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				4K
+				<svg class="h-3 w-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 				</svg>
 			</label>
 		{/if}
 	</div>
 
-	<!-- Drive mode badge -->
-	<div class="mt-3 flex items-center gap-2 border-t border-primary/15 pt-3 dark:border-primary/20">
+	<!-- Consolidated action bar -->
+	<div class="flex items-center gap-1 rounded-lg border border-primary/10 bg-white/[0.025] p-1 dark:border-primary/10">
 		<button
 			onclick={toggleMode}
 			disabled={togglingMode}
-			class="rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors
+			class="rounded-md px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors
 				{drive.drive_mode === 'manual'
 					? 'bg-amber-500/20 text-amber-700 hover:bg-amber-500/30 dark:text-amber-400'
 					: 'bg-primary/10 text-primary-text hover:bg-primary/20 dark:text-primary-text-dark'}
@@ -215,58 +224,73 @@
 			{drive.drive_mode === 'manual' ? 'Manual' : 'Auto'}
 		</button>
 
-		<div class="ml-auto flex items-center gap-1.5">
-			<!-- Eject -->
-			<button
-				onclick={() => handleEject('eject')}
-				disabled={ejecting}
-				class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300 disabled:opacity-50 transition-colors"
-				title="Eject tray"
-			>
-				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7M5 19h14" />
-				</svg>
-			</button>
-			<!-- Close tray -->
-			<button
-				onclick={() => handleEject('close')}
-				disabled={ejecting}
-				class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300 disabled:opacity-50 transition-colors"
-				title="Close tray"
-			>
-				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7M5 5h14" />
-				</svg>
-			</button>
-		</div>
-	</div>
+		<div class="h-6 w-px bg-primary/10 dark:bg-primary/15"></div>
 
-	<div class="mt-2 flex items-center gap-2">
+		<button
+			onclick={() => handleEject('eject')}
+			disabled={ejecting}
+			class="flex flex-1 items-center justify-center gap-1 rounded-md bg-primary/10 px-2 py-1.5 text-xs text-primary-text transition-colors hover:bg-primary/20 disabled:opacity-50 dark:text-primary-text-dark dark:hover:bg-primary/25"
+			title="Eject tray"
+		>
+			<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7M5 19h14" />
+			</svg>
+			Eject
+		</button>
+		<button
+			onclick={() => handleEject('close')}
+			disabled={ejecting}
+			class="flex flex-1 items-center justify-center gap-1 rounded-md bg-primary/10 px-2 py-1.5 text-xs text-primary-text transition-colors hover:bg-primary/20 disabled:opacity-50 dark:text-primary-text-dark dark:hover:bg-primary/25"
+			title="Close tray"
+		>
+			<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7M5 5h14" />
+			</svg>
+			Insert
+		</button>
 		<button
 			onclick={handleScan}
 			disabled={scanning || scanCooldown}
-			class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors
-				{scanning ? 'bg-primary/30 text-primary-text dark:text-primary-text-dark' : 'bg-primary/15 text-primary-text hover:bg-primary/25 dark:text-primary-text-dark dark:hover:bg-primary/30'}
-				disabled:opacity-50 disabled:cursor-not-allowed"
+			class="flex flex-1 items-center justify-center gap-1 rounded-md bg-primary/10 px-2 py-1.5 text-xs text-primary-text transition-colors hover:bg-primary/20 disabled:opacity-50 dark:text-primary-text-dark dark:hover:bg-primary/25"
+			title="Force scan for media"
 		>
-			<svg class="h-4 w-4 {scanning ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg class="h-3.5 w-3.5 {scanning ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
 			</svg>
-			{scanning ? 'Scanning...' : scanCooldown ? 'Scan Sent' : 'Force Scan'}
+			{scanning ? 'Scanning...' : scanCooldown ? 'Sent' : 'Scan'}
 		</button>
+
 		{#if isStale && !drive.current_job}
 			<button
 				onclick={handleRemove}
 				disabled={removing}
-				class="rounded-lg px-3 py-1.5 text-sm font-medium text-red-700 bg-red-500/15 hover:bg-red-500/25 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-500/30 transition-colors"
+				class="rounded-md bg-red-500/15 px-2 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-500/25 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-500/30"
 			>
 				{removing ? 'Removing...' : 'Remove'}
 			</button>
 		{/if}
-		{#if drive.current_job}
-			<a href="/jobs/{drive.current_job.job_id}" class="text-sm text-primary-text hover:underline dark:text-primary-text-dark">
-				{drive.current_job.title || drive.current_job.label || 'Active Job'}
-			</a>
-		{/if}
 	</div>
+
+	<!-- Current rip / previous job -->
+	{#if drive.current_job || drive.job_id_previous}
+		<div class="mt-2 border-t border-primary/10 pt-1.5 dark:border-primary/15">
+			{#if drive.current_job}
+				<div class="flex items-center gap-1.5">
+					<span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">Current Rip</span>
+					<StatusBadge status={drive.current_job.status} />
+				</div>
+				<a href="/jobs/{drive.current_job.job_id}" class="block truncate text-[11px] text-primary-text hover:underline dark:text-primary-text-dark">
+					{drive.current_job.title || drive.current_job.label || 'Active Job'}
+				</a>
+			{/if}
+			{#if drive.job_id_previous}
+				<div class="mt-0.5">
+					<span class="text-[9px] text-gray-400 dark:text-gray-500">Prev: </span>
+					<a href="/jobs/{drive.job_id_previous}" class="text-[9px] text-gray-500 hover:underline dark:text-gray-400">
+						Job #{drive.job_id_previous}
+					</a>
+				</div>
+			{/if}
+		</div>
+	{/if}
 </div>
