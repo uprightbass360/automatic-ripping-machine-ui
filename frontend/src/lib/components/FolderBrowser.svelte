@@ -29,10 +29,21 @@
 		return `${(bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
 	}
 
-	function isDiscFolder(name: string): string | null {
+	function isDiscStructureDir(name: string): boolean {
 		const upper = name.toUpperCase();
-		if (upper === 'BDMV' || upper === 'CERTIFICATE') return 'BDMV';
-		if (upper === 'VIDEO_TS' || upper === 'AUDIO_TS') return 'VIDEO_TS';
+		return upper === 'BDMV' || upper === 'VIDEO_TS' || upper === 'CERTIFICATE' || upper === 'AUDIO_TS';
+	}
+
+	/** True if the current listing contains BDMV or VIDEO_TS — this folder IS a disc. */
+	let currentIsDisc = $derived(
+		entries.some((e) => e.type === 'directory' && (e.name.toUpperCase() === 'BDMV' || e.name.toUpperCase() === 'VIDEO_TS'))
+	);
+
+	/** Badge for entries that are disc structure internals. */
+	function discBadgeFor(name: string): string | null {
+		const upper = name.toUpperCase();
+		if (upper === 'BDMV' || upper === 'CERTIFICATE') return 'Blu-ray';
+		if (upper === 'VIDEO_TS' || upper === 'AUDIO_TS') return 'DVD';
 		return null;
 	}
 
@@ -60,10 +71,20 @@
 	}
 
 	function handleOpen(entry: FileEntry) {
+		// Don't drill into disc structure internals
+		if (isDiscStructureDir(entry.name)) return;
 		const fullPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
 		selectedPath = null;
 		loadDirectory(fullPath);
 	}
+
+	// When we navigate into a disc folder, auto-select the current path
+	$effect(() => {
+		if (currentIsDisc && currentPath) {
+			selectedPath = currentPath;
+			onselect(currentPath);
+		}
+	});
 
 	function goBack() {
 		if (!currentPath || currentPath === ingressPath) return;
@@ -141,6 +162,13 @@
 			<span class="font-medium text-gray-700 dark:text-gray-300">{currentPath || ingressPath}</span>
 		</div>
 
+		<!-- Disc detected banner -->
+		{#if currentIsDisc}
+			<div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+				Disc folder detected — this folder is ready to import.
+			</div>
+		{/if}
+
 		<!-- Directory table -->
 		{#if directories.length === 0}
 			<p class="py-6 text-center text-sm text-gray-400 dark:text-gray-500">No subdirectories found.</p>
@@ -157,18 +185,21 @@
 					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 						{#each directories as entry (entry.name)}
 							{@const fullPath = currentPath ? `${currentPath}/${entry.name}` : entry.name}
-							{@const discBadge = isDiscFolder(entry.name)}
+							{@const isStructureDir = isDiscStructureDir(entry.name)}
+							{@const badge = discBadgeFor(entry.name)}
 							<tr
-								class="cursor-pointer transition-colors hover:bg-primary/5 dark:hover:bg-primary/10 {selectedPath === fullPath ? 'bg-primary/15 dark:bg-primary/15' : ''}"
-								onclick={() => handleSelect(entry)}
-								ondblclick={() => handleOpen(entry)}
+								class="transition-colors {isStructureDir
+									? 'cursor-default opacity-50'
+									: `cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10 ${selectedPath === fullPath ? 'bg-primary/15 dark:bg-primary/15' : ''}`}"
+								onclick={() => { if (!isStructureDir) handleSelect(entry); }}
+								ondblclick={() => { if (!isStructureDir) handleOpen(entry); }}
 							>
 								<td class="flex items-center gap-2 px-4 py-2">
 									<FileIcon category="directory" />
-									<span class="text-gray-900 dark:text-white">{entry.name}</span>
-									{#if discBadge}
+									<span class="{isStructureDir ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}">{entry.name}</span>
+									{#if badge}
 										<span class="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-											{discBadge}
+											{badge}
 										</span>
 									{/if}
 								</td>
@@ -181,6 +212,9 @@
 					</tbody>
 				</table>
 			</div>
+			{#if !currentIsDisc}
+				<p class="mt-2 text-xs text-gray-400 dark:text-gray-500">Navigate to a folder containing BDMV or VIDEO_TS and select it.</p>
+			{/if}
 		{/if}
 	{/if}
 </div>
