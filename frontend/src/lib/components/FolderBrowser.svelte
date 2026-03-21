@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { fetchIngressRoot, fetchIngressDirectory } from '$lib/api/folder';
+	import { showImportWizard } from '$lib/stores/importWizard';
 	import type { FileEntry } from '$lib/types/files';
 	import FileIcon from '$lib/components/FileIcon.svelte';
 
@@ -90,7 +92,13 @@
 	{#if needsConfig}
 		<div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
 			<p class="font-medium">Folder Import Path is not configured</p>
-			<p class="mt-1">Set the <strong>Folder Import Path</strong> in <a href="/settings#ripping/media-directories" class="underline hover:text-amber-900 dark:hover:text-amber-300">Settings &rarr; Ripping &rarr; Media Directories</a> to the directory containing your BDMV/VIDEO_TS folders.</p>
+			<p class="mt-1">Set the <strong>Folder Import Path</strong> in
+				<button
+					type="button"
+					class="underline hover:text-amber-900 dark:hover:text-amber-300"
+					onclick={() => { showImportWizard.set(false); goto('/settings#ripping/media-directories'); }}
+				>Settings &rarr; Ripping &rarr; Media Directories</button>
+				to the directory containing your BDMV/VIDEO_TS folders.</p>
 		</div>
 	{:else if error}
 		<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
