@@ -44,7 +44,10 @@
 			currentPath = listing.path;
 			entries = listing.entries;
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load directory';
+			const msg = e instanceof Error ? e.message : 'Failed to load directory';
+			error = msg.includes('unreachable') || msg.includes('503')
+				? 'ARM service is starting up — try again in a moment'
+				: msg;
 		} finally {
 			loading = false;
 		}
@@ -70,7 +73,10 @@
 		loadDirectory(parent);
 	}
 
-	onMount(async () => {
+	async function init() {
+		loading = true;
+		error = null;
+		needsConfig = false;
 		try {
 			const roots = await fetchIngressRoot();
 			const ingress = roots.find((r) => r.key === 'ingress');
@@ -82,10 +88,15 @@
 			ingressPath = ingress.path;
 			await loadDirectory(ingress.path);
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load file roots';
+			const msg = e instanceof Error ? e.message : 'Failed to load file roots';
+			error = msg.includes('unreachable') || msg.includes('503')
+				? 'ARM service is starting up — try again in a moment'
+				: msg;
 			loading = false;
 		}
-	});
+	}
+
+	onMount(() => { init(); });
 </script>
 
 <div class="space-y-3">
@@ -102,7 +113,12 @@
 		</div>
 	{:else if error}
 		<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-			{error}
+			<p>{error}</p>
+			<button
+				type="button"
+				onclick={init}
+				class="mt-2 rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+			>Retry</button>
 		</div>
 	{:else if loading}
 		<div class="py-8 text-center text-gray-400">Loading...</div>
