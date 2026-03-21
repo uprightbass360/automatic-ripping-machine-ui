@@ -11,8 +11,8 @@
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
 	import SectionFrame from '$lib/components/SectionFrame.svelte';
-	import JobStatsCard from '$lib/components/JobStatsCard.svelte';
 	import FolderImportWizard from '$lib/components/FolderImportWizard.svelte';
+	import { page as pageStore } from '$app/stores';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -35,6 +35,17 @@
 	let dashError = $state<string | null>(null);
 
 	let showImportWizard = $state(false);
+
+	// Open import wizard if navigated with ?import=1
+	$effect(() => {
+		if ($pageStore.url.searchParams.get('import') === '1') {
+			showImportWizard = true;
+			// Clean up the URL param
+			const url = new URL(window.location.href);
+			url.searchParams.delete('import');
+			window.history.replaceState({}, '', url.pathname);
+		}
+	});
 
 	let dismissedJobIds = $state(new Set<number>());
 	let waitingJobs = $derived(
@@ -189,16 +200,6 @@
 		<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
 	</div>
 
-	<div class="mb-4 flex justify-end">
-		<button
-			type="button"
-			onclick={() => showImportWizard = true}
-			class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary/90"
-		>
-			Import Folder
-		</button>
-	</div>
-
 	<!-- Global pause banner -->
 	{#if dashReady && !dash.ripping_enabled}
 		<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
@@ -270,9 +271,6 @@
 			</div>
 		</section>
 	{/if}
-
-	<!-- Ripping Statistics -->
-	<JobStatsCard />
 
 	<!-- All Jobs -->
 	<section class="space-y-4">
