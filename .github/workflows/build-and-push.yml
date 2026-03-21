@@ -23,7 +23,7 @@ jobs:
 
       - name: Set image name
         id: image
-        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/arm-ui" >> "$GITHUB_OUTPUT"
 
       - name: Read VERSION file
         id: version
