@@ -21,6 +21,7 @@
 	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
 	let active = $derived(isJobActive(job.status));
 	let hasErrors = $derived(!!job.errors && job.errors.trim().length > 0);
+	let isFolderImport = $derived(job.source_type === 'folder');
 	let discLabelDiffers = $derived(
 		!!job.label && !!job.title && job.label.toLowerCase() !== job.title.toLowerCase()
 	);
@@ -52,7 +53,7 @@
 				<h3 class="truncate font-semibold text-gray-900 dark:text-white">
 					{job.title || job.label || 'Untitled'}
 				</h3>
-				<StatusBadge status={job.status} />
+				<StatusBadge status={isFolderImport && job.status === 'ripping' ? 'importing' : job.status} />
 			</div>
 
 			<!-- Row 2: Year, IMDB, disc label -->
@@ -77,7 +78,9 @@
 					{#if job.stage}
 						<span class="rounded-sm bg-primary-light-bg px-1.5 py-0.5 font-medium text-primary-text dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">{job.stage}</span>
 					{/if}
-					{#if job.status === 'info'}
+					{#if isFolderImport}
+						<!-- Folder imports use "all" mode — don't show per-track counts -->
+					{:else if job.status === 'info'}
 						<span>Scanning{job.no_of_titles ? `... ${job.no_of_titles} titles` : '...'}</span>
 					{:else if job.tracks_total != null && job.tracks_total > 0}
 						<span>{job.tracks_ripped ?? 0} / {job.tracks_total} titles</span>
