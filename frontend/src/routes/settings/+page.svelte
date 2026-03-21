@@ -762,13 +762,13 @@
 				{ keys: ['RIPMETHOD', 'MKV_ARGS', 'DATA_RIP_PARAMETERS'] },
 			]},
 			{ label: 'MakeMKV', subpanels: [
-				{ keys: ['MAKEMKV_PERMA_KEY', 'MAKEMKV_COMMUNITY_KEYDB', 'MAX_CONCURRENT_MAKEMKVINFO'] },
+				{ keys: ['MAKEMKV_PERMA_KEY', 'MAKEMKV_COMMUNITY_KEYDB', 'MAX_CONCURRENT_MAKEMKVINFO', 'PRESCAN_TIMEOUT'] },
 			]},
 			{ label: 'Post-Rip', subpanels: [
 				{ keys: ['AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER'] },
 			]},
 			{ label: 'Media Directories', subpanels: [
-				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'MUSIC_PATH', 'EXTRAS_SUB'] },
+				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'MUSIC_PATH', 'INGRESS_PATH', 'EXTRAS_SUB'] },
 			]},
 			{ label: 'File Permissions', subpanels: [
 				{ keys: ['UMASK', 'SET_MEDIA_PERMISSIONS', 'CHMOD_VALUE', 'SET_MEDIA_OWNER', 'CHOWN_USER', 'CHOWN_GROUP'] },
