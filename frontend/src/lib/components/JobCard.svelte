@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Job } from '$lib/types/arm';
+	import { posterSrc } from '$lib/utils/poster';
 	import StatusBadge from './StatusBadge.svelte';
 	import TimeAgo from './TimeAgo.svelte';
 	import ProgressBar from './ProgressBar.svelte';
@@ -32,7 +33,7 @@
 	<div class="flex gap-4">
 		{#if job.poster_url}
 			<img
-				src={job.poster_url}
+				src={posterSrc(job.poster_url)}
 				alt={job.title ?? 'Poster'}
 				class="h-24 w-16 rounded-sm object-cover"
 			/>

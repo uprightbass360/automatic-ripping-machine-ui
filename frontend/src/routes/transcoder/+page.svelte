@@ -3,6 +3,7 @@
 	import { createPollingStore } from '$lib/stores/polling';
 	import { fetchTranscoderStats, fetchTranscoderJobs, retryTranscoderJob, deleteTranscoderJob, retranscodeTranscoderJob } from '$lib/api/transcoder';
 	import { fetchStructuredTranscoderLogContent } from '$lib/api/logs';
+	import { posterSrc } from '$lib/utils/poster';
 	import type { TranscoderStats, TranscoderJobListResponse } from '$lib/types/transcoder';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
@@ -184,7 +185,7 @@
 							<!-- Poster -->
 							{#if job.poster_url}
 								<img
-									src={job.poster_url}
+									src={posterSrc(job.poster_url)}
 									alt={job.title ?? 'Poster'}
 									class="h-24 w-16 shrink-0 rounded-sm object-cover"
 								/>

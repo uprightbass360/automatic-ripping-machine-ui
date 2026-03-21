@@ -3,6 +3,7 @@
 	import type { Job } from '$lib/types/arm';
 	import { fetchCrcLookup, submitToCrcDb, updateJobTitle } from '$lib/api/jobs';
 	import type { CrcLookupResponse, CrcLookupResult } from '$lib/api/jobs';
+	import { posterSrc } from '$lib/utils/poster';
 
 	interface Props {
 		job: Job;
@@ -155,7 +156,7 @@
 					<div class="flex gap-4">
 					{#if result.poster_url}
 						<img
-							src={result.poster_url}
+							src={posterSrc(result.poster_url)}
 							alt={result.title}
 							class="h-28 w-20 shrink-0 rounded-sm object-cover"
 							loading="lazy"

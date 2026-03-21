@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { fetchJob, retranscodeJob, fetchMusicDetail, toggleMultiTitle, updateTrack } from '$lib/api/jobs';
+	import { posterSrc } from '$lib/utils/poster';
 	import { fetchStructuredTranscoderLogContent, fetchTranscoderLogForArmJob } from '$lib/api/logs';
 	import type { JobDetail, MusicDetail } from '$lib/types/arm';
 	import JobActions from '$lib/components/JobActions.svelte';
@@ -234,7 +235,7 @@
 		<div class="flex flex-col gap-6 md:flex-row">
 			{#if job.poster_url}
 				<img
-					src={job.poster_url}
+					src={posterSrc(job.poster_url)}
 					alt={job.title ?? 'Poster'}
 					class="rounded-lg object-cover shadow-md {isMusicDisc ? 'h-48 w-48' : 'h-64 w-44'}"
 				/>
@@ -521,7 +522,7 @@
 											{#if track.title}
 												<div class="flex items-center gap-1.5">
 													{#if track.poster_url}
-														<img src={track.poster_url} alt="" class="h-8 w-5 rounded-sm object-cover" />
+														<img src={posterSrc(track.poster_url)} alt="" class="h-8 w-5 rounded-sm object-cover" />
 													{/if}
 													<div>
 														<span class="font-medium text-gray-900 dark:text-white">{track.title}</span>
