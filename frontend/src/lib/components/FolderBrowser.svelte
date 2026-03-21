@@ -19,8 +19,13 @@
 	let error = $state<string | null>(null);
 	let needsConfig = $state(false);
 	let selectedPath = $state<string | null>(null);
+	let filter = $state('');
 
-	let directories = $derived(entries.filter((e) => e.type === 'directory'));
+	let directories = $derived(
+		entries
+			.filter((e) => e.type === 'directory')
+			.filter((e) => !filter || e.name.toLowerCase().includes(filter.toLowerCase()))
+	);
 
 	function formatSize(bytes: number): string {
 		if (bytes === 0) return '0 B';
@@ -50,6 +55,7 @@
 	async function loadDirectory(path: string) {
 		loading = true;
 		error = null;
+		filter = '';
 		try {
 			const listing = await fetchIngressDirectory(path);
 			currentPath = listing.path;
@@ -161,6 +167,16 @@
 			{/if}
 			<span class="font-medium text-gray-700 dark:text-gray-300">{currentPath || ingressPath}</span>
 		</div>
+
+		<!-- Filter -->
+		{#if entries.filter(e => e.type === 'directory').length > 5}
+			<input
+				type="text"
+				bind:value={filter}
+				placeholder="Filter folders..."
+				class="w-full rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500"
+			/>
+		{/if}
 
 		<!-- Disc detected banner -->
 		{#if currentIsDisc}
