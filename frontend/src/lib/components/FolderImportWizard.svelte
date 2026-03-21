@@ -1,0 +1,441 @@
+<script lang="ts">
+	import { scanFolder, createFolderJob } from '$lib/api/folder';
+	import { searchMetadata, fetchMediaDetail } from '$lib/api/jobs';
+	import type { FolderScanResult, SearchResult, MediaDetail, FolderCreateRequest } from '$lib/types/arm';
+	import FolderBrowser from '$lib/components/FolderBrowser.svelte';
+
+	interface Props {
+		open: boolean;
+		onclose: () => void;
+		oncreated: () => void;
+	}
+
+	let { open, onclose, oncreated }: Props = $props();
+
+	// Wizard state
+	let step = $state(1);
+	let selectedPath = $state('');
+	let scanning = $state(false);
+	let scanError = $state<string | null>(null);
+	let scanResult = $state<FolderScanResult | null>(null);
+
+	// Step 2 editable fields
+	let editTitle = $state('');
+	let editYear = $state('');
+	let editType = $state<'movie' | 'series'>('movie');
+	let editImdbId = $state('');
+	let editPosterUrl = $state('');
+
+	// Search state
+	let searchQuery = $state('');
+	let searching = $state(false);
+	let searchResults = $state<SearchResult[]>([]);
+	let searchError = $state<string | null>(null);
+	let loadingDetail = $state(false);
+	let detail = $state<MediaDetail | null>(null);
+
+	// Step 3
+	let importing = $state(false);
+	let importError = $state<string | null>(null);
+
+	const inputBase =
+		'rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
+	const btnBase =
+		'rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors';
+
+	function formatSize(bytes: number): string {
+		if (bytes === 0) return '0 B';
+		const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(1024));
+		return `${(bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
+	}
+
+	function reset() {
+		step = 1;
+		selectedPath = '';
+		scanning = false;
+		scanError = null;
+		scanResult = null;
+		editTitle = '';
+		editYear = '';
+		editType = 'movie';
+		editImdbId = '';
+		editPosterUrl = '';
+		searchQuery = '';
+		searching = false;
+		searchResults = [];
+		searchError = null;
+		loadingDetail = false;
+		detail = null;
+		importing = false;
+		importError = null;
+	}
+
+	function handleClose() {
+		reset();
+		onclose();
+	}
+
+	function handleFolderSelect(path: string) {
+		selectedPath = path;
+	}
+
+	async function goToStep2() {
+		if (!selectedPath) return;
+		scanning = true;
+		scanError = null;
+		try {
+			scanResult = await scanFolder(selectedPath);
+			editTitle = scanResult.title_suggestion;
+			editYear = scanResult.year_suggestion || '';
+			editType = 'movie';
+			editImdbId = '';
+			editPosterUrl = '';
+			searchQuery = scanResult.title_suggestion;
+			searchResults = [];
+			searchError = null;
+			detail = null;
+			step = 2;
+		} catch (e) {
+			scanError = e instanceof Error ? e.message : 'Scan failed';
+		} finally {
+			scanning = false;
+		}
+	}
+
+	async function handleSearch() {
+		if (!searchQuery.trim()) return;
+		searching = true;
+		searchError = null;
+		searchResults = [];
+		detail = null;
+		try {
+			searchResults = await searchMetadata(searchQuery.trim(), editYear.trim() || undefined);
+			if (searchResults.length === 0) {
+				searchError = 'No results found.';
+			}
+		} catch (e) {
+			searchError = e instanceof Error ? e.message : 'Search failed';
+		} finally {
+			searching = false;
+		}
+	}
+
+	async function handleSelectResult(result: SearchResult) {
+		if (result.imdb_id) {
+			loadingDetail = true;
+			try {
+				detail = await fetchMediaDetail(result.imdb_id);
+				editTitle = detail.title;
+				editYear = detail.year;
+				editType = detail.media_type === 'series' ? 'series' : 'movie';
+				editImdbId = detail.imdb_id ?? '';
+				editPosterUrl = detail.poster_url ?? '';
+			} catch {
+				// Fall back to search result
+				editTitle = result.title;
+				editYear = result.year;
+				editType = result.media_type === 'series' ? 'series' : 'movie';
+				editImdbId = result.imdb_id ?? '';
+				editPosterUrl = result.poster_url ?? '';
+			} finally {
+				loadingDetail = false;
+			}
+		} else {
+			editTitle = result.title;
+			editYear = result.year;
+			editType = result.media_type === 'series' ? 'series' : 'movie';
+			editPosterUrl = result.poster_url ?? '';
+		}
+	}
+
+	function handleSearchKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') handleSearch();
+	}
+
+	async function handleImport() {
+		if (!scanResult) return;
+		importing = true;
+		importError = null;
+		try {
+			const data: FolderCreateRequest = {
+				source_path: selectedPath,
+				title: editTitle.trim(),
+				year: editYear.trim() || null,
+				video_type: editType,
+				disctype: scanResult.disc_type,
+				imdb_id: editImdbId.trim() || null,
+				poster_url: editPosterUrl.trim() || null
+			};
+			await createFolderJob(data);
+			reset();
+			oncreated();
+		} catch (e) {
+			importError = e instanceof Error ? e.message : 'Import failed';
+		} finally {
+			importing = false;
+		}
+	}
+</script>
+
+{#if open}
+	<div class="fixed inset-0 z-50 flex items-center justify-center">
+		<!-- Backdrop -->
+		<button
+			type="button"
+			class="absolute inset-0 bg-black/50"
+			aria-label="Close dialog"
+			onclick={handleClose}
+		></button>
+
+		<!-- Dialog -->
+		<div class="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-lg bg-surface shadow-xl dark:bg-surface-dark">
+			<!-- Header -->
+			<div class="flex items-center justify-between border-b border-primary/20 px-6 py-4 dark:border-primary/20">
+				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Import Folder</h3>
+				<!-- Progress dots -->
+				<div class="flex items-center gap-2">
+					{#each [1, 2, 3] as s}
+						<div
+							class="h-2.5 w-2.5 rounded-full transition-colors {s === step
+								? 'bg-primary'
+								: s < step
+									? 'bg-primary/50'
+									: 'bg-gray-300 dark:bg-gray-600'}"
+						></div>
+					{/each}
+				</div>
+			</div>
+
+			<!-- Body -->
+			<div class="flex-1 overflow-y-auto px-6 py-4">
+				{#if step === 1}
+					<!-- Step 1: Pick Folder -->
+					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+						Select a folder from the ingress directory to import.
+					</p>
+					<FolderBrowser onselect={handleFolderSelect} />
+					{#if selectedPath}
+						<div class="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-gray-700 dark:border-primary/20 dark:bg-primary/10 dark:text-gray-300">
+							Selected: <span class="font-medium">{selectedPath}</span>
+						</div>
+					{/if}
+					{#if scanError}
+						<div class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+							{scanError}
+						</div>
+					{/if}
+
+				{:else if step === 2}
+					<!-- Step 2: Verify & Match -->
+					{#if scanResult}
+						<!-- Scan info -->
+						<div class="mb-4 flex flex-wrap gap-3 text-sm">
+							<span class="rounded-sm bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+								{scanResult.disc_type.toUpperCase()}
+							</span>
+							<span class="text-gray-500 dark:text-gray-400">{formatSize(scanResult.folder_size_bytes)}</span>
+							<span class="text-gray-500 dark:text-gray-400">{scanResult.stream_count} streams</span>
+							<span class="text-gray-500 dark:text-gray-400">Label: {scanResult.label}</span>
+						</div>
+
+						<!-- Poster preview + editable fields -->
+						<div class="mb-4 flex gap-4">
+							{#if editPosterUrl}
+								<img
+									src={editPosterUrl}
+									alt={editTitle}
+									class="h-36 w-24 shrink-0 rounded-md object-cover"
+								/>
+							{:else}
+								<div class="flex h-36 w-24 shrink-0 items-center justify-center rounded-md bg-primary/10 text-gray-400 dark:bg-primary/15">
+									<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+									</svg>
+								</div>
+							{/if}
+							<div class="grid flex-1 grid-cols-2 gap-3">
+								<label class="col-span-2">
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
+									<input type="text" bind:value={editTitle} class="w-full {inputBase}" />
+								</label>
+								<label>
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
+									<input type="text" bind:value={editYear} class="w-full {inputBase}" />
+								</label>
+								<label>
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</span>
+									<select bind:value={editType} class="w-full {inputBase}">
+										<option value="movie">Movie</option>
+										<option value="series">Series</option>
+									</select>
+								</label>
+								<label class="col-span-2">
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
+									<input type="text" bind:value={editImdbId} placeholder="tt..." class="w-full {inputBase}" />
+								</label>
+							</div>
+						</div>
+
+						<!-- Metadata search -->
+						<div class="space-y-3 border-t border-primary/20 pt-4 dark:border-primary/20">
+							<div class="flex gap-2">
+								<input
+									type="text"
+									bind:value={searchQuery}
+									onkeydown={handleSearchKeydown}
+									placeholder="Search title..."
+									class="flex-1 {inputBase}"
+								/>
+								<button
+									type="button"
+									onclick={handleSearch}
+									disabled={searching || !searchQuery.trim()}
+									class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
+								>
+									{searching ? 'Searching...' : 'Search'}
+								</button>
+							</div>
+
+							{#if searchError}
+								<p class="text-sm text-gray-500 dark:text-gray-400">{searchError}</p>
+							{/if}
+
+							{#if loadingDetail}
+								<p class="text-sm text-gray-400">Loading details...</p>
+							{/if}
+
+							{#if searchResults.length > 0}
+								<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+									{#each searchResults as result}
+										<button
+											type="button"
+											onclick={() => handleSelectResult(result)}
+											class="flex flex-col overflow-hidden rounded-lg border text-left transition-all border-primary/20 hover:border-primary/40 dark:border-primary/20 dark:hover:border-primary/40"
+										>
+											{#if result.poster_url}
+												<img
+													src={result.poster_url}
+													alt={result.title}
+													class="aspect-[2/3] w-full object-cover"
+													loading="lazy"
+												/>
+											{:else}
+												<div class="flex aspect-[2/3] w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15">
+													<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+													</svg>
+												</div>
+											{/if}
+											<div class="p-1.5">
+												<p class="text-xs font-medium text-gray-900 dark:text-white line-clamp-2">{result.title}</p>
+												<span class="text-[10px] text-gray-500 dark:text-gray-400">{result.year}</span>
+											</div>
+										</button>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{/if}
+
+				{:else if step === 3}
+					<!-- Step 3: Confirm -->
+					<div class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
+						<div class="flex gap-4">
+							{#if editPosterUrl}
+								<img
+									src={editPosterUrl}
+									alt={editTitle}
+									class="h-40 w-28 shrink-0 rounded-md object-cover"
+								/>
+							{:else}
+								<div class="flex h-40 w-28 shrink-0 items-center justify-center rounded-md bg-primary/10 text-gray-400 dark:bg-primary/15">
+									<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+									</svg>
+								</div>
+							{/if}
+							<div class="space-y-2 text-sm">
+								<h4 class="text-lg font-semibold text-gray-900 dark:text-white">{editTitle}</h4>
+								{#if editYear}
+									<p class="text-gray-500 dark:text-gray-400">{editYear}</p>
+								{/if}
+								<div class="flex flex-wrap gap-2">
+									<span class="rounded-sm bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+										{editType}
+									</span>
+									{#if scanResult}
+										<span class="rounded-sm bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+											{scanResult.disc_type.toUpperCase()}
+										</span>
+									{/if}
+								</div>
+								{#if editImdbId}
+									<p class="text-xs text-gray-500 dark:text-gray-400">IMDb: {editImdbId}</p>
+								{/if}
+								<p class="text-xs text-gray-500 dark:text-gray-400">Source: {selectedPath}</p>
+							</div>
+						</div>
+					</div>
+					{#if importError}
+						<div class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+							{importError}
+						</div>
+					{/if}
+				{/if}
+			</div>
+
+			<!-- Footer -->
+			<div class="flex items-center justify-between border-t border-primary/20 px-6 py-4 dark:border-primary/20">
+				<div>
+					{#if step > 1}
+						<button
+							type="button"
+							onclick={() => step--}
+							class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+						>
+							Back
+						</button>
+					{/if}
+				</div>
+				<div class="flex gap-3">
+					<button
+						type="button"
+						onclick={handleClose}
+						class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+					>
+						Cancel
+					</button>
+					{#if step === 1}
+						<button
+							type="button"
+							onclick={goToStep2}
+							disabled={!selectedPath || scanning}
+							class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
+						>
+							{scanning ? 'Scanning...' : 'Next'}
+						</button>
+					{:else if step === 2}
+						<button
+							type="button"
+							onclick={() => step = 3}
+							disabled={!editTitle.trim()}
+							class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
+						>
+							Next
+						</button>
+					{:else if step === 3}
+						<button
+							type="button"
+							onclick={handleImport}
+							disabled={importing}
+							class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
+						>
+							{importing ? 'Importing...' : 'Import'}
+						</button>
+					{/if}
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
