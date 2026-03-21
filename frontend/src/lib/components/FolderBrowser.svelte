@@ -60,10 +60,9 @@
 	}
 
 	function goBack() {
-		if (!currentPath) return;
-		const parts = currentPath.split('/');
-		parts.pop();
-		const parent = parts.join('/');
+		if (!currentPath || currentPath === ingressPath) return;
+		const parent = currentPath.replace(/\/[^/]+$/, '');
+		if (!parent || !ingressPath || !parent.startsWith(ingressPath)) return;
 		selectedPath = null;
 		loadDirectory(parent);
 	}
@@ -78,7 +77,7 @@
 				return;
 			}
 			ingressPath = ingress.path;
-			await loadDirectory('');
+			await loadDirectory(ingress.path);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load file roots';
 			loading = false;
@@ -96,7 +95,7 @@
 	{:else}
 		<!-- Breadcrumb -->
 		<div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-			{#if currentPath}
+			{#if currentPath && currentPath !== ingressPath}
 				<button
 					type="button"
 					onclick={goBack}
@@ -109,7 +108,7 @@
 				</button>
 				<span class="text-gray-300 dark:text-gray-600">/</span>
 			{/if}
-			<span class="font-medium text-gray-700 dark:text-gray-300">{ingressPath}{currentPath ? '/' + currentPath : ''}</span>
+			<span class="font-medium text-gray-700 dark:text-gray-300">{currentPath || ingressPath}</span>
 		</div>
 
 		<!-- Directory table -->
