@@ -11,3 +11,9 @@ export function setRippingEnabled(enabled: boolean): Promise<unknown> {
 		body: JSON.stringify({ enabled })
 	});
 }
+
+export function checkMakemkvKey(): Promise<{ reachable: boolean; key_valid: boolean | null }> {
+	return apiFetch('/api/dashboard/makemkv-key-check', {
+		method: 'POST'
+	});
+}

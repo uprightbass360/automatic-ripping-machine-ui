@@ -4,13 +4,14 @@
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, schemeLocksMode } from '$lib/stores/colorScheme';
 	import { dashboard } from '$lib/stores/dashboard';
-	import { setRippingEnabled } from '$lib/api/dashboard';
+	import { checkMakemkvKey, setRippingEnabled } from '$lib/api/dashboard';
 	import SidebarStats from '$lib/components/SidebarStats.svelte';
 	import { onMount } from 'svelte';
 	let { children } = $props();
 
 	let sidebarOpen = $state(false);
 	let togglingPause = $state(false);
+	let checkingKey = $state(false);
 
 	async function toggleRipping() {
 		if (togglingPause) return;
@@ -24,6 +25,17 @@
 			dashboard.update(d => ({ ...d, ripping_enabled: !newValue }));
 		} finally {
 			togglingPause = false;
+		}
+	}
+
+	async function manualCheckKey() {
+		if (checkingKey) return;
+		checkingKey = true;
+		try {
+			const res = await checkMakemkvKey();
+			dashboard.update((d) => ({ ...d, makemkv_key_valid: res.key_valid }));
+		} finally {
+			checkingKey = false;
 		}
 	}
 
@@ -115,10 +127,16 @@
 						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.transcoder_online && ($dashboard.transcoder_stats?.worker_running ?? true) ? 'bg-green-500' : $dashboard.transcoder_online ? 'bg-yellow-500' : 'bg-gray-400'}"></div>
 						<span class="text-gray-700 dark:text-gray-200">Transcode</span>
 					</div>
-					<div class="flex items-center gap-1.5">
+					<button
+						type="button"
+						onclick={manualCheckKey}
+						disabled={checkingKey}
+						class="flex items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-primary/10 disabled:opacity-60 dark:hover:bg-primary/15"
+						title="Click to manually check MakeMKV key validity"
+					>
 						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.makemkv_key_valid === true ? 'bg-green-500' : $dashboard.makemkv_key_valid === false ? 'bg-red-500' : 'bg-gray-400'}"></div>
-						<span class="text-gray-700 dark:text-gray-200">Key</span>
-					</div>
+						<span class="text-gray-700 dark:text-gray-200">{checkingKey ? 'Key...' : 'Key'}</span>
+					</button>
 				</div>
 				<!-- Divider -->
 				<div class="h-6 w-px bg-black dark:bg-white/30"></div>

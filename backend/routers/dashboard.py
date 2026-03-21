@@ -58,16 +58,25 @@ async def get_dashboard():
     transcoder_online, transcoder_stats, active_transcodes = await transcoder_task
 
     system_stats: SystemStatsSchema | None = None
-    stats_data = await stats_task
+    try:
+        stats_data = await stats_task
+    except Exception:
+        stats_data = None
     if stats_data:
         system_stats = SystemStatsSchema(**stats_data)
 
     transcoder_system_stats: SystemStatsSchema | None = None
-    transcoder_stats_data = await transcoder_stats_task
+    try:
+        transcoder_stats_data = await transcoder_stats_task
+    except Exception:
+        transcoder_stats_data = None
     if transcoder_stats_data:
         transcoder_system_stats = SystemStatsSchema(**transcoder_stats_data)
 
-    makemkv_key_data = await key_task
+    try:
+        makemkv_key_data = await key_task
+    except Exception:
+        makemkv_key_data = None
     makemkv_key_valid = makemkv_key_data.get("key_valid") if makemkv_key_data else None
 
     arm_hw = system_cache.get_arm_info()
@@ -92,3 +101,12 @@ async def get_dashboard():
         transcoder_info=HardwareInfoSchema(**transcoder_hw) if transcoder_hw else None,
         makemkv_key_valid=makemkv_key_valid,
     )
+
+
+@router.post("/dashboard/makemkv-key-check")
+async def manual_check_makemkv_key():
+    """Manually trigger MakeMKV key validity check."""
+    result = await arm_client.get_makemkv_key_valid()
+    if result is None:
+        return {"reachable": False, "key_valid": None}
+    return {"reachable": True, "key_valid": result.get("key_valid")}
