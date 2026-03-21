@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import {
 		fetchSettings,
 		saveArmConfig,
@@ -54,6 +55,16 @@
 
 	// --- Tab state ---
 	let activeTab = $state<'ripping' | 'transcoding' | 'notifications' | 'appearance' | 'drives' | 'system' | 'maintenance'>('ripping');
+
+	function applyTabFromUrl() {
+		const tab = $page.url.searchParams.get('tab');
+		if (tab === 'maintenance') {
+			activeTab = 'maintenance';
+			loadFailedJobs();
+			loadMaintenanceLogs();
+			loadMaintenanceFolders();
+		}
+	}
 
 	// --- Drives polling store ---
 	const drives = createPollingStore(fetchDrives, [] as Drive[], 10000);
@@ -314,8 +325,14 @@
 
 	onMount(() => {
 		drives.start();
+		applyTabFromUrl();
 		loadSettings();
 		return () => drives.stop();
+	});
+
+	$effect(() => {
+		$page.url.searchParams.get('tab');
+		applyTabFromUrl();
 	});
 
 	async function loadSettings() {
@@ -1155,7 +1172,6 @@
 				<button type="button" onclick={() => (activeTab = 'transcoding')} class={tabClass('transcoding')}>Transcoding</button>
 				<button type="button" onclick={() => (activeTab = 'notifications')} class={tabClass('notifications')}>Notifications</button>
 				<button type="button" onclick={() => (activeTab = 'drives')} class={tabClass('drives')}>Drives</button>
-				<button type="button" onclick={() => { activeTab = 'maintenance'; loadFailedJobs(); loadMaintenanceLogs(); loadMaintenanceFolders(); }} class={tabClass('maintenance')}>Maintenance</button>
 				<button type="button" onclick={() => (activeTab = 'appearance')} class={tabClass('appearance')}>Appearance</button>
 				<button type="button" onclick={() => { activeTab = 'system'; loadSystemInfo(); }} class={tabClass('system')}>System</button>
 			</nav>
