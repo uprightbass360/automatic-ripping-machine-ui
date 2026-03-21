@@ -221,6 +221,16 @@ async def get_system_stats() -> dict[str, Any] | None:
         return None
 
 
+async def restart_transcoder() -> dict[str, Any] | None:
+    """Restart the transcoder service. Returns None if offline."""
+    try:
+        resp = await get_client().post("/system/restart")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
 async def get_config() -> dict[str, Any] | None:
     """Fetch transcoder config with valid option lists. Returns None if offline."""
     try:
