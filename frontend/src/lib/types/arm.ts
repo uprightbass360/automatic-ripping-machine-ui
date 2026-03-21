@@ -81,6 +81,8 @@ export interface Job {
 	ejected: boolean | null;
 	pid: number | null;
 	manual_pause: boolean | null;
+	source_type?: string;
+	source_path?: string;
 	wait_start_time: string | null;
 	tracks_total: number | null;
 	tracks_ripped: number | null;
@@ -296,6 +298,33 @@ export interface TranscoderConfig {
 export interface TranscoderAuthStatus {
 	require_api_auth: boolean;
 	webhook_secret_configured: boolean;
+}
+
+export interface FolderScanResult {
+	disc_type: string;
+	label: string;
+	title_suggestion: string;
+	year_suggestion: string | null;
+	folder_size_bytes: number;
+	stream_count: number;
+}
+
+export interface FolderCreateRequest {
+	source_path: string;
+	title: string;
+	year?: string | null;
+	video_type: string;
+	disctype: string;
+	imdb_id?: string | null;
+	poster_url?: string | null;
+	multi_title?: boolean;
+}
+
+export interface FolderCreateResponse {
+	job_id: number;
+	status: string;
+	source_type: string;
+	source_path: string;
 }
 
 export interface SettingsData {
