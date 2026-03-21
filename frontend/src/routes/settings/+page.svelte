@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo, fetchAbcdeConfig, saveAbcdeConfig } from '$lib/api/settings';
 	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
@@ -91,6 +92,8 @@
 	let diagRunning = $state(false);
 	let diagResult = $state<DiagnosticResult | null>(null);
 	let diagError = $state<string | null>(null);
+	let diagOpen = $state(false);
+	let diagLastRun = $state<string | null>(null);
 
 	async function runDiagnostic() {
 		if (diagRunning) return;
@@ -98,6 +101,8 @@
 		diagError = null;
 		try {
 			diagResult = await fetchDriveDiagnostic();
+			diagLastRun = new Date().toLocaleTimeString();
+			diagOpen = true;
 		} catch (e) {
 			diagError = e instanceof Error ? e.message : 'Diagnostic failed';
 			diagResult = null;
@@ -2341,145 +2346,95 @@
 					</div>
 				{/if}
 
-				<!-- Diagnostics -->
+				<!-- Diagnostics — collapsible panel -->
 				<hr class="my-2 opacity-20" />
 				<div data-diag>
-					<div class="flex items-center gap-3">
-						<button
-							onclick={runDiagnostic}
-							disabled={diagRunning}
-							class="inline-flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-200 disabled:opacity-50 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
-						>
-							<svg class="h-4 w-4 {diagRunning ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-							</svg>
-							{diagRunning ? 'Running...' : 'Check Udev & Drives'}
-						</button>
-						{#if diagError}
-							<span class="text-sm text-red-600 dark:text-red-400">{diagError}</span>
-						{/if}
-					</div>
+					<button
+						onclick={() => { diagOpen = !diagOpen; }}
+						class="flex w-full items-center gap-2 rounded-lg border border-primary/15 bg-primary/5 px-3.5 py-2.5 text-sm font-medium text-primary-text transition-colors hover:bg-primary/10 dark:border-primary/15 dark:text-primary-text-dark dark:hover:bg-primary/15"
+					>
+						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+						</svg>
+						Udev & Drive Diagnostics
+						<svg class="ml-auto h-4 w-4 transition-transform duration-200 {diagOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+						</svg>
+					</button>
 
-					{#if diagResult}
-						<div class="mt-4 space-y-4">
-							<!-- System summary row -->
-							<div class="flex flex-wrap items-center gap-4 text-sm">
-								<span class="inline-flex items-center gap-1.5">
-									<div class="h-2 w-2 rounded-full {diagResult.udevd_running ? 'bg-green-500' : 'bg-red-500'}"></div>
-									<span class="font-medium text-gray-700 dark:text-gray-300">udevd {diagResult.udevd_running ? 'running' : 'not running'}</span>
-								</span>
-								<span class="text-gray-500 dark:text-gray-400">
-									Kernel: {diagResult.kernel_drives.length > 0 ? diagResult.kernel_drives.join(', ') : 'none'}
-								</span>
-								<span class="text-gray-500 dark:text-gray-400">
-									{diagResult.drives.length} drive{diagResult.drives.length !== 1 ? 's' : ''} checked
-								</span>
-								<span class="font-medium {diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}">
-									{diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'Issues Found' : 'All OK'}
-								</span>
+					{#if diagOpen}
+						<div class="mt-2.5 rounded-lg border border-primary/10 bg-white/[0.02] p-3 dark:border-primary/10" transition:slide={{ duration: 200 }}>
+							<div class="mb-2.5 flex items-center justify-between">
+								<button
+									onclick={runDiagnostic}
+									disabled={diagRunning}
+									class="inline-flex items-center gap-2 rounded-lg bg-primary/15 px-3.5 py-1.5 text-sm font-medium text-primary-text transition-colors hover:bg-primary/25 disabled:opacity-50 dark:text-primary-text-dark dark:hover:bg-primary/30"
+								>
+									<svg class="h-4 w-4 {diagRunning ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+									</svg>
+									{diagRunning ? 'Running...' : 'Run Check'}
+								</button>
+								{#if diagLastRun}
+									<span class="text-[10px] text-gray-400 dark:text-gray-500">Last run: {diagLastRun}</span>
+								{/if}
+								{#if diagError}
+									<span class="text-sm text-red-600 dark:text-red-400">{diagError}</span>
+								{/if}
 							</div>
 
-							<!-- System-level issues -->
-							{#if diagResult.issues.length > 0}
-								<div class="rounded-md bg-red-500/10 p-3">
-									{#each diagResult.issues as issue}
-										<p class="text-xs text-red-700 dark:text-red-300">{issue}</p>
-									{/each}
+							{#if diagResult}
+								<!-- Status bar -->
+								<div class="mb-2 flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 text-xs
+									{diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0)
+										? 'border-amber-500/15 bg-amber-500/5'
+										: 'border-green-500/15 bg-green-500/5'}">
+									<span class="inline-flex items-center gap-1.5">
+										<div class="h-1.5 w-1.5 rounded-full {diagResult.udevd_running ? 'bg-green-500' : 'bg-red-500'}"></div>
+										<span class="font-medium text-gray-700 dark:text-gray-300">udevd {diagResult.udevd_running ? 'running' : 'not running'}</span>
+									</span>
+									<span class="text-gray-500 dark:text-gray-400">
+										Kernel: {diagResult.kernel_drives.length > 0 ? diagResult.kernel_drives.join(', ') : 'none'}
+									</span>
+									<span class="text-gray-500 dark:text-gray-400">
+										{diagResult.drives.length} drive{diagResult.drives.length !== 1 ? 's' : ''}
+									</span>
+									<span class="font-medium {diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}">
+										{diagResult.issues.length > 0 || diagResult.drives.some(d => d.issues.length > 0) ? 'Issues Found' : 'All OK'}
+									</span>
 								</div>
-							{/if}
 
-							<!-- Per-drive cards -->
-							{#if diagResult.drives.length > 0}
-								<div class="grid gap-3 md:grid-cols-2">
-									{#each diagResult.drives as diag}
-										<div class="rounded-lg border border-primary/20 p-3 dark:border-primary/20
-											{diag.issues.length > 0 ? 'bg-amber-500/5' : 'bg-green-500/5'}">
-
-											<!-- Header: device name + tray status -->
-											<div class="flex items-center justify-between">
-												<div>
-													<span class="font-mono text-sm font-semibold text-gray-900 dark:text-white">/dev/{diag.devname}</span>
-													{#if diag.db_name}
-														<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">{diag.db_name}</span>
-													{/if}
-												</div>
-												<div class="flex items-center gap-1.5">
-													{#if diag.arm_processing}
-														<span class="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-400">Ripping</span>
-													{/if}
-													<span class="rounded-full px-2 py-0.5 text-[10px] font-medium
-														{diag.tray_status === 4 ? 'bg-green-500/20 text-green-700 dark:text-green-400'
-														: diag.tray_status === 1 ? 'bg-gray-500/20 text-gray-600 dark:text-gray-400'
-														: diag.tray_status === 2 ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
-														: diag.tray_status === 3 ? 'bg-blue-500/20 text-blue-700 dark:text-blue-400'
-														: 'bg-gray-500/20 text-gray-600 dark:text-gray-400'}">
-														{diag.tray_status_name ?? 'unknown'}
-													</span>
-												</div>
+								<!-- System-level issues -->
+								{#if diagResult.issues.length > 0}
+									<div class="mb-2 rounded-lg border border-red-500/15 bg-red-500/5 p-2.5">
+										{#each diagResult.issues as issue}
+											<div class="flex items-start gap-1.5 text-xs">
+												<svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+												</svg>
+												<span class="text-red-700 dark:text-red-300">{issue}</span>
 											</div>
+										{/each}
+									</div>
+								{/if}
 
-											<!-- Model / connection info -->
-											{#if diag.db_model || diag.db_connection}
-												<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-													{diag.db_model ?? ''}{diag.db_model && diag.db_connection ? ' · ' : ''}{diag.db_connection ?? ''}{diag.major_minor ? ` · ${diag.major_minor}` : ''}
-												</p>
-											{:else if diag.major_minor}
-												<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-													{diag.udevadm.ID_BUS ?? ''}{diag.udevadm.ID_BUS ? ' · ' : ''}{diag.major_minor}
-												</p>
-											{/if}
-
-											<!-- Check pills + media badges -->
-											<div class="mt-2 flex flex-wrap gap-1.5">
-												{#each [
-													{ label: '/dev', ok: diag.dev_node_exists },
-													{ label: 'sysfs', ok: diag.sysfs_exists },
-													{ label: 'kernel', ok: diag.in_kernel_cdrom },
-													{ label: 'DB', ok: diag.in_database },
-												] as check}
-													<span class="rounded-sm px-1.5 py-0.5 text-[10px] font-medium
-														{check.ok
-															? 'bg-green-500/20 text-green-700 dark:text-green-400'
-															: 'bg-red-500/20 text-red-700 dark:text-red-400'}">
-														{check.label}
-													</span>
-												{/each}
-
-												<!-- Media type badges from udevadm -->
-												{#if diag.udevadm.ID_CDROM_MEDIA === '1'}
-													<span class="rounded-sm bg-green-500/20 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-400">DISC</span>
-												{/if}
-												{#if diag.udevadm.ID_CDROM_MEDIA_BD === '1'}
-													<span class="rounded-sm bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 dark:text-purple-400">BD</span>
-												{/if}
-												{#if diag.udevadm.ID_CDROM_MEDIA_DVD === '1'}
-													<span class="rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary-text dark:text-primary-text-dark">DVD</span>
-												{/if}
-												{#if diag.udevadm.ID_CDROM_MEDIA_CD === '1'}
-													<span class="rounded-sm bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-400">CD</span>
-												{/if}
-												{#if diag.udevadm.ID_FS_TYPE}
-													<span class="rounded-sm bg-gray-500/20 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:text-gray-400">{diag.udevadm.ID_FS_TYPE}</span>
-												{/if}
+								<!-- Per-drive issues only -->
+								{#each diagResult.drives.filter(d => d.issues.length > 0) as diag}
+									<div class="mb-1.5 rounded-lg border border-amber-500/15 bg-amber-500/5 p-2.5">
+										{#each diag.issues as issue}
+											<div class="flex items-start gap-1.5 text-xs">
+												<svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+												</svg>
+												<span class="text-amber-700 dark:text-amber-400">
+													<span class="font-medium">/dev/{diag.devname}</span> — {issue}
+												</span>
 											</div>
-
-											{#if !Object.keys(diag.udevadm).length}
-												<p class="mt-1 text-[10px] italic text-gray-400 dark:text-gray-500">no udevadm data</p>
-											{/if}
-
-											<!-- Issues -->
-											{#if diag.issues.length > 0}
-												<div class="mt-2 rounded-md bg-amber-500/10 p-2">
-													{#each diag.issues as issue}
-														<p class="text-xs text-amber-700 dark:text-amber-400">{issue}</p>
-													{/each}
-												</div>
-											{/if}
-										</div>
-									{/each}
-								</div>
-							{:else}
-								<p class="text-sm text-gray-400">No optical drives found in kernel, sysfs, /dev, or database.</p>
+										{/each}
+									</div>
+								{/each}
+							{:else if !diagRunning}
+								<p class="text-center text-xs text-gray-400 dark:text-gray-500">Click "Run Check" to scan drives and udev configuration.</p>
 							{/if}
 						</div>
 					{/if}
