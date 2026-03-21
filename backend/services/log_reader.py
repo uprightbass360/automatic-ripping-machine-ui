@@ -1,16 +1,3 @@
-def delete_log(filename: str) -> bool:
-    """Delete a log file by filename. Returns True if deleted, False otherwise."""
-    log_path = _log_dir() / filename
-    try:
-        log_path = log_path.resolve()
-        if not str(log_path).startswith(str(_log_dir().resolve())):
-            return False
-        if not log_path.is_file():
-            return False
-        log_path.unlink()
-        return True
-    except Exception:
-        return False
 """ARM log file reader service."""
 
 from __future__ import annotations
@@ -50,6 +37,21 @@ def list_logs() -> list[dict]:
                 "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
             })
     return logs
+
+
+def delete_log(filename: str) -> bool:
+    """Delete a log file by filename. Returns True if deleted, False otherwise."""
+    log_path = _log_dir() / filename
+    try:
+        log_path = log_path.resolve()
+        if not str(log_path).startswith(str(_log_dir().resolve())):
+            return False
+        if not log_path.is_file():
+            return False
+        log_path.unlink()
+        return True
+    except Exception:
+        return False
 
 
 def read_log(
