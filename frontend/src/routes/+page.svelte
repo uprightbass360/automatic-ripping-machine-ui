@@ -12,6 +12,7 @@
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
 	import SectionFrame from '$lib/components/SectionFrame.svelte';
 	import JobStatsCard from '$lib/components/JobStatsCard.svelte';
+	import FolderImportWizard from '$lib/components/FolderImportWizard.svelte';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -32,6 +33,8 @@
 	});
 	let dashReady = $state(false);
 	let dashError = $state<string | null>(null);
+
+	let showImportWizard = $state(false);
 
 	let dismissedJobIds = $state(new Set<number>());
 	let waitingJobs = $derived(
@@ -184,6 +187,16 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+	</div>
+
+	<div class="mb-4 flex justify-end">
+		<button
+			type="button"
+			onclick={() => showImportWizard = true}
+			class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary/90"
+		>
+			Import Folder
+		</button>
 	</div>
 
 	<!-- Global pause banner -->
@@ -383,3 +396,9 @@
 			{/if}
 	</section>
 </div>
+
+<FolderImportWizard
+	open={showImportWizard}
+	onclose={() => showImportWizard = false}
+	oncreated={() => { showImportWizard = false; refreshDashboard(); }}
+/>
