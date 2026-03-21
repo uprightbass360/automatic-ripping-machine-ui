@@ -11,8 +11,6 @@
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
 	import SectionFrame from '$lib/components/SectionFrame.svelte';
-	import FolderImportWizard from '$lib/components/FolderImportWizard.svelte';
-	import { showImportWizard } from '$lib/stores/importWizard';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -381,9 +379,3 @@
 			{/if}
 	</section>
 </div>
-
-<FolderImportWizard
-	open={$showImportWizard}
-	onclose={() => showImportWizard.set(false)}
-	oncreated={() => { showImportWizard.set(false); refreshDashboard(); }}
-/>

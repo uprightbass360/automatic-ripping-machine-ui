@@ -8,6 +8,7 @@
 	import SidebarStats from '$lib/components/SidebarStats.svelte';
 	import { goto } from '$app/navigation';
 	import { showImportWizard } from '$lib/stores/importWizard';
+	import FolderImportWizard from '$lib/components/FolderImportWizard.svelte';
 	import { onMount } from 'svelte';
 	let { children } = $props();
 
@@ -23,7 +24,6 @@
 		closeQuickMenu();
 		if (action === 'import-folder') {
 			showImportWizard.set(true);
-			goto('/');
 		} else if (action === 'restart-arm') {
 			if (confirm('Restart the ARM ripping service? Active rips will be interrupted.')) {
 				fetch('/api/system/restart', { method: 'POST' });
@@ -308,3 +308,10 @@
 	</div>
 </div>
 {/if}
+
+<!-- Folder import wizard (global, triggered from gear menu) -->
+<FolderImportWizard
+	open={$showImportWizard}
+	onclose={() => showImportWizard.set(false)}
+	oncreated={() => { showImportWizard.set(false); }}
+/>
