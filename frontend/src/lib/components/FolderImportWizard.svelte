@@ -4,6 +4,11 @@
 	import type { FolderScanResult, SearchResult, MediaDetail, FolderCreateRequest } from '$lib/types/arm';
 	import FolderBrowser from '$lib/components/FolderBrowser.svelte';
 
+	function posterSrc(url: string | null | undefined): string {
+		if (!url) return '';
+		return `/api/jobs/folder/poster-proxy?url=${encodeURIComponent(url)}`;
+	}
+
 	interface Props {
 		open: boolean;
 		onclose: () => void;
@@ -243,7 +248,7 @@
 						<div class="mb-4 flex gap-4">
 							{#if editPosterUrl}
 								<img
-									src={editPosterUrl}
+									src={posterSrc(editPosterUrl)}
 									alt={editTitle}
 									class="h-36 w-24 shrink-0 rounded-md object-cover"
 								/>
@@ -315,7 +320,7 @@
 										>
 											{#if result.poster_url}
 												<img
-													src={result.poster_url}
+													src={posterSrc(result.poster_url)}
 													alt={result.title}
 													class="aspect-[2/3] w-full object-cover"
 													loading="lazy"
@@ -344,7 +349,7 @@
 						<div class="flex gap-4">
 							{#if editPosterUrl}
 								<img
-									src={editPosterUrl}
+									src={posterSrc(editPosterUrl)}
 									alt={editTitle}
 									class="h-40 w-28 shrink-0 rounded-md object-cover"
 								/>
