@@ -80,3 +80,44 @@ export interface SystemInfoData {
 export function fetchSystemInfo(): Promise<SystemInfoData> {
 	return apiFetch<SystemInfoData>('/api/settings/system-info');
 }
+
+export interface FailedJobSummary {
+	job_id: number;
+	status: string | null;
+	title: string | null;
+	label: string | null;
+	raw_path: string | null;
+	logfile: string | null;
+	start_time: string | null;
+}
+
+export function fetchFailedJobs(): Promise<{ jobs: FailedJobSummary[] }> {
+	return apiFetch<{ jobs: FailedJobSummary[] }>('/api/settings/maintenance/failed-jobs');
+}
+
+export function maintenanceRescanDrives(): Promise<{ success?: boolean; drive_count?: number; drives_changed?: boolean; error?: string }> {
+	return apiFetch('/api/settings/maintenance/rescan-drives', {
+		method: 'POST'
+	});
+}
+
+export function maintenanceClearJob(jobId: number): Promise<{ success: boolean; job_id: number; title?: string | null }> {
+	return apiFetch('/api/settings/maintenance/clear-job', {
+		method: 'POST',
+		body: JSON.stringify({ job_id: jobId })
+	});
+}
+
+export function maintenanceDeleteJobLogs(jobId: number): Promise<{ success: boolean; job_id: number; removed: string[]; missing: string[] }> {
+	return apiFetch('/api/settings/maintenance/delete-job-logs', {
+		method: 'POST',
+		body: JSON.stringify({ job_id: jobId })
+	});
+}
+
+export function maintenanceDeleteJobRaw(jobId: number): Promise<{ success: boolean; job_id: number; deleted: boolean; path?: string; reason?: string; title?: string | null }> {
+	return apiFetch('/api/settings/maintenance/delete-job-raw', {
+		method: 'POST',
+		body: JSON.stringify({ job_id: jobId })
+	});
+}

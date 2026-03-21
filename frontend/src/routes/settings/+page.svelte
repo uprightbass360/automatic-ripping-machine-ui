@@ -1,7 +1,20 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo } from '$lib/api/settings';
-	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
+	import {
+		fetchSettings,
+		saveArmConfig,
+		saveTranscoderConfig,
+		testMetadataKey,
+		testTranscoderConnection,
+		testTranscoderWebhook,
+		fetchSystemInfo,
+		fetchFailedJobs,
+		maintenanceRescanDrives,
+		maintenanceClearJob,
+		maintenanceDeleteJobLogs,
+		maintenanceDeleteJobRaw
+	} from '$lib/api/settings';
+	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData, FailedJobSummary } from '$lib/api/settings';
 	import type { SettingsData, Drive } from '$lib/types/arm';
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES, schemeLocksMode } from '$lib/stores/colorScheme';
@@ -27,7 +40,7 @@
 	let armCollapsed = $state<Record<string, boolean>>({});
 
 	// --- Tab state ---
-	let activeTab = $state<'ripping' | 'transcoding' | 'notifications' | 'appearance' | 'drives' | 'system'>('ripping');
+	let activeTab = $state<'ripping' | 'transcoding' | 'notifications' | 'appearance' | 'drives' | 'system' | 'maintenance'>('ripping');
 
 	// --- Drives polling store ---
 	const drives = createPollingStore(fetchDrives, [] as Drive[], 10000);
@@ -54,6 +67,13 @@
 	let systemInfoLoading = $state(false);
 	let systemInfoLoaded = $state(false);
 
+	// --- Maintenance state ---
+	let failedJobs = $state<FailedJobSummary[]>([]);
+	let failedJobsLoading = $state(false);
+	let maintenanceBusy = $state(false);
+	let maintenanceFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let selectedFailedJobId = $state<number | null>(null);
+
 	async function loadSystemInfo() {
 		if (systemInfoLoaded) return;
 		systemInfoLoading = true;
@@ -65,6 +85,74 @@
 		} finally {
 			systemInfoLoading = false;
 		}
+	}
+
+	async function loadFailedJobs() {
+		failedJobsLoading = true;
+		try {
+			const resp = await fetchFailedJobs();
+			failedJobs = resp.jobs ?? [];
+			if (failedJobs.length > 0 && !selectedFailedJobId) {
+				selectedFailedJobId = failedJobs[0].job_id;
+			}
+		} catch (e) {
+			maintenanceFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to load failed jobs' };
+		} finally {
+			failedJobsLoading = false;
+		}
+	}
+
+	function selectedFailedJob(): FailedJobSummary | null {
+		if (selectedFailedJobId == null) return null;
+		return failedJobs.find((j) => j.job_id === selectedFailedJobId) ?? null;
+	}
+
+	async function runMaintenanceAction(action: () => Promise<unknown>, successMessage: string) {
+		maintenanceBusy = true;
+		maintenanceFeedback = null;
+		try {
+			await action();
+			maintenanceFeedback = { type: 'success', message: successMessage };
+			await loadFailedJobs();
+			await drives.refresh();
+		} catch (e) {
+			maintenanceFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Maintenance action failed' };
+		} finally {
+			maintenanceBusy = false;
+		}
+	}
+
+	async function handleMaintenanceRescan() {
+		await runMaintenanceAction(async () => {
+			await maintenanceRescanDrives();
+		}, 'Drive rescan triggered');
+	}
+
+	async function handleMaintenanceDeleteLogs() {
+		const selected = selectedFailedJob();
+		if (!selected) return;
+		if (!confirm(`Delete logs for job #${selected.job_id}?`)) return;
+		await runMaintenanceAction(async () => {
+			await maintenanceDeleteJobLogs(selected.job_id);
+		}, `Deleted logs for job #${selected.job_id}`);
+	}
+
+	async function handleMaintenanceDeleteRaw() {
+		const selected = selectedFailedJob();
+		if (!selected) return;
+		if (!confirm(`Delete raw output for job #${selected.job_id}? This cannot be undone.`)) return;
+		await runMaintenanceAction(async () => {
+			await maintenanceDeleteJobRaw(selected.job_id);
+		}, `Deleted raw output for job #${selected.job_id}`);
+	}
+
+	async function handleMaintenanceClearJob() {
+		const selected = selectedFailedJob();
+		if (!selected) return;
+		if (!confirm(`Clear failed job #${selected.job_id} from the ARM database?`)) return;
+		await runMaintenanceAction(async () => {
+			await maintenanceClearJob(selected.job_id);
+		}, `Cleared failed job #${selected.job_id} from database`);
 	}
 
 	onMount(() => {
@@ -910,6 +998,7 @@
 				<button type="button" onclick={() => (activeTab = 'transcoding')} class={tabClass('transcoding')}>Transcoding</button>
 				<button type="button" onclick={() => (activeTab = 'notifications')} class={tabClass('notifications')}>Notifications</button>
 				<button type="button" onclick={() => (activeTab = 'drives')} class={tabClass('drives')}>Drives</button>
+				<button type="button" onclick={() => { activeTab = 'maintenance'; loadFailedJobs(); }} class={tabClass('maintenance')}>Maintenance</button>
 				<button type="button" onclick={() => (activeTab = 'appearance')} class={tabClass('appearance')}>Appearance</button>
 				<button type="button" onclick={() => { activeTab = 'system'; loadSystemInfo(); }} class={tabClass('system')}>System</button>
 			</nav>
@@ -1692,6 +1781,114 @@
 						{/each}
 					</div>
 				{/if}
+			</section>
+		{/if}
+
+		{#if activeTab === 'maintenance'}
+			<section class="space-y-6">
+				<div class="rounded-lg border border-amber-300/40 bg-amber-50/40 p-4 text-sm text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/10 dark:text-amber-300">
+					These actions are scoped to failed jobs and intended for clean retries.
+				</div>
+
+				{#if maintenanceFeedback}
+					<div class="rounded-lg border p-4 text-sm {maintenanceFeedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400' : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'}">
+						{maintenanceFeedback.message}
+					</div>
+				{/if}
+
+				<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+					<div class="mb-3 flex items-center justify-between">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Failed Jobs</h2>
+						<button
+							type="button"
+							onclick={loadFailedJobs}
+							disabled={failedJobsLoading || maintenanceBusy}
+							class="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+						>
+							{failedJobsLoading ? 'Refreshing...' : 'Refresh'}
+						</button>
+					</div>
+
+					{#if failedJobsLoading}
+						<p class="text-sm text-gray-500 dark:text-gray-400">Loading failed jobs...</p>
+					{:else if failedJobs.length === 0}
+						<p class="text-sm text-gray-500 dark:text-gray-400">No failed jobs found.</p>
+					{:else}
+						<label for="failed-job-select" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Select failed job</label>
+						<select
+							id="failed-job-select"
+							class={inputClass}
+							bind:value={selectedFailedJobId}
+							disabled={maintenanceBusy}
+						>
+							{#each failedJobs as job}
+								<option value={job.job_id}>
+									#{job.job_id} · {job.title ?? job.label ?? 'Untitled'} · {job.status ?? 'unknown'}
+								</option>
+							{/each}
+						</select>
+
+						{#if selectedFailedJob()}
+							{@const selected = selectedFailedJob()}
+							<div class="mt-3 grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
+								<div class="rounded-sm bg-primary/10 px-2 py-1 dark:bg-primary/15">
+									<span class="font-medium text-gray-500 dark:text-gray-400">Raw:</span>
+									<span class="ml-1 font-mono text-gray-700 dark:text-gray-200">{selected?.raw_path ?? '(none)'}</span>
+								</div>
+								<div class="rounded-sm bg-primary/10 px-2 py-1 dark:bg-primary/15">
+									<span class="font-medium text-gray-500 dark:text-gray-400">Log:</span>
+									<span class="ml-1 font-mono text-gray-700 dark:text-gray-200">{selected?.logfile ?? '(none)'}</span>
+								</div>
+							</div>
+						{/if}
+					{/if}
+				</div>
+
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+						<h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-white">Drive Detection</h3>
+						<p class="mb-3 text-xs text-gray-500 dark:text-gray-400">Trigger an immediate drive rescan without restarting containers.</p>
+						<button
+							type="button"
+							onclick={handleMaintenanceRescan}
+							disabled={maintenanceBusy}
+							class="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+						>
+							Rescan Drives
+						</button>
+					</div>
+
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+						<h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-white">Failed Job Cleanup</h3>
+						<p class="mb-3 text-xs text-gray-500 dark:text-gray-400">Use these in order: logs/raw cleanup first, then clear DB row if needed.</p>
+						<div class="flex flex-wrap gap-2">
+							<button
+								type="button"
+								onclick={handleMaintenanceDeleteLogs}
+								disabled={maintenanceBusy || failedJobs.length === 0}
+								class="rounded-lg px-3 py-2 text-xs font-medium text-gray-700 ring-1 ring-gray-300 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:ring-gray-600 dark:hover:bg-gray-800"
+							>
+								Delete Job Logs
+							</button>
+							<button
+								type="button"
+								onclick={handleMaintenanceDeleteRaw}
+								disabled={maintenanceBusy || failedJobs.length === 0}
+								class="rounded-lg px-3 py-2 text-xs font-medium text-gray-700 ring-1 ring-gray-300 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:ring-gray-600 dark:hover:bg-gray-800"
+							>
+								Delete Raw Output
+							</button>
+							<button
+								type="button"
+								onclick={handleMaintenanceClearJob}
+								disabled={maintenanceBusy || failedJobs.length === 0}
+								class="rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+							>
+								Clear Job DB Entry
+							</button>
+						</div>
+					</div>
+				</div>
 			</section>
 		{/if}
 	{/if}

@@ -166,6 +166,11 @@ async def update_drive(drive_id: int, data: dict[str, Any]) -> dict[str, Any] | 
     return await _request("PATCH", f"/api/v1/drives/{drive_id}", json=data)
 
 
+async def rescan_drives() -> dict[str, Any] | None:
+    """Trigger a drive rescan via ARM's REST API. Returns None if unreachable."""
+    return await _request("POST", "/api/v1/drives/rescan")
+
+
 async def dismiss_notification(notify_id: int) -> dict[str, Any] | None:
     """Mark a notification as read. Returns None if ARM is unreachable."""
     return await _request("PATCH", f"/api/v1/notifications/{notify_id}")
