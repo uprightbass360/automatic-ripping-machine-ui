@@ -6,6 +6,8 @@
 	import { dashboard } from '$lib/stores/dashboard';
 	import { setRippingEnabled } from '$lib/api/dashboard';
 	import SidebarStats from '$lib/components/SidebarStats.svelte';
+	import { goto } from '$app/navigation';
+	import { showImportWizard } from '$lib/stores/importWizard';
 	import { onMount } from 'svelte';
 	let { children } = $props();
 
@@ -20,7 +22,8 @@
 	function handleQuickAction(action: string) {
 		closeQuickMenu();
 		if (action === 'import-folder') {
-			window.location.href = '/?import=1';
+			showImportWizard.set(true);
+			goto('/');
 		} else if (action === 'restart-arm') {
 			if (confirm('Restart the ARM ripping service? Active rips will be interrupted.')) {
 				fetch('/api/system/restart', { method: 'POST' });
@@ -30,7 +33,7 @@
 				fetch('/api/system/restart-transcoder', { method: 'POST' });
 			}
 		} else if (action === 'settings') {
-			window.location.href = '/settings';
+			goto('/settings');
 		}
 	}
 
