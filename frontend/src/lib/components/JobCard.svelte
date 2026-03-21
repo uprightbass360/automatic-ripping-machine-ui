@@ -114,7 +114,7 @@
 				{/if}
 			</div>
 
-			<!-- Row 4: Type badge, disctype, device, start time -->
+			<!-- Row 4: Type badge, disctype, device/source, start time -->
 			<div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
 				<span class="rounded-sm px-1.5 py-0.5 font-medium {typeConfig.badgeClasses}">{typeConfig.label}</span>
 				{#if job.disctype}
@@ -123,11 +123,21 @@
 						{discTypeLabel(job.disctype)}
 					</span>
 				{/if}
+				{#if job.source_type === 'folder'}
+					<span class="inline-flex items-center gap-1 rounded-sm bg-violet-100 px-1.5 py-0.5 font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+						<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+						</svg>
+						Folder Import
+					</span>
+				{/if}
 				{#if job.disc_number}
 					<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 dark:bg-primary/15">Disc {job.disc_number}{#if job.disc_total}/{job.disc_total}{/if}</span>
 				{/if}
 				{#if job.devpath}
 					<span>{driveName ?? job.devpath}</span>
+				{:else if job.source_path}
+					<span class="truncate max-w-48" title={job.source_path}>{job.source_path.split('/').slice(-2).join('/')}</span>
 				{/if}
 				{#if !active && job.start_time}
 					<TimeAgo date={job.start_time} />

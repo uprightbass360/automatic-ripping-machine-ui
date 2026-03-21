@@ -103,8 +103,19 @@
 		{/if}
 	</td>
 
-	<!-- Device -->
-	<td class="px-4 py-3 text-sm">{driveName ?? job.devpath ?? ''}</td>
+	<!-- Device / Source -->
+	<td class="px-4 py-3 text-sm">
+		{#if job.source_type === 'folder'}
+			<span class="inline-flex items-center gap-1 text-violet-600 dark:text-violet-400" title={job.source_path ?? ''}>
+				<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+				</svg>
+				Folder
+			</span>
+		{:else}
+			{driveName ?? job.devpath ?? ''}
+		{/if}
+	</td>
 
 	<!-- Started + elapsed/duration sub-text -->
 	<td class="px-4 py-3 text-sm">
