@@ -50,6 +50,9 @@ async def create_folder_job(req: FolderCreateRequest) -> dict[str, Any]:
     return _check_result(await arm_client.create_folder_job(req.model_dump()))
 
 
+_poster_cache: dict[str, tuple[bytes, str]] = {}
+_POSTER_CACHE_MAX = 100  # max cached images (~5 MB at ~50 KB each)
+
 _ALLOWED_IMAGE_HOSTS = {
     "m.media-amazon.com",
     "image.tmdb.org",
@@ -65,11 +68,27 @@ async def poster_proxy(url: str = Query(..., description="Poster image URL")) ->
     parsed = urlparse(url)
     if parsed.hostname not in _ALLOWED_IMAGE_HOSTS:
         raise HTTPException(400, "Image host not allowed")
+
+    # Return from server-side cache if available
+    if url in _poster_cache:
+        content, content_type = _poster_cache[url]
+        return Response(
+            content=content,
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+
     try:
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
             resp = await client.get(url)
             resp.raise_for_status()
             content_type = resp.headers.get("content-type", "image/jpeg")
+
+            # Evict oldest if cache is full
+            if len(_poster_cache) >= _POSTER_CACHE_MAX:
+                _poster_cache.pop(next(iter(_poster_cache)))
+            _poster_cache[url] = (resp.content, content_type)
+
             return Response(
                 content=resp.content,
                 media_type=content_type,
