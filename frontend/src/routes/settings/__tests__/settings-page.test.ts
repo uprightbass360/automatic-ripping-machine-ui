@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { renderComponent, screen, cleanup, waitFor } from '$lib/test-utils';
+import { renderComponent, screen, cleanup, waitFor, fireEvent } from '$lib/test-utils';
 import SettingsPage from '../+page.svelte';
 
 const mockArmConfig: Record<string, string | null> = {
@@ -143,6 +143,21 @@ describe('Settings Page', () => {
 			await waitFor(() => {
 				expect(screen.getByText('TV Series')).toBeInTheDocument();
 			});
+		});
+
+		it('renders drives tab with collapsible diagnostics toggle', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			// Switch to drives tab
+			const drivesTab = screen.getAllByText('Drives');
+			await fireEvent.click(drivesTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Udev & Drive Diagnostics')).toBeInTheDocument();
+			});
+			// Run Check button should not be visible when collapsed
+			expect(screen.queryByText('Run Check')).not.toBeInTheDocument();
 		});
 	});
 });
