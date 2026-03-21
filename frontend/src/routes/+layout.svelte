@@ -11,6 +11,28 @@
 
 	let sidebarOpen = $state(false);
 	let togglingPause = $state(false);
+	let quickMenuOpen = $state(false);
+
+	function closeQuickMenu() {
+		quickMenuOpen = false;
+	}
+
+	function handleQuickAction(action: string) {
+		closeQuickMenu();
+		if (action === 'import-folder') {
+			window.location.href = '/?import=1';
+		} else if (action === 'restart-arm') {
+			if (confirm('Restart the ARM ripping service? Active rips will be interrupted.')) {
+				fetch('/api/system/restart', { method: 'POST' });
+			}
+		} else if (action === 'restart-transcoder') {
+			if (confirm('Restart the transcoder service? Active transcodes will be interrupted.')) {
+				fetch('/api/system/restart-transcoder', { method: 'POST' });
+			}
+		} else if (action === 'settings') {
+			window.location.href = '/settings';
+		}
+	}
 
 	let isSetupPage = $derived($page.url.pathname.startsWith('/setup'));
 
@@ -157,6 +179,68 @@
 						{$dashboard.ripping_enabled ? 'Auto-Start' : 'Paused'}
 					</button>
 				{/if}
+				<!-- Quick actions menu -->
+				<div class="relative">
+					<button
+						onclick={() => quickMenuOpen = !quickMenuOpen}
+						class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-400 dark:hover:bg-primary/15"
+						title="Quick actions"
+					>
+						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+						</svg>
+					</button>
+					{#if quickMenuOpen}
+						<!-- Backdrop -->
+						<button type="button" class="fixed inset-0 z-40" onclick={closeQuickMenu} aria-label="Close menu"></button>
+						<!-- Dropdown -->
+						<div class="absolute right-0 z-50 mt-1 w-52 rounded-lg border border-primary/20 bg-surface py-1 shadow-lg dark:border-primary/30 dark:bg-surface-dark">
+							<button
+								type="button"
+								onclick={() => handleQuickAction('import-folder')}
+								class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
+							>
+								<svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+								</svg>
+								Import Folder
+							</button>
+							<div class="my-1 border-t border-primary/10 dark:border-primary/20"></div>
+							<button
+								type="button"
+								onclick={() => handleQuickAction('restart-arm')}
+								class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
+							>
+								<svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+								</svg>
+								Restart ARM
+							</button>
+							<button
+								type="button"
+								onclick={() => handleQuickAction('restart-transcoder')}
+								class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
+							>
+								<svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+								</svg>
+								Restart Transcoder
+							</button>
+							<div class="my-1 border-t border-primary/10 dark:border-primary/20"></div>
+							<button
+								type="button"
+								onclick={() => handleQuickAction('settings')}
+								class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
+							>
+								<svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+								</svg>
+								Settings
+							</button>
+						</div>
+					{/if}
+				</div>
 				<!-- Dark mode toggle (hidden when theme locks the mode) -->
 				{#if !$schemeLocksMode}
 					<button
