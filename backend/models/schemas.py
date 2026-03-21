@@ -84,6 +84,8 @@ class JobSchema(BaseModel):
     path: str | None = None
     raw_path: str | None = None
     transcode_path: str | None = None
+    source_type: str | None = None
+    source_path: str | None = None
     transcode_overrides: dict | None = None
     multi_title: bool | None = None
     disc_number: int | None = None
