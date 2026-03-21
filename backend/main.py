@@ -13,6 +13,7 @@ from backend.routers import (
     dashboard,
     drives,
     files,
+    folder,
     jobs,
     logs,
     notifications,
@@ -57,6 +58,7 @@ app.include_router(settings.router)
 app.include_router(notifications.router)
 app.include_router(themes.router)
 app.include_router(files.router)
+app.include_router(folder.router)
 app.include_router(setup.router)
 app.include_router(system.router)
 
