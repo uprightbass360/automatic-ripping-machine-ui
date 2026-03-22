@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Job } from '$lib/types/arm';
-	import { abandonJob, deleteJob, fixJobPermissions } from '$lib/api/jobs';
+	import { abandonJob, deleteJob, fixJobPermissions, bulkPurgeJobs } from '$lib/api/jobs';
 	import { isJobActive } from '$lib/utils/job-type';
 
 	interface Props {
@@ -20,6 +20,7 @@
 	let canAbandon = $derived(active);
 	let canDelete = $derived(statusLower === 'success' || statusLower === 'fail' || statusLower === 'waiting_transcode');
 	let canFixPerms = $derived(statusLower === 'success');
+	let canPurge = $derived(statusLower === 'fail' || statusLower === 'success');
 
 	function clearFeedback() {
 		setTimeout(() => (feedback = null), 3000);
@@ -77,6 +78,22 @@
 		}
 	}
 
+	async function handlePurge() {
+		if (!confirm(`Purge job "${job.title || job.label || job.job_id}"? This will delete the job record, log files, and raw files.`)) return;
+		loading = 'purge';
+		feedback = null;
+		try {
+			await bulkPurgeJobs({ job_ids: [job.job_id] });
+			feedback = { type: 'success', message: 'Job purged' };
+			onaction?.();
+		} catch (e) {
+			feedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to purge' };
+		} finally {
+			loading = null;
+			clearFeedback();
+		}
+	}
+
 	let btnBase = $derived(
 		compact
 			? 'rounded px-2 py-0.5 text-xs font-medium disabled:opacity-50'
@@ -84,7 +101,7 @@
 	);
 </script>
 
-{#if canAbandon || canDelete || canFixPerms}
+{#if canAbandon || canDelete || canFixPerms || canPurge}
 	<div class="flex items-center gap-1.5 flex-wrap">
 		{#if canAbandon}
 			<button
@@ -111,6 +128,15 @@
 				class="{btnBase} bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
 			>
 				{loading === 'delete' ? 'Deleting...' : 'Delete'}
+			</button>
+		{/if}
+		{#if canPurge}
+			<button
+				onclick={handlePurge}
+				disabled={loading !== null}
+				class="{btnBase} bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50"
+			>
+				{loading === 'purge' ? 'Purging...' : 'Purge'}
 			</button>
 		{/if}
 		{#if feedback}
