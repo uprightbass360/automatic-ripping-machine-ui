@@ -350,14 +350,16 @@
 	function scrollToPanel(label: string) {
 		// Expand the panel first
 		armCollapsed[label] = false;
-		// Wait for DOM to fully settle (settings render can cause reflow)
-		// Double-rAF ensures layout is complete before scrolling
-		requestAnimationFrame(() => {
-			requestAnimationFrame(() => {
-				const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
-				el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-			});
-		});
+		// Scroll to top immediately to prevent the browser's native hash
+		// scroll from locking the viewport mid-page while DOM is reflowing
+		window.scrollTo(0, 0);
+		// Then scroll to the target after DOM settles (setTimeout is more
+		// reliable than rAF here because Svelte's reactivity may queue
+		// multiple microtask renders after expanding the panel)
+		setTimeout(() => {
+			const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+			el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}, 100);
 	}
 
 	onMount(() => {
