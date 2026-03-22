@@ -350,10 +350,13 @@
 	function scrollToPanel(label: string) {
 		// Expand the panel first
 		armCollapsed[label] = false;
-		// Scroll to it after DOM update
+		// Wait for DOM to fully settle (settings render can cause reflow)
+		// Double-rAF ensures layout is complete before scrolling
 		requestAnimationFrame(() => {
-			const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
-			el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			requestAnimationFrame(() => {
+				const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+				el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			});
 		});
 	}
 
