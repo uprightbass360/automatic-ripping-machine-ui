@@ -367,3 +367,54 @@ async def get_job_stats() -> dict[str, Any] | None:
 async def restart_arm() -> dict[str, Any] | None:
     """Restart the ARM service. Returns None if ARM is unreachable."""
     return await _request("POST", "/api/v1/system/restart")
+
+
+# --- Maintenance ---
+
+
+async def get_maintenance_counts() -> dict[str, Any] | None:
+    """Get orphan counts from ARM."""
+    return await _request("GET", "/api/v1/maintenance/counts")
+
+
+async def get_orphan_logs() -> dict[str, Any] | None:
+    """Get orphan log files from ARM."""
+    return await _request("GET", "/api/v1/maintenance/orphan-logs")
+
+
+async def get_orphan_folders() -> dict[str, Any] | None:
+    """Get orphan folders from ARM."""
+    return await _request("GET", "/api/v1/maintenance/orphan-folders")
+
+
+async def delete_orphan_log(path: str) -> dict[str, Any] | None:
+    """Delete a single orphan log file via ARM."""
+    return await _request("POST", "/api/v1/maintenance/delete-log", json={"path": path})
+
+
+async def delete_orphan_folder(path: str) -> dict[str, Any] | None:
+    """Delete a single orphan folder via ARM."""
+    return await _request("POST", "/api/v1/maintenance/delete-folder", json={"path": path})
+
+
+async def bulk_delete_logs(paths: list[str]) -> dict[str, Any] | None:
+    """Bulk delete orphan log files via ARM."""
+    return await _request("POST", "/api/v1/maintenance/bulk-delete-logs", json={"paths": paths})
+
+
+async def bulk_delete_folders(paths: list[str]) -> dict[str, Any] | None:
+    """Bulk delete orphan folders via ARM."""
+    return await _request("POST", "/api/v1/maintenance/bulk-delete-folders", json={"paths": paths})
+
+
+# --- Architecture debt fix: proxy these through ARM ---
+
+
+async def update_transcode_overrides(job_id: int, overrides: dict) -> dict[str, Any] | None:
+    """Update per-job transcode overrides via ARM (existing endpoint)."""
+    return await _request("PATCH", f"/api/v1/jobs/{job_id}/transcode-config", json=overrides)
+
+
+async def update_track_fields(job_id: int, track_id: int, fields: dict) -> dict[str, Any] | None:
+    """Update track fields via ARM."""
+    return await _request("PATCH", f"/api/v1/jobs/{job_id}/tracks/{track_id}", json=fields)
