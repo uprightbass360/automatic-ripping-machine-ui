@@ -53,6 +53,7 @@ async def get_dashboard():
     transcoder_task = asyncio.create_task(_fetch_transcoder())
     stats_task = asyncio.create_task(arm_client.get_system_stats())
     transcoder_stats_task = asyncio.create_task(transcoder_client.get_system_stats())
+    ripping_task = asyncio.create_task(arm_client.get_ripping_enabled())
 
     transcoder_online, transcoder_stats, active_transcodes = await transcoder_task
 
@@ -65,6 +66,13 @@ async def get_dashboard():
     transcoder_stats_data = await transcoder_stats_task
     if transcoder_stats_data:
         transcoder_system_stats = SystemStatsSchema(**transcoder_stats_data)
+
+    ripping_data = await ripping_task
+    makemkv_key_valid = None
+    makemkv_key_checked_at = None
+    if ripping_data and ripping_data.get("ripping_enabled") is not None:
+        makemkv_key_valid = ripping_data.get("makemkv_key_valid")
+        makemkv_key_checked_at = ripping_data.get("makemkv_key_checked_at")
 
     arm_hw = system_cache.get_arm_info()
     transcoder_hw = system_cache.get_transcoder_info()
@@ -80,6 +88,8 @@ async def get_dashboard():
         drive_names=drive_names,
         notification_count=notification_count,
         ripping_enabled=not ripping_paused,
+        makemkv_key_valid=makemkv_key_valid,
+        makemkv_key_checked_at=makemkv_key_checked_at,
         transcoder_online=transcoder_online,
         transcoder_stats=transcoder_stats,
         transcoder_system_stats=transcoder_system_stats,
@@ -87,3 +97,16 @@ async def get_dashboard():
         system_stats=system_stats,
         transcoder_info=HardwareInfoSchema(**transcoder_hw) if transcoder_hw else None,
     )
+
+
+@router.post("/dashboard/makemkv-key-check")
+async def check_makemkv_key():
+    """Proxy MakeMKV key check to ARM backend."""
+    result = await arm_client.check_makemkv_key()
+    if result is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="ARM is unreachable")
+    if result.get("success") is False:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=502, detail=result.get("error", "ARM request failed"))
+    return result
