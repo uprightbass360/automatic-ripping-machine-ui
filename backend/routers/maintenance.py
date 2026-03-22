@@ -28,6 +28,8 @@ class BulkPathRequest(BaseModel):
 def _check_arm(result: dict[str, Any] | None) -> dict[str, Any]:
     if result is None:
         raise HTTPException(status_code=503, detail=_ARM_UNREACHABLE)
+    if result.get("success") is False:
+        raise HTTPException(status_code=502, detail=result.get("error", "ARM request failed"))
     return result
 
 
