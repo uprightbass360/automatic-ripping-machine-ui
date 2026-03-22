@@ -90,3 +90,44 @@ async def test_dashboard_transcoder_offline(app_client):
     data = resp.json()
     assert data["transcoder_online"] is False
     assert data["transcoder_stats"] is None
+
+
+# --- POST /api/dashboard/makemkv-key-check ---
+
+
+async def test_makemkv_key_check_success(app_client):
+    """POST /api/dashboard/makemkv-key-check returns key_valid and message from ARM."""
+    result = {"success": True, "key_valid": True, "message": "MakeMKV key is valid"}
+    with patch(
+        "backend.routers.dashboard.arm_client.check_makemkv_key",
+        new_callable=AsyncMock,
+        return_value=result,
+    ):
+        resp = await app_client.post("/api/dashboard/makemkv-key-check")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["key_valid"] is True
+    assert data["message"] == "MakeMKV key is valid"
+
+
+async def test_makemkv_key_check_arm_unreachable(app_client):
+    """POST /api/dashboard/makemkv-key-check returns 503 when ARM is unreachable."""
+    with patch(
+        "backend.routers.dashboard.arm_client.check_makemkv_key",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.post("/api/dashboard/makemkv-key-check")
+    assert resp.status_code == 503
+    assert "unreachable" in resp.json()["detail"].lower()
+
+
+async def test_makemkv_key_check_arm_error(app_client):
+    """POST /api/dashboard/makemkv-key-check returns 502 when ARM returns success=False."""
+    with patch(
+        "backend.routers.dashboard.arm_client.check_makemkv_key",
+        new_callable=AsyncMock,
+        return_value={"success": False, "error": "invalid key"},
+    ):
+        resp = await app_client.post("/api/dashboard/makemkv-key-check")
+    assert resp.status_code == 502
