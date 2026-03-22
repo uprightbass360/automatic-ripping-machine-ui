@@ -202,6 +202,62 @@ def get_jobs_paginated_response(
     }
 
 
+_ACTIVE_STATUSES = ["active", "ripping", "transcoding"]
+_WAITING_STATUSES = ["waiting", "waiting_transcode"]
+
+
+def get_job_stats(
+    search: str | None = None,
+    video_type: str | None = None,
+    disctype: str | None = None,
+    days: int | None = None,
+) -> dict:
+    """Return job counts by status category, respecting filters."""
+    try:
+        with get_session() as session:
+            base = select(Job)
+
+            if video_type:
+                base = base.where(func.lower(Job.video_type) == video_type.lower())
+            if disctype:
+                base = base.where(func.lower(Job.disctype) == disctype.lower())
+            if days and days > 0:
+                from datetime import datetime, timedelta
+                cutoff = datetime.utcnow() - timedelta(days=days)
+                base = base.where(Job.start_time >= cutoff)
+            if search:
+                pattern = f"%{search}%"
+                base = base.where(
+                    or_(
+                        Job.title.ilike(pattern),
+                        Job.title_auto.ilike(pattern),
+                        Job.title_manual.ilike(pattern),
+                        Job.label.ilike(pattern),
+                    )
+                )
+
+            sub = base.subquery()
+            total = session.scalar(select(func.count()).select_from(sub)) or 0
+
+            def _count_statuses(statuses: list[str]) -> int:
+                q = base.where(func.lower(Job.status).in_(statuses))
+                return session.scalar(select(func.count()).select_from(q.subquery())) or 0
+
+            def _count_status(s: str) -> int:
+                q = base.where(func.lower(Job.status) == s)
+                return session.scalar(select(func.count()).select_from(q.subquery())) or 0
+
+            return {
+                "total": total,
+                "active": _count_statuses(_ACTIVE_STATUSES),
+                "success": _count_status("success"),
+                "fail": _count_status("fail"),
+                "waiting": _count_statuses(_WAITING_STATUSES),
+            }
+    except Exception:
+        return {"total": 0, "active": 0, "success": 0, "fail": 0, "waiting": 0}
+
+
 def get_job_track_counts(job_id: int) -> dict:
     """Return track completion counts for a single job."""
     try:

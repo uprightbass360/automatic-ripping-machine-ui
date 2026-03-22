@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, HTTPException, Query, Request
+from pydantic import BaseModel
 
 from backend.models.schemas import (
     JobDetailSchema,
@@ -51,6 +52,85 @@ def list_jobs(
         per_page=data["per_page"],
         pages=data["pages"],
     )
+
+
+@router.get("/jobs/stats")
+def get_job_stats(
+    search: str | None = None,
+    video_type: str | None = None,
+    disctype: str | None = None,
+    days: int | None = Query(None, ge=1),
+):
+    return arm_db.get_job_stats(search, video_type, disctype, days)
+
+
+class BulkJobRequest(BaseModel):
+    job_ids: list[int] | None = None
+    status: str | None = None
+
+
+@router.post("/jobs/bulk-delete")
+async def bulk_delete_jobs(req: BulkJobRequest):
+    """Delete multiple jobs by ID list or by status."""
+    job_ids = _resolve_job_ids(req)
+    deleted = 0
+    errors: list[str] = []
+
+    for job_id in job_ids:
+        result = await arm_client.delete_job(job_id)
+        if result is None:
+            errors.append(f"ARM unreachable for job {job_id}")
+        elif result.get("success") is False:
+            errors.append(f"Job {job_id}: {result.get('error', 'delete failed')}")
+        else:
+            deleted += 1
+
+    return {"deleted": deleted, "errors": errors}
+
+
+@router.post("/jobs/bulk-purge")
+async def bulk_purge_jobs(req: BulkJobRequest):
+    """Purge multiple jobs — delete record + log file + raw folder."""
+    job_ids = _resolve_job_ids(req)
+    purged = 0
+    errors: list[str] = []
+
+    for job_id in job_ids:
+        # Read job to get logfile and raw path before deleting
+        job = arm_db.get_job(job_id)
+        logfile = getattr(job, "logfile", None) if job else None
+        raw_path = getattr(job, "path", None) if job else None
+
+        # Delete job record via ARM
+        result = await arm_client.delete_job(job_id)
+        if result is None:
+            errors.append(f"ARM unreachable for job {job_id}")
+            continue
+        if result.get("success") is False:
+            errors.append(f"Job {job_id}: {result.get('error', 'delete failed')}")
+            continue
+
+        # Best-effort: delete log file and raw folder
+        if logfile:
+            await arm_client.delete_orphan_log(logfile)
+        if raw_path:
+            await arm_client.delete_orphan_folder(raw_path)
+
+        purged += 1
+
+    return {"purged": purged, "errors": errors}
+
+
+def _resolve_job_ids(req: BulkJobRequest) -> list[int]:
+    """Resolve request to a list of job IDs."""
+    if req.job_ids:
+        return req.job_ids
+    if req.status:
+        jobs, _ = arm_db.get_jobs_paginated(
+            page=1, per_page=10000, status=req.status,
+        )
+        return [j.job_id for j in jobs]
+    return []
 
 
 @router.get("/jobs/{job_id}", response_model=JobDetailSchema, responses=_404_JOB)
