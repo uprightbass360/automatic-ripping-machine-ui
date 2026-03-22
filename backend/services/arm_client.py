@@ -418,3 +418,20 @@ async def update_transcode_overrides(job_id: int, overrides: dict) -> dict[str, 
 async def update_track_fields(job_id: int, track_id: int, fields: dict) -> dict[str, Any] | None:
     """Update track fields via ARM."""
     return await _request("PATCH", f"/api/v1/jobs/{job_id}/tracks/{track_id}", json=fields)
+
+
+# --- MakeMKV Key Check ---
+
+
+async def get_ripping_enabled() -> dict[str, Any] | None:
+    """Get ripping-enabled status and MakeMKV key validity from ARM."""
+    return await _request("GET", "/api/v1/system/ripping-enabled")
+
+
+async def check_makemkv_key() -> dict[str, Any] | None:
+    """Trigger a MakeMKV key validity check on ARM.
+
+    Uses a 30-second timeout since prep_mkv() may fetch the beta key
+    from forum.makemkv.com over the network.
+    """
+    return await _request("POST", "/api/v1/system/makemkv-key-check", timeout=30.0)
