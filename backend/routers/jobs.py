@@ -90,16 +90,22 @@ async def bulk_delete_jobs(req: BulkJobRequest):
 
 @router.post("/jobs/bulk-purge")
 async def bulk_purge_jobs(req: BulkJobRequest):
-    """Purge multiple jobs — delete record + log file + raw folder."""
+    """Purge multiple jobs — delete record + all associated files.
+
+    Cleans up: log file, raw MKV output, transcoded intermediates,
+    and final completed media folder.
+    """
     job_ids = _resolve_job_ids(req)
     purged = 0
     errors: list[str] = []
 
     for job_id in job_ids:
-        # Read job to get logfile and raw path before deleting
+        # Read job to get all file paths before deleting the record
         job = arm_db.get_job(job_id)
         logfile = getattr(job, "logfile", None) if job else None
-        raw_path = getattr(job, "path", None) if job else None
+        raw_path = getattr(job, "raw_path", None) if job else None
+        transcode_path = getattr(job, "transcode_path", None) if job else None
+        completed_path = getattr(job, "path", None) if job else None
 
         # Delete job record via ARM
         result = await arm_client.delete_job(job_id)
@@ -110,11 +116,12 @@ async def bulk_purge_jobs(req: BulkJobRequest):
             errors.append(f"Job {job_id}: {result.get('error', 'delete failed')}")
             continue
 
-        # Best-effort: delete log file and raw folder
+        # Best-effort: delete all associated files
         if logfile:
             await arm_client.delete_orphan_log(logfile)
-        if raw_path:
-            await arm_client.delete_orphan_folder(raw_path)
+        for folder in (raw_path, transcode_path, completed_path):
+            if folder:
+                await arm_client.delete_orphan_folder(folder)
 
         purged += 1
 
