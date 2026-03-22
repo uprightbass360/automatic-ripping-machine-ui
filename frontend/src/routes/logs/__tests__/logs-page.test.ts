@@ -9,7 +9,9 @@ vi.mock('$lib/api/logs', () => ({
 	])),
 	fetchTranscoderLogs: vi.fn(() => Promise.resolve([
 		{ filename: 'transcode_001.log', size: 512, modified: '2025-06-15T11:00:00Z' }
-	]))
+	])),
+	deleteLog: vi.fn(() => Promise.resolve({ success: true, filename: 'test.log' })),
+	logDownloadUrl: vi.fn((f: string) => `/api/logs/${f}/download`),
 }));
 
 describe('Logs Page', () => {

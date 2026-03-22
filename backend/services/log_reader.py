@@ -39,6 +39,32 @@ def list_logs() -> list[dict]:
     return logs
 
 
+def resolve_log_path(filename: str) -> Path | None:
+    """Resolve a log filename to an absolute path, with traversal protection."""
+    log_path = _log_dir() / filename
+    try:
+        log_path = log_path.resolve()
+        if not str(log_path).startswith(str(_log_dir().resolve())):
+            return None
+    except (OSError, ValueError):
+        return None
+    if not log_path.is_file():
+        return None
+    return log_path
+
+
+def delete_log(filename: str) -> bool:
+    """Delete a log file. Returns True on success, False if not found."""
+    log_path = resolve_log_path(filename)
+    if log_path is None:
+        return False
+    try:
+        log_path.unlink()
+        return True
+    except OSError:
+        return False
+
+
 def read_log(
     filename: str,
     mode: str = "tail",

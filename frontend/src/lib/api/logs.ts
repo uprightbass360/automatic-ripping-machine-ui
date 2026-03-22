@@ -57,6 +57,14 @@ export function fetchStructuredTranscoderLogContent(
 	);
 }
 
+export function deleteLog(filename: string): Promise<{ success: boolean; filename: string }> {
+	return apiFetch(`/api/logs/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+}
+
+export function logDownloadUrl(filename: string): string {
+	return `/api/logs/${encodeURIComponent(filename)}/download`;
+}
+
 export async function fetchTranscoderLogForArmJob(
 	armJobId: number
 ): Promise<{ found: boolean; logfile?: string; transcoder_job_id?: number; status?: string }> {
