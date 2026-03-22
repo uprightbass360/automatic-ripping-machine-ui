@@ -1,8 +1,28 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fetchLogs, fetchTranscoderLogs } from '$lib/api/logs';
+	import { fetchLogs, fetchTranscoderLogs, deleteLog, logDownloadUrl } from '$lib/api/logs';
 	import type { LogFile } from '$lib/types/arm';
 	import { formatBytes, formatDateTime } from '$lib/utils/format';
+
+	let deleting = $state<string | null>(null);
+	let deleteFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	async function handleDelete(filename: string) {
+		if (!confirm(`Delete log file "${filename}"? This cannot be undone.`)) return;
+		deleting = filename;
+		deleteFeedback = null;
+		try {
+			await deleteLog(filename);
+			armLogs = armLogs.filter(l => l.filename !== filename);
+			deleteFeedback = { type: 'success', message: `Deleted ${filename}` };
+			setTimeout(() => (deleteFeedback = null), 3000);
+		} catch (e) {
+			deleteFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to delete' };
+			setTimeout(() => (deleteFeedback = null), 5000);
+		} finally {
+			deleting = null;
+		}
+	}
 
 	let activeTab = $state<'arm' | 'transcoder'>('arm');
 	let armLogs = $state<LogFile[]>([]);
@@ -116,6 +136,7 @@
 								Last Modified
 								<span class="ml-0.5 text-[10px]">{fileSortKey === 'modified' ? (fileSortDir === 'asc' ? '▲' : '▼') : '▲▼'}</span>
 							</th>
+							<th class="px-4 py-3 font-medium">Actions</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -128,11 +149,32 @@
 								</td>
 								<td class="px-4 py-3 text-gray-500 dark:text-gray-400">{formatBytes(log.size)}</td>
 								<td class="px-4 py-3 text-gray-500 dark:text-gray-400">{formatDateTime(log.modified)}</td>
+								<td class="px-4 py-3">
+									<div class="flex items-center gap-1.5">
+										<a
+											href={logDownloadUrl(log.filename)}
+											download
+											class="rounded px-2 py-0.5 text-xs font-medium bg-primary-light-bg text-primary-text hover:bg-primary/25 dark:bg-primary-light-bg-dark dark:text-primary-text-dark dark:hover:bg-primary/30"
+										>Download</a>
+										<button
+											onclick={() => handleDelete(log.filename)}
+											disabled={deleting === log.filename}
+											class="rounded px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 disabled:opacity-50"
+										>
+											{deleting === log.filename ? 'Deleting...' : 'Delete'}
+										</button>
+									</div>
+								</td>
 							</tr>
 						{/each}
 					</tbody>
 				</table>
 			</div>
+			{#if deleteFeedback}
+				<div class="mt-2 text-sm {deleteFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+					{deleteFeedback.message}
+				</div>
+			{/if}
 		{/if}
 	{:else}
 		{#if transcoderError}
