@@ -1174,6 +1174,7 @@
 				<button type="button" onclick={() => (activeTab = 'drives')} class={tabClass('drives')}>Drives</button>
 				<button type="button" onclick={() => (activeTab = 'appearance')} class={tabClass('appearance')}>Appearance</button>
 				<button type="button" onclick={() => { activeTab = 'system'; loadSystemInfo(); }} class={tabClass('system')}>System</button>
+				<button type="button" onclick={() => { activeTab = 'maintenance'; loadFailedJobs(); loadMaintenanceLogs(); loadMaintenanceFolders(); }} class={tabClass('maintenance')}>Maintenance</button>
 			</nav>
 		</div>
 
