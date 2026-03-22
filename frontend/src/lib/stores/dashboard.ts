@@ -11,6 +11,8 @@ const emptyDashboard: DashboardData = {
 	drive_names: {},
 	notification_count: 0,
 	ripping_enabled: true,
+	makemkv_key_valid: null,
+	makemkv_key_checked_at: null,
 	transcoder_online: false,
 	transcoder_stats: null,
 	transcoder_system_stats: null,

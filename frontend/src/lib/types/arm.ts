@@ -180,6 +180,8 @@ export interface DashboardData {
 	drive_names: Record<string, string>;
 	notification_count: number;
 	ripping_enabled: boolean;
+	makemkv_key_valid: boolean | null;
+	makemkv_key_checked_at: string | null;
 	transcoder_online: boolean;
 	transcoder_stats: Record<string, unknown> | null;
 	transcoder_system_stats: SystemStats | null;
