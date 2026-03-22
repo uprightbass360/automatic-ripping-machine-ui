@@ -247,34 +247,36 @@ async def tvdb_episodes(job_id: int, season: int = Query(1, ge=1)):
     return result
 
 
-@router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}})
+@router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}, 502: {}, 503: {}})
 async def update_transcode_config(job_id: int, request: Request):
-    """Set per-job transcode override settings."""
+    """Set per-job transcode override settings (proxied to ARM)."""
     body = await request.json()
     if not isinstance(body, dict):
         raise HTTPException(status_code=400, detail="Request body must be a JSON object")
-    try:
-        result = arm_db.update_job_transcode_overrides(job_id, body)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    result = await arm_client.update_transcode_overrides(job_id, body)
     if result is None:
-        raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
-    return {"success": True, "overrides": result}
+        raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+    if isinstance(result, dict) and result.get("success") is False:
+        detail = result.get("error") or result.get("detail") or "Action failed"
+        status = 404 if "not found" in detail.lower() else 502
+        raise HTTPException(status_code=status, detail=detail)
+    return result
 
 
-@router.patch("/jobs/{job_id}/tracks/{track_id}", responses={400: {"description": "Invalid request"}, 404: {"description": "Track not found"}})
+@router.patch("/jobs/{job_id}/tracks/{track_id}", responses={400: {"description": "Invalid request"}, 404: {"description": "Track not found"}, 502: {}, 503: {}})
 async def update_track_fields(job_id: int, track_id: int, request: Request):
-    """Update editable fields (enabled, filename, ripped) on a track."""
+    """Update editable fields (enabled, filename, ripped) on a track (proxied to ARM)."""
     body = await request.json()
     if not isinstance(body, dict):
         raise HTTPException(status_code=400, detail="Request body must be a JSON object")
-    try:
-        result = arm_db.update_track_fields(job_id, track_id, body)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    result = await arm_client.update_track_fields(job_id, track_id, body)
     if result is None:
-        raise HTTPException(status_code=404, detail="Track not found")
-    return {"success": True, "updated": result}
+        raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+    if isinstance(result, dict) and result.get("success") is False:
+        detail = result.get("error") or result.get("detail") or "Action failed"
+        status = 404 if "not found" in detail.lower() else 502
+        raise HTTPException(status_code=status, detail=detail)
+    return result
 
 
 @router.post("/jobs/{job_id}/retranscode", responses={404: {"description": "Job not found or not a video disc"}, 503: {"description": "Transcoder unavailable"}})
