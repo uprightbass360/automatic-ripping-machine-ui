@@ -887,6 +887,7 @@
 		'TMDB_API_KEY',
 		'TVDB_API_KEY',
 		'TRANSCODER_WEBHOOK_SECRET',
+		'MAKEMKV_PERMA_KEY',
 	]);
 
 	// Keys hidden based on metadata provider selection
