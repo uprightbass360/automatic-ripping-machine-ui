@@ -347,20 +347,15 @@
 		if (tab === 'system') loadSystemInfo();
 	}
 
-	function scrollToPanel(label: string) {
-		// Expand the panel first
+	function scrollToPanel(label: string, immediate = false) {
+		// Expand the panel so it's visible
 		armCollapsed[label] = false;
-		// Use a generous delay to let all async data (settings, drives,
-		// system info) finish loading and the DOM fully settle before
-		// scrolling. Use 'instant' to avoid smooth-scroll animation
-		// fighting with ongoing DOM reflows.
-		setTimeout(() => {
+		if (!immediate) return; // On initial load, just expand — don't scroll
+		// For in-page hash changes, scroll after a tick
+		requestAnimationFrame(() => {
 			const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
-			if (el) {
-				el.scrollIntoView({ behavior: 'instant', block: 'start' });
-				// After instant jump, the page is scrollable immediately
-			}
-		}, 300);
+			el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
 	}
 
 	onMount(() => {
@@ -383,7 +378,7 @@
 			if (panel) {
 				const groups = TAB_ARM_GROUPS[tab] ?? [];
 				const match = groups.find((g) => g.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') === panel.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-				if (match) scrollToPanel(match.label);
+				if (match) scrollToPanel(match.label, true);
 			}
 		}
 		window.addEventListener('hashchange', onHashChange);
