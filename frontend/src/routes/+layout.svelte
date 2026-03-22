@@ -1,4 +1,5 @@
 <script lang="ts">
+import { GITHUB_COMMIT } from '$lib/github-commit';
 	import '../app.css';
 	import { page } from '$app/stores';
 	import { theme, toggleTheme } from '$lib/stores/theme';
@@ -182,7 +183,7 @@
 				{/if}
 				<!-- Commit label -->
 				<div class="ml-4 flex items-center">
-					<span class="inline-flex items-center rounded bg-gray-200 dark:bg-gray-700 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:text-gray-100" title="Current commit hash">commit: 0d2b239</span>
+					<span class="inline-flex items-center rounded bg-gray-200 dark:bg-gray-700 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:text-gray-100" title="Current commit hash">commit: {GITHUB_COMMIT}</span>
 				</div>
 			</div>
 
