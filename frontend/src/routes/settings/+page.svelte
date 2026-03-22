@@ -347,15 +347,41 @@
 		if (tab === 'system') loadSystemInfo();
 	}
 
-	function scrollToPanel(label: string, immediate = false) {
+	function scrollToPanel(label: string) {
 		// Expand the panel so it's visible
 		armCollapsed[label] = false;
-		if (!immediate) return; // On initial load, just expand — don't scroll
-		// For in-page hash changes, scroll after a tick
-		requestAnimationFrame(() => {
-			const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
-			el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-		});
+		const panelId = `panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
+		// Wait for the element to appear in the DOM, then wait for idle
+		// before scrolling. This handles both initial load (element doesn't
+		// exist yet) and in-page nav (element exists but DOM is reflowing).
+		function tryScroll() {
+			const el = document.getElementById(panelId);
+			if (!el) {
+				// Element not rendered yet — observe DOM until it appears
+				const observer = new MutationObserver(() => {
+					if (document.getElementById(panelId)) {
+						observer.disconnect();
+						tryScroll();
+					}
+				});
+				observer.observe(document.body, { childList: true, subtree: true });
+				// Safety: stop observing after 5s
+				setTimeout(() => observer.disconnect(), 5000);
+				return;
+			}
+			// Element exists — wait for browser idle, then scroll
+			if ('requestIdleCallback' in window) {
+				requestIdleCallback(() => {
+					el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				});
+			} else {
+				setTimeout(() => {
+					el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}, 500);
+			}
+		}
+		tryScroll();
 	}
 
 	onMount(() => {
@@ -378,7 +404,7 @@
 			if (panel) {
 				const groups = TAB_ARM_GROUPS[tab] ?? [];
 				const match = groups.find((g) => g.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') === panel.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-				if (match) scrollToPanel(match.label, true);
+				if (match) scrollToPanel(match.label);
 			}
 		}
 		window.addEventListener('hashchange', onHashChange);
