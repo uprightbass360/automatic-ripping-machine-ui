@@ -12,9 +12,11 @@
 		job: Job;
 		driveNames?: Record<string, string>;
 		onaction?: () => void;
+		selected?: boolean;
+		onselect?: (jobId: number, selected: boolean) => void;
 	}
 
-	let { job, driveNames = {}, onaction }: Props = $props();
+	let { job, driveNames = {}, onaction, selected = false, onselect }: Props = $props();
 	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
 
 	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
@@ -25,7 +27,17 @@
 	);
 </script>
 
-<tr class="border-b border-primary/20 hover:bg-page dark:border-primary/20 dark:hover:bg-primary/5">
+<tr class="border-b border-primary/20 hover:bg-page dark:border-primary/20 dark:hover:bg-primary/5 {selected ? 'bg-primary/[0.03] dark:bg-primary/[0.06]' : ''}">
+	<!-- Checkbox -->
+	<td class="px-4 py-3 w-8">
+		<input
+			type="checkbox"
+			checked={selected}
+			onchange={() => onselect?.(job.job_id, !selected)}
+			class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+		/>
+	</td>
+
 	<!-- Title -->
 	<td class="px-4 py-3">
 		<div class="flex items-center gap-2">
