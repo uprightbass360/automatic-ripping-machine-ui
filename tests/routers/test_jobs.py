@@ -37,7 +37,7 @@ async def test_list_jobs_with_pagination_params(app_client):
     with patch("backend.routers.jobs.arm_db.get_jobs_paginated_response", return_value=paginated) as mock_fn:
         resp = await app_client.get("/api/jobs?page=3&per_page=10&status=active")
     assert resp.status_code == 200
-    mock_fn.assert_called_once_with(3, 10, "active", None, None)
+    mock_fn.assert_called_once_with(3, 10, "active", None, None, None, None, None, None)
 
 
 # --- GET /api/jobs/{job_id} ---

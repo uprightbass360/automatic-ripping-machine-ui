@@ -108,21 +108,47 @@ def get_active_jobs() -> list[dict]:
         return []
 
 
+_SORTABLE_COLUMNS = {
+    "title": Job.title,
+    "year": Job.year,
+    "status": Job.status,
+    "video_type": Job.video_type,
+    "disctype": Job.disctype,
+    "start_time": Job.start_time,
+}
+
+
 def get_jobs_paginated(
     page: int = 1,
     per_page: int = 25,
     status: str | None = None,
     search: str | None = None,
     video_type: str | None = None,
+    disctype: str | None = None,
+    days: int | None = None,
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
 ) -> tuple[list[Job], int]:
     try:
         with get_session() as session:
             stmt = select(Job)
 
             if status:
-                stmt = stmt.where(func.lower(Job.status) == status.lower())
+                status_lower = status.lower()
+                if status_lower == "active":
+                    stmt = stmt.where(func.lower(Job.status).in_(["active", "ripping", "transcoding"]))
+                elif status_lower == "waiting":
+                    stmt = stmt.where(func.lower(Job.status).in_(["waiting", "waiting_transcode"]))
+                else:
+                    stmt = stmt.where(func.lower(Job.status) == status_lower)
             if video_type:
                 stmt = stmt.where(func.lower(Job.video_type) == video_type.lower())
+            if disctype:
+                stmt = stmt.where(func.lower(Job.disctype) == disctype.lower())
+            if days and days > 0:
+                from datetime import datetime, timedelta
+                cutoff = datetime.utcnow() - timedelta(days=days)
+                stmt = stmt.where(Job.start_time >= cutoff)
             if search:
                 pattern = f"%{search}%"
                 stmt = stmt.where(
@@ -137,7 +163,13 @@ def get_jobs_paginated(
             count_stmt = select(func.count()).select_from(stmt.subquery())
             total = session.scalar(count_stmt) or 0
 
-            stmt = stmt.order_by(Job.start_time.desc())
+            # Sorting
+            col = _SORTABLE_COLUMNS.get(sort_by, Job.start_time)
+            if sort_dir == "asc":
+                stmt = stmt.order_by(col.asc().nulls_last())
+            else:
+                stmt = stmt.order_by(col.desc().nulls_last())
+
             stmt = stmt.offset((page - 1) * per_page).limit(per_page)
             jobs = list(session.scalars(stmt).unique().all())
 
@@ -152,8 +184,15 @@ def get_jobs_paginated_response(
     status: str | None = None,
     search: str | None = None,
     video_type: str | None = None,
+    disctype: str | None = None,
+    days: int | None = None,
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
 ) -> dict:
-    jobs, total = get_jobs_paginated(page, per_page, status, search, video_type)
+    jobs, total = get_jobs_paginated(
+        page, per_page, status, search, video_type,
+        disctype, days, sort_by, sort_dir,
+    )
     return {
         "jobs": jobs,
         "total": total,
