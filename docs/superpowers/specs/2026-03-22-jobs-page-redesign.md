@@ -134,3 +134,7 @@ _Not part of this implementation._ Future enhancement: when navigating to a job 
 - Bulk purge may be slow (deletes files) — show progress/feedback
 - Confirm dialogs for all destructive bulk actions
 - Preserve existing per-row action behavior (abandon, delete, fix perms)
+
+## Tech Debt
+
+The UI backend currently reads jobs directly from the ARM database via `arm_db.get_jobs_paginated()` rather than proxying through ARM's API. This applies to all job listing, filtering, sorting, and stats in this spec. This pattern should eventually be replaced with ARM API calls so ARM is the single source of truth for job data. For now, the direct DB approach is kept for consistency with existing code, but new features should not deepen this dependency beyond what's needed for this spec.
