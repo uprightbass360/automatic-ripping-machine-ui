@@ -35,8 +35,15 @@ def list_jobs(
     status: str | None = None,
     search: str | None = None,
     video_type: str | None = None,
+    disctype: str | None = None,
+    days: int | None = Query(None, ge=1),
+    sort_by: str | None = None,
+    sort_dir: str | None = Query(None, pattern="^(asc|desc)$"),
 ):
-    data = arm_db.get_jobs_paginated_response(page, per_page, status, search, video_type)
+    data = arm_db.get_jobs_paginated_response(
+        page, per_page, status, search, video_type,
+        disctype, days, sort_by, sort_dir,
+    )
     return JobListResponse(
         jobs=[JobSchema.model_validate(j) for j in data["jobs"]],
         total=data["total"],
