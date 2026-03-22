@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import math
 
-from sqlalchemy import create_engine, func, or_, select
+from sqlalchemy import create_engine, delete, func, or_, select, update
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import NullPool
 
@@ -293,6 +293,50 @@ def get_notification_count() -> int:
             )
             return session.scalar(stmt) or 0
     except Exception:
+        return 0
+
+
+def get_cleared_notification_count() -> int:
+    """Count notifications marked as cleared."""
+    try:
+        with get_session() as session:
+            stmt = select(func.count()).select_from(Notifications).where(
+                Notifications.cleared == True  # noqa: E712
+            )
+            return session.scalar(stmt) or 0
+    except Exception:
+        return 0
+
+
+def dismiss_all_notifications() -> int:
+    """Mark all unseen notifications as seen. Returns count affected."""
+    try:
+        with get_rw_session() as session:
+            stmt = (
+                update(Notifications)
+                .where(Notifications.seen == False)  # noqa: E712
+                .values(seen=True)
+            )
+            result = session.execute(stmt)
+            session.commit()
+            return result.rowcount
+    except Exception:
+        log.exception("Failed to dismiss all notifications")
+        return 0
+
+
+def purge_cleared_notifications() -> int:
+    """Hard-delete all cleared notifications. Returns count deleted."""
+    try:
+        with get_rw_session() as session:
+            stmt = delete(Notifications).where(
+                Notifications.cleared == True  # noqa: E712
+            )
+            result = session.execute(stmt)
+            session.commit()
+            return result.rowcount
+    except Exception:
+        log.exception("Failed to purge cleared notifications")
         return 0
 
 
