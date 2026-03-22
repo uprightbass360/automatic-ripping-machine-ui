@@ -153,7 +153,7 @@
 								? 'MakeMKV key invalid — click to update'
 								: 'MakeMKV key not checked yet'}
 					>
-						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.makemkv_key_valid === true ? 'bg-green-500' : $dashboard.makemkv_key_valid === false ? 'bg-red-500' : 'bg-gray-400'}"></div>
+						<div class="h-2 w-2 shrink-0 rounded-full {$dashboard.makemkv_key_valid === true ? 'bg-green-500' : 'bg-red-500'}"></div>
 						<span class="text-gray-700 dark:text-gray-200">Key</span>
 					</a>
 				</div>
