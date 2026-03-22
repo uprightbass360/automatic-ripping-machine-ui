@@ -234,6 +234,8 @@ class DashboardResponse(BaseModel):
     drive_names: dict[str, str] = {}
     notification_count: int = 0
     ripping_enabled: bool = True
+    makemkv_key_valid: bool | None = None
+    makemkv_key_checked_at: str | None = None
     transcoder_online: bool = False
     transcoder_stats: dict[str, Any] | None = None
     transcoder_system_stats: SystemStatsSchema | None = None
