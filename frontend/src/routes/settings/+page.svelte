@@ -350,16 +350,17 @@
 	function scrollToPanel(label: string) {
 		// Expand the panel first
 		armCollapsed[label] = false;
-		// Scroll to top immediately to prevent the browser's native hash
-		// scroll from locking the viewport mid-page while DOM is reflowing
-		window.scrollTo(0, 0);
-		// Then scroll to the target after DOM settles (setTimeout is more
-		// reliable than rAF here because Svelte's reactivity may queue
-		// multiple microtask renders after expanding the panel)
+		// Use a generous delay to let all async data (settings, drives,
+		// system info) finish loading and the DOM fully settle before
+		// scrolling. Use 'instant' to avoid smooth-scroll animation
+		// fighting with ongoing DOM reflows.
 		setTimeout(() => {
 			const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
-			el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-		}, 100);
+			if (el) {
+				el.scrollIntoView({ behavior: 'instant', block: 'start' });
+				// After instant jump, the page is scrollable immediately
+			}
+		}, 300);
 	}
 
 	onMount(() => {
