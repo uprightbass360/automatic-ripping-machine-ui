@@ -7,6 +7,10 @@ export function fetchJobs(params?: {
 	status?: string;
 	search?: string;
 	video_type?: string;
+	disctype?: string;
+	days?: number;
+	sort_by?: string;
+	sort_dir?: string;
 }): Promise<JobListResponse> {
 	const query = new URLSearchParams();
 	if (params?.page) query.set('page', String(params.page));
@@ -14,6 +18,10 @@ export function fetchJobs(params?: {
 	if (params?.status) query.set('status', params.status);
 	if (params?.search) query.set('search', params.search);
 	if (params?.video_type) query.set('video_type', params.video_type);
+	if (params?.disctype) query.set('disctype', params.disctype);
+	if (params?.days) query.set('days', String(params.days));
+	if (params?.sort_by) query.set('sort_by', params.sort_by);
+	if (params?.sort_dir) query.set('sort_dir', params.sort_dir);
 	const qs = query.toString();
 	return apiFetch<JobListResponse>(`/api/jobs${qs ? `?${qs}` : ''}`);
 }
@@ -256,4 +264,35 @@ export function updateTrack(
 		method: 'PATCH',
 		body: JSON.stringify(data)
 	});
+}
+
+export interface JobStats {
+	total: number;
+	active: number;
+	success: number;
+	fail: number;
+	waiting: number;
+}
+
+export function fetchJobStats(params?: {
+	search?: string;
+	video_type?: string;
+	disctype?: string;
+	days?: number;
+}): Promise<JobStats> {
+	const query = new URLSearchParams();
+	if (params?.search) query.set('search', params.search);
+	if (params?.video_type) query.set('video_type', params.video_type);
+	if (params?.disctype) query.set('disctype', params.disctype);
+	if (params?.days) query.set('days', String(params.days));
+	const qs = query.toString();
+	return apiFetch<JobStats>(`/api/jobs/stats${qs ? `?${qs}` : ''}`);
+}
+
+export function bulkDeleteJobs(params: { job_ids?: number[]; status?: string }): Promise<{ deleted: number; errors: string[] }> {
+	return apiFetch('/api/jobs/bulk-delete', { method: 'POST', body: JSON.stringify(params) });
+}
+
+export function bulkPurgeJobs(params: { job_ids?: number[]; status?: string }): Promise<{ purged: number; errors: string[] }> {
+	return apiFetch('/api/jobs/bulk-purge', { method: 'POST', body: JSON.stringify(params) });
 }
