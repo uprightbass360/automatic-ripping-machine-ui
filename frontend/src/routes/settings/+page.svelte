@@ -1158,10 +1158,25 @@
 							{metadataTesting ? 'Testing...' : 'Test'}
 						</button>
 					{/if}
+					{#if key === 'MAKEMKV_PERMA_KEY'}
+						<button
+							type="button"
+							onclick={handleKeyCheck}
+							disabled={checkingKey}
+							class="rounded-md border border-primary/25 px-2 py-2 text-xs font-medium text-primary-text hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:text-primary-text-dark dark:hover:bg-primary/15"
+						>
+							{checkingKey ? 'Checking...' : 'Check Key'}
+						</button>
+					{/if}
 				</div>
 				{#if isMetadataApiKey(key) && metadataTestResult}
 					<p class="mt-1 text-xs font-medium {metadataTestResult.success ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
 						{metadataTestResult.message}
+					</p>
+				{/if}
+				{#if key === 'MAKEMKV_PERMA_KEY' && keyCheckResult}
+					<p class="mt-1 text-xs font-medium {keyCheckResult.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+						{keyCheckResult.message}
 					</p>
 				{/if}
 			{:else if isIntStr(val?.toString())}
@@ -1743,24 +1758,7 @@
 													</div>
 												{/if}
 											{/each}
-											<!-- Check Key button — rendered only inside MakeMKV panel -->
-											{#if group.label === 'MakeMKV'}
-												<div class="mt-4 flex items-center gap-3">
-													<button
-														onclick={handleKeyCheck}
-														disabled={checkingKey}
-														class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
-													>
-														{checkingKey ? 'Checking...' : 'Check Key'}
-													</button>
-													{#if keyCheckResult}
-														<span class="text-sm {keyCheckResult.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-															{keyCheckResult.message}
-														</span>
-													{/if}
-												</div>
-											{/if}
-										</div>
+											</div>
 									</div>
 								{/if}
 							</div>
