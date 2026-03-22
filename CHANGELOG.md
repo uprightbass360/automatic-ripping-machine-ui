@@ -1,5 +1,43 @@
 # Changelog
 
+## [13.6.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.5.0...v13.6.0) (2026-03-22)
+
+
+### Features
+
+* add filter input to folder browser for large directories ([1dd310d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1dd310dcba0735bdca43939ebc17ea388188c38a))
+* add folder import API client and types ([8cf2bf5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8cf2bf553b2f288033657461501fe10795da68d5))
+* add Folder Import badge and source path to job cards ([256f8ed](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/256f8ed3b646dd4f7f8433e810457e96482be4e5))
+* add folder import proxy routes in UI backend ([e47a19c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e47a19c9e0aea34f356d538d019cbac136f97c8f))
+* add FolderBrowser component for ingress directory picking ([8fd1a8c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8fd1a8cd42f0f91302502a446fc03b2936cf27fc))
+* add FolderImportWizard three-step modal component ([5a385a4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5a385a4db3622be4beb1612e59cd0d6f9607d3cb))
+* add Import Folder button to dashboard with wizard integration ([af1f5d5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/af1f5d58ffe9a685baf93c3a909ce03d0aa8928f))
+* add PRESCAN_TIMEOUT and INGRESS_PATH to settings UI groups ([10760a5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/10760a510835c73c093c02bdae4db962bc560785))
+* add quick actions gear menu to header, remove dashboard stats card ([115f521](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/115f521a8c5f77f241220e76f00c7e4cb43bf9c3))
+* add server-side LRU cache for proxied poster images ([bfbd6d0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bfbd6d057a2b2d20a16d6d1c22c4dc98ec41f824))
+* add source_type and source_path to job schema for folder import display ([e92ca53](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e92ca5305c16dd4d2262d212ee8c5e99a99c06b3))
+* add transcoder restart button to settings service control ([9a92904](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9a929045f94a961681df74523b1d82d81691bea4))
+* auto-detect disc folders, prevent drilling into BDMV/VIDEO_TS ([a6a447b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a6a447b0bceff374f7947f16e8066af4ea58f6a4))
+* make diagnostics section collapsible with issues-only view ([0bb7f37](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0bb7f37f9c96ce3d96d38c4b1d2975412be6f757))
+* redesign DriveCard with consolidated action bar and enriched info ([92d4c64](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/92d4c64b9b3849d0fcc1bbdf57da1125268842eb))
+* show 'Importing' status and hide track counts for folder imports ([b367337](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b367337c5a07e4e2f6c5f5880cc5f798291096f6))
+
+
+### Bug Fixes
+
+* add friendly labels for INGRESS_PATH and PRESCAN_TIMEOUT in settings ([ffb7d4d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ffb7d4ddd3ea805424c22c3098b69eeadea33e0b))
+* catch httpx.ReadError in ARM client to prevent dashboard 500 errors ([eca79e6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/eca79e6474a57714de8ae3df3e06cbac57d1c6e4))
+* dismiss import wizard when clicking settings link ([7234387](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/72343870fb69b53269c935c09d5b1282f358507e))
+* move import wizard to layout so it works from any page without navigation ([e9e45fd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e9e45fdb80b060790747711a958613cd8f84ce73))
+* proxy all poster images site-wide to prevent ORB blocking ([ea11c2a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ea11c2a6fdd2362de5ca485b9b6aa35e78429484))
+* proxy poster images through backend to avoid browser ORB blocking ([8d872aa](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8d872aac3e33a6f2543e136c0bf7f37c8bfb4546))
+* show friendly message and retry button when ARM is starting up ([8b553b0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8b553b0b60af453205c9c7d0c983113f596b7343))
+* show helpful link to settings when ingress path is not configured ([4f77dbf](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4f77dbf128d87f85351fa87930f3ef5a2d4a723f))
+* strengthen poster proxy SSRF validation for SonarCloud ([0739f94](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0739f94bc249dd818a2607fb64ef8bcc07dfd5ec))
+* use absolute ingress path for directory listing in FolderBrowser ([98692fb](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/98692fbe37629cf98a00ea2f57239bdf5fe2cf94))
+* use https in poster test to satisfy SonarCloud security scan ([844f1e9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/844f1e9094fd7494da0f0eec3da65d4ad19e222e))
+* use svelte store for import wizard instead of page reload ([85c6709](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/85c670906c570c03a8360cab2af1cd61b34d641d))
+
 ## [13.5.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.4.0...v13.5.0) (2026-03-20)
 
 
