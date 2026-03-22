@@ -12,6 +12,7 @@
 	import type { DiagnosticResult } from '$lib/api/drives';
 	import DriveCard from '$lib/components/DriveCard.svelte';
 	import { restartArm, restartTranscoder } from '$lib/api/system';
+	import { checkMakemkvKey } from '$lib/api/dashboard';
 
 	let settings = $state<SettingsData | null>(null);
 	let error = $state<string | null>(null);
@@ -65,6 +66,33 @@
 			const fb = { type: 'error' as const, message: `Failed to restart ${label}` };
 			if (service === 'arm') { armRestartFeedback = fb; armRestarting = false; }
 			else { tcRestartFeedback = fb; tcRestarting = false; }
+		}
+	}
+
+	// --- Key check state ---
+	let checkingKey = $state(false);
+	let keyCheckResult = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let keyCheckTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	async function handleKeyCheck() {
+		if (checkingKey) return;
+		checkingKey = true;
+		keyCheckResult = null;
+		if (keyCheckTimeout) clearTimeout(keyCheckTimeout);
+		try {
+			const res = await checkMakemkvKey();
+			keyCheckResult = {
+				type: res.key_valid ? 'success' : 'error',
+				message: res.message
+			};
+		} catch (e) {
+			keyCheckResult = {
+				type: 'error',
+				message: e instanceof Error ? e.message : 'Failed to check key'
+			};
+		} finally {
+			checkingKey = false;
+			keyCheckTimeout = setTimeout(() => (keyCheckResult = null), 10000);
 		}
 	}
 
@@ -642,7 +670,7 @@
 		MAX_CONCURRENT_MAKEMKVINFO: { label: 'Max Concurrent Disc Scans', description: 'Limit parallel makemkvinfo processes (0 = unlimited)' },
 		AUTO_EJECT: { label: 'Auto-Eject After Rip', description: 'Eject the disc when ripping completes' },
 		RIP_POSTER: { label: 'Download Poster', description: 'Save movie poster artwork during ripping' },
-		MAKEMKV_COMMUNITY_KEYDB: { label: 'Community Key Database', description: 'Download community keydb.cfg at container startup' },
+		MAKEMKV_COMMUNITY_KEYDB: { label: 'Use FindVUK', description: 'Download FindVUK community keydb.cfg for Blu-ray decryption keys' },
 		ARM_CHILDREN: { label: 'ARM Child Servers', description: 'Comma-delimited list of child ARM server URLs' },
 		DELRAWFILES: { label: 'Delete Raw Files', description: 'Remove raw MakeMKV output after processing' },
 		DRIVE_READY_TIMEOUT: { label: 'Drive Ready Timeout', description: 'Seconds to wait for the drive to become ready after disc insertion' },
@@ -1715,6 +1743,23 @@
 													</div>
 												{/if}
 											{/each}
+											<!-- Check Key button — rendered only inside MakeMKV panel -->
+											{#if group.label === 'MakeMKV'}
+												<div class="mt-4 flex items-center gap-3">
+													<button
+														onclick={handleKeyCheck}
+														disabled={checkingKey}
+														class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
+													>
+														{checkingKey ? 'Checking...' : 'Check Key'}
+													</button>
+													{#if keyCheckResult}
+														<span class="text-sm {keyCheckResult.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+															{keyCheckResult.message}
+														</span>
+													{/if}
+												</div>
+											{/if}
 										</div>
 									</div>
 								{/if}
