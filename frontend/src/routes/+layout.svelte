@@ -114,7 +114,7 @@
 				{/each}
 			</nav>
 			<hr class="border-primary/20 dark:border-primary/20" />
-			<div class="hidden xl:block">
+			<div class="hidden 2xl:block">
 				<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
 			</div>
 		</div>
@@ -317,7 +317,7 @@
 		{/if}
 
 		<!-- Page content -->
-		<main class="flex-1 overflow-y-auto p-4 lg:p-6 lg:pb-16 xl:pb-6">
+		<main class="flex-1 overflow-y-auto p-4 lg:p-6 lg:pb-16 2xl:pb-6">
 			{@render children()}
 		</main>
 

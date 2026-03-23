@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import { fetchRoots, fetchDirectory, renameFile, moveFile, deleteFile, createDirectory, fixPermissions } from '$lib/api/files';
 	import type { FileRoot, DirectoryListing, FileEntry } from '$lib/types/files';
 	import { formatBytes, formatDateTime } from '$lib/utils/format';
@@ -310,6 +311,11 @@
 
 	onMount(async () => {
 		await loadRoots();
+		// Support ?path= query param for deep linking from other pages
+		const paramPath = $page.url.searchParams.get('path');
+		if (paramPath) {
+			currentPath = paramPath.replace(/\/+$/, '');  // strip trailing slash
+		}
 		if (currentPath) {
 			await navigate(currentPath);
 		} else {
