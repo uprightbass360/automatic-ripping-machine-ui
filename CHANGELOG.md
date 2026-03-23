@@ -1,5 +1,66 @@
 # Changelog
 
+## [13.7.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.6.0...v13.7.0) (2026-03-23)
+
+
+### Features
+
+* add BottomStatsBar component for lg breakpoint ([29f1b69](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/29f1b69916a941167ac5ce3dff760db6b04d4c73))
+* add bulk delete and purge endpoints for jobs ([8727fd7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8727fd7a99e60d040f5839607228782d3ce8a361))
+* add Check Key button to settings, update FindVUK label ([29dde50](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/29dde501102d07b4e3f9450ef10520eb0ce95376))
+* add checkbox to JobRow, purge action to JobActions ([70d5575](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/70d557576a23e5dc303bf8f3e8613145c0c603a4))
+* add GET /api/jobs/stats endpoint with filter support ([2921b60](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2921b601016280e2ee873ea4800a8ac42b9ddad7))
+* add Jobs to sidebar nav, remove card view from jobs page ([fde92fa](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fde92fa8ab5409b5b5ed4b69b0e63a4ee2300730))
+* add log file download and delete functionality ([a4196a8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a4196a83a157fd35d829ecf92861a7ed997e6e45))
+* add maintenance and arch-debt proxy functions to arm_client ([5cb0994](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5cb099423bcc709c8f8a2266fd6773a7ebb3590c))
+* add maintenance API client and tests ([8ad9ac5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8ad9ac57701d4e3027d96efb3728aaaec58f28e6))
+* add Maintenance nav item to sidebar ([613c549](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/613c5495f797c1826b535cac909448a9379f6e8e))
+* add maintenance page with orphan cleanup, notification, and transcoder sections ([29e7d9e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/29e7d9e50acdd48c3b83bf51bc98cf21e6f76cfb))
+* add maintenance router with ARM proxy, notification, and transcoder cleanup ([91ee8f4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/91ee8f43946a591b7907e3bc6d7e4661a53483da))
+* add MakeMKV key check and ripping-enabled proxy to arm_client ([8c71496](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8c71496eb3183f5a8ae0810402412531b41c3fce))
+* add MakeMKV key status dot to header bar ([c398eff](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c398eff48f3bac3cf8729b317d36976c031c5c57))
+* add MakeMKV key status to dashboard and key check proxy endpoint ([9fe545d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9fe545d7796788dfc2e94a70999f450042a454c7))
+* add MakeMKV key status to dashboard types, store, and API client ([29a420b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/29a420bec2db34eb867e34fe462f3e9db9525d86))
+* add notification dismiss-all and purge functions to arm_db ([4fbe5f1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4fbe5f19264307d38b209f408bf1771a1bb96a2b))
+* add sort, filter, stats, and bulk operations to jobs API client ([f4f56a7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f4f56a75d61e85ec2e8bb973e3040bf9b5e9a49c))
+* add sorting, disc type filter, and time range to jobs endpoint ([6307549](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/630754953fd2f840fa07a196012aee9dbdfcac5a))
+* extend bottom bar to 2xl, full width, storage deep links ([7d8cd60](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7d8cd60d2c13cb72080f2782a985d14f3657173e))
+* redesign jobs page with stats bar, pill filters, sortable headers, gear menu ([958ea5d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/958ea5d451e8e6bc67868a2e540b4c70dc49494b))
+* wire BottomStatsBar at lg, hide sidebar stats below xl ([672359a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/672359aba108193a8aa26c6f5a406c8021d89078))
+
+
+### Bug Fixes
+
+* add MAKEMKV_PERMA_KEY to HIDDEN_KEYS, make key dot red when unchecked ([5aecc52](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5aecc52a15a7c56dd2cba3b206706d5bb178944d))
+* add missing DashboardData fields, fix test mocks for ARM proxy ([c345436](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c34543669306bbe8df55841a92be57d8f996bcfa))
+* handle ARM error responses in maintenance _check_arm ([ead732b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ead732bcff2d07ea29f3e75644c33d71229cd74c))
+* move responsive visibility into BottomStatsBar root element ([b5a0c75](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b5a0c758a76f83520a43f908cdad6fce7f15fe1f))
+* only scroll to settings panel on in-page nav, not initial load ([a261461](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a261461568ea41d6a1bbd093b626638f90e5e757))
+* prevent background task garbage collection in system cache ([6d1e190](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6d1e190da2c73f8f1101c733aa74a50875fe87e0))
+* prevent scroll lock when navigating to settings panel via hash link ([a4bb637](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a4bb6377a66394e6315ec4e9301ab76b4784cce8))
+* proxy transcode-overrides and track-fields through ARM instead of direct DB ([9cbb211](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9cbb21185f727b80a5be7dc91d1ead227590137c))
+* purge now cleans raw_path, transcode_path, and completed path ([68efe79](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/68efe790d59b87ac64de738b073038f8498ed3a1))
+* remove programmatic scroll — just expand panel on deep link ([9917aae](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9917aae39765c0c13dfb76a18d4192bd3c643dda))
+* reset scroll position before navigating to settings panel ([eeafb79](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/eeafb7969fde05e57a6fddf0bd9ef0cc5b6db96f))
+* scroll to panel after 600ms delay with instant behavior ([8b8d31c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8b8d31ce141b227b7714a4e64d1e0e6e52be411e))
+* settings deep link scroll, hashchange data loading, drive card duplicate badge ([c875a9f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c875a9fab14679d82824d832f1d48df126ea90bd))
+* setup/status uses 2s timeout fallback on cold cache ([039c99e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/039c99e7e695bd269a45c8e5cde2ded4a4356da7))
+* storage links use ripper paths, reactive query param on files page ([1efafc9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1efafc9a4e278f60eac9c19ff3ec8d820aab38a9))
+* update jobs page test mock to include fetchJobStats ([149ab43](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/149ab436935c723554e28dbce90f485493bc6dc1))
+* use instant scroll and longer delay for settings panel navigation ([6c47c35](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6c47c357b3b5b5b5eee971a59d289cb76050832d))
+* use MutationObserver + requestIdleCallback for reliable panel scroll ([c01aad4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c01aad432d12de09df74004f0f6ba3cc6059335f))
+
+
+### Performance Improvements
+
+* cache setup/status endpoint with 5min TTL ([4d12135](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4d1213537d76fe419e80de260a626c0baab74036))
+* cache slow ripping-enabled call with 60s TTL ([d86e96d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d86e96dbc8a7b71f09bbcffceb548c49681d1b28))
+
+
+### Reverts
+
+* remove setup/status cache — was masking ARM connection pool issue ([7dab179](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7dab179c8322a59801990e90f750dbf93700737e))
+
 ## [13.6.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.5.0...v13.6.0) (2026-03-22)
 
 
