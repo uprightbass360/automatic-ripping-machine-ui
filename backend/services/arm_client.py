@@ -344,9 +344,12 @@ async def delete_file(path: str) -> dict[str, Any] | None:
     return await _request("DELETE", "/api/v1/files/delete", json={"path": path})
 
 
-async def get_setup_status() -> dict[str, Any] | None:
+async def get_setup_status(timeout: float | None = None) -> dict[str, Any] | None:
     """Fetch setup wizard status. Returns None if ARM is unreachable."""
-    return await _request("GET", "/api/v1/setup/status")
+    kwargs: dict[str, Any] = {}
+    if timeout is not None:
+        kwargs["timeout"] = timeout
+    return await _request("GET", "/api/v1/setup/status", **kwargs)
 
 
 async def complete_setup() -> dict[str, Any] | None:
