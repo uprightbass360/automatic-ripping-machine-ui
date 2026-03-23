@@ -30,7 +30,7 @@
 	}
 </script>
 
-<div class="fixed bottom-0 left-64 right-0 z-30 flex h-10 items-center gap-3 border-t border-primary/20 bg-surface px-4 dark:border-primary/20 dark:bg-surface-dark">
+<div class="fixed bottom-0 left-64 right-0 z-30 hidden h-10 items-center gap-3 border-t border-primary/20 bg-surface px-4 lg:flex xl:hidden dark:border-primary/20 dark:bg-surface-dark">
 	<!-- Panel toggle -->
 	<div class="flex shrink-0 rounded-sm bg-primary/10 p-0.5 dark:bg-primary/10">
 		<button
