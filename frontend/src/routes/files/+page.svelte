@@ -106,9 +106,11 @@
 		}
 	}
 
+	const rootOrder: Record<string, number> = { raw: 0, transcode: 1, completed: 2, music: 3 };
+
 	async function loadRoots() {
 		try {
-			roots = await fetchRoots();
+			roots = (await fetchRoots()).sort((a, b) => (rootOrder[a.key] ?? 99) - (rootOrder[b.key] ?? 99));
 			if (roots.length > 0 && !currentPath) {
 				currentPath = roots[0].path;
 			}
@@ -309,12 +311,25 @@
 		if (e.key === 'Escape') cancelNewFolder();
 	}
 
-	onMount(async () => {
-		await loadRoots();
-		// Support ?path= query param for deep linking from other pages
+	// React to ?path= query param changes (works for both initial load and in-page nav)
+	let lastParamPath = '';
+	$effect(() => {
 		const paramPath = $page.url.searchParams.get('path');
 		if (paramPath) {
-			currentPath = paramPath.replace(/\/+$/, '');  // strip trailing slash
+			const cleaned = paramPath.replace(/\/+$/, '');
+			if (cleaned !== lastParamPath) {
+				lastParamPath = cleaned;
+				navigate(cleaned);
+			}
+		}
+	});
+
+	onMount(async () => {
+		await loadRoots();
+		const paramPath = $page.url.searchParams.get('path');
+		if (paramPath) {
+			currentPath = paramPath.replace(/\/+$/, '');
+			lastParamPath = currentPath;
 		}
 		if (currentPath) {
 			await navigate(currentPath);
