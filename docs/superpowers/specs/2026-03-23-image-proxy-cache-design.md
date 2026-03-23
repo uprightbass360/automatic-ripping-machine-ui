@@ -81,13 +81,28 @@ Update proxy URL from `/api/jobs/folder/poster-proxy?url=` to `/api/images/proxy
 
 Add "Image Cache" section showing stats and a "Clear Cache" button.
 
-### 6. Docker Volume
+### 6. Docker & Environment
 
-**File:** `docker-compose.yml` and `docker-compose.remote-transcoder.yml` in ARM-neu
+All compose files and env examples in ARM-neu need the image cache volume and env var.
 
-Add volume mount for image cache: `${ARM_CONFIG_PATH:-/etc/arm/config}/image-cache:/data/cache/images:rw`
+**Compose files (ARM-neu):**
+- `docker-compose.yml` — add volume mount to `arm-ui` service
+- `docker-compose.remote-transcoder.yml` — add volume mount to `arm-ui` service
+- `docker-compose.dev.yml` — add dev volume mount (`./dev-data/cache/images:/data/cache/images:rw`)
 
-Or use a named volume: `image-cache:/data/cache/images`
+Volume mount: `image-cache:/data/cache/images:rw` (named volume, persists across recreates)
+
+Add to volumes section: `image-cache:`
+
+**Env vars to arm-ui service:**
+- `ARM_UI_IMAGE_CACHE_PATH=/data/cache/images`
+
+**Env example files (ARM-neu):**
+- `.env.example` — add `# IMAGE_CACHE_PATH=./data/image-cache` comment
+- `.env.remote-transcoder.example` — same
+
+**UI compose file:**
+- `docker-compose.yml` (in automatic-ripping-machine-ui) — add volume mount for standalone dev use
 
 ### 7. Config
 
