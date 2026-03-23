@@ -53,7 +53,7 @@ async def get_dashboard():
     transcoder_task = asyncio.create_task(_fetch_transcoder())
     stats_task = asyncio.create_task(arm_client.get_system_stats())
     transcoder_stats_task = asyncio.create_task(transcoder_client.get_system_stats())
-    ripping_task = asyncio.create_task(arm_client.get_ripping_enabled())
+    ripping_task = asyncio.create_task(system_cache.get_ripping_data())
 
     transcoder_online, transcoder_stats, active_transcodes = await transcoder_task
 
