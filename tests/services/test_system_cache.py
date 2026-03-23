@@ -118,3 +118,20 @@ async def test_refresh_ripping_skips_on_none_result():
         result = await system_cache.get_ripping_data()
     # Should still have the previous data
     assert result == ripping_info
+
+
+async def test_refresh_ripping_skips_when_already_fresh():
+    """Double-check after acquiring lock returns early if TTL not expired."""
+    _reset_ripping_cache()
+    ripping_info = {"ripping_enabled": True}
+    mock = AsyncMock(return_value=ripping_info)
+    with patch("backend.services.system_cache.arm_client.get_ripping_enabled", mock):
+        # Populate cache
+        await system_cache.get_ripping_data()
+        await asyncio.sleep(0.05)
+        assert mock.call_count == 1
+        # Call _refresh_ripping directly while cache is still fresh
+        lock = system_cache._get_lock()
+        await system_cache._refresh_ripping(lock)
+        # Should NOT have called ARM again — early return on line 80
+        assert mock.call_count == 1
