@@ -24,6 +24,7 @@ _ripping_data: dict[str, Any] | None = None
 _ripping_fetched_at: float = 0.0
 _RIPPING_TTL: float = 60.0
 _ripping_lock: asyncio.Lock | None = None
+_background_tasks: set[asyncio.Task[None]] = set()
 
 
 def _get_lock() -> asyncio.Lock:
@@ -65,7 +66,9 @@ async def get_ripping_data() -> dict[str, Any] | None:
     if now - _ripping_fetched_at >= _RIPPING_TTL:
         lock = _get_lock()
         if not lock.locked():
-            asyncio.create_task(_refresh_ripping(lock))
+            task = asyncio.create_task(_refresh_ripping(lock))
+            _background_tasks.add(task)
+            task.add_done_callback(_background_tasks.discard)
     return _ripping_data
 
 
