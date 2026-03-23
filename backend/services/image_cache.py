@@ -31,6 +31,14 @@ def _ensure_dir() -> Path:
     return p
 
 
+def _safe_path(base: Path, filename: str, ext: str) -> Path:
+    """Build a path within base and verify containment (prevents path traversal)."""
+    target = (base / f"{filename}{ext}").resolve()
+    if not target.is_relative_to(base.resolve()):
+        raise ValueError(f"Path traversal blocked: {target}")
+    return target
+
+
 def store(url: str, data: bytes, content_type: str) -> bool:
     """Store an image in the cache. Returns False if too large."""
     if len(data) > _MAX_IMAGE_BYTES:
@@ -45,7 +53,9 @@ def store(url: str, data: bytes, content_type: str) -> bool:
     filename = _url_to_filename(url)
     now = time.time()
 
-    (d / f"{filename}.img").write_bytes(data)
+    img_path = _safe_path(d, filename, ".img")
+    meta_path = _safe_path(d, filename, ".json")
+    img_path.write_bytes(data)
     meta = {
         "url": url,
         "content_type": content_type,
@@ -53,7 +63,7 @@ def store(url: str, data: bytes, content_type: str) -> bool:
         "accessed_at": now,
         "size": len(data),
     }
-    (d / f"{filename}.json").write_text(json.dumps(meta))
+    meta_path.write_text(json.dumps(meta))
 
     _index[url] = {
         "filename": filename,
@@ -77,7 +87,7 @@ def retrieve(url: str) -> tuple[bytes, str] | None:
         return None
 
     d = Path(_cache_dir)
-    img_path = d / f"{entry['filename']}.img"
+    img_path = _safe_path(d, entry["filename"], ".img")
     if not img_path.exists():
         _remove(url)
         return None
@@ -95,7 +105,7 @@ def _remove(url: str) -> int:
     d = Path(_cache_dir)
     freed = 0
     for ext in (".img", ".json"):
-        p = d / f"{entry['filename']}{ext}"
+        p = _safe_path(d, entry["filename"], ext)
         if p.exists():
             freed += p.stat().st_size
             p.unlink()

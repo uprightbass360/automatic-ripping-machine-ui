@@ -12,6 +12,10 @@ from backend.services import image_cache
 
 router = APIRouter(prefix="/api", tags=["images"])
 
+_SAFE_CONTENT_TYPES = {
+    "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml",
+}
+
 _ALLOWED_IMAGE_HOSTS = {
     "m.media-amazon.com",
     "image.tmdb.org",
@@ -30,22 +34,27 @@ async def proxy_image(url: str = Query(..., description="Image URL to proxy")) -
     if parsed.hostname not in _ALLOWED_IMAGE_HOSTS:
         raise HTTPException(400, "Image host not allowed")
 
+    # Use the validated/reconstructed URL to break taint chain
+    safe_url = parsed.geturl()
+
     # Cache hit
-    cached = image_cache.retrieve(url)
+    cached = image_cache.retrieve(safe_url)
     if cached is not None:
         content, content_type = cached
-        return Response(content=content, media_type=content_type,
+        # Sanitize content_type to known image types
+        safe_type = content_type if content_type in _SAFE_CONTENT_TYPES else "application/octet-stream"
+        return Response(content=content, media_type=safe_type,
                         headers={"Cache-Control": "public, max-age=604800"})
 
     # Fetch from origin
-    validated_url = parsed.geturl()
     try:
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-            resp = await client.get(validated_url)
+            resp = await client.get(safe_url)  # NOSONAR — host validated above
             resp.raise_for_status()
             content_type = resp.headers.get("content-type", "image/jpeg")
-            image_cache.store(url, resp.content, content_type)
-            return Response(content=resp.content, media_type=content_type,
+            safe_type = content_type if content_type in _SAFE_CONTENT_TYPES else "image/jpeg"
+            image_cache.store(safe_url, resp.content, safe_type)
+            return Response(content=resp.content, media_type=safe_type,
                             headers={"Cache-Control": "public, max-age=604800"})
     except httpx.HTTPError:
         raise HTTPException(502, "Failed to fetch image")
