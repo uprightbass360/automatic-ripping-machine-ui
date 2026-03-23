@@ -1,5 +1,18 @@
 # Changelog
 
+## [13.8.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.7.1...v13.8.0) (2026-03-23)
+
+
+### Features
+
+* disk-backed image proxy cache with maintenance controls ([b8957ab](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b8957abd1aa3cc0739828d9d6a23301345ac90fe)), closes [#38](https://github.com/uprightbass360/automatic-ripping-machine-ui/issues/38)
+
+
+### Bug Fixes
+
+* address SonarCloud SSRF and path traversal findings (S5131, S2083) ([710cb5f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/710cb5f9325ac0bd76186dbb5c8f7e3cf743bf0c))
+* remove dead code in system_cache test (SonarCloud S5727) ([50d9daa](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/50d9daa37d6e9d801b38f5271b7d71bfe0c4bf38))
+
 ## [13.7.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.7.0...v13.7.1) (2026-03-23)
 
 
