@@ -6,6 +6,7 @@
 	import { dashboard } from '$lib/stores/dashboard';
 	import { setRippingEnabled } from '$lib/api/dashboard';
 	import SidebarStats from '$lib/components/SidebarStats.svelte';
+	import BottomStatsBar from '$lib/components/BottomStatsBar.svelte';
 	import { goto } from '$app/navigation';
 	import { showImportWizard } from '$lib/stores/importWizard';
 	import FolderImportWizard from '$lib/components/FolderImportWizard.svelte';
@@ -113,7 +114,9 @@
 				{/each}
 			</nav>
 			<hr class="border-primary/20 dark:border-primary/20" />
-			<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
+			<div class="hidden xl:block">
+				<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
+			</div>
 		</div>
 	</aside>
 
@@ -314,9 +317,14 @@
 		{/if}
 
 		<!-- Page content -->
-		<main class="flex-1 overflow-y-auto p-4 lg:p-6">
+		<main class="flex-1 overflow-y-auto p-4 lg:p-6 lg:pb-16 xl:pb-6">
 			{@render children()}
 		</main>
+
+		<!-- Bottom stats bar — visible only at lg (1024-1279px) -->
+		<div class="hidden lg:block xl:hidden">
+			<BottomStatsBar systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
+		</div>
 	</div>
 </div>
 {/if}
