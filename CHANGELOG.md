@@ -1,5 +1,14 @@
 # Changelog
 
+## [13.7.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.7.0...v13.7.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* make system_cache tests deterministic by testing _refresh_ripping directly ([3a8eed3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3a8eed316a366cb6f6e648717549f4ba91648c64))
+* properly await background tasks in system_cache tests for CI reliability ([5b2f0fa](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5b2f0fa8bb7cdba8c16c5ab0f0c8034f478c8818))
+* system_cache test isolation — avoid task.cancel on closed event loop ([1f6c8ef](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1f6c8ef8b40c74ff39928a01df4be0ee7304729e))
+
 ## [13.7.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.6.0...v13.7.0) (2026-03-23)
 
 
