@@ -348,40 +348,10 @@
 	}
 
 	function scrollToPanel(label: string) {
-		// Expand the panel so it's visible
+		// Just expand the panel — no programmatic scrolling.
+		// The browser handles scrolling natively via the URL hash
+		// (e.g. #panel-makemkv) after the element renders.
 		armCollapsed[label] = false;
-		const panelId = `panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-
-		// Wait for the element to appear in the DOM, then wait for idle
-		// before scrolling. This handles both initial load (element doesn't
-		// exist yet) and in-page nav (element exists but DOM is reflowing).
-		function tryScroll() {
-			const el = document.getElementById(panelId);
-			if (!el) {
-				// Element not rendered yet — observe DOM until it appears
-				const observer = new MutationObserver(() => {
-					if (document.getElementById(panelId)) {
-						observer.disconnect();
-						tryScroll();
-					}
-				});
-				observer.observe(document.body, { childList: true, subtree: true });
-				// Safety: stop observing after 5s
-				setTimeout(() => observer.disconnect(), 5000);
-				return;
-			}
-			// Element exists — wait for browser idle, then scroll
-			if ('requestIdleCallback' in window) {
-				requestIdleCallback(() => {
-					el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-				});
-			} else {
-				setTimeout(() => {
-					el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-				}, 500);
-			}
-		}
-		tryScroll();
 	}
 
 	onMount(() => {
