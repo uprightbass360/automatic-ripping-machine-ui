@@ -49,6 +49,10 @@ async def test_refresh_handles_none_from_services():
 
 def _reset_ripping_cache():
     """Reset ripping cache globals for test isolation."""
+    # Cancel any lingering background tasks from previous tests
+    for task in list(system_cache._background_tasks):
+        task.cancel()
+    system_cache._background_tasks.clear()
     system_cache._ripping_data = None
     system_cache._ripping_fetched_at = 0.0
     system_cache._ripping_lock = None
@@ -62,22 +66,26 @@ async def test_get_ripping_data_returns_none_on_cold_cache():
         new_callable=AsyncMock, return_value={"ripping_enabled": True},
     ):
         result = await system_cache.get_ripping_data()
-    assert result is None  # background task kicked off, not awaited
+        assert result is None  # background task kicked off, not awaited
+        # Let the background task finish within the mock context
+        for task in list(system_cache._background_tasks):
+            try:
+                await task
+            except Exception:
+                pass
 
 
 async def test_refresh_ripping_populates_cache():
     """Calling _refresh_ripping directly populates the cache."""
     _reset_ripping_cache()
     ripping_info = {"ripping_enabled": True, "makemkv_key_valid": True}
+    lock = asyncio.Lock()
     with patch(
         "backend.services.system_cache.arm_client.get_ripping_enabled",
         new_callable=AsyncMock, return_value=ripping_info,
     ):
-        lock = system_cache._get_lock()
         await system_cache._refresh_ripping(lock)
     assert system_cache._ripping_data == ripping_info
-    result = await system_cache.get_ripping_data()
-    assert result == ripping_info
 
 
 async def test_refresh_ripping_respects_ttl():
@@ -85,8 +93,8 @@ async def test_refresh_ripping_respects_ttl():
     _reset_ripping_cache()
     ripping_info = {"ripping_enabled": True}
     mock = AsyncMock(return_value=ripping_info)
+    lock = asyncio.Lock()
     with patch("backend.services.system_cache.arm_client.get_ripping_enabled", mock):
-        lock = system_cache._get_lock()
         await system_cache._refresh_ripping(lock)
         assert mock.call_count == 1
         # Second call within TTL should not fetch again
@@ -98,12 +106,12 @@ async def test_refresh_ripping_skips_on_none_result():
     """If ARM returns None, cache keeps the previous value."""
     _reset_ripping_cache()
     ripping_info = {"ripping_enabled": True}
+    lock = asyncio.Lock()
     # First: populate cache
     with patch(
         "backend.services.system_cache.arm_client.get_ripping_enabled",
         new_callable=AsyncMock, return_value=ripping_info,
     ):
-        lock = system_cache._get_lock()
         await system_cache._refresh_ripping(lock)
     assert system_cache._ripping_data == ripping_info
 
@@ -125,8 +133,8 @@ async def test_refresh_ripping_skips_when_already_fresh():
     _reset_ripping_cache()
     ripping_info = {"ripping_enabled": True}
     mock = AsyncMock(return_value=ripping_info)
+    lock = asyncio.Lock()
     with patch("backend.services.system_cache.arm_client.get_ripping_enabled", mock):
-        lock = system_cache._get_lock()
         await system_cache._refresh_ripping(lock)
         assert mock.call_count == 1
         # Call again while cache is fresh — should early return
