@@ -4,13 +4,20 @@ import FilesPage from '../+page.svelte';
 
 import { fetchRoots, fetchDirectory } from '$lib/api/files';
 
+vi.mock('$app/stores', async () => {
+	const { readable } = await import('svelte/store');
+	return {
+		page: readable({ url: new URL('http://localhost/files') })
+	};
+});
+
 vi.mock('$lib/api/files', () => ({
 	fetchRoots: vi.fn(() => Promise.resolve([
-		{ key: 'completed', label: 'Completed', path: '/media/completed' },
-		{ key: 'raw', label: 'Raw', path: '/media/raw' }
+		{ key: 'raw', label: 'Raw', path: '/media/raw' },
+		{ key: 'completed', label: 'Completed', path: '/media/completed' }
 	])),
 	fetchDirectory: vi.fn(() => Promise.resolve({
-		path: '/media/completed',
+		path: '/media/raw',
 		parent: null,
 		entries: [
 			{ name: 'movie.mkv', type: 'file', size: 4294967296, modified: '2025-06-15T12:00:00Z', extension: 'mkv', category: 'video', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' },
@@ -86,19 +93,19 @@ describe('Files Page', () => {
 			// subfolder is a directory — clicking it triggers navigation
 			await fireEvent.click(screen.getByText('subfolder'));
 			await waitFor(() => {
-				expect(mockFetchDirectory).toHaveBeenCalledWith('/media/completed/subfolder');
+				expect(mockFetchDirectory).toHaveBeenCalledWith('/media/raw/subfolder');
 			});
 		});
 
 		it('switches root on tab click', async () => {
 			renderComponent(FilesPage);
 			await waitFor(() => {
-				const matches = screen.getAllByText('Completed');
+				const matches = screen.getAllByText('Raw');
 				expect(matches.length).toBeGreaterThanOrEqual(1);
 			});
-			await fireEvent.click(screen.getByText('Raw'));
+			await fireEvent.click(screen.getByText('Completed'));
 			await waitFor(() => {
-				expect(mockFetchDirectory).toHaveBeenCalledWith('/media/raw');
+				expect(mockFetchDirectory).toHaveBeenCalledWith('/media/completed');
 			});
 		});
 	});
