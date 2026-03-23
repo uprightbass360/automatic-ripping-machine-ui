@@ -348,10 +348,13 @@
 	}
 
 	function scrollToPanel(label: string) {
-		// Just expand the panel — no programmatic scrolling.
-		// The browser handles scrolling natively via the URL hash
-		// (e.g. #panel-makemkv) after the element renders.
 		armCollapsed[label] = false;
+		// Scroll after DOM has fully settled — 600ms gives settings
+		// form fields time to render without causing scroll lock
+		setTimeout(() => {
+			const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+			el?.scrollIntoView({ behavior: 'instant', block: 'start' });
+		}, 600);
 	}
 
 	onMount(() => {
