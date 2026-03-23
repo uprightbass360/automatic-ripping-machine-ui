@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.services import arm_client, arm_db, transcoder_client
+from backend.services import arm_client, arm_db, image_cache, transcoder_client
 
 log = logging.getLogger(__name__)
 
@@ -136,3 +136,15 @@ async def cleanup_transcoder():
                 break
 
     return {"success": True, "deleted": deleted, "errors": errors}
+
+
+@router.get("/maintenance/image-cache-stats")
+def get_image_cache_stats():
+    """Return image cache statistics."""
+    return image_cache.stats()
+
+
+@router.post("/maintenance/clear-image-cache")
+def clear_image_cache():
+    """Clear all cached images."""
+    return image_cache.clear()
