@@ -69,44 +69,6 @@ async def get_ripping_data() -> dict[str, Any] | None:
     return _ripping_data
 
 
-# Setup status cache — checked on every page load
-_setup_data: dict[str, Any] | None = None
-_setup_fetched_at: float = 0.0
-_SETUP_TTL: float = 300.0  # 5 minutes — setup status rarely changes
-_setup_lock: asyncio.Lock | None = None
-
-
-def _get_setup_lock() -> asyncio.Lock:
-    global _setup_lock
-    if _setup_lock is None:
-        _setup_lock = asyncio.Lock()
-    return _setup_lock
-
-
-async def get_setup_status() -> dict[str, Any] | None:
-    """Return cached setup status, refreshing at most every 5 minutes."""
-    global _setup_data, _setup_fetched_at
-    now = time.monotonic()
-    if now - _setup_fetched_at >= _SETUP_TTL:
-        lock = _get_setup_lock()
-        if not lock.locked():
-            asyncio.create_task(_refresh_setup(lock))
-    return _setup_data
-
-
-async def _refresh_setup(lock: asyncio.Lock) -> None:
-    """Background task to refresh setup status."""
-    global _setup_data, _setup_fetched_at
-    async with lock:
-        if time.monotonic() - _setup_fetched_at < _SETUP_TTL:
-            return
-        result = await arm_client.get_setup_status()
-        if result is not None:
-            _setup_data = result
-            _setup_fetched_at = time.monotonic()
-            logger.debug("Setup status cache refreshed")
-
-
 async def _refresh_ripping(lock: asyncio.Lock) -> None:
     """Background task to refresh ripping data without blocking callers."""
     global _ripping_data, _ripping_fetched_at
