@@ -321,10 +321,8 @@
 			{@render children()}
 		</main>
 
-		<!-- Bottom stats bar — visible only at lg (1024-1279px) -->
-		<div class="hidden lg:block xl:hidden">
-			<BottomStatsBar systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
-		</div>
+		<!-- Bottom stats bar — visible only at lg (1024-1279px), visibility controlled by component root -->
+		<BottomStatsBar systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
 	</div>
 </div>
 {/if}
