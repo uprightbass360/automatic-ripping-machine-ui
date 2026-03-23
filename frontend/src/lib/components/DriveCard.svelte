@@ -275,10 +275,7 @@
 	{#if drive.current_job || drive.job_id_previous}
 		<div class="mt-2 border-t border-primary/10 pt-1.5 dark:border-primary/15">
 			{#if drive.current_job}
-				<div class="flex items-center gap-1.5">
-					<span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">Current Rip</span>
-					<StatusBadge status={drive.current_job.status} />
-				</div>
+				<span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">Current Rip</span>
 				<a href="/jobs/{drive.current_job.job_id}" class="block truncate text-[11px] text-primary-text hover:underline dark:text-primary-text-dark">
 					{drive.current_job.title || drive.current_job.label || 'Active Job'}
 				</a>
