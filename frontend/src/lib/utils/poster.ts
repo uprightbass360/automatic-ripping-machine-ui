@@ -6,5 +6,5 @@ export function posterSrc(url: string | null | undefined): string {
 	if (!url) return '';
 	// Only proxy external URLs — local/relative paths don't need it
 	if (!url.startsWith('http://') && !url.startsWith('https://')) return url;
-	return `/api/jobs/folder/poster-proxy?url=${encodeURIComponent(url)}`;
+	return `/api/images/proxy?url=${encodeURIComponent(url)}`;
 }

@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     arm_config_path: str = ""
     arm_hb_presets_path: str = ""
     arm_themes_path: str = "/data/config/themes"
+    image_cache_path: str = "/data/cache/images"
     arm_url: str = "http://localhost:8080"
     transcoder_url: str = "http://localhost:5000"
     transcoder_api_key: str = ""

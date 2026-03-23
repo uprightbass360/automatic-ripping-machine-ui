@@ -314,3 +314,24 @@ async def test_cleanup_transcoder_unreachable(app_client):
     assert data["success"] is True
     assert data["deleted"] == 0
     assert len(data["errors"]) == 2  # one per status (completed, failed)
+
+
+# --- Image cache endpoints ---
+
+
+async def test_image_cache_stats(app_client):
+    with patch("backend.routers.maintenance.image_cache.stats", return_value={
+        "count": 5, "size_bytes": 250000, "size_mb": 0.2, "oldest": 1711234567.0, "path": "/data/cache/images"
+    }):
+        resp = await app_client.get("/api/maintenance/image-cache-stats")
+    assert resp.status_code == 200
+    assert resp.json()["count"] == 5
+
+
+async def test_clear_image_cache(app_client):
+    with patch("backend.routers.maintenance.image_cache.clear", return_value={
+        "success": True, "cleared": 5, "freed_bytes": 250000
+    }):
+        resp = await app_client.post("/api/maintenance/clear-image-cache")
+    assert resp.status_code == 200
+    assert resp.json()["cleared"] == 5

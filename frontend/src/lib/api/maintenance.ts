@@ -76,3 +76,19 @@ export function purgeNotifications(): Promise<{ success: boolean; count: number 
 export function cleanupTranscoder(): Promise<{ success: boolean; deleted: number; errors: string[] }> {
 	return apiFetch('/api/maintenance/cleanup-transcoder', { method: 'POST' });
 }
+
+export interface ImageCacheStats {
+	count: number;
+	size_bytes: number;
+	size_mb: number;
+	oldest: number | null;
+	path: string;
+}
+
+export function fetchImageCacheStats(): Promise<ImageCacheStats> {
+	return apiFetch('/api/maintenance/image-cache-stats');
+}
+
+export function clearImageCache(): Promise<{ success: boolean; cleared: number; freed_bytes: number }> {
+	return apiFetch('/api/maintenance/clear-image-cache', { method: 'POST' });
+}

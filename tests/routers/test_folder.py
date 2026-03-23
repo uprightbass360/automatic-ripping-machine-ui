@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
-import httpx
 import pytest
 
 
@@ -77,90 +76,13 @@ async def test_create_backend_error(app_client):
     assert resp.status_code == 502
 
 
-# --- Poster proxy ---
+# --- Poster proxy redirect (backward compat) ---
 
-async def test_poster_proxy_success(app_client):
-    mock_resp = MagicMock()
-    mock_resp.content = b"\xff\xd8\xff\xe0"  # JPEG header bytes
-    mock_resp.headers = {"content-type": "image/jpeg"}
-    mock_resp.raise_for_status = MagicMock()
-
-    mock_client = AsyncMock()
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
-    mock_client.get = AsyncMock(return_value=mock_resp)
-
-    with patch("backend.routers.folder.httpx.AsyncClient", return_value=mock_client):
-        resp = await app_client.get("/api/jobs/folder/poster-proxy?url=https://m.media-amazon.com/images/test.jpg")
-    assert resp.status_code == 200
-    assert resp.headers["content-type"] == "image/jpeg"
-
-
-async def test_poster_proxy_disallowed_host(app_client):
-    resp = await app_client.get("/api/jobs/folder/poster-proxy?url=https://evil.com/malware.jpg")
-    assert resp.status_code == 400
-    assert "not allowed" in resp.json()["detail"]
-
-
-async def test_poster_proxy_bad_scheme(app_client):
-    resp = await app_client.get("/api/jobs/folder/poster-proxy?url=ftp://m.media-amazon.com/test.jpg")
-    assert resp.status_code == 400
-    assert "HTTP" in resp.json()["detail"]
-
-
-async def test_poster_proxy_fetch_error(app_client):
-    from backend.routers.folder import _poster_cache
-    _poster_cache.clear()
-
-    mock_client = AsyncMock()
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
-    mock_client.get = AsyncMock(side_effect=httpx.HTTPError("Connection failed"))
-
-    with patch("backend.routers.folder.httpx.AsyncClient", return_value=mock_client):
-        resp = await app_client.get("/api/jobs/folder/poster-proxy?url=https://m.media-amazon.com/images/error-test.jpg")
-    assert resp.status_code == 502
-    _poster_cache.clear()
-
-
-async def test_poster_proxy_cache_hit(app_client):
-    """Second request for same URL should use cache."""
-    from backend.routers.folder import _poster_cache
-    _poster_cache.clear()
-    _poster_cache["https://m.media-amazon.com/images/cached.jpg"] = (b"\xff\xd8", "image/jpeg")
-
-    resp = await app_client.get("/api/jobs/folder/poster-proxy?url=https://m.media-amazon.com/images/cached.jpg")
-    assert resp.status_code == 200
-    assert resp.headers["content-type"] == "image/jpeg"
-
-    _poster_cache.clear()
-
-
-async def test_poster_proxy_cache_eviction(app_client):
-    """Cache evicts oldest entry when full."""
-    from backend.routers.folder import _poster_cache, _POSTER_CACHE_MAX
-    _poster_cache.clear()
-
-    # Fill the cache
-    for i in range(_POSTER_CACHE_MAX):
-        _poster_cache[f"https://m.media-amazon.com/img/{i}.jpg"] = (b"x", "image/jpeg")
-
-    assert len(_poster_cache) == _POSTER_CACHE_MAX
-
-    # Add one more via the endpoint
-    mock_resp = MagicMock()
-    mock_resp.content = b"\xff\xd8"
-    mock_resp.headers = {"content-type": "image/jpeg"}
-    mock_resp.raise_for_status = MagicMock()
-
-    mock_client = AsyncMock()
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
-    mock_client.get = AsyncMock(return_value=mock_resp)
-
-    with patch("backend.routers.folder.httpx.AsyncClient", return_value=mock_client):
-        resp = await app_client.get("/api/jobs/folder/poster-proxy?url=https://m.media-amazon.com/images/new.jpg")
-    assert resp.status_code == 200
-    assert len(_poster_cache) == _POSTER_CACHE_MAX  # didn't exceed max
-
-    _poster_cache.clear()
+async def test_poster_proxy_redirects(app_client):
+    """Old poster-proxy URL redirects to /api/images/proxy."""
+    resp = await app_client.get(
+        "/api/jobs/folder/poster-proxy?url=https://m.media-amazon.com/test.jpg",
+        follow_redirects=False,
+    )
+    assert resp.status_code == 301
+    assert "/api/images/proxy" in resp.headers["location"]
