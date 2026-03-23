@@ -345,6 +345,8 @@
 		window.location.hash = tab;
 		if (tab === 'music') loadAbcdeConfig();
 		if (tab === 'system') loadSystemInfo();
+		// Reset scroll to top when switching tabs
+		document.querySelector('main')?.scrollTo(0, 0);
 	}
 
 	function scrollToPanel(label: string) {
@@ -353,7 +355,16 @@
 		// form fields time to render without causing scroll lock
 		setTimeout(() => {
 			const el = document.getElementById(`panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
-			el?.scrollIntoView({ behavior: 'instant', block: 'start' });
+			if (!el) return;
+			// Find the scrollable <main> ancestor and scroll within it
+			const scrollContainer = el.closest('main');
+			if (scrollContainer) {
+				const containerRect = scrollContainer.getBoundingClientRect();
+				const elRect = el.getBoundingClientRect();
+				scrollContainer.scrollTop += elRect.top - containerRect.top - 16;
+			} else {
+				el.scrollIntoView({ behavior: 'instant', block: 'start' });
+			}
 		}, 600);
 	}
 
@@ -374,10 +385,15 @@
 		function onHashChange() {
 			const { tab, panel } = parseHash();
 			activeTab = tab;
+			if (tab === 'music') loadAbcdeConfig();
+			if (tab === 'system') loadSystemInfo();
 			if (panel) {
 				const groups = TAB_ARM_GROUPS[tab] ?? [];
 				const match = groups.find((g) => g.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') === panel.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
 				if (match) scrollToPanel(match.label);
+			} else {
+				// Reset scroll to top when switching tabs without a panel target
+				document.querySelector('main')?.scrollTo(0, 0);
 			}
 		}
 		window.addEventListener('hashchange', onHashChange);
@@ -1720,7 +1736,7 @@
 				{:else}
 					<div class="space-y-2">
 						{#each groups as group}
-							<div id="panel-{group.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}" class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
+							<div id="panel-{group.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}" class="scroll-mt-4 rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
 								<button
 									type="button"
 									onclick={() => toggleCollapse(group.label)}
