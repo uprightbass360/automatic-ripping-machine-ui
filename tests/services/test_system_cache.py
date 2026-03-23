@@ -83,14 +83,8 @@ def test_ripping_ttl_expired():
     assert now - system_cache._ripping_fetched_at >= system_cache._RIPPING_TTL
 
 
-def test_ripping_none_result_preserves_previous():
-    """If refresh returns None, previous data is preserved (not overwritten)."""
+def test_ripping_data_not_overwritten_when_not_set():
+    """Cached ripping data persists when no new value is written."""
     previous = {"ripping_enabled": True}
     system_cache._ripping_data = previous
-
-    # Simulate None result — _refresh_ripping only updates on non-None
-    result = None
-    if result is not None:
-        system_cache._ripping_data = result
-
-    assert system_cache._ripping_data == previous
+    assert system_cache._ripping_data is previous
