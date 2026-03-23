@@ -57,6 +57,16 @@ describe('Files Page', () => {
 			});
 		});
 
+		it('renders tabs in rootOrder: Raw before Completed', async () => {
+			renderComponent(FilesPage);
+			await waitFor(() => {
+				const rawTab = screen.getAllByText('Raw')[0];
+				const completedTab = screen.getAllByText('Completed')[0];
+				// Raw should appear before Completed in DOM order
+				expect(rawTab.compareDocumentPosition(completedTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+			});
+		});
+
 		it('renders file listing after auto-navigation', async () => {
 			renderComponent(FilesPage);
 			await waitFor(() => {
