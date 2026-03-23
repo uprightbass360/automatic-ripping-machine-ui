@@ -14,6 +14,7 @@ from backend.routers import (
     drives,
     files,
     folder,
+    images,
     jobs,
     logs,
     maintenance,
@@ -25,12 +26,13 @@ from backend.routers import (
     transcoder,
 )
 from backend.services import arm_client, transcoder_client
-from backend.services import system_cache
+from backend.services import image_cache, system_cache
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await system_cache.refresh()
+    image_cache.startup_scan()
     yield
     await arm_client.close_client()
     await transcoder_client.close_client()
@@ -62,6 +64,7 @@ app.include_router(files.router)
 app.include_router(folder.router)
 app.include_router(setup.router)
 app.include_router(system.router)
+app.include_router(images.router)
 app.include_router(maintenance.router)
 
 # Serve static frontend build if it exists

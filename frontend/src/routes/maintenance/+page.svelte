@@ -11,9 +11,12 @@
 		dismissAllNotifications,
 		purgeNotifications,
 		cleanupTranscoder,
+		fetchImageCacheStats,
+		clearImageCache,
 		type MaintenanceSummary,
 		type OrphanLogsResponse,
-		type OrphanFoldersResponse
+		type OrphanFoldersResponse,
+		type ImageCacheStats
 	} from '$lib/api/maintenance';
 
 	let summary = $state<MaintenanceSummary | null>(null);
@@ -24,12 +27,17 @@
 	let foldersOpen = $state(false);
 	let notificationsOpen = $state(false);
 	let transcoderOpen = $state(false);
+	let imageCacheOpen = $state(false);
 
 	// Section data (lazy-loaded)
 	let logsData = $state<OrphanLogsResponse | null>(null);
 	let foldersData = $state<OrphanFoldersResponse | null>(null);
 	let logsLoading = $state(false);
 	let foldersLoading = $state(false);
+
+	// Image cache
+	let cacheStats = $state<ImageCacheStats | null>(null);
+	let cacheLoading = $state(false);
 
 	// Selection state
 	let selectedLogs = $state<Set<string>>(new Set());
@@ -214,6 +222,25 @@
 				message: `Deleted ${result.deleted} job${result.deleted !== 1 ? 's' : ''}${result.errors.length ? `, ${result.errors.length} error(s)` : ''}`
 			};
 			await loadSummary();
+		});
+	}
+
+	async function loadCacheStats() {
+		cacheLoading = true;
+		try {
+			cacheStats = await fetchImageCacheStats();
+		} catch { cacheStats = null; }
+		cacheLoading = false;
+	}
+
+	async function handleClearCache() {
+		showConfirm('Clear Image Cache', 'Delete all cached poster images? They will be re-fetched on next view.', async () => {
+			const result = await clearImageCache();
+			feedback = {
+				type: 'success',
+				message: `Cleared ${result.cleared} cached image${result.cleared !== 1 ? 's' : ''} (${(result.freed_bytes / 1048576).toFixed(1)} MB)`
+			};
+			cacheStats = await fetchImageCacheStats();
 		});
 	}
 
@@ -548,6 +575,50 @@
 								? 's'
 								: ''}){/if}
 					</button>
+				</div>
+			{/if}
+		</div>
+		<!-- Image Cache -->
+		<div class="rounded-lg border border-primary/15 dark:border-primary/15">
+			<button
+				onclick={() => {
+					imageCacheOpen = !imageCacheOpen;
+					if (imageCacheOpen && !cacheStats) loadCacheStats();
+				}}
+				class="flex w-full items-center gap-3 p-4 text-left"
+			>
+				<svg class="h-5 w-5 text-primary-text dark:text-primary-text-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v13.5A1.5 1.5 0 003.75 21z" />
+				</svg>
+				Image Cache
+				{#if cacheStats}
+					<span class="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary-text dark:text-primary-text-dark">
+						{cacheStats.count} image{cacheStats.count !== 1 ? 's' : ''} &middot; {cacheStats.size_mb} MB
+					</span>
+				{/if}
+				<svg class="ml-auto h-4 w-4 transition-transform {imageCacheOpen ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+				</svg>
+			</button>
+			{#if imageCacheOpen}
+				<div class="border-t border-primary/10 p-4 dark:border-primary/10">
+					{#if cacheLoading}
+						<p class="text-sm text-gray-500">Loading...</p>
+					{:else if cacheStats}
+						<p class="mb-3 text-sm text-gray-600 dark:text-gray-400">
+							{cacheStats.count} cached poster image{cacheStats.count !== 1 ? 's' : ''}
+							({cacheStats.size_mb} MB)
+						</p>
+						<button
+							onclick={handleClearCache}
+							disabled={busy || !cacheStats.count}
+							class="rounded bg-red-500/15 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-500/25 disabled:opacity-50 dark:text-red-400"
+						>
+							Clear Cache{#if cacheStats.count} ({cacheStats.count} image{cacheStats.count !== 1 ? 's' : ''}){/if}
+						</button>
+					{:else}
+						<p class="text-sm text-gray-500">Unable to load cache stats</p>
+					{/if}
 				</div>
 			{/if}
 		</div>

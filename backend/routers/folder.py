@@ -1,10 +1,8 @@
 """Folder import proxy — routes folder scan/create through the ARM backend."""
 from typing import Any
-from urllib.parse import urlparse
 
-import httpx
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import Response
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from backend.services import arm_client
@@ -50,59 +48,7 @@ async def create_folder_job(req: FolderCreateRequest) -> dict[str, Any]:
     return _check_result(await arm_client.create_folder_job(req.model_dump()))
 
 
-_poster_cache: dict[str, tuple[bytes, str]] = {}
-_POSTER_CACHE_MAX = 100  # max cached images (~5 MB at ~50 KB each)
-
-_ALLOWED_IMAGE_HOSTS = {
-    "m.media-amazon.com",
-    "image.tmdb.org",
-    "images-na.ssl-images-amazon.com",
-    "coverartarchive.org",
-    "ia.media-imdb.com",
-}
-
-
 @router.get("/poster-proxy")
-async def poster_proxy(url: str = Query(..., description="Poster image URL")) -> Response:
-    """Proxy external poster images to avoid browser ORB/CORS blocking.
-
-    Only allows HTTPS (or HTTP for coverartarchive.org) requests to a
-    strict allowlist of known image CDN hosts. This prevents SSRF by
-    rejecting any URL that doesn't match the allowlist.
-    """
-    parsed = urlparse(url)
-    if parsed.scheme not in ("http", "https"):
-        raise HTTPException(400, "Only HTTP(S) URLs are allowed")
-    if parsed.hostname not in _ALLOWED_IMAGE_HOSTS:
-        raise HTTPException(400, "Image host not allowed")
-
-    # Return from server-side cache if available
-    if url in _poster_cache:
-        content, content_type = _poster_cache[url]
-        return Response(
-            content=content,
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=86400"},
-        )
-
-    # Build the validated URL from parsed components to satisfy SSRF analysis.
-    # The hostname was checked against _ALLOWED_IMAGE_HOSTS above.
-    validated_url = parsed.geturl()
-    try:
-        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-            resp = await client.get(validated_url)  # NOSONAR — host validated above
-            resp.raise_for_status()
-            content_type = resp.headers.get("content-type", "image/jpeg")
-
-            # Evict oldest if cache is full
-            if len(_poster_cache) >= _POSTER_CACHE_MAX:
-                _poster_cache.pop(next(iter(_poster_cache)))
-            _poster_cache[url] = (resp.content, content_type)
-
-            return Response(
-                content=resp.content,
-                media_type=content_type,
-                headers={"Cache-Control": "public, max-age=86400"},
-            )
-    except httpx.HTTPError:
-        raise HTTPException(502, "Failed to fetch poster image")
+async def poster_proxy_redirect(url: str = Query(..., description="Poster image URL")):
+    """Redirect to new image proxy endpoint (backward compatibility)."""
+    return RedirectResponse(f"/api/images/proxy?url={url}", status_code=301)
