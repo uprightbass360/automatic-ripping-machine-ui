@@ -53,7 +53,7 @@
 				<h3 class="truncate font-semibold text-gray-900 dark:text-white">
 					{job.title || job.label || 'Untitled'}
 				</h3>
-				<StatusBadge status={isFolderImport && job.status === 'ripping' ? 'processing' : job.status} />
+				<StatusBadge status={isFolderImport && job.status === 'ripping' ? 'importing' : job.status} />
 			</div>
 
 			<!-- Row 2: Year, IMDB, disc label -->
