@@ -13,7 +13,7 @@
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import InlineLogFeed from './InlineLogFeed.svelte';
 	import TrackTitleSearch from './TrackTitleSearch.svelte';
-	import TvdbMatch from './TvdbMatch.svelte';
+	import EpisodeMatch from './EpisodeMatch.svelte';
 
 	interface Props {
 		job: Job;
@@ -460,7 +460,7 @@
 					? 'bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-300'
 					: 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}"
 			>
-				TVDB
+				Episodes
 			</button>
 		{/if}
 		<button
@@ -799,7 +799,7 @@
 
 	{#if showTvdb && isVideo && detail}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
-			<TvdbMatch job={detail} onapply={loadDetail} />
+			<EpisodeMatch job={detail} onapply={loadDetail} />
 		</div>
 	{/if}
 
