@@ -107,6 +107,54 @@ describe('DiscReviewWidget', () => {
 		});
 	});
 
+	describe('Episodes button visibility', () => {
+		it('shows Episodes button when video_type is series', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', video_type: 'series', disctype: 'bluray' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Episodes')).toBeInTheDocument();
+			});
+		});
+
+		it('shows Episodes button when imdb_id is set (even for movie type)', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', video_type: 'movie', disctype: 'bluray', imdb_id: 'tt1234567' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Episodes')).toBeInTheDocument();
+			});
+		});
+
+		it('does NOT show Episodes button for music discs', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', disctype: 'music', video_type: 'music' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Start')).toBeInTheDocument();
+			});
+			expect(screen.queryByText('Episodes')).not.toBeInTheDocument();
+		});
+
+		it('does NOT show Episodes button for video disc with no series type and no imdb_id', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', video_type: 'movie', disctype: 'bluray', imdb_id: null })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Start')).toBeInTheDocument();
+			});
+			expect(screen.queryByText('Episodes')).not.toBeInTheDocument();
+		});
+	});
+
 	describe('interactions', () => {
 		it('calls startWaitingJob when Start is clicked', async () => {
 			renderComponent(DiscReviewWidget, {
