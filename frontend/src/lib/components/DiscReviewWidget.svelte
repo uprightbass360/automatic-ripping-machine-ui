@@ -13,6 +13,7 @@
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import InlineLogFeed from './InlineLogFeed.svelte';
 	import TrackTitleSearch from './TrackTitleSearch.svelte';
+	import TvdbMatch from './TvdbMatch.svelte';
 
 	interface Props {
 		job: Job;
@@ -33,6 +34,7 @@
 	let showCrcLookup = $state(false);
 	let showRipSettings = $state(false);
 	let showTranscodeSettings = $state(false);
+	let showTvdb = $state(false);
 	let cancelling = $state(false);
 	let starting = $state(false);
 	let togglingMultiTitle = $state(false);
@@ -254,8 +256,8 @@
 		loadDetail();
 	}
 
-	function toggleSection(section: 'info' | 'title' | 'music' | 'crc' | 'settings' | 'transcode') {
-		const closeAll = () => { showInfo = false; showTitleSearch = false; showMusicSearch = false; showCrcLookup = false; showRipSettings = false; showTranscodeSettings = false; };
+	function toggleSection(section: 'info' | 'title' | 'music' | 'crc' | 'settings' | 'transcode' | 'tvdb') {
+		const closeAll = () => { showInfo = false; showTitleSearch = false; showMusicSearch = false; showCrcLookup = false; showRipSettings = false; showTranscodeSettings = false; showTvdb = false; };
 		if (section === 'info') {
 			showInfo = !showInfo;
 			if (showInfo) { closeAll(); showInfo = true; }
@@ -271,6 +273,9 @@
 		} else if (section === 'transcode') {
 			showTranscodeSettings = !showTranscodeSettings;
 			if (showTranscodeSettings) { closeAll(); showTranscodeSettings = true; }
+		} else if (section === 'tvdb') {
+			showTvdb = !showTvdb;
+			if (showTvdb) { closeAll(); showTvdb = true; }
 		} else {
 			showRipSettings = !showRipSettings;
 			if (showRipSettings) { closeAll(); showRipSettings = true; }
@@ -446,6 +451,16 @@
 					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
 			>
 				Transcode
+			</button>
+		{/if}
+		{#if isVideo && (job.video_type === 'series' || job.imdb_id)}
+			<button
+				onclick={() => toggleSection('tvdb')}
+				class="{btnBase} {showTvdb
+					? 'bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-300'
+					: 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}"
+			>
+				TVDB
 			</button>
 		{/if}
 		<button
@@ -779,6 +794,12 @@
 	{#if showTranscodeSettings && isVideo}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
 			<TranscodeOverrides {job} onsaved={handleConfigSaved} />
+		</div>
+	{/if}
+
+	{#if showTvdb && isVideo && detail}
+		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
+			<TvdbMatch job={detail} onapply={loadDetail} />
 		</div>
 	{/if}
 
