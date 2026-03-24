@@ -15,7 +15,7 @@
 	import CrcLookup from '$lib/components/CrcLookup.svelte';
 	import InlineLogFeed from '$lib/components/InlineLogFeed.svelte';
 	import TrackTitleSearch from '$lib/components/TrackTitleSearch.svelte';
-	import TvdbMatch from '$lib/components/TvdbMatch.svelte';
+	import EpisodeMatch from '$lib/components/EpisodeMatch.svelte';
 	import { formatDateTime, timeAgo, statusLabel } from '$lib/utils/format';
 	import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
 
@@ -423,7 +423,7 @@
 					onclick={() => (activePanel = activePanel === 'tvdb' ? null : 'tvdb')}
 					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePanel === 'tvdb' ? 'bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-300' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}"
 				>
-					TVDB Episodes
+					Episodes
 				</button>
 			{/if}
 			{#if isVideoDisc}
@@ -455,7 +455,7 @@
 			</section>
 		{:else if activePanel === 'tvdb'}
 			<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
-				<TvdbMatch {job} onapply={loadJob} />
+				<EpisodeMatch {job} onapply={loadJob} />
 			</section>
 		{:else if activePanel === 'transcode'}
 			<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">

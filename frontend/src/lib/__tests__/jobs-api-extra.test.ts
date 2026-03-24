@@ -47,7 +47,7 @@ describe('tvdbMatch', () => {
 		await tvdbMatch(1, { season: 2, apply: true });
 		expect(mockFetch).toHaveBeenCalledWith('/api/jobs/1/tvdb-match', expect.objectContaining({
 			method: 'POST',
-			body: JSON.stringify({ season: 2, tolerance: null, apply: true })
+			body: JSON.stringify({ season: 2, tolerance: null, apply: true, disc_number: null, disc_total: null })
 		}));
 	});
 
@@ -55,7 +55,7 @@ describe('tvdbMatch', () => {
 		mockFetch.mockResolvedValue(jsonResponse({ success: true, matches: [] }));
 		await tvdbMatch(1);
 		expect(mockFetch).toHaveBeenCalledWith('/api/jobs/1/tvdb-match', expect.objectContaining({
-			body: JSON.stringify({ season: null, tolerance: null, apply: false })
+			body: JSON.stringify({ season: null, tolerance: null, apply: false, disc_number: null, disc_total: null })
 		}));
 	});
 });
