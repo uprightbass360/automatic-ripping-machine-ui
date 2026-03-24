@@ -233,14 +233,22 @@ export interface TvdbEpisodesResponse {
 
 export function tvdbMatch(
 	jobId: number,
-	opts?: { season?: number | null; tolerance?: number | null; apply?: boolean }
+	opts?: {
+		season?: number | null;
+		tolerance?: number | null;
+		apply?: boolean;
+		disc_number?: number | null;
+		disc_total?: number | null;
+	}
 ): Promise<TvdbMatchResponse> {
 	return apiFetch<TvdbMatchResponse>(`/api/jobs/${jobId}/tvdb-match`, {
 		method: 'POST',
 		body: JSON.stringify({
 			season: opts?.season ?? null,
 			tolerance: opts?.tolerance ?? null,
-			apply: opts?.apply ?? false
+			apply: opts?.apply ?? false,
+			disc_number: opts?.disc_number ?? null,
+			disc_total: opts?.disc_total ?? null
 		})
 	});
 }
@@ -253,6 +261,8 @@ export interface TrackFieldUpdate {
 	enabled?: boolean;
 	filename?: string;
 	ripped?: boolean;
+	episode_number?: string;
+	episode_name?: string;
 }
 
 export function updateTrack(
