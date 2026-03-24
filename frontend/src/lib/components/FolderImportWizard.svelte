@@ -27,6 +27,9 @@
 	let editType = $state<'movie' | 'series'>('movie');
 	let editImdbId = $state('');
 	let editPosterUrl = $state('');
+	let editSeason = $state('');
+	let editDiscNumber = $state('');
+	let editDiscTotal = $state('');
 
 	// Search state
 	let searchQuery = $state('');
@@ -93,6 +96,9 @@
 			editType = 'movie';
 			editImdbId = '';
 			editPosterUrl = '';
+			editSeason = scanResult.season?.toString() || '';
+			editDiscNumber = scanResult.disc_number?.toString() || '';
+			editDiscTotal = scanResult.disc_total?.toString() || '';
 			searchQuery = scanResult.title_suggestion;
 			searchResults = [];
 			searchError = null;
@@ -167,7 +173,10 @@
 				video_type: editType,
 				disctype: scanResult.disc_type,
 				imdb_id: editImdbId.trim() || null,
-				poster_url: editPosterUrl.trim() || null
+				poster_url: editPosterUrl.trim() || null,
+				season: editSeason ? Number(editSeason) : null,
+				disc_number: editDiscNumber ? Number(editDiscNumber) : null,
+				disc_total: editDiscTotal ? Number(editDiscTotal) : null,
 			};
 			await createFolderJob(data);
 			reset();
@@ -275,6 +284,18 @@
 								<label class="col-span-2">
 									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
 									<input type="text" bind:value={editImdbId} placeholder="tt..." class="w-full {inputBase}" />
+								</label>
+								<label>
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Season</span>
+									<input type="number" bind:value={editSeason} min="1" placeholder="—" class="w-full {inputBase}" />
+								</label>
+								<label>
+									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc</span>
+									<div class="flex items-center gap-1">
+										<input type="number" bind:value={editDiscNumber} min="1" placeholder="—" class="w-full {inputBase}" />
+										<span class="text-xs text-gray-400">of</span>
+										<input type="number" bind:value={editDiscTotal} min="1" placeholder="—" class="w-full {inputBase}" />
+									</div>
 								</label>
 							</div>
 						</div>
