@@ -80,7 +80,7 @@ const STATUS_LABELS: Record<string, string> = {
 	importing: 'Processing',
 	copying: 'Copying Files',
 	ejecting: 'Ejecting',
-	processing: 'Processing',
+	processing: 'Transcoding',
 	transcoding: 'Transcoding',
 	success: 'Success',
 	completed: 'Completed',
