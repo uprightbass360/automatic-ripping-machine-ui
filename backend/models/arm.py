@@ -58,6 +58,8 @@ class Job(Base):
     multi_title = Column(Boolean, default=False)
     disc_number = Column(Integer)
     disc_total = Column(Integer)
+    source_type = Column(String(20))
+    source_path = Column(String(1000))
     ejected = Column(Boolean)
     updated = Column(Boolean)
     pid = Column(Integer)
