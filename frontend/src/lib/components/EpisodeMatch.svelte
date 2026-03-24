@@ -99,10 +99,19 @@
 				assignments[m.track_number] = m.episode_number;
 			}
 
-			// Fetch all episodes for dropdowns
+			// Fetch all episodes for dropdowns (may fail if tvdb_id not yet persisted)
 			if (result.season) {
-				const epResult = await fetchTvdbEpisodes(job.job_id, result.season);
-				episodes = epResult.episodes;
+				try {
+					const epResult = await fetchTvdbEpisodes(job.job_id, result.season);
+					episodes = epResult.episodes;
+				} catch {
+					// tvdb-episodes requires tvdb_id on job — build dropdown from match results instead
+					episodes = result.matches.map((m) => ({
+						number: m.episode_number,
+						name: m.episode_name,
+						runtime: m.episode_runtime ? Math.round(m.episode_runtime / 60) : 0,
+					}));
+				}
 			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Match failed';
@@ -160,9 +169,9 @@
 		return episodes.find((e) => e.number === epNum);
 	}
 
-	// Auto-run match on mount if job has TVDB ID
+	// Auto-run match on mount if job has TVDB ID or IMDB ID (match endpoint resolves TVDB from IMDB)
 	$effect(() => {
-		if (job.tvdb_id && mainTracks.length > 0 && matches.length === 0) {
+		if ((job.tvdb_id || job.imdb_id) && mainTracks.length > 0 && matches.length === 0) {
 			runMatch();
 		}
 	});
@@ -314,8 +323,8 @@
 		</div>
 	{:else if !loading && !error}
 		<div class="py-6 text-center text-sm text-gray-400 dark:text-gray-500">
-			{#if !job.tvdb_id}
-				No TVDB ID set. Use <strong>Search</strong> to find the show first, then match episodes.
+			{#if !job.tvdb_id && !job.imdb_id}
+				No IMDB or TVDB ID set. Use <strong>Search</strong> to identify the show first.
 			{:else if mainTracks.length === 0}
 				No tracks found. The prescan may still be running.
 			{:else}
