@@ -309,6 +309,9 @@ export interface FolderScanResult {
 	year_suggestion: string | null;
 	folder_size_bytes: number;
 	stream_count: number;
+	disc_number?: number | null;
+	disc_total?: number | null;
+	season?: number | null;
 }
 
 export interface FolderCreateRequest {
@@ -320,6 +323,9 @@ export interface FolderCreateRequest {
 	imdb_id?: string | null;
 	poster_url?: string | null;
 	multi_title?: boolean;
+	season?: number | null;
+	disc_number?: number | null;
+	disc_total?: number | null;
 }
 
 export interface FolderCreateResponse {
