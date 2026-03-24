@@ -27,6 +27,8 @@
 	let retranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 	let transcoderLogfile = $state<string | null>(null);
 
+	let isFolderImport = $derived(job?.source_type === 'folder');
+
 	// MusicBrainz track listing (fetched when DB tracks are empty for music discs)
 	let musicDetail = $state<MusicDetail | null>(null);
 	let musicDetailLoading = $state(false);
@@ -248,7 +250,7 @@
 					{#if job.year}
 						<span class="text-lg text-gray-500 dark:text-gray-400">({job.year})</span>
 					{/if}
-					<StatusBadge status={job.status} />
+					<StatusBadge status={isFolderImport && job.status === 'ripping' ? 'processing' : job.status} />
 					{#if job.multi_title}
 						<span class="rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
 					{/if}
