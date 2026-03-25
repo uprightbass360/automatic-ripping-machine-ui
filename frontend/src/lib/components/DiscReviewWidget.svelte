@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Job, JobDetail } from '$lib/types/arm';
-	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle, toggleMultiTitle, updateTrack } from '$lib/api/jobs';
+	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
+	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import { posterSrc } from '$lib/utils/poster';
 	import CountdownTimer from './CountdownTimer.svelte';
@@ -41,7 +42,7 @@
 	let editingTrackId = $state<number | null>(null);
 	let savingTrackField = $state<string | null>(null);
 	let togglingAllEnabled = $state(false);
-	let dirtyFilenames = $state<Record<number, string>>({});
+	let namingPreviews = $state<Record<string, NamingPreviewTrack>>({});
 	let errorMessage = $state<string | null>(null);
 
 	let allEnabled = $derived(
@@ -70,7 +71,6 @@
 		errorMessage = null;
 		try {
 			await updateTrack(job.job_id, trackId, { [field]: value });
-			delete dirtyFilenames[trackId];
 			loadDetail();
 		} catch (e) {
 			errorMessage = `Failed to update track: ${e instanceof Error ? e.message : 'Unknown error'}`;
@@ -179,10 +179,26 @@
 	async function loadDetail() {
 		try {
 			detail = await fetchJob(job.job_id);
+			loadNamingPreviews();
 		} catch {
 			detail = null;
 		} finally {
 			initialLoading = false;
+		}
+	}
+
+	async function loadNamingPreviews() {
+		try {
+			const result = await fetchNamingPreview(job.job_id);
+			if (result.success) {
+				const map: Record<string, NamingPreviewTrack> = {};
+				for (const t of result.tracks) {
+					map[t.track_number] = t;
+				}
+				namingPreviews = map;
+			}
+		} catch {
+			// Non-critical — show raw filename as fallback
 		}
 	}
 
@@ -704,31 +720,9 @@
 														/>
 													</td>
 													<td class="px-3 py-1.5">
-														<div class="flex items-center gap-1">
-															<input
-																type="text"
-																value={dirtyFilenames[track.track_id] ?? track.filename ?? track.basename ?? ''}
-																oninput={(e) => {
-																	const val = e.currentTarget.value;
-																	if (val !== (track.filename ?? track.basename ?? '')) {
-																		dirtyFilenames[track.track_id] = val;
-																	} else {
-																		delete dirtyFilenames[track.track_id];
-																	}
-																}}
-																onkeydown={(e) => { if (e.key === 'Enter' && dirtyFilenames[track.track_id] != null) handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id]); }}
-																class="w-full min-w-[120px] rounded-sm border bg-transparent px-1 py-0.5 font-mono text-xs text-gray-500 hover:border-primary/25 focus:border-primary focus:bg-primary/5 focus:outline-hidden focus:ring-1 focus:ring-primary dark:text-gray-400 dark:focus:bg-primary/10 {dirtyFilenames[track.track_id] != null ? 'border-amber-400 dark:border-amber-600' : 'border-transparent'}"
-															/>
-															{#if dirtyFilenames[track.track_id] != null}
-																<button
-																	onclick={() => handleTrackFieldUpdate(track.track_id, 'filename', dirtyFilenames[track.track_id])}
-																	disabled={savingTrackField === `${track.track_id}-filename`}
-																	class="{btnBase} bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-50"
-																>
-																	{savingTrackField === `${track.track_id}-filename` ? '...' : 'Save'}
-																</button>
-															{/if}
-														</div>
+														<span class="font-mono text-xs text-gray-500 dark:text-gray-400">
+															{namingPreviews[track.track_number ?? '']?.rendered_title || track.filename || track.basename || '--'}
+														</span>
 													</td>
 												{/if}
 											</tr>
