@@ -532,7 +532,11 @@
 															<span class="text-gray-400"> ({track.year})</span>
 														{/if}
 													</div>
-													<span class="rounded-sm bg-purple-100 px-1 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">CUSTOM</span>
+													{#if track.episode_number}
+														<span class="rounded-sm bg-blue-100 px-1 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">E{track.episode_number}</span>
+													{:else}
+														<span class="rounded-sm bg-purple-100 px-1 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">CUSTOM</span>
+													{/if}
 												</div>
 											{:else}
 												<span class="text-xs text-gray-400">{job.title || job.label || 'Untitled'}{#if job.year} ({job.year}){/if}</span>
