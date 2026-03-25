@@ -7,7 +7,7 @@ function jsonResponse(data: unknown, ok = true) {
 	return { ok, status: ok ? 200 : 500, statusText: ok ? 'OK' : 'Error', json: () => Promise.resolve(data) };
 }
 
-import { toggleMultiTitle, updateTrackTitle, clearTrackTitle, tvdbMatch, fetchTvdbEpisodes, updateTrack, fetchNamingPreview } from '../api/jobs';
+import { toggleMultiTitle, updateTrackTitle, clearTrackTitle, tvdbMatch, fetchTvdbEpisodes, updateTrack, fetchNamingPreview, updateJobNaming, validatePattern, fetchNamingVariables } from '../api/jobs';
 
 beforeEach(() => mockFetch.mockReset());
 
@@ -100,5 +100,54 @@ describe('fetchNamingPreview', () => {
 		expect(result.success).toBe(true);
 		expect(result.tracks).toHaveLength(2);
 		expect(result.tracks[0].rendered_title).toBe('Pilot S01E01');
+	});
+});
+
+describe('updateJobNaming', () => {
+	it('PATCHes /api/jobs/:id/naming with pattern overrides', async () => {
+		mockFetch.mockResolvedValue(jsonResponse({ success: true, title_pattern_override: '{title} - E{episode}', folder_pattern_override: null }));
+		const result = await updateJobNaming(1, { title_pattern_override: '{title} - E{episode}' });
+		expect(mockFetch).toHaveBeenCalledWith('/api/jobs/1/naming', expect.objectContaining({
+			method: 'PATCH',
+			body: JSON.stringify({ title_pattern_override: '{title} - E{episode}' })
+		}));
+		expect(result.success).toBe(true);
+		expect(result.title_pattern_override).toBe('{title} - E{episode}');
+	});
+
+	it('clears override with null', async () => {
+		mockFetch.mockResolvedValue(jsonResponse({ success: true, title_pattern_override: null, folder_pattern_override: null }));
+		const result = await updateJobNaming(1, { title_pattern_override: null });
+		expect(result.title_pattern_override).toBeNull();
+	});
+});
+
+describe('validatePattern', () => {
+	it('POSTs to /api/naming/validate', async () => {
+		mockFetch.mockResolvedValue(jsonResponse({ valid: false, invalid_vars: ['episde'], suggestions: { episde: 'episode' } }));
+		const result = await validatePattern('{title} {episde}');
+		expect(mockFetch).toHaveBeenCalledWith('/api/naming/validate', expect.objectContaining({
+			method: 'POST',
+			body: JSON.stringify({ pattern: '{title} {episde}' })
+		}));
+		expect(result.valid).toBe(false);
+		expect(result.invalid_vars).toContain('episde');
+		expect(result.suggestions.episde).toBe('episode');
+	});
+
+	it('returns valid for correct pattern', async () => {
+		mockFetch.mockResolvedValue(jsonResponse({ valid: true, invalid_vars: [], suggestions: {} }));
+		const result = await validatePattern('{title} S{season}E{episode}');
+		expect(result.valid).toBe(true);
+	});
+});
+
+describe('fetchNamingVariables', () => {
+	it('GETs /api/naming/variables', async () => {
+		mockFetch.mockResolvedValue(jsonResponse({ variables: ['album', 'artist', 'episode', 'label', 'season', 'title', 'video_type', 'year'], descriptions: {} }));
+		const result = await fetchNamingVariables();
+		expect(result.variables).toHaveLength(8);
+		expect(result.variables).toContain('title');
+		expect(result.variables).toContain('episode');
 	});
 });
