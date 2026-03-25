@@ -48,6 +48,7 @@ function createTrack(overrides: Partial<Track> = {}): Track {
 		video_type: null,
 		episode_number: null,
 		episode_name: null,
+		custom_filename: null,
 		...overrides
 	};
 }

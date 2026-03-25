@@ -68,6 +68,8 @@ function createJobDetail(overrides: Partial<JobDetail> = {}): JobDetail {
 		episode_manual: null,
 		transcode_overrides: null,
 		multi_title: null,
+		title_pattern_override: null,
+		folder_pattern_override: null,
 		disc_number: null,
 		disc_total: null,
 		ejected: null,
@@ -90,7 +92,7 @@ function createTrack(overrides: Partial<Track> = {}): Track {
 		status: null, error: null, source: null, enabled: true,
 		aspect_ratio: '16:9', fps: 23.976, ripped: false, basename: null,
 		title: null, year: null, imdb_id: null, video_type: null,
-		poster_url: null, episode_number: null, episode_name: null,
+		poster_url: null, episode_number: null, episode_name: null, custom_filename: null,
 		...overrides
 	};
 }

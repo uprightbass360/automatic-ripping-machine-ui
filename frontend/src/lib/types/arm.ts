@@ -25,6 +25,8 @@ export interface Track {
 	// TVDB episode matching
 	episode_number: string | null;
 	episode_name: string | null;
+	// User-specified output filename (overrides pattern rendering)
+	custom_filename: string | null;
 }
 
 export interface Job {
@@ -76,6 +78,8 @@ export interface Job {
 	episode_manual: string | null;
 	transcode_overrides: Record<string, unknown> | null;
 	multi_title: boolean | null;
+	title_pattern_override: string | null;
+	folder_pattern_override: string | null;
 	disc_number: number | null;
 	disc_total: number | null;
 	ejected: boolean | null;
