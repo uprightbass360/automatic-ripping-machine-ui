@@ -34,6 +34,9 @@ class FolderCreateRequest(BaseModel):
     imdb_id: str | None = None
     poster_url: str | None = None
     multi_title: bool = False
+    season: int | None = None
+    disc_number: int | None = None
+    disc_total: int | None = None
 
 
 @router.post("/scan")
