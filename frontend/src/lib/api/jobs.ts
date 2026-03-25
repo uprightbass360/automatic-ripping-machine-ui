@@ -286,6 +286,23 @@ export function namingPreview(
 	});
 }
 
+export interface NamingPreviewTrack {
+	track_number: string;
+	rendered_title: string;
+	rendered_folder: string;
+}
+
+export interface NamingPreviewResponse {
+	success: boolean;
+	job_title: string;
+	job_folder: string;
+	tracks: NamingPreviewTrack[];
+}
+
+export function fetchNamingPreview(jobId: number): Promise<NamingPreviewResponse> {
+	return apiFetch<NamingPreviewResponse>(`/api/jobs/${jobId}/naming-preview`);
+}
+
 export interface JobStats {
 	total: number;
 	active: number;

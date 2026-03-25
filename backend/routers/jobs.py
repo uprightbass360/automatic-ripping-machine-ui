@@ -341,6 +341,18 @@ async def tvdb_episodes(job_id: int, season: int = Query(1, ge=1)):
     return result
 
 
+@router.get("/jobs/{job_id}/naming-preview", responses=_404_502_ARM)
+async def naming_preview_for_job(job_id: int):
+    """Get rendered filenames for all tracks on a job (proxied to ARM)."""
+    result = await arm_client.naming_preview_for_job(job_id)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if not result.get("success", True):
+        status = 404 if "not found" in result.get("error", "").lower() else 400
+        raise HTTPException(status_code=status, detail=result.get("error", "Failed"))
+    return result
+
+
 @router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}, 502: {}, 503: {}})
 async def update_transcode_config(job_id: int, request: Request):
     """Set per-job transcode override settings (proxied to ARM)."""
