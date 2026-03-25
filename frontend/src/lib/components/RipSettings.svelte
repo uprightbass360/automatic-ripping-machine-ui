@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Job, JobConfigUpdate } from '$lib/types/arm';
-	import { updateJobConfig } from '$lib/api/jobs';
+	import { updateJobConfig, updateJobNaming, fetchNamingVariables, fetchNamingPreview } from '$lib/api/jobs';
+	import type { NamingPreviewTrack } from '$lib/api/jobs';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		job: Job;
@@ -50,6 +52,100 @@
 			folderKey: 'MOVIE_FOLDER_PATTERN',
 		};
 	});
+
+	// Naming override state
+	let overrideEnabled = $state(!!job.title_pattern_override || !!job.folder_pattern_override);
+	let titlePattern = $state(job.title_pattern_override || namingPatterns.title);
+	let folderPattern = $state(job.folder_pattern_override || namingPatterns.folder);
+	let validVars = $state<string[]>([]);
+	let namingSaving = $state(false);
+	let namingFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let namingPreviewText = $state('');
+	let lastFocusedInput = $state<HTMLInputElement | null>(null);
+	let patternValidation = $state<{ valid: boolean; errors: string[] }>({ valid: true, errors: [] });
+
+	// Fetch variables on mount
+	onMount(async () => {
+		try {
+			const result = await fetchNamingVariables();
+			validVars = result.variables;
+		} catch { /* fallback: empty */ }
+	});
+
+	// Validate pattern client-side
+	function validateLocally(pattern: string): string[] {
+		const tokens = [...pattern.matchAll(/\{(\w+)\}/g)].map(m => m[1]);
+		return tokens.filter(t => validVars.length > 0 && !validVars.includes(t));
+	}
+
+	function handlePatternInput() {
+		const titleErrors = validateLocally(titlePattern);
+		const folderErrors = validateLocally(folderPattern);
+		const errors = [...new Set([...titleErrors, ...folderErrors])];
+		patternValidation = { valid: errors.length === 0, errors };
+		// Debounced preview
+		clearTimeout(previewTimer);
+		previewTimer = window.setTimeout(loadPreview, 500);
+	}
+
+	let previewTimer = 0;
+	async function loadPreview() {
+		try {
+			const result = await fetchNamingPreview(job.job_id);
+			if (result.success && result.tracks.length > 0) {
+				namingPreviewText = result.tracks[0].rendered_title;
+			}
+		} catch { /* ignore */ }
+	}
+
+	function insertVariable(varName: string) {
+		if (!lastFocusedInput) return;
+		const input = lastFocusedInput;
+		const start = input.selectionStart ?? input.value.length;
+		const end = input.selectionEnd ?? start;
+		const text = `{${varName}}`;
+		const before = input.value.slice(0, start);
+		const after = input.value.slice(end);
+		input.value = before + text + after;
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		// Restore cursor after insertion
+		const newPos = start + text.length;
+		input.setSelectionRange(newPos, newPos);
+		input.focus();
+		// Update state
+		if (input.dataset.field === 'title') titlePattern = input.value;
+		else folderPattern = input.value;
+		handlePatternInput();
+	}
+
+	async function saveNamingOverrides() {
+		namingSaving = true;
+		namingFeedback = null;
+		try {
+			await updateJobNaming(job.job_id, {
+				title_pattern_override: overrideEnabled ? titlePattern : null,
+				folder_pattern_override: overrideEnabled ? folderPattern : null,
+			});
+			namingFeedback = { type: 'success', message: 'Saved' };
+			onsaved?.();
+		} catch (e) {
+			namingFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Save failed' };
+		} finally {
+			namingSaving = false;
+		}
+	}
+
+	function toggleOverride() {
+		if (overrideEnabled) {
+			if (!confirm('Clear pattern overrides? This will revert to global settings.')) return;
+			overrideEnabled = false;
+			titlePattern = namingPatterns.title;
+			folderPattern = namingPatterns.folder;
+			saveNamingOverrides();
+		} else {
+			overrideEnabled = true;
+		}
+	}
 
 	let saving = $state(false);
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -161,29 +257,88 @@
 		</div>
 	{/if}
 
-	<!-- Naming patterns (read-only, from global settings) -->
-	<div class="rounded-lg border border-primary/15 bg-primary/[0.03] p-3 dark:border-primary/20 dark:bg-primary/5">
+	<!-- Naming patterns (editable with per-job override) -->
+	<div class="rounded-lg border {overrideEnabled ? 'border-green-500/30' : 'border-primary/15'} bg-primary/[0.03] p-3 dark:border-primary/20 dark:bg-primary/5">
 		<div class="mb-2 flex items-center justify-between">
 			<span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
 				{namingPatterns.label} Naming
 			</span>
-			<a
-				href="/settings#ripping/naming-patterns"
-				class="text-[10px] font-medium text-primary hover:underline dark:text-primary"
+			<button
+				onclick={toggleOverride}
+				class="flex items-center gap-1.5 text-[10px] font-medium {overrideEnabled ? 'text-green-500' : 'text-gray-400'}"
 			>
-				Edit in Settings
-			</a>
+				Override
+				<div class="h-4 w-7 rounded-full transition-colors {overrideEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}" style="position:relative;">
+					<div class="absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform {overrideEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}"></div>
+				</div>
+			</button>
 		</div>
+
+		{#if overrideEnabled && validVars.length > 0}
+			<div class="mb-2 flex flex-wrap gap-1">
+				{#each validVars as v}
+					<button
+						onclick={() => insertVariable(v)}
+						class="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-mono text-blue-700 transition-colors hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-800/40"
+					>
+						{`{${v}}`}
+					</button>
+				{/each}
+			</div>
+		{/if}
+
 		<div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
 			<div>
 				<span class="text-[10px] font-medium text-gray-400 dark:text-gray-500">Title</span>
-				<p class="font-mono text-xs text-gray-700 dark:text-gray-300">{namingPatterns.title}</p>
+				{#if overrideEnabled}
+					<input
+						type="text"
+						data-field="title"
+						bind:value={titlePattern}
+						onfocus={(e) => { lastFocusedInput = e.currentTarget; }}
+						oninput={handlePatternInput}
+						class="w-full rounded border px-1.5 py-0.5 font-mono text-xs {patternValidation.valid ? 'border-green-500/40 text-gray-900 dark:border-green-500/30 dark:text-white' : 'border-red-500 text-red-700 dark:text-red-400'} bg-surface dark:bg-surface-dark"
+					/>
+				{:else}
+					<p class="font-mono text-xs text-gray-500 dark:text-gray-500">{namingPatterns.title}</p>
+				{/if}
 			</div>
 			<div>
 				<span class="text-[10px] font-medium text-gray-400 dark:text-gray-500">Folder</span>
-				<p class="font-mono text-xs text-gray-700 dark:text-gray-300">{namingPatterns.folder}</p>
+				{#if overrideEnabled}
+					<input
+						type="text"
+						data-field="folder"
+						bind:value={folderPattern}
+						onfocus={(e) => { lastFocusedInput = e.currentTarget; }}
+						oninput={handlePatternInput}
+						class="w-full rounded border px-1.5 py-0.5 font-mono text-xs {patternValidation.valid ? 'border-green-500/40 text-gray-900 dark:border-green-500/30 dark:text-white' : 'border-red-500 text-red-700 dark:text-red-400'} bg-surface dark:bg-surface-dark"
+					/>
+				{:else}
+					<p class="font-mono text-xs text-gray-500 dark:text-gray-500">{namingPatterns.folder}</p>
+				{/if}
 			</div>
 		</div>
+
+		{#if overrideEnabled}
+			{#if !patternValidation.valid}
+				<p class="mt-1 text-[10px] text-red-500">Unknown variable{patternValidation.errors.length > 1 ? 's' : ''}: {patternValidation.errors.map(e => `{${e}}`).join(', ')}</p>
+			{:else if namingPreviewText}
+				<p class="mt-1 text-[10px] text-green-500">Preview: {namingPreviewText}</p>
+			{/if}
+			<div class="mt-2 flex items-center gap-2">
+				<button
+					onclick={saveNamingOverrides}
+					disabled={namingSaving || !patternValidation.valid}
+					class="{btnBase} bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-500"
+				>
+					{namingSaving ? 'Saving...' : 'Save Pattern'}
+				</button>
+				{#if namingFeedback}
+					<span class="text-[10px] {namingFeedback.type === 'success' ? 'text-green-500' : 'text-red-500'}">{namingFeedback.message}</span>
+				{/if}
+			</div>
+		{/if}
 	</div>
 
 	<div class="flex items-center gap-2">

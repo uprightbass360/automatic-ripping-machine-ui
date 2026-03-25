@@ -43,6 +43,8 @@
 	let savingTrackField = $state<string | null>(null);
 	let togglingAllEnabled = $state(false);
 	let namingPreviews = $state<Record<string, NamingPreviewTrack>>({});
+	let editingFilenameTrackId = $state<number | null>(null);
+	let editingFilenameValue = $state('');
 	let errorMessage = $state<string | null>(null);
 
 	let allEnabled = $derived(
@@ -720,9 +722,43 @@
 														/>
 													</td>
 													<td class="px-3 py-1.5">
-														<span class="font-mono text-xs text-gray-500 dark:text-gray-400">
-															{namingPreviews[track.track_number ?? '']?.rendered_title || track.filename || track.basename || '--'}
-														</span>
+														{#if editingFilenameTrackId === track.track_id}
+															<div class="flex items-center gap-1">
+																<input
+																	type="text"
+																	bind:value={editingFilenameValue}
+																	onkeydown={(e) => { if (e.key === 'Enter') { handleTrackFieldUpdate(track.track_id, 'custom_filename', editingFilenameValue); editingFilenameTrackId = null; } if (e.key === 'Escape') editingFilenameTrackId = null; }}
+																	class="w-full min-w-[120px] rounded-sm border border-amber-400 bg-transparent px-1 py-0.5 font-mono text-xs text-amber-600 focus:outline-hidden focus:ring-1 focus:ring-amber-400 dark:border-amber-600 dark:text-amber-400"
+																/>
+																<button
+																	onclick={() => { handleTrackFieldUpdate(track.track_id, 'custom_filename', editingFilenameValue); editingFilenameTrackId = null; }}
+																	disabled={savingTrackField === `${track.track_id}-custom_filename`}
+																	class="rounded bg-green-600 px-1.5 py-0.5 text-[10px] text-white hover:bg-green-700"
+																>Save</button>
+																<button
+																	onclick={() => { editingFilenameTrackId = null; }}
+																	class="rounded border border-gray-400 px-1 py-0.5 text-[10px] text-gray-400 hover:bg-gray-800"
+																>×</button>
+															</div>
+														{:else}
+															{@const customFn = track.custom_filename}
+															{@const renderedFn = namingPreviews[track.track_number ?? '']?.rendered_title || track.filename || track.basename || '--'}
+															<button
+																onclick={() => { editingFilenameTrackId = track.track_id; editingFilenameValue = customFn || renderedFn; }}
+																class="w-full text-left font-mono text-xs {customFn ? 'text-amber-500 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'} hover:underline"
+															>
+																{customFn || renderedFn}
+															</button>
+															{#if customFn}
+																<div class="flex items-center gap-1">
+																	<span class="text-[9px] text-gray-500">was: {renderedFn}</span>
+																	<button
+																		onclick={() => handleTrackFieldUpdate(track.track_id, 'custom_filename', '')}
+																		class="text-[9px] text-red-400 hover:text-red-300"
+																	>clear</button>
+																</div>
+															{/if}
+														{/if}
 													</td>
 												{/if}
 											</tr>

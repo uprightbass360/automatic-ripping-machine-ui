@@ -49,6 +49,8 @@ const defaults: Job = {
 	episode_manual: null,
 	transcode_overrides: null,
 	multi_title: null,
+	title_pattern_override: null,
+	folder_pattern_override: null,
 	disc_number: null,
 	disc_total: null,
 	ejected: null,

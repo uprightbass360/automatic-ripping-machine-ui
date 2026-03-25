@@ -264,6 +264,7 @@ export interface TrackFieldUpdate {
 	ripped?: boolean;
 	episode_number?: string;
 	episode_name?: string;
+	custom_filename?: string | null;
 }
 
 export function updateTrack(
@@ -302,6 +303,46 @@ export interface NamingPreviewResponse {
 
 export function fetchNamingPreview(jobId: number): Promise<NamingPreviewResponse> {
 	return apiFetch<NamingPreviewResponse>(`/api/jobs/${jobId}/naming-preview`);
+}
+
+export interface NamingOverrideUpdate {
+	title_pattern_override?: string | null;
+	folder_pattern_override?: string | null;
+}
+
+export interface NamingOverrideResponse {
+	success: boolean;
+	title_pattern_override: string | null;
+	folder_pattern_override: string | null;
+}
+
+export function updateJobNaming(jobId: number, data: NamingOverrideUpdate): Promise<NamingOverrideResponse> {
+	return apiFetch(`/api/jobs/${jobId}/naming`, {
+		method: 'PATCH',
+		body: JSON.stringify(data)
+	});
+}
+
+export interface PatternValidation {
+	valid: boolean;
+	invalid_vars: string[];
+	suggestions: Record<string, string>;
+}
+
+export function validatePattern(pattern: string): Promise<PatternValidation> {
+	return apiFetch('/api/naming/validate', {
+		method: 'POST',
+		body: JSON.stringify({ pattern })
+	});
+}
+
+export interface NamingVariablesResponse {
+	variables: string[];
+	descriptions: Record<string, string>;
+}
+
+export function fetchNamingVariables(): Promise<NamingVariablesResponse> {
+	return apiFetch<NamingVariablesResponse>('/api/naming/variables');
 }
 
 export interface JobStats {
