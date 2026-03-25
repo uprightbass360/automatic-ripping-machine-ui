@@ -18,6 +18,24 @@
 
 	const activeHw = $derived(activePanel === 'ripper' ? (armOnline ? systemInfo : null) : (transcoderOnline ? transcoderInfo : null));
 	const activeStats = $derived(activePanel === 'ripper' ? (armOnline ? systemStats : null) : (transcoderOnline ? transcoderStats : null));
+
+	// Map storage display names to file root keys for deep linking
+	const storageNameToRoot: Record<string, string> = {
+		'Raw': 'raw', 'Transcode': 'transcode', 'Work': 'transcode', 'Completed': 'completed',
+	};
+	const rootPaths = $derived(
+		(systemStats?.storage ?? []).reduce<Record<string, string>>((acc, sp) => {
+			const key = storageNameToRoot[sp.name];
+			if (key) acc[key] = sp.path.replace(/\/+$/, '');
+			return acc;
+		}, {})
+	);
+	function filesLink(sp: { name: string; path: string }): string | null {
+		if (activePanel !== 'ripper') return null;
+		const key = storageNameToRoot[sp.name];
+		const path = key ? rootPaths[key] : null;
+		return path ? `/files?path=${encodeURIComponent(path)}` : null;
+	}
 </script>
 
 <div data-stats class="border-t border-primary/20 px-3 py-3 dark:border-primary/20">
@@ -91,17 +109,32 @@
 				<div class="mt-3 space-y-2">
 					<p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Storage</p>
 					{#each activeStats.storage as sp}
-						<div>
-							<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
-								<span>{sp.name}</span>
-								<span>{sp.free_gb} GB free</span>
+						{@const link = filesLink(sp)}
+						{#if link}
+							<a href={link} class="block rounded-sm transition-colors hover:bg-primary/5 dark:hover:bg-primary/10 -mx-1 px-1">
+								<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+									<span>{sp.name}</span>
+									<span>{sp.free_gb} GB free</span>
+								</div>
+								<ProgressBar
+									value={sp.percent}
+									color={sp.percent >= 90 ? 'bg-red-500' : sp.percent >= 70 ? 'bg-yellow-500' : 'bg-emerald-500'}
+									showLabel={false}
+								/>
+							</a>
+						{:else}
+							<div>
+								<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+									<span>{sp.name}</span>
+									<span>{sp.free_gb} GB free</span>
+								</div>
+								<ProgressBar
+									value={sp.percent}
+									color={sp.percent >= 90 ? 'bg-red-500' : sp.percent >= 70 ? 'bg-yellow-500' : 'bg-emerald-500'}
+									showLabel={false}
+								/>
 							</div>
-							<ProgressBar
-								value={sp.percent}
-								color={sp.percent >= 90 ? 'bg-red-500' : sp.percent >= 70 ? 'bg-yellow-500' : 'bg-emerald-500'}
-								showLabel={false}
-							/>
-						</div>
+						{/if}
 					{/each}
 				</div>
 			{/if}
