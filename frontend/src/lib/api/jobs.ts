@@ -221,6 +221,7 @@ export interface TvdbMatchResponse {
 export interface TvdbEpisode {
 	number: number;
 	name: string;
+	/** Runtime in minutes (API returns seconds, caller must convert) */
 	runtime: number;
 	aired: string;
 }
