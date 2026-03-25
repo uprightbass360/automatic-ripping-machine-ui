@@ -353,6 +353,42 @@ async def naming_preview_for_job(job_id: int):
     return result
 
 
+@router.patch("/jobs/{job_id}/naming", responses={400: {"description": "Invalid pattern"}, 404: {"description": _JOB_NOT_FOUND}, 502: {}, 503: {}})
+async def update_job_naming(job_id: int, request: Request):
+    """Update per-job naming pattern overrides (proxied to ARM)."""
+    body = await request.json()
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+    result = await arm_client.update_job_naming(job_id, body)
+    if result is None:
+        raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+    if isinstance(result, dict) and result.get("success") is False:
+        detail = result.get("error") or "Action failed"
+        status = 400 if result.get("invalid_vars") else (404 if "not found" in detail.lower() else 502)
+        raise HTTPException(status_code=status, detail=detail)
+    return result
+
+
+@router.post("/naming/validate")
+async def validate_naming_pattern(request: Request):
+    """Validate a naming pattern against known variables (proxied to ARM)."""
+    body = await request.json()
+    pattern = body.get("pattern", "")
+    result = await arm_client.validate_naming_pattern(pattern)
+    if result is None:
+        raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+    return result
+
+
+@router.get("/naming/variables")
+async def get_naming_variables():
+    """Get the list of valid naming pattern variables (proxied to ARM)."""
+    result = await arm_client.get_naming_variables()
+    if result is None:
+        raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+    return result
+
+
 @router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}, 502: {}, 503: {}})
 async def update_transcode_config(job_id: int, request: Request):
     """Set per-job transcode override settings (proxied to ARM)."""

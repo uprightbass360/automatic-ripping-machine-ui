@@ -175,3 +175,64 @@ async def test_naming_preview_arm_unreachable(app_client):
     with patch("backend.routers.jobs.arm_client.naming_preview_for_job", new_callable=AsyncMock, return_value=None):
         resp = await app_client.get("/api/jobs/1/naming-preview")
     assert resp.status_code == 502
+
+
+# --- Per-job naming overrides ---
+
+
+async def test_update_job_naming_success(app_client):
+    """PATCH /api/jobs/{id}/naming saves pattern overrides."""
+    result = {"success": True, "title_pattern_override": "{title} - E{episode}", "folder_pattern_override": None}
+    with patch("backend.routers.jobs.arm_client.update_job_naming", new_callable=AsyncMock, return_value=result):
+        resp = await app_client.patch("/api/jobs/1/naming", json={"title_pattern_override": "{title} - E{episode}"})
+    assert resp.status_code == 200
+    assert resp.json()["title_pattern_override"] == "{title} - E{episode}"
+
+
+async def test_update_job_naming_invalid_pattern(app_client):
+    """PATCH /api/jobs/{id}/naming returns 400 for invalid patterns."""
+    result = {"success": False, "error": "Invalid variables in pattern: ['episde']", "invalid_vars": ["episde"], "suggestions": {"episde": "episode"}}
+    with patch("backend.routers.jobs.arm_client.update_job_naming", new_callable=AsyncMock, return_value=result):
+        resp = await app_client.patch("/api/jobs/1/naming", json={"title_pattern_override": "{title} S{episde}"})
+    assert resp.status_code == 400
+
+
+async def test_update_job_naming_arm_unreachable(app_client):
+    """PATCH /api/jobs/{id}/naming returns 503 when ARM is down."""
+    with patch("backend.routers.jobs.arm_client.update_job_naming", new_callable=AsyncMock, return_value=None):
+        resp = await app_client.patch("/api/jobs/1/naming", json={"title_pattern_override": "{title}"})
+    assert resp.status_code == 503
+
+
+async def test_validate_naming_pattern(app_client):
+    """POST /api/naming/validate returns validation result."""
+    result = {"valid": False, "invalid_vars": ["episde"], "suggestions": {"episde": "episode"}}
+    with patch("backend.routers.jobs.arm_client.validate_naming_pattern", new_callable=AsyncMock, return_value=result):
+        resp = await app_client.post("/api/naming/validate", json={"pattern": "{title} {episde}"})
+    assert resp.status_code == 200
+    assert resp.json()["valid"] is False
+    assert "episde" in resp.json()["invalid_vars"]
+
+
+async def test_validate_naming_arm_unreachable(app_client):
+    """POST /api/naming/validate returns 503 when ARM is down."""
+    with patch("backend.routers.jobs.arm_client.validate_naming_pattern", new_callable=AsyncMock, return_value=None):
+        resp = await app_client.post("/api/naming/validate", json={"pattern": "{title}"})
+    assert resp.status_code == 503
+
+
+async def test_get_naming_variables(app_client):
+    """GET /api/naming/variables returns variable list."""
+    result = {"variables": ["album", "artist", "episode", "label", "season", "title", "video_type", "year"], "descriptions": {}}
+    with patch("backend.routers.jobs.arm_client.get_naming_variables", new_callable=AsyncMock, return_value=result):
+        resp = await app_client.get("/api/naming/variables")
+    assert resp.status_code == 200
+    assert "title" in resp.json()["variables"]
+    assert len(resp.json()["variables"]) == 8
+
+
+async def test_get_naming_variables_arm_unreachable(app_client):
+    """GET /api/naming/variables returns 503 when ARM is down."""
+    with patch("backend.routers.jobs.arm_client.get_naming_variables", new_callable=AsyncMock, return_value=None):
+        resp = await app_client.get("/api/naming/variables")
+    assert resp.status_code == 503
