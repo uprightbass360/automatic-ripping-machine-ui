@@ -306,7 +306,7 @@
 			<div class="h-2 w-2 animate-pulse rounded-full bg-white/80"></div>
 			<span class="text-sm font-semibold text-on-primary">Waiting for Review</span>
 		</div>
-		{#if job.wait_start_time || job.start_time}
+		{#if job.source_type !== 'folder' && (job.wait_start_time || job.start_time)}
 			<CountdownTimer
 			startTime={job.wait_start_time ?? job.start_time ?? ''}
 			waitSeconds={waitTime}
