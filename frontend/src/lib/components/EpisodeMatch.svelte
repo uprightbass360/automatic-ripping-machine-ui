@@ -116,19 +116,28 @@
 				assignments[m.track_number] = m.episode_number;
 			}
 
-			// Fetch all episodes for dropdowns (may fail if tvdb_id not yet persisted)
+			// Fetch ALL season episodes for dropdowns (not just matched ones)
 			if (result.season) {
 				try {
 					const epResult = await fetchTvdbEpisodes(job.job_id, result.season);
 					episodes = epResult.episodes;
 				} catch {
-					// tvdb-episodes requires tvdb_id on job — build dropdown from match results instead
-					episodes = result.matches.map((m) => ({
-						number: m.episode_number,
-						name: m.episode_name,
-						runtime: m.episode_runtime ? Math.round(m.episode_runtime / 60) : 0,
-						aired: '',
-					}));
+					// tvdb-episodes requires tvdb_id on job — build dropdown from match results as fallback
+					// Deduplicate by episode number in case multiple tracks matched same episode
+					const seen = new Set<number>();
+					const fallback: TvdbEpisode[] = [];
+					for (const m of result.matches) {
+						if (!seen.has(m.episode_number)) {
+							seen.add(m.episode_number);
+							fallback.push({
+								number: m.episode_number,
+								name: m.episode_name,
+								runtime: m.episode_runtime ? Math.round(m.episode_runtime / 60) : 0,
+								aired: '',
+							});
+						}
+					}
+					episodes = fallback;
 				}
 			}
 			} catch (e) {
@@ -221,7 +230,7 @@
 				type="number"
 				bind:value={seasonInput}
 				min="1"
-				class="w-12 rounded border border-primary/20 bg-surface px-2 py-1 text-center text-sm text-gray-900 dark:border-primary/20 dark:bg-surface-dark dark:text-white"
+				class="w-12 rounded border border-primary/20 bg-surface px-1.5 py-0.5 text-center text-xs text-gray-900 dark:border-primary/20 dark:bg-surface-dark dark:text-white"
 			/>
 		</div>
 		<div class="flex items-center gap-1.5">
@@ -230,14 +239,14 @@
 				type="number"
 				bind:value={discInput}
 				min="1"
-				class="w-12 rounded border border-primary/20 bg-surface px-2 py-1 text-center text-sm text-gray-900 dark:border-primary/20 dark:bg-surface-dark dark:text-white"
+				class="w-12 rounded border border-primary/20 bg-surface px-1.5 py-0.5 text-center text-xs text-gray-900 dark:border-primary/20 dark:bg-surface-dark dark:text-white"
 			/>
 			<span class="text-xs text-gray-400">of</span>
 			<input
 				type="number"
 				bind:value={discTotalInput}
 				min="1"
-				class="w-12 rounded border border-primary/20 bg-surface px-2 py-1 text-center text-sm text-gray-900 dark:border-primary/20 dark:bg-surface-dark dark:text-white"
+				class="w-12 rounded border border-primary/20 bg-surface px-1.5 py-0.5 text-center text-xs text-gray-900 dark:border-primary/20 dark:bg-surface-dark dark:text-white"
 			/>
 		</div>
 		<div class="flex items-center gap-1.5">
@@ -247,7 +256,7 @@
 				bind:value={toleranceInput}
 				min="60"
 				step="60"
-				class="w-16 rounded border border-primary/20 bg-surface px-2 py-1 text-center text-sm text-gray-900 dark:border-primary/20 dark:bg-surface-dark dark:text-white"
+				class="w-16 rounded border border-primary/20 bg-surface px-1.5 py-0.5 text-center text-xs text-gray-900 dark:border-primary/20 dark:bg-surface-dark dark:text-white"
 			/>
 			<span class="text-[10px] text-gray-400">sec</span>
 		</div>
@@ -306,7 +315,7 @@
 							<td class="px-2 py-2 text-gray-300 dark:text-gray-300">{formatDuration(track.length)}</td>
 							<td class="px-2 py-2">
 								<select
-									class="w-full max-w-xs rounded border border-primary/20 bg-surface px-2 py-1 text-sm dark:border-primary/20 dark:bg-surface-dark {assignments[tn] != null ? 'text-green-400' : 'text-gray-400'}"
+									class="w-full max-w-xs rounded border border-primary/20 bg-surface px-1.5 py-0.5 text-xs dark:border-primary/20 dark:bg-surface-dark {assignments[tn] != null ? 'text-green-400' : 'text-gray-400'}"
 									value={assignments[tn] ?? ''}
 									onchange={(e) => {
 										const val = (e.target as HTMLSelectElement).value;

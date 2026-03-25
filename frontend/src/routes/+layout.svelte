@@ -201,7 +201,7 @@
 				<div class="relative">
 					<button
 						onclick={() => quickMenuOpen = !quickMenuOpen}
-						class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-400 dark:hover:bg-primary/15"
+						class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-300 dark:hover:bg-primary/15"
 						title="Quick actions"
 					>
 						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,7 +263,7 @@
 				{#if !$schemeLocksMode}
 					<button
 						onclick={toggleTheme}
-						class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-400 dark:hover:bg-primary/15"
+						class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-300 dark:hover:bg-primary/15"
 					>
 						{#if $theme === 'dark'}
 							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
