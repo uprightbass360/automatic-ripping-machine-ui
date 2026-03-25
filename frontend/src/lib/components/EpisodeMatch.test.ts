@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, cleanup } from '$lib/test-utils';
 import EpisodeMatch from './EpisodeMatch.svelte';
-import type { JobDetail } from '$lib/types/arm';
+import type { JobDetail, Track } from '$lib/types/arm';
 
 vi.mock('$lib/api/jobs', () => ({
 	tvdbMatch: vi.fn(() => Promise.resolve({
@@ -14,7 +14,8 @@ vi.mock('$lib/api/jobs', () => ({
 		alternatives: []
 	})),
 	fetchTvdbEpisodes: vi.fn(() => Promise.resolve({ episodes: [], tvdb_id: 12345, season: 1 })),
-	updateTrack: vi.fn(() => Promise.resolve({ success: true, updated: {} }))
+	updateTrack: vi.fn(() => Promise.resolve({ success: true, updated: {} })),
+	fetchNamingPreview: vi.fn(() => Promise.resolve({ success: true, tracks: [] }))
 }));
 
 function createJobDetail(overrides: Partial<JobDetail> = {}): JobDetail {
@@ -78,6 +79,18 @@ function createJobDetail(overrides: Partial<JobDetail> = {}): JobDetail {
 		tvdb_id: null,
 		tracks: [],
 		config: null,
+		...overrides
+	};
+}
+
+function createTrack(overrides: Partial<Track> = {}): Track {
+	return {
+		track_id: 1, job_id: 1, track_number: '0', length: 2750,
+		filename: 't00.mkv', orig_filename: null, new_filename: null,
+		status: null, error: null, source: null, enabled: true,
+		aspect_ratio: '16:9', fps: 23.976, ripped: false, basename: null,
+		title: null, year: null, imdb_id: null, video_type: null,
+		poster_url: null, episode_number: null, episode_name: null,
 		...overrides
 	};
 }
@@ -159,6 +172,127 @@ describe('EpisodeMatch', () => {
 			});
 			const inputs = container.querySelectorAll('input[type="number"]');
 			expect((inputs[3] as HTMLInputElement).value).toBe('600');
+		});
+	});
+
+	describe('runtime conversion', () => {
+		it('converts episode runtime from seconds to minutes in dropdowns', async () => {
+			const { tvdbMatch, fetchTvdbEpisodes } = await import('$lib/api/jobs');
+			vi.mocked(tvdbMatch).mockResolvedValueOnce({
+				success: true,
+				matcher: 'runtime',
+				season: 1,
+				matches: [
+					{ track_number: '0', episode_number: 1, episode_name: 'Pilot', episode_runtime: 2700 }
+				],
+				match_count: 1,
+				score: 100,
+				alternatives: []
+			});
+			// API returns runtime in seconds (2700 = 45 minutes)
+			vi.mocked(fetchTvdbEpisodes).mockResolvedValueOnce({
+				episodes: [
+					{ number: 1, name: 'Pilot', runtime: 2700, aired: '2024-01-01' },
+					{ number: 2, name: 'Episode 2', runtime: 3060, aired: '2024-01-08' }
+				],
+				tvdb_id: 12345,
+				season: 1
+			});
+
+			const { container } = renderComponent(EpisodeMatch, {
+				props: { job: createJobDetail({ imdb_id: 'tt1234567', tracks: [createTrack()] }) }
+			});
+
+			// Wait for auto-match to complete
+			await vi.waitFor(() => {
+				const selects = container.querySelectorAll('select');
+				expect(selects.length).toBeGreaterThan(0);
+			});
+
+			// Check dropdown options show minutes not seconds
+			const select = container.querySelector('select')!;
+			const options = Array.from(select.options);
+			const pilotOption = options.find(o => o.textContent?.includes('Pilot'));
+			expect(pilotOption?.textContent).toContain('45m');
+			expect(pilotOption?.textContent).not.toContain('2700m');
+		});
+
+		it('shows all season episodes in dropdowns, not just matched', async () => {
+			const { tvdbMatch, fetchTvdbEpisodes } = await import('$lib/api/jobs');
+			vi.mocked(tvdbMatch).mockResolvedValueOnce({
+				success: true,
+				matcher: 'runtime',
+				season: 1,
+				matches: [
+					{ track_number: '0', episode_number: 3, episode_name: 'Episode 3', episode_runtime: 2700 }
+				],
+				match_count: 1,
+				score: 100,
+				alternatives: []
+			});
+			vi.mocked(fetchTvdbEpisodes).mockResolvedValueOnce({
+				episodes: [
+					{ number: 1, name: 'Episode 1', runtime: 2700, aired: '' },
+					{ number: 2, name: 'Episode 2', runtime: 2700, aired: '' },
+					{ number: 3, name: 'Episode 3', runtime: 2700, aired: '' },
+					{ number: 4, name: 'Episode 4', runtime: 2700, aired: '' },
+					{ number: 5, name: 'Episode 5', runtime: 2700, aired: '' }
+				],
+				tvdb_id: 12345,
+				season: 1
+			});
+
+			const { container } = renderComponent(EpisodeMatch, {
+				props: { job: createJobDetail({ imdb_id: 'tt1234567', tracks: [createTrack()] }) }
+			});
+
+			await vi.waitFor(() => {
+				const selects = container.querySelectorAll('select');
+				expect(selects.length).toBeGreaterThan(0);
+			});
+
+			// All 5 episodes should be in dropdown, not just matched episode 3
+			const select = container.querySelector('select')!;
+			const options = Array.from(select.options).filter(o => o.value !== '');
+			expect(options).toHaveLength(5);
+			expect(options[0].textContent).toContain('E1');
+			expect(options[4].textContent).toContain('E5');
+		});
+
+		it('deduplicates fallback episodes when fetchTvdbEpisodes fails', async () => {
+			const { tvdbMatch, fetchTvdbEpisodes } = await import('$lib/api/jobs');
+			vi.mocked(tvdbMatch).mockResolvedValueOnce({
+				success: true,
+				matcher: 'runtime',
+				season: 1,
+				matches: [
+					{ track_number: '0', episode_number: 1, episode_name: 'Pilot', episode_runtime: 2700 },
+					{ track_number: '1', episode_number: 2, episode_name: 'Ep 2', episode_runtime: 2700 }
+				],
+				match_count: 2,
+				score: 100,
+				alternatives: []
+			});
+			vi.mocked(fetchTvdbEpisodes).mockRejectedValueOnce(new Error('No TVDB ID'));
+
+			const tracks = [
+				createTrack(),
+				createTrack({ track_id: 2, track_number: '1', filename: 't01.mkv' })
+			];
+
+			const { container } = renderComponent(EpisodeMatch, {
+				props: { job: createJobDetail({ imdb_id: 'tt1234567', tracks }) }
+			});
+
+			await vi.waitFor(() => {
+				const selects = container.querySelectorAll('select');
+				expect(selects.length).toBeGreaterThan(0);
+			});
+
+			// Should have 2 fallback episodes from match results
+			const select = container.querySelector('select')!;
+			const options = Array.from(select.options).filter(o => o.value !== '');
+			expect(options).toHaveLength(2);
 		});
 	});
 });
