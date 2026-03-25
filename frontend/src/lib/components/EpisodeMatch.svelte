@@ -295,7 +295,7 @@
 									}}
 								>
 									<option value="">— None —</option>
-									{#each episodes as episode}
+									{#each [...episodes].sort((a, b) => a.number - b.number) as episode}
 										<option value={episode.number}>
 											E{episode.number} — {episode.name} ({episode.runtime}m)
 										</option>
