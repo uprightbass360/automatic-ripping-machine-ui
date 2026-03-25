@@ -335,3 +335,44 @@ async def test_clear_image_cache(app_client):
         resp = await app_client.post("/api/maintenance/clear-image-cache")
     assert resp.status_code == 200
     assert resp.json()["cleared"] == 5
+
+
+# --- Clear raw directory ---
+
+
+async def test_clear_raw_success(app_client):
+    """POST /api/maintenance/clear-raw proxies to ARM and returns result."""
+    with patch(
+        "backend.routers.maintenance.arm_client.clear_raw",
+        new_callable=AsyncMock,
+        return_value={"success": True, "cleared": 3, "freed_bytes": 5000000, "errors": [], "path": "/home/arm/media/raw"},
+    ):
+        resp = await app_client.post("/api/maintenance/clear-raw")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["cleared"] == 3
+    assert data["freed_bytes"] == 5000000
+    assert data["path"] == "/home/arm/media/raw"
+
+
+async def test_clear_raw_arm_unreachable(app_client):
+    """POST /api/maintenance/clear-raw returns 503 when ARM is unreachable."""
+    with patch(
+        "backend.routers.maintenance.arm_client.clear_raw",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.post("/api/maintenance/clear-raw")
+    assert resp.status_code == 503
+
+
+async def test_clear_raw_arm_error(app_client):
+    """POST /api/maintenance/clear-raw returns 502 when ARM returns error."""
+    with patch(
+        "backend.routers.maintenance.arm_client.clear_raw",
+        new_callable=AsyncMock,
+        return_value={"success": False, "error": "RAW_PATH not configured"},
+    ):
+        resp = await app_client.post("/api/maintenance/clear-raw")
+    assert resp.status_code == 502
