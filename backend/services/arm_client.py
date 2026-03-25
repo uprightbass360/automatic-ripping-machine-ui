@@ -417,6 +417,21 @@ async def clear_raw() -> dict[str, Any] | None:
     return await _request("POST", "/api/v1/maintenance/clear-raw")
 
 
+async def update_job_naming(job_id: int, overrides: dict) -> dict[str, Any] | None:
+    """Update per-job naming pattern overrides via ARM."""
+    return await _request("PATCH", f"/api/v1/jobs/{job_id}/naming", json=overrides)
+
+
+async def validate_naming_pattern(pattern: str) -> dict[str, Any] | None:
+    """Validate a naming pattern against known variables."""
+    return await _request("POST", "/api/v1/naming/validate", json={"pattern": pattern})
+
+
+async def get_naming_variables() -> dict[str, Any] | None:
+    """Get the list of valid naming pattern variables."""
+    return await _request("GET", "/api/v1/naming/variables")
+
+
 # --- Architecture debt fix: proxy these through ARM ---
 
 
