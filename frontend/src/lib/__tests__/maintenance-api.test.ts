@@ -9,7 +9,8 @@ import {
 	bulkDeleteFolders,
 	dismissAllNotifications,
 	purgeNotifications,
-	cleanupTranscoder
+	cleanupTranscoder,
+	clearRaw
 } from '$lib/api/maintenance';
 
 const mockFetch = vi.fn();
@@ -119,5 +120,17 @@ describe('maintenance API', () => {
 		mockFetch.mockResolvedValueOnce(ok({ success: true, deleted: 3, errors: [] }));
 		const result = await cleanupTranscoder();
 		expect(result.deleted).toBe(3);
+	});
+
+	it('clearRaw calls POST and returns cleared count', async () => {
+		mockFetch.mockResolvedValueOnce(ok({ success: true, cleared: 5, freed_bytes: 1048576, errors: [], path: '/home/arm/media/raw' }));
+		const result = await clearRaw();
+		expect(mockFetch).toHaveBeenCalledWith(
+			'/api/maintenance/clear-raw',
+			expect.objectContaining({ method: 'POST' })
+		);
+		expect(result.cleared).toBe(5);
+		expect(result.freed_bytes).toBe(1048576);
+		expect(result.path).toBe('/home/arm/media/raw');
 	});
 });
