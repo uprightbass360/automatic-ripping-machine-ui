@@ -153,12 +153,12 @@ describe('EpisodeMatch', () => {
 			expect((inputs[2] as HTMLInputElement).value).toBe('6');
 		});
 
-		it('tolerance defaults to 300', () => {
+		it('tolerance defaults to 600', () => {
 			const { container } = renderComponent(EpisodeMatch, {
 				props: { job: createJobDetail() }
 			});
 			const inputs = container.querySelectorAll('input[type="number"]');
-			expect((inputs[3] as HTMLInputElement).value).toBe('300');
+			expect((inputs[3] as HTMLInputElement).value).toBe('600');
 		});
 	});
 });
