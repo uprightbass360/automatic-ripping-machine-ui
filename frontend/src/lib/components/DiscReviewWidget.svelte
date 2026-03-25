@@ -296,7 +296,7 @@
 	});
 
 	const btnBase =
-		'rounded-md px-2 py-1 text-xs font-medium transition-colors';
+		'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors';
 </script>
 
 <div class="overflow-hidden rounded-lg border-2 border-primary bg-surface shadow-md dark:border-primary dark:bg-surface-dark">
