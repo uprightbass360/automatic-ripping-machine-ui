@@ -415,6 +415,16 @@
 				Search
 			</button>
 		{/if}
+		{#if isVideo && (job.video_type === 'series' || job.imdb_id)}
+			<button
+				onclick={() => toggleSection('tvdb')}
+				class="{btnBase} {showTvdb
+					? 'bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-300'
+					: 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}"
+			>
+				Episodes
+			</button>
+		{/if}
 		{#if isMusic}
 			<button
 				onclick={() => toggleSection('music')}
@@ -451,16 +461,6 @@
 					: 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
 			>
 				Transcode
-			</button>
-		{/if}
-		{#if isVideo && (job.video_type === 'series' || job.imdb_id)}
-			<button
-				onclick={() => toggleSection('tvdb')}
-				class="{btnBase} {showTvdb
-					? 'bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-300'
-					: 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}"
-			>
-				Episodes
 			</button>
 		{/if}
 		<button
