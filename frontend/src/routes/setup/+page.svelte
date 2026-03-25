@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { fetchSetupStatus } from '$lib/api/setup';
 	import type { SetupStatus } from '$lib/types/setup';
 	import SetupWizard from '$lib/components/setup/SetupWizard.svelte';
@@ -10,6 +11,11 @@
 	onMount(async () => {
 		try {
 			status = await fetchSetupStatus();
+			// If setup is already complete, redirect to dashboard
+			if (status && status.db_initialized && status.db_current && !status.first_run) {
+				goto('/');
+				return;
+			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load setup status';
 		}

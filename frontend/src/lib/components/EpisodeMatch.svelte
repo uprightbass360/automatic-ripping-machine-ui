@@ -110,6 +110,7 @@
 						number: m.episode_number,
 						name: m.episode_name,
 						runtime: m.episode_runtime ? Math.round(m.episode_runtime / 60) : 0,
+						aired: '',
 					}));
 				}
 			}

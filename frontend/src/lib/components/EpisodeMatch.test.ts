@@ -89,11 +89,11 @@ describe('EpisodeMatch', () => {
 	});
 
 	describe('empty states', () => {
-		it('renders "No TVDB ID" message when tvdb_id is null and no tracks', () => {
+		it('renders "No IMDB or TVDB ID" message when both are null', () => {
 			renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ tvdb_id: null, tracks: [] }) }
+				props: { job: createJobDetail({ tvdb_id: null, imdb_id: null, tracks: [] }) }
 			});
-			expect(screen.getByText(/No TVDB ID set/)).toBeInTheDocument();
+			expect(screen.getByText(/No IMDB or TVDB ID set/)).toBeInTheDocument();
 		});
 
 		it('renders "No tracks found" when tvdb_id set but empty tracks', () => {

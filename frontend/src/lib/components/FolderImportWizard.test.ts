@@ -110,9 +110,9 @@ describe('FolderImportWizard', () => {
 		it('handles undefined season/disc fields from scan result', () => {
 			// FolderScanResult has these as optional fields
 			const scanResult = createScanResult();
-			delete (scanResult as Record<string, unknown>).season;
-			delete (scanResult as Record<string, unknown>).disc_number;
-			delete (scanResult as Record<string, unknown>).disc_total;
+			delete (scanResult as unknown as Record<string, unknown>).season;
+			delete (scanResult as unknown as Record<string, unknown>).disc_number;
+			delete (scanResult as unknown as Record<string, unknown>).disc_total;
 
 			const editSeason = scanResult.season?.toString() || '';
 			const editDiscNumber = scanResult.disc_number?.toString() || '';
