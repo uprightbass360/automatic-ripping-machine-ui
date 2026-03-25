@@ -4,7 +4,10 @@ import RipSettings from './RipSettings.svelte';
 import { createJob } from './__fixtures__/job';
 
 vi.mock('$lib/api/jobs', () => ({
-	updateJobConfig: vi.fn(() => Promise.resolve())
+	updateJobConfig: vi.fn(() => Promise.resolve()),
+	updateJobNaming: vi.fn(() => Promise.resolve({ success: true, title_pattern_override: null, folder_pattern_override: null })),
+	fetchNamingVariables: vi.fn(() => Promise.resolve({ variables: ['title', 'year', 'season', 'episode', 'label', 'video_type', 'artist', 'album'], descriptions: {} })),
+	fetchNamingPreview: vi.fn(() => Promise.resolve({ success: true, tracks: [{ track_number: '0', rendered_title: 'Preview', rendered_folder: 'Folder' }] }))
 }));
 
 const defaultConfig: Record<string, string | null> = {
@@ -127,6 +130,51 @@ describe('RipSettings', () => {
 			await waitFor(() => {
 				expect(onsaved).toHaveBeenCalledOnce();
 			});
+		});
+	});
+
+	describe('naming overrides', () => {
+		it('shows Override toggle button', () => {
+			renderComponent(RipSettings, {
+				props: { job: createJob({ video_type: 'series' }), config: defaultConfig }
+			});
+			expect(screen.getByText('Override')).toBeInTheDocument();
+		});
+
+		it('shows editable inputs when job has pattern override', async () => {
+			renderComponent(RipSettings, {
+				props: {
+					job: createJob({ video_type: 'series', title_pattern_override: '{title} - E{episode}' }),
+					config: defaultConfig
+				}
+			});
+			// Override is auto-enabled when job has an override
+			await waitFor(() => {
+				expect(screen.getByText('Save Pattern')).toBeInTheDocument();
+			});
+		});
+
+		it('shows variable badges when override is enabled', async () => {
+			renderComponent(RipSettings, {
+				props: {
+					job: createJob({ video_type: 'series', title_pattern_override: '{title}' }),
+					config: defaultConfig
+				}
+			});
+			// Wait for fetchNamingVariables to resolve
+			await waitFor(() => {
+				expect(screen.getByText('{title}')).toBeInTheDocument();
+				expect(screen.getByText('{episode}')).toBeInTheDocument();
+				expect(screen.getByText('{season}')).toBeInTheDocument();
+			});
+		});
+
+		it('shows read-only pattern when override is disabled', () => {
+			renderComponent(RipSettings, {
+				props: { job: createJob({ video_type: 'series' }), config: defaultConfig }
+			});
+			// Should show the global pattern as read-only text
+			expect(screen.getByText('{title} S{season}E{episode}')).toBeInTheDocument();
 		});
 	});
 });
