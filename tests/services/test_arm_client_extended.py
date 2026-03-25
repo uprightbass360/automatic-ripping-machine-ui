@@ -160,3 +160,50 @@ async def test_naming_preview_success():
         "POST", "/api/v1/naming/preview",
         json={"pattern": "{title} ({year})", "variables": {"title": "Movie", "year": "2024"}},
     )
+
+
+# --- update_job_naming ---
+
+
+async def test_update_job_naming_success():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({
+        "success": True, "title_pattern_override": "{title} - E{episode}", "folder_pattern_override": None
+    })
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.update_job_naming(1, {"title_pattern_override": "{title} - E{episode}"})
+    assert result["success"] is True
+    assert result["title_pattern_override"] == "{title} - E{episode}"
+    mock_client.request.assert_awaited_once_with(
+        "PATCH", "/api/v1/jobs/1/naming",
+        json={"title_pattern_override": "{title} - E{episode}"},
+    )
+
+
+# --- validate_naming_pattern ---
+
+
+async def test_validate_naming_pattern_invalid():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({
+        "valid": False, "invalid_vars": ["episde"], "suggestions": {"episde": "episode"}
+    })
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.validate_naming_pattern("{title} {episde}")
+    assert result["valid"] is False
+    assert "episde" in result["invalid_vars"]
+
+
+# --- get_naming_variables ---
+
+
+async def test_get_naming_variables():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({
+        "variables": ["album", "artist", "episode", "label", "season", "title", "video_type", "year"],
+        "descriptions": {"title": "Disc title"}
+    })
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.get_naming_variables()
+    assert len(result["variables"]) == 8
+    assert "title" in result["variables"]
