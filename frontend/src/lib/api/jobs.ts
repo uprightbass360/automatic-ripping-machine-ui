@@ -276,6 +276,16 @@ export function updateTrack(
 	});
 }
 
+export function namingPreview(
+	pattern: string,
+	variables: Record<string, string>
+): Promise<{ success: boolean; rendered: string }> {
+	return apiFetch('/api/naming/preview', {
+		method: 'POST',
+		body: JSON.stringify({ pattern, variables })
+	});
+}
+
 export interface JobStats {
 	total: number;
 	active: number;
