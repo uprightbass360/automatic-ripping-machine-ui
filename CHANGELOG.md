@@ -1,6 +1,6 @@
 # Changelog
 
-## [13.9.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.8.0...v13.9.0) (2026-03-25)
+## [14.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.8.0...v14.0.0) (2026-03-25)
 
 
 ### Features
