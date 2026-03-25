@@ -10,11 +10,27 @@
 
 	let { job, onapply }: Props = $props();
 
-	// Controls
-	let seasonInput = $state(job.season || job.season_auto || '');
-	let discInput = $state(job.disc_number?.toString() || '');
-	let discTotalInput = $state(job.disc_total?.toString() || '');
+	// Controls — initialized empty, synced from job props via $effect
+	let seasonInput = $state('');
+	let discInput = $state('');
+	let discTotalInput = $state('');
 	let toleranceInput = $state('600');
+	let controlsSynced = $state(false);
+
+	// Sync controls from job props when they become available
+	$effect(() => {
+		if (!controlsSynced) {
+			const s = job.season || job.season_auto || '';
+			const d = job.disc_number?.toString() || '';
+			const dt = job.disc_total?.toString() || '';
+			if (s || d || dt) {
+				seasonInput = s;
+				discInput = d;
+				discTotalInput = dt;
+				controlsSynced = true;
+			}
+		}
+	});
 
 	// State
 	let loading = $state(false);
