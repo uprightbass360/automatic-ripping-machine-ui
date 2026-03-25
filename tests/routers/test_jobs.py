@@ -138,3 +138,40 @@ async def test_get_job_progress_includes_no_of_titles(app_client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["no_of_titles"] == 12
+
+
+# --- GET /api/jobs/{job_id}/naming-preview ---
+
+
+async def test_naming_preview_success(app_client):
+    """GET /api/jobs/{id}/naming-preview returns rendered filenames."""
+    result = {
+        "success": True,
+        "job_title": "Show S01E01",
+        "job_folder": "Show/Season 01",
+        "tracks": [
+            {"track_number": "0", "rendered_title": "Pilot S01E01", "rendered_folder": "Show/Season 01"},
+        ],
+    }
+    with patch("backend.routers.jobs.arm_client.naming_preview_for_job", new_callable=AsyncMock, return_value=result):
+        resp = await app_client.get("/api/jobs/1/naming-preview")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert len(data["tracks"]) == 1
+    assert data["tracks"][0]["rendered_title"] == "Pilot S01E01"
+
+
+async def test_naming_preview_job_not_found(app_client):
+    """GET /api/jobs/{id}/naming-preview returns 404 for missing job."""
+    result = {"success": False, "error": "Job not found"}
+    with patch("backend.routers.jobs.arm_client.naming_preview_for_job", new_callable=AsyncMock, return_value=result):
+        resp = await app_client.get("/api/jobs/999/naming-preview")
+    assert resp.status_code == 404
+
+
+async def test_naming_preview_arm_unreachable(app_client):
+    """GET /api/jobs/{id}/naming-preview returns 502 when ARM is down."""
+    with patch("backend.routers.jobs.arm_client.naming_preview_for_job", new_callable=AsyncMock, return_value=None):
+        resp = await app_client.get("/api/jobs/1/naming-preview")
+    assert resp.status_code == 502
