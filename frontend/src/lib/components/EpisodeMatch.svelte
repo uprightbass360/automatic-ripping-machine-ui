@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { JobDetail, Track } from '$lib/types/arm';
 	import type { TvdbEpisode } from '$lib/api/jobs';
-	import { tvdbMatch, fetchTvdbEpisodes, updateTrack } from '$lib/api/jobs';
+	import { tvdbMatch, fetchTvdbEpisodes, updateTrack, namingPreview } from '$lib/api/jobs';
 
 	interface Props {
 		job: JobDetail;
@@ -39,6 +39,9 @@
 	let episodes = $state<TvdbEpisode[]>([]);
 	let matchedSeason = $state<number | null>(null);
 	let applying = $state(false);
+
+	// Filename previews: track_number -> rendered filename
+	let previews = $state<Record<string, string>>({});
 
 	// Editable assignments: track_number -> episode_number (null = unassigned)
 	let assignments = $state<Record<string, number | null>>({});
@@ -130,11 +133,40 @@
 					}));
 				}
 			}
+				// Render filename previews for matched tracks
+			await renderPreviews();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Match failed';
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function renderPreviews() {
+		const pattern = job.config?.TV_TITLE_PATTERN || '{title} S{season}E{episode}';
+		const newPreviews: Record<string, string> = {};
+
+		for (const [tn, epNum] of Object.entries(assignments)) {
+			if (epNum == null) continue;
+			const ep = episodes.find((e) => e.number === epNum);
+			const vars: Record<string, string> = {
+				title: ep?.name || job.title || '',
+				season: (seasonInput || '1').toString().padStart(2, '0'),
+				episode: epNum.toString().padStart(2, '0'),
+				year: job.year || '',
+				label: job.label || '',
+				video_type: job.video_type || 'series',
+			};
+			try {
+				const result = await namingPreview(pattern, vars);
+				if (result.success) {
+					newPreviews[tn] = result.rendered;
+				}
+			} catch {
+				// Preview failed — skip silently
+			}
+		}
+		previews = newPreviews;
 	}
 
 	async function applyMatches() {
@@ -271,6 +303,7 @@
 						<th class="px-2 py-1.5 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Track</th>
 						<th class="px-2 py-1.5 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Duration</th>
 						<th class="px-2 py-1.5 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Episode</th>
+						<th class="px-2 py-1.5 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Filename</th>
 						<th class="px-2 py-1.5 text-right text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">TVDB</th>
 						<th class="px-2 py-1.5 text-right text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Delta</th>
 					</tr>
@@ -302,6 +335,9 @@
 									{/each}
 								</select>
 							</td>
+							<td class="px-2 py-2 text-xs text-gray-400 dark:text-gray-500 font-mono">
+								{previews[tn] || '—'}
+							</td>
 							<td class="px-2 py-2 text-right text-gray-400">{ep ? `${ep.runtime}m` : '—'}</td>
 							<td class="px-2 py-2 text-right {deltaClass(track.length, ep?.runtime ?? null)}">
 								{deltaText(track.length, ep?.runtime ?? null)}
@@ -310,7 +346,7 @@
 					{/each}
 					{#if shortTracks.length > 0}
 						<tr class="opacity-40">
-							<td class="px-2 py-2 text-xs text-gray-500" colspan="5">
+							<td class="px-2 py-2 text-xs text-gray-500" colspan="6">
 								{shortTracks.length} short track{shortTracks.length > 1 ? 's' : ''} skipped (menus, intros)
 							</td>
 						</tr>
