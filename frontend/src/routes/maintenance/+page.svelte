@@ -13,6 +13,7 @@
 		cleanupTranscoder,
 		fetchImageCacheStats,
 		clearImageCache,
+		clearRaw,
 		type MaintenanceSummary,
 		type OrphanLogsResponse,
 		type OrphanFoldersResponse,
@@ -28,6 +29,7 @@
 	let notificationsOpen = $state(false);
 	let transcoderOpen = $state(false);
 	let imageCacheOpen = $state(false);
+	let rawCleanupOpen = $state(false);
 
 	// Section data (lazy-loaded)
 	let logsData = $state<OrphanLogsResponse | null>(null);
@@ -241,6 +243,18 @@
 				message: `Cleared ${result.cleared} cached image${result.cleared !== 1 ? 's' : ''} (${(result.freed_bytes / 1048576).toFixed(1)} MB)`
 			};
 			cacheStats = await fetchImageCacheStats();
+		});
+	}
+
+	async function handleClearRaw() {
+		showConfirm('Clear Raw Directory', 'Delete all files and folders in the raw/scratch directory? This cannot be undone.', async () => {
+			const result = await clearRaw();
+			const mb = (result.freed_bytes / 1048576).toFixed(1);
+			feedback = {
+				type: 'success',
+				message: `Cleared ${result.cleared} item${result.cleared !== 1 ? 's' : ''} (${mb} MB freed)`
+			};
+			loadSummary();
 		});
 	}
 
@@ -619,6 +633,35 @@
 					{:else}
 						<p class="text-sm text-gray-500">Unable to load cache stats</p>
 					{/if}
+				</div>
+			{/if}
+		</div>
+		<!-- Raw Directory Cleanup -->
+		<div class="rounded-lg border border-primary/15 dark:border-primary/15">
+			<button
+				onclick={() => { rawCleanupOpen = !rawCleanupOpen; }}
+				class="flex w-full items-center gap-3 p-4 text-left"
+			>
+				<svg class="h-5 w-5 text-primary-text dark:text-primary-text-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+				</svg>
+				Raw Directory
+				<svg class="ml-auto h-4 w-4 transition-transform {rawCleanupOpen ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+				</svg>
+			</button>
+			{#if rawCleanupOpen}
+				<div class="border-t border-primary/10 p-4 dark:border-primary/10">
+					<p class="mb-3 text-sm text-gray-600 dark:text-gray-400">
+						Remove all files and folders from the raw/scratch directory. This clears leftover rip output from completed or failed jobs.
+					</p>
+					<button
+						onclick={handleClearRaw}
+						disabled={busy}
+						class="rounded bg-red-500/15 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-500/25 disabled:opacity-50 dark:text-red-400"
+					>
+						Clear Raw Directory
+					</button>
 				</div>
 			{/if}
 		</div>

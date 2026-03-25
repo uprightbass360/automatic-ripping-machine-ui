@@ -92,3 +92,15 @@ export function fetchImageCacheStats(): Promise<ImageCacheStats> {
 export function clearImageCache(): Promise<{ success: boolean; cleared: number; freed_bytes: number }> {
 	return apiFetch('/api/maintenance/clear-image-cache', { method: 'POST' });
 }
+
+export interface ClearRawResult {
+	success: boolean;
+	cleared: number;
+	freed_bytes: number;
+	errors: string[];
+	path: string;
+}
+
+export function clearRaw(): Promise<ClearRawResult> {
+	return apiFetch('/api/maintenance/clear-raw', { method: 'POST' });
+}

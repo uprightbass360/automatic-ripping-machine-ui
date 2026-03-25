@@ -412,6 +412,11 @@ async def bulk_delete_folders(paths: list[str]) -> dict[str, Any] | None:
     return await _request("POST", "/api/v1/maintenance/bulk-delete-folders", json={"paths": paths})
 
 
+async def clear_raw() -> dict[str, Any] | None:
+    """Clear all contents of the raw/scratch directory via ARM."""
+    return await _request("POST", "/api/v1/maintenance/clear-raw")
+
+
 # --- Architecture debt fix: proxy these through ARM ---
 
 
