@@ -7,7 +7,7 @@ function jsonResponse(data: unknown, ok = true) {
 	return { ok, status: ok ? 200 : 500, statusText: ok ? 'OK' : 'Error', json: () => Promise.resolve(data) };
 }
 
-import { toggleMultiTitle, updateTrackTitle, clearTrackTitle, tvdbMatch, fetchTvdbEpisodes, updateTrack } from '../api/jobs';
+import { toggleMultiTitle, updateTrackTitle, clearTrackTitle, tvdbMatch, fetchTvdbEpisodes, updateTrack, fetchNamingPreview } from '../api/jobs';
 
 beforeEach(() => mockFetch.mockReset());
 
@@ -78,5 +78,27 @@ describe('updateTrack', () => {
 			body: JSON.stringify({ enabled: false })
 		}));
 		expect(result.success).toBe(true);
+	});
+});
+
+describe('fetchNamingPreview', () => {
+	it('GETs /api/jobs/:id/naming-preview', async () => {
+		const preview = {
+			success: true,
+			job_title: 'Test Show S01E01',
+			job_folder: 'Test Show/Season 01',
+			tracks: [
+				{ track_number: '0', rendered_title: 'Pilot S01E01', rendered_folder: 'Test Show/Season 01' },
+				{ track_number: '1', rendered_title: 'Episode 2 S01E02', rendered_folder: 'Test Show/Season 01' }
+			]
+		};
+		mockFetch.mockResolvedValue(jsonResponse(preview));
+		const result = await fetchNamingPreview(42);
+		expect(mockFetch).toHaveBeenCalledWith('/api/jobs/42/naming-preview', expect.objectContaining({
+			headers: expect.objectContaining({ 'Content-Type': 'application/json' })
+		}));
+		expect(result.success).toBe(true);
+		expect(result.tracks).toHaveLength(2);
+		expect(result.tracks[0].rendered_title).toBe('Pilot S01E01');
 	});
 });

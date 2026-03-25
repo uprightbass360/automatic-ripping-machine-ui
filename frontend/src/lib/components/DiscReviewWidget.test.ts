@@ -23,7 +23,8 @@ vi.mock('$lib/api/jobs', () => ({
 	fetchCrcLookup: vi.fn(() => Promise.resolve({ no_crc: true })),
 	submitToCrcDb: vi.fn(),
 	updateJobConfig: vi.fn(() => Promise.resolve()),
-	updateJobTranscodeConfig: vi.fn(() => Promise.resolve())
+	updateJobTranscodeConfig: vi.fn(() => Promise.resolve()),
+	fetchNamingPreview: vi.fn(() => Promise.resolve({ success: true, job_title: 'Test Movie', job_folder: 'Test Movie (2024)', tracks: [] }))
 }));
 
 vi.mock('$lib/api/settings', () => ({
@@ -35,9 +36,11 @@ vi.mock('$lib/api/logs', () => ({
 	fetchLogContent: vi.fn(() => Promise.resolve({ content: '' }))
 }));
 
-import { startWaitingJob, cancelWaitingJob } from '$lib/api/jobs';
+import { startWaitingJob, cancelWaitingJob, fetchJob, fetchNamingPreview } from '$lib/api/jobs';
 const mockStart = vi.mocked(startWaitingJob);
 const mockCancel = vi.mocked(cancelWaitingJob);
+const mockFetchJob = vi.mocked(fetchJob);
+const mockFetchNamingPreview = vi.mocked(fetchNamingPreview);
 
 vi.stubGlobal('confirm', vi.fn(() => true));
 
@@ -209,6 +212,105 @@ describe('DiscReviewWidget', () => {
 			await fireEvent.click(screen.getByText('Start'));
 			await waitFor(() => {
 				expect(onrefresh).toHaveBeenCalled();
+			});
+		});
+	});
+
+	describe('rendered filenames', () => {
+		it('fetches naming preview on load and displays rendered titles in track table', async () => {
+			mockFetchJob.mockResolvedValue({
+				job_id: 1,
+				title: 'Kolchak',
+				status: 'waiting',
+				video_type: 'series',
+				disctype: 'bluray',
+				label: 'TEST',
+				year: '1974',
+				no_of_titles: 2,
+				crc_id: null,
+				logfile: null,
+				start_time: '2025-06-15T10:00:00Z',
+				wait_start_time: '2025-06-15T11:55:00Z',
+				devpath: '/dev/sr0',
+				imdb_id: 'tt0071003',
+				poster_url: null,
+				errors: null,
+				multi_title: false,
+				tracks: [
+					{ track_id: 1, track_number: '0', length: 3012, filename: 'Kolchak_t00.mkv', enabled: true, aspect_ratio: '16:9', fps: '23.976', ripped: false, basename: null, title: 'Demon in Lace', year: null, video_type: null, poster_url: null, episode_number: '16', episode_name: 'Demon in Lace' }
+				],
+				config: { MANUAL_WAIT_TIME: 60 }
+			} as any);
+			mockFetchNamingPreview.mockResolvedValue({
+				success: true,
+				job_title: 'Kolchak: The Night Stalker S01E16',
+				job_folder: 'Kolchak: The Night Stalker/Season 01',
+				tracks: [
+					{ track_number: '0', rendered_title: 'Demon in Lace S01E16', rendered_folder: 'Kolchak/Season 01' }
+				]
+			} as any);
+
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', video_type: 'series', disctype: 'bluray', imdb_id: 'tt0071003' })
+				}
+			});
+
+			// Wait for detail to load, then open Info panel to see tracks
+			await waitFor(() => expect(screen.getByText('Info')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Info'));
+
+			// fetchNamingPreview should have been called
+			await waitFor(() => {
+				expect(mockFetchNamingPreview).toHaveBeenCalledWith(1);
+			});
+
+			// Rendered filename should show instead of raw MakeMKV filename
+			await waitFor(() => {
+				expect(screen.getByText('Demon in Lace S01E16')).toBeInTheDocument();
+			});
+			// Raw MakeMKV filename should NOT appear
+			expect(screen.queryByText('Kolchak_t00.mkv')).not.toBeInTheDocument();
+		});
+
+		it('falls back to raw filename when naming preview fails', async () => {
+			mockFetchJob.mockResolvedValue({
+				job_id: 1,
+				title: 'Test Movie',
+				status: 'waiting',
+				video_type: 'movie',
+				disctype: 'bluray',
+				label: 'TEST',
+				year: '2024',
+				no_of_titles: 1,
+				crc_id: null,
+				logfile: null,
+				start_time: '2025-06-15T10:00:00Z',
+				wait_start_time: '2025-06-15T11:55:00Z',
+				devpath: '/dev/sr0',
+				imdb_id: null,
+				poster_url: null,
+				errors: null,
+				multi_title: false,
+				tracks: [
+					{ track_id: 1, track_number: '0', length: 7200, filename: 'title_t00.mkv', enabled: true, aspect_ratio: '16:9', fps: '23.976', ripped: false, basename: null, title: null, year: null, video_type: null, poster_url: null, episode_number: null, episode_name: null }
+				],
+				config: { MANUAL_WAIT_TIME: 60 }
+			} as any);
+			mockFetchNamingPreview.mockRejectedValue(new Error('API down'));
+
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z' })
+				}
+			});
+
+			await waitFor(() => expect(screen.getByText('Info')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Info'));
+
+			// Falls back to raw filename
+			await waitFor(() => {
+				expect(screen.getByText('title_t00.mkv')).toBeInTheDocument();
 			});
 		});
 	});
