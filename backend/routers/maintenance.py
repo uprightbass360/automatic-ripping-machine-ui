@@ -138,6 +138,12 @@ async def cleanup_transcoder():
     return {"success": True, "deleted": deleted, "errors": errors}
 
 
+@router.post("/maintenance/clear-raw")
+async def clear_raw():
+    """Clear all contents of the raw/scratch directory."""
+    return _check_arm(await arm_client.clear_raw())
+
+
 @router.get("/maintenance/image-cache-stats")
 def get_image_cache_stats():
     """Return image cache statistics."""
