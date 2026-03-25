@@ -239,6 +239,11 @@ async def naming_preview(pattern: str, variables: dict[str, str]) -> dict[str, A
     )
 
 
+async def naming_preview_for_job(job_id: int) -> dict[str, Any] | None:
+    """Get rendered filenames for all tracks on a job. Returns None if ARM is unreachable."""
+    return await _request("GET", f"/api/v1/jobs/{job_id}/naming-preview")
+
+
 # ---------------------------------------------------------------------------
 # Metadata proxy — ARM is the single source of truth
 # ---------------------------------------------------------------------------

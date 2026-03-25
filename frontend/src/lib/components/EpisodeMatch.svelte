@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { JobDetail, Track } from '$lib/types/arm';
-	import type { TvdbEpisode } from '$lib/api/jobs';
-	import { tvdbMatch, fetchTvdbEpisodes, updateTrack } from '$lib/api/jobs';
+	import type { TvdbEpisode, NamingPreviewTrack } from '$lib/api/jobs';
+	import { tvdbMatch, fetchTvdbEpisodes, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
 
 	interface Props {
 		job: JobDetail;
@@ -37,6 +37,7 @@
 	let error = $state<string | null>(null);
 	let matches = $state<Array<{ track_number: string; episode_number: number; episode_name: string; episode_runtime: number }>>([]);
 	let episodes = $state<TvdbEpisode[]>([]);
+	let namingPreviews = $state<Record<string, NamingPreviewTrack>>({});
 	let matchedSeason = $state<number | null>(null);
 	let applying = $state(false);
 
@@ -166,11 +167,28 @@
 				}
 			}
 
+			// Fetch rendered filenames after apply
+			await loadNamingPreviews();
 			onapply?.();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Apply failed';
 		} finally {
 			applying = false;
+		}
+	}
+
+	async function loadNamingPreviews() {
+		try {
+			const result = await fetchNamingPreview(job.job_id);
+			if (result.success) {
+				const map: Record<string, NamingPreviewTrack> = {};
+				for (const t of result.tracks) {
+					map[t.track_number] = t;
+				}
+				namingPreviews = map;
+			}
+		} catch {
+			// Non-critical — silently skip
 		}
 	}
 
@@ -304,7 +322,7 @@
 								</select>
 							</td>
 							<td class="px-2 py-2 text-xs text-gray-300 dark:text-gray-400">
-								{ep?.name || '—'}
+								{namingPreviews[tn]?.rendered_title || ep?.name || '—'}
 							</td>
 							<td class="px-2 py-2 text-right text-gray-400">{ep ? `${ep.runtime}m` : '—'}</td>
 							<td class="px-2 py-2 text-right {deltaClass(track.length, ep?.runtime ?? null)}">
