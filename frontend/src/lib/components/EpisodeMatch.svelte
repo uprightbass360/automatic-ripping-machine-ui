@@ -120,7 +120,11 @@
 			if (result.season) {
 				try {
 					const epResult = await fetchTvdbEpisodes(job.job_id, result.season);
-					episodes = epResult.episodes;
+					// API returns runtime in seconds — convert to minutes for display
+					episodes = epResult.episodes.map((ep) => ({
+						...ep,
+						runtime: ep.runtime > 300 ? Math.round(ep.runtime / 60) : ep.runtime,
+					}));
 				} catch {
 					// tvdb-episodes requires tvdb_id on job — build dropdown from match results as fallback
 					// Deduplicate by episode number in case multiple tracks matched same episode
