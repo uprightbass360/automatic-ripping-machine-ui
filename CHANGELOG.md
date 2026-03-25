@@ -1,5 +1,46 @@
 # Changelog
 
+## [13.9.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.8.0...v13.9.0) (2026-03-25)
+
+
+### Features
+
+* add clear raw directory maintenance action ([0564c5a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0564c5ab4fffbf2033eb00caff25b2072a654548))
+* add EpisodeMatch component with match table and dropdown reassignment ([baec9ab](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/baec9ab93e643351e0e1e712b6a251ced5f5d4a2))
+* add naming proxy endpoints for per-job overrides ([d56d13a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d56d13a36f4451747efdc8011093de863b1d08ab))
+* add TVDB Episodes button to dashboard review widget ([c059dc9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c059dc9e091abaec828e8fa65923bd6bfcfd604b))
+* display Processing status for folder jobs, fix job detail page override ([264b692](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/264b692fa6bf9a67084392150bbe01838afb1cc0))
+* make sidebar storage stats clickable links to files browser ([9ed704b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9ed704ba0224b9f353942c0d3bbcebbed1b3558d))
+* per-job naming overrides UI with editable patterns and custom filenames ([1628cb5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1628cb5f21abfb30a7634f253da031b5139b82ea))
+* prefill season/disc fields in folder import wizard from scan ([c291c13](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c291c13ac3e295aca0b1923d288c2cf766010160))
+* replace TVDB button with Episodes panel using EpisodeMatch component ([fe7af04](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fe7af045a729206c44fa427e3d870b45240ca697))
+* show rendered filename preview in episode match table ([b235476](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b2354764bc59811ea82602bade865cbab4a21e3e))
+* show rendered output filename in review track table ([4eeb94c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4eeb94cb6f511c91010cdb1ee46313d23651ca40))
+* wire naming-preview API into EpisodeMatch, show rendered filenames after apply ([26f15c9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/26f15c98d3ed2f2d6d74e02de2e456390aca24e6))
+
+
+### Bug Fixes
+
+* add season/disc fields to UI proxy FolderCreateRequest, fix test factory defaults ([cfae06a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cfae06ad2cc206c4dfa2857bac8d33556a4cfd8a))
+* add source_type and source_path columns to Job ORM model ([714b671](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/714b67127d2c42a4f200a5d6f43f9f0c255d1102))
+* add source_type, source_path, disc_number, disc_total to test factory defaults ([ad6dc61](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ad6dc61c8fff6fc65afe5aef62ad44943a9d338b))
+* convert TVDB episode runtime from seconds to minutes for display ([f72e526](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f72e5263a66c25e3df23a2e05a99e86f251c8bbe))
+* disable auto-proceed timer for folder import jobs ([cdad4e2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cdad4e2093f11415c0d214076aad3470da6c080e))
+* EpisodeMatch auto-resolves TVDB from IMDB, fallback dropdown from match results ([d82fa82](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d82fa8263c292ac3d48f384b43293ec96e08e912))
+* Episodes button uses same primary style as other review widget buttons ([1e5cc13](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1e5cc13659b8f2243e0985fcb89fdcda72da99d4))
+* increase default episode match tolerance to 600s for TVDB runtime inaccuracies ([a735765](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a73576501c45b3bc24fe350775cc8c9972f2cb7b))
+* increase review widget button size for better readability ([cd8286d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cd8286d922b06c505a8c060fc83bc13e8bcf5a46))
+* LCARS navbar button visibility and episode match input sizing ([fcfb038](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fcfb038be77957d2855e051d8b1d454a7383fad2))
+* move Episodes button next to Search in review widget button bar ([0dbca4b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0dbca4b33dc0c523f335fc4a9f66e24aeb499fdb))
+* setup page redirects before render via load function ([b92311e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b92311e0e11ef720559bf8668bc35c72fdb30c65))
+* setup page redirects to dashboard when complete, type fixes for episode match fallback ([dd3f917](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/dd3f917f87fc60a96508d9255b225192071567e4))
+* setup test import path and null check for type safety ([12c2518](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/12c251844a4a9bc320a025ab9ae65ba3137bd4b3))
+* show episode number badge instead of CUSTOM for episode-matched tracks ([bac5482](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bac5482063c4ce193ea55af472e77be4dad01a5d))
+* show episode number badge instead of CUSTOM in review widget track table ([3c3483b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3c3483b1a7f9099384b2d91d44c2a6f00c213fd8))
+* sort episode dropdown options by episode number ([bfc0c8e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bfc0c8ea018d7d0a29ccfec35cdbc447e15c8279))
+* sync season/disc controls from job props via effect instead of init-time state ([6dd5be2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6dd5be288a0afaa38684f856aba66e8551475108))
+* use importing status key for folder jobs, keep processing for transcoder ([846e5be](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/846e5be6e0055068e3404b43484c793a4d522231))
+
 ## [13.8.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.7.1...v13.8.0) (2026-03-23)
 
 
