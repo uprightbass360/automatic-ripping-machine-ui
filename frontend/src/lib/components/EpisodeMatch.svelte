@@ -14,7 +14,7 @@
 	let seasonInput = $state(job.season || job.season_auto || '');
 	let discInput = $state(job.disc_number?.toString() || '');
 	let discTotalInput = $state(job.disc_total?.toString() || '');
-	let toleranceInput = $state('300');
+	let toleranceInput = $state('600');
 
 	// State
 	let loading = $state(false);
