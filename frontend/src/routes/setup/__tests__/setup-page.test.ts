@@ -24,7 +24,7 @@ describe('setup page load', () => {
 			first_run: false,
 		});
 
-		const { load } = await import('../+page.ts');
+		const { load } = await import('../+page');
 
 		await expect(load()).rejects.toMatchObject({ status: 302, location: '/' });
 	});
@@ -36,7 +36,7 @@ describe('setup page load', () => {
 			first_run: true,
 		});
 
-		const { load } = await import('../+page.ts');
+		const { load } = await import('../+page');
 		const result = await load();
 
 		expect(result).toEqual({
@@ -51,17 +51,17 @@ describe('setup page load', () => {
 			first_run: false,
 		});
 
-		const { load } = await import('../+page.ts');
+		const { load } = await import('../+page');
 		const result = await load();
 
 		expect(result.status).toBeTruthy();
-		expect(result.status.db_current).toBe(false);
+		expect(result.status!.db_current).toBe(false);
 	});
 
 	it('returns null status on fetch error', async () => {
 		mockFetchSetupStatus.mockRejectedValue(new Error('network error'));
 
-		const { load } = await import('../+page.ts');
+		const { load } = await import('../+page');
 		const result = await load();
 
 		expect(result).toEqual({ status: null });
