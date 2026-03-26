@@ -126,7 +126,7 @@
 		if (!touched.type) infoType = job.video_type || '';
 		if (!touched.imdbId) infoImdbId = job.imdb_id || '';
 		if (!touched.posterUrl) infoPosterUrl = job.poster_url || '';
-		if (!touched.path) infoPath = job.path || '';
+		if (!touched.path && job.path) infoPath = job.path;
 		if (!touched.disctype) infoDisctype = job.disctype || '';
 		if (!touched.label) infoLabel = job.label || '';
 		if (!touched.artist) infoArtist = job.artist || '';
@@ -198,6 +198,10 @@
 					map[t.track_number] = t;
 				}
 				namingPreviews = map;
+				// Populate output path from rendered folder if not already set
+				if (!infoPath && result.job_folder && !touched.path) {
+					infoPath = result.job_folder;
+				}
 			}
 		} catch {
 			// Non-critical — show raw filename as fallback
@@ -657,6 +661,7 @@
 										<tr>
 											<th class="px-3 py-1.5 font-medium">#</th>
 											<th class="px-3 py-1.5 font-medium">{isMusic ? 'Name' : 'Title'}</th>
+											{#if !isMusic}<th class="px-2 py-1.5 font-medium text-center">Episode</th>{/if}
 											<th class="px-3 py-1.5 font-medium">Length</th>
 											{#if !isMusic}
 												<th class="px-3 py-1.5 font-medium">Aspect</th>
@@ -673,7 +678,7 @@
 														/>
 													</label>
 												</th>
-												<th class="px-3 py-1.5 font-medium">File</th>
+												<th class="px-3 py-1.5 font-medium">Filename</th>
 											{/if}
 										</tr>
 									</thead>
@@ -697,14 +702,16 @@
 																{#if track.year}
 																	<span class="text-gray-400">({track.year})</span>
 																{/if}
-																{#if track.episode_number}
-																<span class="rounded-sm bg-blue-100 px-1 py-0.5 text-[9px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">E{track.episode_number}</span>
-															{:else}
-																<span class="rounded-sm bg-purple-100 px-1 py-0.5 text-[9px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">CUSTOM</span>
-															{/if}
 															</div>
 														{:else}
 															<span class="text-gray-400">{job.title || job.label || 'Untitled'}{#if job.year} ({job.year}){/if}</span>
+														{/if}
+													</td>
+												{/if}
+												{#if !isMusic}
+													<td class="px-2 py-1.5 text-center">
+														{#if track.episode_number}
+															<span class="rounded-sm bg-blue-100 px-1 py-0.5 text-[9px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">E{track.episode_number}</span>
 														{/if}
 													</td>
 												{/if}
