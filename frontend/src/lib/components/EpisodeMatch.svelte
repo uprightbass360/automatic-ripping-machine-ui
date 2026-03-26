@@ -10,7 +10,7 @@
 
 	let { job, onapply }: Props = $props();
 
-	// Controls — initialized empty, synced from job props via $effect
+	// Controls - initialized empty, synced from job props via $effect
 	let seasonInput = $state('');
 	let discInput = $state('');
 	let discTotalInput = $state('');
@@ -61,7 +61,7 @@
 	let unmatched = $derived(mainTracks.length - matchCount);
 
 	function formatDuration(seconds: number | null): string {
-		if (!seconds) return '—';
+		if (!seconds) return '-';
 		const m = Math.floor(seconds / 60);
 		const s = seconds % 60;
 		return `${m}:${s.toString().padStart(2, '0')}`;
@@ -76,12 +76,40 @@
 	}
 
 	function deltaText(trackLen: number | null, epRuntime: number | null): string {
-		if (!trackLen || !epRuntime) return '—';
+		if (!trackLen || !epRuntime) return '-';
 		const delta = trackLen - epRuntime * 60;
 		const abs = Math.abs(delta);
 		const sign = delta >= 0 ? '+' : '-';
 		if (abs < 60) return `${sign}${abs}s`;
 		return `${sign}${Math.floor(abs / 60)}m${(abs % 60).toString().padStart(2, '0')}s`;
+	}
+
+	async function loadEpisodeList(season: number, fallbackMatches?: typeof matches) {
+		try {
+			const epResult = await fetchTvdbEpisodes(job.job_id, season);
+			// API returns runtime in seconds - always convert to minutes
+			episodes = epResult.episodes.map(ep => ({
+				...ep,
+				runtime: Math.round(ep.runtime / 60),
+			}));
+		} catch {
+			if (fallbackMatches?.length) {
+				const seen = new Set<number>();
+				const fallback: TvdbEpisode[] = [];
+				for (const m of fallbackMatches) {
+					if (!seen.has(m.episode_number)) {
+						seen.add(m.episode_number);
+						fallback.push({
+							number: m.episode_number,
+							name: m.episode_name,
+							runtime: m.episode_runtime ? Math.round(m.episode_runtime / 60) : 0,
+							aired: '',
+						});
+					}
+				}
+				episodes = fallback;
+			}
+		}
 	}
 
 	async function runMatch() {
@@ -116,33 +144,9 @@
 				assignments[m.track_number] = m.episode_number;
 			}
 
-			// Fetch ALL season episodes for dropdowns (not just matched ones)
+			// Fetch ALL season episodes for dropdowns
 			if (result.season) {
-				try {
-					const epResult = await fetchTvdbEpisodes(job.job_id, result.season);
-					// API returns runtime in seconds — convert to minutes for display
-					episodes = epResult.episodes.map((ep) => ({
-						...ep,
-						runtime: ep.runtime > 300 ? Math.round(ep.runtime / 60) : ep.runtime,
-					}));
-				} catch {
-					// tvdb-episodes requires tvdb_id on job — build dropdown from match results as fallback
-					// Deduplicate by episode number in case multiple tracks matched same episode
-					const seen = new Set<number>();
-					const fallback: TvdbEpisode[] = [];
-					for (const m of result.matches) {
-						if (!seen.has(m.episode_number)) {
-							seen.add(m.episode_number);
-							fallback.push({
-								number: m.episode_number,
-								name: m.episode_name,
-								runtime: m.episode_runtime ? Math.round(m.episode_runtime / 60) : 0,
-								aired: '',
-							});
-						}
-					}
-					episodes = fallback;
-				}
+				await loadEpisodeList(result.season, result.matches);
 			}
 			} catch (e) {
 			error = e instanceof Error ? e.message : 'Match failed';
@@ -201,7 +205,7 @@
 				namingPreviews = map;
 			}
 		} catch {
-			// Non-critical — silently skip
+			// Non-critical - silently skip
 		}
 	}
 
@@ -217,10 +221,35 @@
 		return episodes.find((e) => e.number === epNum);
 	}
 
-	// Auto-run match on mount if job has TVDB ID or IMDB ID (match endpoint resolves TVDB from IMDB)
+	// Tracks with existing episode assignments (from previous Apply)
+	let existingMatches = $derived(
+		mainTracks.filter(t => t.episode_number)
+	);
+
+	// On mount: if tracks have existing episodes, restore into assignments
+	// and load full episode list for dropdowns. Otherwise auto-run match.
 	$effect(() => {
-		if ((job.tvdb_id || job.imdb_id) && mainTracks.length > 0 && matches.length === 0) {
-			runMatch();
+		if (mainTracks.length > 0 && matches.length === 0) {
+			if (existingMatches.length > 0) {
+				// Populate assignments from DB track data
+				for (const t of existingMatches) {
+					assignments[t.track_number ?? ''] = Number(t.episode_number);
+				}
+				// Set matches so the interactive table renders
+				matches = existingMatches.map(t => ({
+					track_number: t.track_number ?? '',
+					episode_number: Number(t.episode_number),
+					episode_name: t.episode_name || '',
+					episode_runtime: 0,
+				}));
+				// Load full episode list for dropdowns
+				if (job.tvdb_id) {
+					const s = Number(seasonInput || job.season || job.season_auto || 1);
+					loadEpisodeList(s);
+				}
+			} else if (job.tvdb_id || job.imdb_id) {
+				runMatch();
+			}
 		}
 	});
 </script>
@@ -326,18 +355,18 @@
 										assignments[tn] = val ? Number(val) : null;
 									}}
 								>
-									<option value="">— None —</option>
+									<option value="">- None -</option>
 									{#each [...episodes].sort((a, b) => a.number - b.number) as episode}
 										<option value={episode.number}>
-											E{episode.number} — {episode.name} ({episode.runtime}m)
+											E{episode.number} - {episode.name} ({episode.runtime}m)
 										</option>
 									{/each}
 								</select>
 							</td>
 							<td class="px-2 py-2 text-xs text-gray-300 dark:text-gray-400">
-								{namingPreviews[tn]?.rendered_title || ep?.name || '—'}
+								{namingPreviews[tn]?.rendered_title || ep?.name || '-'}
 							</td>
-							<td class="px-2 py-2 text-right text-gray-400">{ep ? `${ep.runtime}m` : '—'}</td>
+							<td class="px-2 py-2 text-right text-gray-400">{ep ? `${ep.runtime}m` : '-'}</td>
 							<td class="px-2 py-2 text-right {deltaClass(track.length, ep?.runtime ?? null)}">
 								{deltaText(track.length, ep?.runtime ?? null)}
 							</td>
