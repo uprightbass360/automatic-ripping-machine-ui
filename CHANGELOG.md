@@ -1,5 +1,12 @@
 # Changelog
 
+## [14.0.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.0.0...v14.0.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* episode column, progress bar, em dashes, and episode restore ([07d3c4c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/07d3c4cd6a150e8a80b8ecd4862ab276e177dd1a))
+
 ## [14.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v13.8.0...v14.0.0) (2026-03-25)
 
 
