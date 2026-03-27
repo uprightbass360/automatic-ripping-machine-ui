@@ -37,17 +37,26 @@
 	let savingTrackField = $state<string | null>(null);
 	let togglingAllEnabled = $state(false);
 
+	let minlength = $derived(Number(job?.config?.MINLENGTH) || 120);
+
+	function isBelowMinlength(track: { length: number | null }): boolean {
+		return track.length != null && track.length < minlength;
+	}
+
+	let rippableTracks = $derived(
+		job?.tracks?.filter((t) => !isBelowMinlength(t)) ?? []
+	);
 	let allEnabled = $derived(
-		!!job?.tracks?.length && job.tracks.every((t) => t.enabled)
+		!!rippableTracks.length && rippableTracks.every((t) => t.enabled)
 	);
 
 	async function handleToggleAllEnabled() {
-		if (!job?.tracks?.length) return;
+		if (!rippableTracks.length) return;
 		togglingAllEnabled = true;
 		const newVal = !allEnabled;
 		try {
 			await Promise.all(
-				job.tracks.map((t) => updateTrack(job!.job_id, t.track_id, { enabled: newVal }))
+				rippableTracks.map((t) => updateTrack(job!.job_id, t.track_id, { enabled: newVal }))
 			);
 			await loadJob();
 		} catch {
@@ -509,7 +518,8 @@
 						</thead>
 						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each job.tracks as track}
-								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
+								{@const tooShort = !isMusicDisc && isBelowMinlength(track)}
+								<tr class="{tooShort ? 'opacity-40' : ''} hover:bg-page dark:hover:bg-gray-800/50">
 									<td class="px-4 py-3">{track.track_number ?? ''}</td>
 									{#if isMusicDisc}
 										<td class="max-w-[300px] truncate px-4 py-3">{track.title || track.filename || '--'}</td>
@@ -557,13 +567,17 @@
 										<td class="px-4 py-3">{track.aspect_ratio ?? ''}</td>
 										<td class="px-4 py-3">{track.fps ?? ''}</td>
 										<td class="pl-1 pr-4 py-3">
-											<input
-												type="checkbox"
-												checked={track.enabled}
-												onchange={() => handleTrackFieldUpdate(track.track_id, 'enabled', !track.enabled)}
-												disabled={savingTrackField === `${track.track_id}-enabled`}
-												class="ml-[26px] h-4 w-4 rounded-sm border-primary/25 text-primary focus:ring-primary disabled:opacity-50 dark:border-primary/30 dark:bg-primary/10"
-											/>
+											{#if tooShort}
+												<span class="ml-4 text-[10px] text-gray-400 dark:text-gray-500" title="Too short to rip (below {minlength}s minimum)">skip</span>
+											{:else}
+												<input
+													type="checkbox"
+													checked={track.enabled}
+													onchange={() => handleTrackFieldUpdate(track.track_id, 'enabled', !track.enabled)}
+													disabled={savingTrackField === `${track.track_id}-enabled`}
+													class="ml-[26px] h-4 w-4 rounded-sm border-primary/25 text-primary focus:ring-primary disabled:opacity-50 dark:border-primary/30 dark:bg-primary/10"
+												/>
+											{/if}
 										</td>
 									{/if}
 									<td class="px-4 py-3">
