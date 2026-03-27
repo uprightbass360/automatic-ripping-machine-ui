@@ -1,5 +1,13 @@
 # Changelog
 
+## [14.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.0.1...v14.1.0) (2026-03-27)
+
+
+### Features
+
+* apply minlength skip indicator to job detail page ([1c3ed3e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1c3ed3e5f831dceb11d56e193789bdb61ee4f11c))
+* hide rip checkbox for tracks below MINLENGTH threshold ([28ada8a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/28ada8a07701edb81752afc8090ebea3bd4394a9))
+
 ## [14.0.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.0.0...v14.0.1) (2026-03-26)
 
 
