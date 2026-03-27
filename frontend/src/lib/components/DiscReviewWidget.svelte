@@ -47,18 +47,30 @@
 	let editingFilenameValue = $state('');
 	let errorMessage = $state<string | null>(null);
 
+	// MakeMKV's minlength threshold - tracks shorter than this are silently
+	// skipped during ripping regardless of checkbox state.
+	let minlength = $derived(Number(detail?.config?.MINLENGTH) || 120);
+
+	function isBelowMinlength(track: { length: number | null }): boolean {
+		return track.length != null && track.length < minlength;
+	}
+
+	// "All enabled" only considers tracks that are long enough to be ripped
+	let rippableTracks = $derived(
+		detail?.tracks?.filter((t) => !isBelowMinlength(t)) ?? []
+	);
 	let allEnabled = $derived(
-		!!detail?.tracks?.length && detail.tracks.every((t) => t.enabled)
+		!!rippableTracks.length && rippableTracks.every((t) => t.enabled)
 	);
 
 	async function handleToggleAllEnabled() {
-		if (!detail?.tracks?.length) return;
+		if (!rippableTracks.length) return;
 		togglingAllEnabled = true;
 		errorMessage = null;
 		const newVal = !allEnabled;
 		try {
 			await Promise.all(
-				detail.tracks.map((t) => updateTrack(job.job_id, t.track_id, { enabled: newVal }))
+				rippableTracks.map((t) => updateTrack(job.job_id, t.track_id, { enabled: newVal }))
 			);
 			loadDetail();
 		} catch (e) {
@@ -221,9 +233,9 @@
 
 	async function handleStart() {
 		errorMessage = null;
-		// Prevent starting with zero tracks enabled (video discs only)
-		if (detail?.tracks?.length && detail.tracks.every((t) => !t.enabled)) {
-			errorMessage = 'Cannot start rip — at least one track must be enabled.';
+		// Prevent starting with zero rippable tracks enabled (video discs only)
+		if (rippableTracks.length && rippableTracks.every((t) => !t.enabled)) {
+			errorMessage = 'Cannot start rip - at least one track must be enabled.';
 			return;
 		}
 		starting = true;
@@ -684,7 +696,8 @@
 									</thead>
 									<tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
 										{#each detail.tracks as track}
-											<tr class="{track.enabled && !isMusic ? 'bg-primary-light-bg/50 dark:bg-primary-light-bg-dark/10' : ''}">
+											{@const tooShort = !isMusic && isBelowMinlength(track)}
+											<tr class="{tooShort ? 'opacity-40' : track.enabled && !isMusic ? 'bg-primary-light-bg/50 dark:bg-primary-light-bg-dark/10' : ''}">
 												<td class="px-3 py-1.5 font-mono text-gray-700 dark:text-gray-300">{track.track_number ?? '--'}</td>
 												{#if isMusic}
 													<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{track.title || track.filename || '--'}</td>
@@ -720,13 +733,17 @@
 													<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.aspect_ratio ?? '--'}</td>
 													<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.fps ?? '--'}</td>
 													<td class="pl-1 pr-3 py-1.5">
-														<input
-															type="checkbox"
-															checked={track.enabled}
-															onchange={() => handleTrackFieldUpdate(track.track_id, 'enabled', !track.enabled)}
-															disabled={savingTrackField === `${track.track_id}-enabled`}
-															class="ml-[22px] h-3.5 w-3.5 rounded-sm border-primary/25 text-primary focus:ring-primary disabled:opacity-50 dark:border-primary/30 dark:bg-primary/10"
-														/>
+														{#if tooShort}
+															<span class="ml-3 text-[10px] text-gray-400 dark:text-gray-500" title="Too short to rip (below {minlength}s minimum)">skip</span>
+														{:else}
+															<input
+																type="checkbox"
+																checked={track.enabled}
+																onchange={() => handleTrackFieldUpdate(track.track_id, 'enabled', !track.enabled)}
+																disabled={savingTrackField === `${track.track_id}-enabled`}
+																class="ml-[22px] h-3.5 w-3.5 rounded-sm border-primary/25 text-primary focus:ring-primary disabled:opacity-50 dark:border-primary/30 dark:bg-primary/10"
+															/>
+														{/if}
 													</td>
 													<td class="px-3 py-1.5">
 														{#if editingFilenameTrackId === track.track_id}
