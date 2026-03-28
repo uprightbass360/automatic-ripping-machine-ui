@@ -168,11 +168,25 @@ export interface StoragePath {
 	percent: number;
 }
 
+export interface GpuSnapshot {
+	vendor: string;
+	utilization_percent: number | null;
+	memory_used_mb: number | null;
+	memory_total_mb: number | null;
+	temperature_c: number | null;
+	encoder_percent: number | null;
+	power_draw_w: number | null;
+	power_limit_w: number | null;
+	clock_core_mhz: number | null;
+	clock_memory_mhz: number | null;
+}
+
 export interface SystemStats {
 	cpu_percent: number;
 	cpu_temp: number;
 	memory: MemoryInfo | null;
 	storage: StoragePath[];
+	gpu: GpuSnapshot | null;
 }
 
 export interface DashboardData {

@@ -215,11 +215,25 @@ class StoragePathSchema(BaseModel):
     percent: float
 
 
+class GpuSnapshotSchema(BaseModel):
+    vendor: str
+    utilization_percent: float | None = None
+    memory_used_mb: float | None = None
+    memory_total_mb: float | None = None
+    temperature_c: float | None = None
+    encoder_percent: float | None = None
+    power_draw_w: float | None = None
+    power_limit_w: float | None = None
+    clock_core_mhz: float | None = None
+    clock_memory_mhz: float | None = None
+
+
 class SystemStatsSchema(BaseModel):
     cpu_percent: float = 0
     cpu_temp: float = 0
     memory: MemoryInfoSchema | None = None
     storage: list[StoragePathSchema] = []
+    gpu: GpuSnapshotSchema | None = None
 
 
 # --- Dashboard Schema ---

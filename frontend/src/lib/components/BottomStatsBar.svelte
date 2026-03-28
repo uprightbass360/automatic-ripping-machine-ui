@@ -12,11 +12,17 @@
 
 	let { systemInfo, systemStats, transcoderInfo = null, transcoderStats = null, armOnline = true, transcoderOnline = true }: Props = $props();
 
-	type Panel = 'ripper' | 'transcoder';
+	type Panel = 'ripper' | 'transcoder' | 'gpu';
 	let activePanel = $state<Panel>('ripper');
 
+	const hasGpu = $derived(transcoderOnline && transcoderStats?.gpu != null);
+
 	const activeStats = $derived(activePanel === 'ripper' ? (armOnline ? systemStats : null) : (transcoderOnline ? transcoderStats : null));
-	const isOffline = $derived(activePanel === 'ripper' ? !armOnline : !transcoderOnline);
+	const isOffline = $derived(
+		activePanel === 'gpu'
+			? !transcoderOnline
+			: activePanel === 'ripper' ? !armOnline : !transcoderOnline
+	);
 	const offlineMessage = $derived(activePanel === 'ripper' ? 'Cannot reach the ARM ripping service' : 'Cannot reach the transcoder service');
 
 	function cpuColor(pct: number): string {
@@ -27,6 +33,9 @@
 	}
 	function storageColor(pct: number): string {
 		return pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-emerald-500';
+	}
+	function gpuColor(pct: number): string {
+		return pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-amber-500';
 	}
 
 	// Map storage display names to file root keys for deep linking.
@@ -72,11 +81,90 @@
 					? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
 					: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
 		>Transcoder</button>
+		{#if hasGpu}
+			<button
+				onclick={() => activePanel = 'gpu'}
+				class="rounded-sm px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider transition-colors
+					{activePanel === 'gpu'
+						? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
+						: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
+			>GPU</button>
+		{/if}
 	</div>
 
 	<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
 
-	{#if isOffline}
+	{#if activePanel === 'gpu'}
+		{#if !transcoderOnline}
+			<span class="text-xs text-orange-500 dark:text-orange-400">{offlineMessage}</span>
+		{:else if transcoderStats?.gpu}
+			{@const gpu = transcoderStats.gpu}
+			<!-- Vendor -->
+			<span class="shrink-0 text-[11px] font-medium capitalize text-gray-500 dark:text-gray-400">{gpu.vendor}</span>
+
+			<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
+
+			<!-- Load -->
+			{#if gpu.utilization_percent != null}
+				<div class="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+					<span class="shrink-0">Load</span>
+					<div class="h-1 w-16 rounded-full bg-primary/15 dark:bg-primary/15">
+						<div class="h-1 rounded-full transition-all duration-500 {gpuColor(gpu.utilization_percent)}" style="width: {Math.min(100, gpu.utilization_percent)}%"></div>
+					</div>
+					<span class="shrink-0">{gpu.utilization_percent.toFixed(0)}%</span>
+				</div>
+
+				<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
+			{/if}
+
+			<!-- Encoder -->
+			{#if gpu.encoder_percent != null}
+				<div class="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+					<span class="shrink-0">Encoder</span>
+					<div class="h-1 w-16 rounded-full bg-primary/15 dark:bg-primary/15">
+						<div class="h-1 rounded-full transition-all duration-500 {gpuColor(gpu.encoder_percent)}" style="width: {Math.min(100, gpu.encoder_percent)}%"></div>
+					</div>
+					<span class="shrink-0">{gpu.encoder_percent.toFixed(0)}%</span>
+				</div>
+
+				<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
+			{/if}
+
+			<!-- VRAM -->
+			{#if gpu.memory_used_mb != null && gpu.memory_total_mb != null}
+				{@const vramPct = (gpu.memory_used_mb / gpu.memory_total_mb) * 100}
+				<div class="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+					<span class="shrink-0">VRAM</span>
+					<div class="h-1 w-16 rounded-full bg-primary/15 dark:bg-primary/15">
+						<div class="h-1 rounded-full transition-all duration-500 {gpuColor(vramPct)}" style="width: {Math.min(100, vramPct)}%"></div>
+					</div>
+					<span class="shrink-0 whitespace-nowrap">{(gpu.memory_used_mb / 1024).toFixed(1)} / {(gpu.memory_total_mb / 1024).toFixed(1)} GB</span>
+				</div>
+
+				<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
+			{/if}
+
+			<!-- Temperature -->
+			{#if gpu.temperature_c != null}
+				<span class="shrink-0 text-[11px] text-orange-500">{gpu.temperature_c.toFixed(0)}&deg;C</span>
+				<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
+			{/if}
+
+			<!-- Power -->
+			{#if gpu.power_draw_w != null}
+				<span class="shrink-0 text-[11px] text-gray-500 dark:text-gray-400">{gpu.power_draw_w.toFixed(0)}W{#if gpu.power_limit_w != null} / {gpu.power_limit_w.toFixed(0)}W{/if}</span>
+				<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
+			{/if}
+
+			<!-- Clocks -->
+			{#if gpu.clock_core_mhz != null}
+				<span class="shrink-0 text-[11px] text-gray-500 dark:text-gray-400">{gpu.clock_core_mhz.toFixed(0)} MHz</span>
+			{/if}
+		{:else}
+			<span class="text-xs text-gray-400 dark:text-gray-500">No GPU detected</span>
+		{/if}
+
+	{:else if isOffline}
 		<span class="text-xs text-orange-500 dark:text-orange-400">{offlineMessage}</span>
 	{:else if activeStats}
 		<!-- CPU -->
