@@ -86,6 +86,59 @@
 				{/if}
 			</div>
 
+			<!-- GPU -->
+			{#if activeStats.gpu}
+				{@const gpu = activeStats.gpu}
+				<div class="mt-3 space-y-2">
+					<p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">GPU <span class="normal-case font-normal">{gpu.vendor}</span></p>
+					{#if gpu.utilization_percent != null}
+						<div>
+							<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+								<span>Util</span>
+								<span>{gpu.utilization_percent.toFixed(0)}%</span>
+							</div>
+							<ProgressBar
+								value={gpu.utilization_percent}
+								color={gpu.utilization_percent >= 90 ? 'bg-red-500' : gpu.utilization_percent >= 70 ? 'bg-yellow-500' : 'bg-amber-500'}
+								showLabel={false}
+							/>
+						</div>
+					{/if}
+					{#if gpu.encoder_percent != null}
+						<div>
+							<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+								<span>Encoder</span>
+								<span>{gpu.encoder_percent.toFixed(0)}%</span>
+							</div>
+							<ProgressBar
+								value={gpu.encoder_percent}
+								color={gpu.encoder_percent >= 90 ? 'bg-red-500' : gpu.encoder_percent >= 70 ? 'bg-yellow-500' : 'bg-amber-500'}
+								showLabel={false}
+							/>
+						</div>
+					{/if}
+					{#if gpu.memory_used_mb != null && gpu.memory_total_mb != null}
+						{@const vramPct = (gpu.memory_used_mb / gpu.memory_total_mb) * 100}
+						<div>
+							<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+								<span>VRAM</span>
+								<span>{(gpu.memory_used_mb / 1024).toFixed(1)} / {(gpu.memory_total_mb / 1024).toFixed(1)} GB</span>
+							</div>
+							<ProgressBar
+								value={vramPct}
+								color={vramPct >= 90 ? 'bg-red-500' : vramPct >= 70 ? 'bg-yellow-500' : 'bg-amber-500'}
+								showLabel={false}
+							/>
+						</div>
+					{/if}
+					{#if gpu.temperature_c != null}
+						<p class="text-[11px] text-gray-500 dark:text-gray-400">
+							Temp <span class="text-orange-500">{gpu.temperature_c.toFixed(0)}&deg;C</span>
+						</p>
+					{/if}
+				</div>
+			{/if}
+
 			<!-- Storage -->
 			{#if activeStats.storage?.length}
 				<div class="mt-3 space-y-2">
