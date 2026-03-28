@@ -37,6 +37,14 @@
 	function gpuColor(pct: number): string {
 		return pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-amber-500';
 	}
+	function vendorPillClasses(vendor: string): string {
+		switch (vendor.toLowerCase()) {
+			case 'nvidia': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+			case 'amd': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+			case 'intel': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+			default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+		}
+	}
 
 	// Map storage display names to file root keys for deep linking.
 	// Storage paths differ between ripper and transcoder, but file roots
@@ -100,7 +108,7 @@
 		{:else if transcoderStats?.gpu}
 			{@const gpu = transcoderStats.gpu}
 			<!-- Vendor -->
-			<span class="shrink-0 text-[11px] font-medium capitalize text-gray-500 dark:text-gray-400">{gpu.vendor}</span>
+			<span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold capitalize {vendorPillClasses(gpu.vendor)}">{gpu.vendor}</span>
 
 			<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
 
