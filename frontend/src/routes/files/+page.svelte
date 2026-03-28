@@ -4,6 +4,8 @@
 	import { fetchRoots, fetchDirectory, renameFile, moveFile, deleteFile, createDirectory, fixPermissions } from '$lib/api/files';
 	import type { FileRoot, DirectoryListing, FileEntry } from '$lib/types/files';
 	import { formatBytes, formatDateTime } from '$lib/utils/format';
+	import { fetchOrphanFolders, deleteFolder as deleteOrphanFolder, bulkDeleteFolders, cleanupTranscoder } from '$lib/api/maintenance';
+	import type { OrphanFoldersResponse } from '$lib/api/maintenance';
 	import FileIcon from '$lib/components/FileIcon.svelte';
 	import BreadcrumbNav from '$lib/components/BreadcrumbNav.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -39,6 +41,18 @@
 	// New folder
 	let creatingFolder = $state(false);
 	let newFolderName = $state('');
+
+	// Orphan folders modal
+	let orphanFoldersOpen = $state(false);
+	let orphanFoldersData = $state<OrphanFoldersResponse | null>(null);
+	let orphanFoldersLoading = $state(false);
+	let orphanFoldersSelected = $state<Set<string>>(new Set());
+	let orphanFoldersBusy = $state(false);
+	let orphanFoldersFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	// Transcoder cleanup
+	let transcoderCleanupOpen = $state(false);
+	let transcoderBusy = $state(false);
 
 	let sortedEntries = $derived.by(() => {
 		if (!listing) return [];
@@ -311,6 +325,73 @@
 		if (e.key === 'Escape') cancelNewFolder();
 	}
 
+	// --- Orphan folders ---
+	async function openOrphanFoldersModal() {
+		orphanFoldersOpen = true;
+		orphanFoldersLoading = true;
+		orphanFoldersFeedback = null;
+		try {
+			orphanFoldersData = await fetchOrphanFolders();
+			orphanFoldersSelected = new Set();
+		} catch { orphanFoldersData = null; }
+		orphanFoldersLoading = false;
+	}
+
+	function toggleOrphanFolderSelect(path: string) {
+		const next = new Set(orphanFoldersSelected);
+		if (next.has(path)) next.delete(path);
+		else next.add(path);
+		orphanFoldersSelected = next;
+	}
+
+	async function handleDeleteOrphanFolder(path: string) {
+		const name = path.split('/').pop();
+		orphanFoldersBusy = true;
+		try {
+			await deleteOrphanFolder(path);
+			orphanFoldersFeedback = { type: 'success', message: `Folder "${name}" deleted` };
+			orphanFoldersData = await fetchOrphanFolders();
+			orphanFoldersSelected = new Set();
+		} catch (e) {
+			orphanFoldersFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Delete failed' };
+		}
+		orphanFoldersBusy = false;
+	}
+
+	async function handleBulkDeleteOrphanFolders() {
+		orphanFoldersBusy = true;
+		try {
+			const result = await bulkDeleteFolders([...orphanFoldersSelected]);
+			orphanFoldersFeedback = {
+				type: result.errors.length ? 'error' : 'success',
+				message: `Deleted ${result.removed.length} folder${result.removed.length !== 1 ? 's' : ''}${result.errors.length ? `, ${result.errors.length} error(s)` : ''}`
+			};
+			orphanFoldersData = await fetchOrphanFolders();
+			orphanFoldersSelected = new Set();
+		} catch (e) {
+			orphanFoldersFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Bulk delete failed' };
+		}
+		orphanFoldersBusy = false;
+	}
+
+	// --- Transcoder cleanup ---
+	async function handleCleanupTranscoder() {
+		transcoderBusy = true;
+		try {
+			const result = await cleanupTranscoder();
+			feedback = {
+				type: result.errors.length ? 'error' : 'success',
+				message: `Deleted ${result.deleted} transcoder job${result.deleted !== 1 ? 's' : ''}${result.errors.length ? `, ${result.errors.length} error(s)` : ''}`
+			};
+			clearFeedback();
+		} catch (e) {
+			feedback = { type: 'error', message: e instanceof Error ? e.message : 'Cleanup failed' };
+			clearFeedback();
+		}
+		transcoderBusy = false;
+		transcoderCleanupOpen = false;
+	}
+
 	// React to ?path= query param changes (works for both initial load and in-page nav)
 	let lastParamPath = '';
 	$effect(() => {
@@ -429,6 +510,29 @@
 						Delete {selectedPaths.size}
 					</button>
 				{/if}
+				<!-- Orphan folders -->
+				<button
+					type="button"
+					onclick={openOrphanFoldersModal}
+					class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-400 dark:hover:bg-primary/15"
+					title="Orphan folders"
+				>
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11v4m-2-2h4" />
+					</svg>
+				</button>
+				<!-- Transcoder cleanup -->
+				<button
+					type="button"
+					onclick={() => (transcoderCleanupOpen = true)}
+					class="rounded-lg p-2 text-gray-500 hover:bg-primary/10 dark:text-gray-400 dark:hover:bg-primary/15"
+					title="Clean up transcoder jobs"
+				>
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+					</svg>
+				</button>
 				<!-- New folder -->
 				<button
 					type="button"
@@ -588,6 +692,132 @@
 	onconfirm={confirmBulkDelete}
 	oncancel={() => (bulkDeleteOpen = false)}
 />
+
+<!-- Transcoder cleanup confirmation -->
+<ConfirmDialog
+	open={transcoderCleanupOpen}
+	title="Clean Up Transcoder"
+	message="Delete all completed and failed transcoder jobs from the transcoder database?"
+	confirmLabel="Clean Up"
+	variant="danger"
+	onconfirm={handleCleanupTranscoder}
+	oncancel={() => (transcoderCleanupOpen = false)}
+/>
+
+<!-- Orphan folders modal -->
+{#if orphanFoldersOpen}
+	<div class="fixed inset-0 z-50 flex items-center justify-center">
+		<button
+			type="button"
+			class="absolute inset-0 bg-black/50"
+			aria-label="Close dialog"
+			onclick={() => (orphanFoldersOpen = false)}
+		></button>
+		<div class="relative z-10 flex w-full max-w-lg flex-col rounded-lg bg-surface shadow-xl dark:bg-surface-dark" style="max-height: 80vh;">
+			<!-- Header -->
+			<div class="shrink-0 border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Orphan Folders</h3>
+				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Folders not associated with any job</p>
+			</div>
+
+			<!-- Feedback -->
+			{#if orphanFoldersFeedback}
+				<div class="shrink-0 border-b border-gray-100 px-6 py-2 dark:border-gray-700/50">
+					<div class="rounded-lg border px-3 py-1.5 text-sm {orphanFoldersFeedback.type === 'success'
+						? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400'
+						: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'}">
+						{orphanFoldersFeedback.message}
+					</div>
+				</div>
+			{/if}
+
+			<!-- Content (scrollable) -->
+			<div class="min-h-0 flex-1 overflow-y-auto">
+				{#if orphanFoldersLoading}
+					<div class="flex items-center justify-center p-8">
+						<svg class="mr-2 h-5 w-5 animate-spin text-gray-400" viewBox="0 0 24 24">
+							<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+							<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+						</svg>
+						<span class="text-sm text-gray-500 dark:text-gray-400">Loading...</span>
+					</div>
+				{:else if orphanFoldersData && orphanFoldersData.folders.length > 0}
+					{#each orphanFoldersData.folders as folder (folder.path)}
+						<div class="flex items-center gap-3 border-b border-gray-100 px-6 py-2.5 dark:border-gray-700/50">
+							<input
+								type="checkbox"
+								checked={orphanFoldersSelected.has(folder.path)}
+								onchange={() => toggleOrphanFolderSelect(folder.path)}
+								disabled={orphanFoldersBusy}
+								class="h-4 w-4 rounded border-gray-300 text-primary accent-primary dark:border-gray-600"
+							/>
+							<svg class="h-5 w-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+							</svg>
+							<div class="min-w-0 flex-1">
+								<div class="truncate text-sm font-medium text-gray-900 dark:text-white">{folder.name}</div>
+								<div class="text-xs text-gray-500 dark:text-gray-400">{formatBytes(folder.size_bytes)}</div>
+							</div>
+							<span class="rounded-full px-2 py-0.5 text-xs font-medium
+								{folder.category === 'raw'
+									? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+									: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}">
+								{folder.category}
+							</span>
+							<button
+								type="button"
+								onclick={() => handleDeleteOrphanFolder(folder.path)}
+								disabled={orphanFoldersBusy}
+								class="rounded p-1 text-red-500 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/20"
+								title="Delete folder"
+							>
+								<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+								</svg>
+							</button>
+						</div>
+					{/each}
+				{:else if orphanFoldersData}
+					<div class="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+						No orphan folders found
+					</div>
+				{:else}
+					<div class="p-8 text-center text-sm text-red-500 dark:text-red-400">
+						Failed to load orphan folders
+					</div>
+				{/if}
+			</div>
+
+			<!-- Footer -->
+			<div class="shrink-0 border-t border-gray-200 px-6 py-4 dark:border-gray-700">
+				<div class="flex items-center justify-between">
+					<div>
+						{#if orphanFoldersSelected.size > 0}
+							<button
+								type="button"
+								onclick={handleBulkDeleteOrphanFolders}
+								disabled={orphanFoldersBusy}
+								class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+							>
+								<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+								</svg>
+								Delete {orphanFoldersSelected.size} selected
+							</button>
+						{/if}
+					</div>
+					<button
+						type="button"
+						onclick={() => (orphanFoldersOpen = false)}
+						class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+					>
+						Close
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <!-- Bulk move dialog — browsable directory picker -->
 {#if moveDialogOpen}

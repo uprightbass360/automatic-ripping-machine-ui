@@ -1,14 +1,19 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fetchNotifications, dismissNotification } from '$lib/api/notifications';
+	import { purgeNotifications } from '$lib/api/maintenance';
 	import type { Notification } from '$lib/types/arm';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let notifications = $state<Notification[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let dismissing = $state<Set<number>>(new Set());
 	let showCleared = $state(false);
+	let purging = $state(false);
+	let purgeConfirmOpen = $state(false);
+	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
 	let filtered = $derived(
 		showCleared ? notifications : notifications.filter((n) => !n.seen)
@@ -52,6 +57,20 @@
 	}
 
 	let unseenCount = $derived(notifications.filter((n) => !n.seen).length);
+	let clearedCount = $derived(notifications.filter((n) => n.seen).length);
+
+	async function handlePurge() {
+		purging = true;
+		purgeConfirmOpen = false;
+		try {
+			const result = await purgeNotifications();
+			feedback = { type: 'success', message: `Purged ${result.count} cleared notification${result.count !== 1 ? 's' : ''}` };
+			await load();
+		} catch (e) {
+			feedback = { type: 'error', message: e instanceof Error ? e.message : 'Purge failed' };
+		}
+		purging = false;
+	}
 
 	onMount(() => {
 		load();
@@ -63,6 +82,15 @@
 </svelte:head>
 
 <div class="space-y-6">
+	{#if feedback}
+		<div class="rounded-lg px-4 py-2.5 text-sm {feedback.type === 'success'
+			? 'bg-green-500/10 text-green-700 dark:text-green-400'
+			: 'bg-red-500/10 text-red-700 dark:text-red-400'}">
+			{feedback.message}
+			<button onclick={() => { feedback = null; }} class="ml-2 opacity-60 hover:opacity-100">&times;</button>
+		</div>
+	{/if}
+
 	<div class="flex items-center justify-between">
 		<div class="flex items-center gap-3">
 			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
@@ -79,6 +107,16 @@
 				/>
 				Show dismissed
 			</label>
+			{#if clearedCount > 0}
+				<button
+					type="button"
+					onclick={() => (purgeConfirmOpen = true)}
+					disabled={purging}
+					class="rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-500/10 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-500/15 transition-colors"
+				>
+					{purging ? 'Purging...' : 'Purge Cleared'}
+				</button>
+			{/if}
 			{#if unseenCount > 0}
 				<button
 					onclick={dismissAll}
@@ -141,3 +179,13 @@
 		</div>
 	{/if}
 </div>
+
+<ConfirmDialog
+	open={purgeConfirmOpen}
+	title="Purge Notifications"
+	message="Permanently delete all cleared notifications from the database? This cannot be undone."
+	confirmLabel="Purge"
+	variant="danger"
+	onconfirm={handlePurge}
+	oncancel={() => (purgeConfirmOpen = false)}
+/>
