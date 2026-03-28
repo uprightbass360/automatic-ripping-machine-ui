@@ -114,20 +114,7 @@
 	// overwriting their changes when the job prop updates from polling
 	let touched = $state<Record<string, boolean>>({});
 
-	let infoDirty = $derived(
-		infoTitle !== (job.title || '') ||
-		infoYear !== (job.year || '') ||
-		infoType !== (job.video_type || '') ||
-		infoImdbId !== (job.imdb_id || '') ||
-		infoPosterUrl !== (job.poster_url || '') ||
-		infoPath !== (job.path || '') ||
-		infoDisctype !== (job.disctype || '') ||
-		infoLabel !== (job.label || '') ||
-		infoArtist !== (job.artist || '') ||
-		infoAlbum !== (job.album || '') ||
-		infoSeason !== (job.season || '') ||
-		infoEpisode !== (job.episode || '')
-	);
+	let infoDirty = $derived(Object.values(touched).some(Boolean));
 
 	// Keep editable fields in sync with the job prop as the backend
 	// detects metadata (title, year, poster, etc.) during disc identification.
@@ -175,6 +162,24 @@
 		}
 	}
 
+	function resetInfo() {
+		infoTitle = job.title || '';
+		infoYear = job.year || '';
+		infoType = job.video_type || '';
+		infoImdbId = job.imdb_id || '';
+		infoPosterUrl = job.poster_url || '';
+		infoPath = job.path || '';
+		infoDisctype = job.disctype || '';
+		infoLabel = job.label || '';
+		infoArtist = job.artist || '';
+		infoAlbum = job.album || '';
+		infoSeason = job.season || '';
+		infoEpisode = job.episode || '';
+		touched = {};
+		infoFeedback = null;
+		loadNamingPreviews();
+	}
+
 	let waitTime = $derived(Number(detail?.config?.MANUAL_WAIT_TIME) || 60);
 	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
 	let isVideo = $derived(
@@ -210,8 +215,8 @@
 					map[t.track_number] = t;
 				}
 				namingPreviews = map;
-				// Populate output path from rendered folder if not already set
-				if (!infoPath && result.job_folder && !touched.path) {
+				// Populate output path from rendered folder (unless user edited it)
+				if (result.job_folder && !touched.path) {
 					infoPath = result.job_folder;
 				}
 			}
@@ -498,23 +503,48 @@
 			</button>
 		{/if}
 		<button
-			onclick={handleStart}
-			disabled={starting}
-			class="{btnBase} ml-auto bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-700 dark:hover:bg-emerald-600"
-		>
-			{starting ? 'Starting...' : 'Start'}
-		</button>
-		<button
 			onclick={handleCancel}
 			disabled={cancelling}
-			class="{btnBase} text-red-600 ring-1 ring-red-300 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:ring-red-700 dark:hover:bg-red-900/20"
+			class="{btnBase} ml-auto text-red-600 ring-1 ring-red-300 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:ring-red-700 dark:hover:bg-red-900/20"
 		>
 			{cancelling ? 'Cancelling...' : 'Cancel'}
+		</button>
+		<button
+			onclick={handleStart}
+			disabled={starting}
+			class="{btnBase} bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-700 dark:hover:bg-emerald-600"
+		>
+			{starting ? 'Starting...' : 'Start'}
 		</button>
 	</div>
 
 	<!-- Expanded sections -->
 	{#if showInfo}
+		{#if infoDirty}
+			<div class="flex items-center justify-between border-t border-amber-300 bg-amber-50 px-4 py-2 dark:border-amber-700 dark:bg-amber-900/20">
+				<span class="text-xs font-medium text-amber-700 dark:text-amber-400">Unsaved changes</span>
+				<div class="flex items-center gap-2">
+					{#if infoFeedback}
+						<span class="text-xs {infoFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+							{infoFeedback.message}
+						</span>
+					{/if}
+					<button
+						onclick={resetInfo}
+						class="{btnBase} text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+					>
+						Reset
+					</button>
+					<button
+						onclick={saveInfo}
+						disabled={infoSaving}
+						class="{btnBase} bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-50"
+					>
+						{infoSaving ? 'Saving...' : 'Save'}
+					</button>
+				</div>
+			</div>
+		{/if}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
 			{#if initialLoading}
 				<p class="text-sm text-gray-400">Loading...</p>
@@ -597,21 +627,10 @@
 						{/if}
 					</div>
 
-					{#if infoDirty}
-						<div class="flex items-center gap-2">
-							<button
-								onclick={saveInfo}
-								disabled={infoSaving}
-								class="{btnBase} bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-50"
-							>
-								{infoSaving ? 'Saving...' : 'Save'}
-							</button>
-							{#if infoFeedback}
-								<span class="text-xs {infoFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-									{infoFeedback.message}
-								</span>
-							{/if}
-						</div>
+					{#if infoFeedback && !infoDirty}
+						<span class="text-xs {infoFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+							{infoFeedback.message}
+						</span>
 					{/if}
 
 					<!-- Disc details -->
@@ -657,6 +676,12 @@
 							</div>
 						{/if}
 					</div>
+
+					<!-- Output path -->
+					<label class="block text-sm">
+						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Output Path</span>
+						<input type="text" bind:value={infoPath} oninput={() => { touched.path = true; }} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
+					</label>
 
 					<!-- Tracks table -->
 					{#if detail?.tracks && detail.tracks.length > 0}
@@ -800,24 +825,63 @@
 						</div>
 					{/if}
 
-					<!-- Output path -->
-					<label class="block text-sm">
-						<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Output Path</span>
-						<input type="text" bind:value={infoPath} oninput={() => { touched.path = true; }} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
-					</label>
-
-					<!-- Link to full job detail -->
-					<a
-						href="/jobs/{job.job_id}"
-						class="{btnBase} inline-flex items-center gap-1 bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15"
-					>
-						View Full Details
-						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-						</svg>
-					</a>
+					<!-- Footer: details link + action buttons -->
+					<div class="flex items-center justify-between">
+						<a
+							href="/jobs/{job.job_id}"
+							class="{btnBase} inline-flex items-center gap-1 bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15"
+						>
+							View Full Details
+							<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+							</svg>
+						</a>
+						<div class="flex gap-2">
+							<button
+								onclick={handleCancel}
+								disabled={cancelling}
+								class="{btnBase} text-red-600 ring-1 ring-red-300 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:ring-red-700 dark:hover:bg-red-900/20"
+							>
+								{cancelling ? 'Cancelling...' : 'Cancel'}
+							</button>
+							<button
+								onclick={handleStart}
+								disabled={starting}
+								class="{btnBase} bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-700 dark:hover:bg-emerald-600"
+							>
+								{starting ? 'Starting...' : 'Start'}
+							</button>
+						</div>
+					</div>
 				</div>
 			{/if}
+		</div>
+	{/if}
+
+	<!-- Unsaved changes bar -->
+	{#if infoDirty && showInfo}
+		<div class="flex items-center justify-between border-t border-amber-300 bg-amber-50 px-4 py-2 dark:border-amber-700 dark:bg-amber-900/20">
+			<span class="text-xs font-medium text-amber-700 dark:text-amber-400">Unsaved changes</span>
+			<div class="flex items-center gap-2">
+				{#if infoFeedback}
+					<span class="text-xs {infoFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+						{infoFeedback.message}
+					</span>
+				{/if}
+				<button
+					onclick={resetInfo}
+					class="{btnBase} text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+				>
+					Reset
+				</button>
+				<button
+					onclick={saveInfo}
+					disabled={infoSaving}
+					class="{btnBase} bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-50"
+				>
+					{infoSaving ? 'Saving...' : 'Save'}
+				</button>
+			</div>
 		</div>
 	{/if}
 

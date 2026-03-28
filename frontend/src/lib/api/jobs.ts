@@ -302,7 +302,9 @@ export interface NamingPreviewResponse {
 }
 
 export function fetchNamingPreview(jobId: number): Promise<NamingPreviewResponse> {
-	return apiFetch<NamingPreviewResponse>(`/api/jobs/${jobId}/naming-preview`);
+	return apiFetch<NamingPreviewResponse>(`/api/jobs/${jobId}/naming-preview`, {
+		signal: AbortSignal.timeout(5000)
+	});
 }
 
 export interface NamingOverrideUpdate {

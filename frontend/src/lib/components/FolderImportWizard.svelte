@@ -190,7 +190,7 @@
 </script>
 
 {#if open}
-	<div class="fixed inset-0 z-50 flex items-center justify-center">
+	<div class="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center">
 		<!-- Backdrop -->
 		<button
 			type="button"
@@ -200,170 +200,166 @@
 		></button>
 
 		<!-- Dialog -->
-		<div class="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-lg bg-surface shadow-xl dark:bg-surface-dark">
+		<div class="relative z-10 flex h-full w-full flex-col bg-surface shadow-xl dark:bg-surface-dark sm:h-[75vh] sm:max-w-2xl sm:rounded-lg">
 			<!-- Header -->
-			<div class="flex items-center justify-between border-b border-primary/20 px-6 py-4 dark:border-primary/20">
+			<div class="flex items-center justify-between border-b border-primary/20 px-6 py-3 dark:border-primary/20">
 				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Import Folder</h3>
-				<!-- Progress dots -->
-				<div class="flex items-center gap-2">
-					{#each [1, 2, 3] as s}
-						<div
-							class="h-2.5 w-2.5 rounded-full transition-colors {s === step
-								? 'bg-primary'
-								: s < step
-									? 'bg-primary/50'
-									: 'bg-gray-300 dark:bg-gray-600'}"
-						></div>
-					{/each}
-				</div>
+				<button
+					type="button"
+					onclick={handleClose}
+					class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+					aria-label="Close"
+				>
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+				</button>
 			</div>
 
 			<!-- Body -->
-			<div class="flex-1 overflow-y-auto px-6 py-4">
+			<div class="flex min-h-0 flex-1 flex-col px-6 py-4">
 				{#if step === 1}
 					<!-- Step 1: Pick Folder -->
-					<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-						Select a folder from the ingress directory to import.
-					</p>
-					<FolderBrowser onselect={handleFolderSelect} />
-					{#if selectedPath}
-						<div class="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-gray-700 dark:border-primary/20 dark:bg-primary/10 dark:text-gray-300">
-							Selected: <span class="font-medium">{selectedPath}</span>
-						</div>
-					{/if}
 					{#if scanError}
-						<div class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+						<div class="mb-2 shrink-0 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
 							{scanError}
 						</div>
 					{/if}
+					<FolderBrowser onselect={handleFolderSelect} />
 
 				{:else if step === 2}
 					<!-- Step 2: Verify & Match -->
 					{#if scanResult}
-						<!-- Scan info -->
-						<div class="mb-4 flex flex-wrap gap-3 text-sm">
-							<span class="rounded-sm bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-								{scanResult.disc_type.toUpperCase()}
-							</span>
-							<span class="text-gray-500 dark:text-gray-400">{formatSize(scanResult.folder_size_bytes)}</span>
-							<span class="text-gray-500 dark:text-gray-400">{scanResult.stream_count} streams</span>
-							<span class="text-gray-500 dark:text-gray-400">Label: {scanResult.label}</span>
-						</div>
+						<!-- Pinned: scan info + poster + fields -->
+						<div class="shrink-0 border-b border-primary/10 pb-4 dark:border-primary/10">
+							<!-- Scan info badges -->
+							<div class="mb-3 flex flex-wrap gap-3 text-sm">
+								<span class="rounded-sm bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+									{scanResult.disc_type.toUpperCase()}
+								</span>
+								<span class="text-gray-500 dark:text-gray-400">{formatSize(scanResult.folder_size_bytes)}</span>
+								<span class="text-gray-500 dark:text-gray-400">{scanResult.stream_count} streams</span>
+								<span class="text-gray-500 dark:text-gray-400">Label: {scanResult.label}</span>
+							</div>
 
-						<!-- Poster preview + editable fields -->
-						<div class="mb-4 flex gap-4">
-							{#if editPosterUrl}
-								<img
-									src={posterSrc(editPosterUrl)}
-									alt={editTitle}
-									class="h-36 w-24 shrink-0 rounded-md object-cover"
-								/>
-							{:else}
-								<div class="flex h-36 w-24 shrink-0 items-center justify-center rounded-md bg-primary/10 text-gray-400 dark:bg-primary/15">
-									<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-									</svg>
-								</div>
-							{/if}
-							<div class="grid flex-1 grid-cols-2 gap-3">
-								<label class="col-span-2">
-									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
-									<input type="text" bind:value={editTitle} class="w-full {inputBase}" />
-								</label>
-								<label>
-									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
-									<input type="text" bind:value={editYear} class="w-full {inputBase}" />
-								</label>
-								<label>
-									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</span>
-									<select bind:value={editType} class="w-full {inputBase}">
-										<option value="movie">Movie</option>
-										<option value="series">Series</option>
-									</select>
-								</label>
-								<label class="col-span-2">
-									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
-									<input type="text" bind:value={editImdbId} placeholder="tt..." class="w-full {inputBase}" />
-								</label>
-								<label>
-									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Season</span>
-									<input type="number" bind:value={editSeason} min="1" placeholder="—" class="w-full {inputBase}" />
-								</label>
-								<label>
-									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc</span>
-									<div class="flex items-center gap-1">
-										<input type="number" bind:value={editDiscNumber} min="1" placeholder="—" class="w-full {inputBase}" />
-										<span class="text-xs text-gray-400">of</span>
-										<input type="number" bind:value={editDiscTotal} min="1" placeholder="—" class="w-full {inputBase}" />
+							<!-- Poster preview + editable fields -->
+							<div class="flex gap-4">
+								{#if editPosterUrl}
+									<img
+										src={posterSrc(editPosterUrl)}
+										alt={editTitle}
+										class="h-36 w-24 shrink-0 rounded-md object-cover"
+									/>
+								{:else}
+									<div class="flex h-36 w-24 shrink-0 items-center justify-center rounded-md bg-primary/10 text-gray-400 dark:bg-primary/15">
+										<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+										</svg>
 									</div>
-								</label>
+								{/if}
+								<div class="grid flex-1 grid-cols-2 gap-3">
+									<label class="col-span-2">
+										<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
+										<input type="text" bind:value={editTitle} class="w-full {inputBase}" />
+									</label>
+									<label>
+										<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
+										<input type="text" bind:value={editYear} class="w-full {inputBase}" />
+									</label>
+									<label>
+										<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</span>
+										<select bind:value={editType} class="w-full {inputBase}">
+											<option value="movie">Movie</option>
+											<option value="series">Series</option>
+										</select>
+									</label>
+									<label class="col-span-2">
+										<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
+										<input type="text" bind:value={editImdbId} placeholder="tt..." class="w-full {inputBase}" />
+									</label>
+									<label>
+										<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Season</span>
+										<input type="number" bind:value={editSeason} min="1" placeholder="—" class="w-full {inputBase}" />
+									</label>
+									<label>
+										<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc</span>
+										<div class="flex items-center gap-1">
+											<input type="number" bind:value={editDiscNumber} min="1" placeholder="—" class="w-full {inputBase}" />
+											<span class="text-xs text-gray-400">of</span>
+											<input type="number" bind:value={editDiscTotal} min="1" placeholder="—" class="w-full {inputBase}" />
+										</div>
+									</label>
+								</div>
 							</div>
 						</div>
 
-						<!-- Metadata search -->
-						<div class="space-y-3 border-t border-primary/20 pt-4 dark:border-primary/20">
-							<div class="flex gap-2">
-								<input
-									type="text"
-									bind:value={searchQuery}
-									onkeydown={handleSearchKeydown}
-									placeholder="Search title..."
-									class="flex-1 {inputBase}"
-								/>
-								<button
-									type="button"
-									onclick={handleSearch}
-									disabled={searching || !searchQuery.trim()}
-									class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
-								>
-									{searching ? 'Searching...' : 'Search'}
-								</button>
-							</div>
-
-							{#if searchError}
-								<p class="text-sm text-gray-500 dark:text-gray-400">{searchError}</p>
-							{/if}
-
-							{#if loadingDetail}
-								<p class="text-sm text-gray-400">Loading details...</p>
-							{/if}
-
-							{#if searchResults.length > 0}
-								<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-									{#each searchResults as result}
-										<button
-											type="button"
-											onclick={() => handleSelectResult(result)}
-											class="flex flex-col overflow-hidden rounded-lg border text-left transition-all border-primary/20 hover:border-primary/40 dark:border-primary/20 dark:hover:border-primary/40"
-										>
-											{#if result.poster_url}
-												<img
-													src={posterSrc(result.poster_url)}
-													alt={result.title}
-													class="aspect-[2/3] w-full object-cover"
-													loading="lazy"
-												/>
-											{:else}
-												<div class="flex aspect-[2/3] w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15">
-													<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-													</svg>
-												</div>
-											{/if}
-											<div class="p-1.5">
-												<p class="text-xs font-medium text-gray-900 dark:text-white line-clamp-2">{result.title}</p>
-												<span class="text-[10px] text-gray-500 dark:text-gray-400">{result.year}</span>
-											</div>
-										</button>
-									{/each}
+						<!-- Scrollable: search + results -->
+						<div class="min-h-0 flex-1 overflow-y-auto pt-4">
+							<div class="space-y-3">
+								<div class="flex gap-2">
+									<input
+										type="text"
+										bind:value={searchQuery}
+										onkeydown={handleSearchKeydown}
+										placeholder="Search title..."
+										class="flex-1 {inputBase}"
+									/>
+									<button
+										type="button"
+										onclick={handleSearch}
+										disabled={searching || !searchQuery.trim()}
+										class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
+									>
+										{searching ? 'Searching...' : 'Search'}
+									</button>
 								</div>
-							{/if}
+
+								{#if searchError}
+									<p class="text-sm text-gray-500 dark:text-gray-400">{searchError}</p>
+								{/if}
+
+								{#if loadingDetail}
+									<p class="text-sm text-gray-400">Loading details...</p>
+								{/if}
+
+								{#if searchResults.length > 0}
+									<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+										{#each searchResults as result}
+											<button
+												type="button"
+												onclick={() => handleSelectResult(result)}
+												class="flex flex-col overflow-hidden rounded-lg border text-left transition-all border-primary/20 hover:border-primary/40 dark:border-primary/20 dark:hover:border-primary/40"
+											>
+												{#if result.poster_url}
+													<img
+														src={posterSrc(result.poster_url)}
+														alt={result.title}
+														class="aspect-[2/3] w-full object-cover"
+														loading="lazy"
+													/>
+												{:else}
+													<div class="flex aspect-[2/3] w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15">
+														<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+														</svg>
+													</div>
+												{/if}
+												<div class="p-1.5">
+													<p class="text-xs font-medium text-gray-900 dark:text-white line-clamp-2">{result.title}</p>
+													<span class="text-[10px] text-gray-500 dark:text-gray-400">{result.year}</span>
+												</div>
+											</button>
+										{/each}
+									</div>
+								{/if}
+							</div>
 						</div>
 					{/if}
 
 				{:else if step === 3}
 					<!-- Step 3: Confirm -->
-					<div class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
+					<!-- Pinned: summary card -->
+					<div class="shrink-0 rounded-lg border border-primary/20 p-4 dark:border-primary/20">
 						<div class="flex gap-4">
 							{#if editPosterUrl}
 								<img
@@ -396,21 +392,35 @@
 								{#if editImdbId}
 									<p class="text-xs text-gray-500 dark:text-gray-400">IMDb: {editImdbId}</p>
 								{/if}
-								<p class="text-xs text-gray-500 dark:text-gray-400">Source: {selectedPath}</p>
 							</div>
 						</div>
 					</div>
-					{#if importError}
-						<div class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-							{importError}
+
+					<!-- Scrollable: source path + errors -->
+					<div class="min-h-0 flex-1 overflow-y-auto pt-4">
+						<div class="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+							<div class="flex items-center gap-2">
+								<svg class="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+								</svg>
+								<span>Source: <span class="font-medium text-gray-700 dark:text-gray-300">{selectedPath}</span></span>
+							</div>
+							{#if editSeason}
+								<p>Season {editSeason}{#if editDiscNumber}, Disc {editDiscNumber}{#if editDiscTotal} of {editDiscTotal}{/if}{/if}</p>
+							{/if}
 						</div>
-					{/if}
+						{#if importError}
+							<div class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+								{importError}
+							</div>
+						{/if}
+					</div>
 				{/if}
 			</div>
 
 			<!-- Footer -->
-			<div class="flex items-center justify-between border-t border-primary/20 px-6 py-4 dark:border-primary/20">
-				<div>
+			<div class="flex items-center justify-between border-t border-primary/20 px-6 py-3 dark:border-primary/20">
+				<div class="w-20">
 					{#if step > 1}
 						<button
 							type="button"
@@ -421,14 +431,19 @@
 						</button>
 					{/if}
 				</div>
-				<div class="flex gap-3">
-					<button
-						type="button"
-						onclick={handleClose}
-						class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-					>
-						Cancel
-					</button>
+				<!-- Progress dots -->
+				<div class="flex items-center gap-2">
+					{#each [1, 2, 3] as s}
+						<div
+							class="h-2 w-2 rounded-full transition-colors {s === step
+								? 'bg-primary'
+								: s < step
+									? 'bg-primary/50'
+									: 'bg-gray-300 dark:bg-gray-600'}"
+						></div>
+					{/each}
+				</div>
+				<div class="flex w-20 justify-end">
 					{#if step === 1}
 						<button
 							type="button"
