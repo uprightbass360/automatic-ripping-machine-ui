@@ -7,7 +7,12 @@ vi.mock('$lib/api/notifications', () => ({
 		{ id: 1, title: 'Job Complete', message: 'Movie ripped successfully', seen: false, trigger_time: '2025-06-15T12:00:00Z' },
 		{ id: 2, title: 'Error', message: 'Rip failed', seen: true, trigger_time: '2025-06-14T10:00:00Z' }
 	])),
-	dismissNotification: vi.fn(() => Promise.resolve({}))
+	dismissNotification: vi.fn(() => Promise.resolve({})),
+	dismissAllNotifications: vi.fn(() => Promise.resolve())
+}));
+
+vi.mock('$lib/api/maintenance', () => ({
+	purgeNotifications: vi.fn(() => Promise.resolve({ success: true, count: 0 }))
 }));
 
 describe('Notifications Page', () => {
@@ -45,6 +50,38 @@ describe('Notifications Page', () => {
 		it('shows Show dismissed checkbox', () => {
 			renderComponent(NotificationsPage);
 			expect(screen.getByText('Show dismissed')).toBeInTheDocument();
+		});
+	});
+
+	describe('purge cleared', () => {
+		it('shows Purge Cleared button when cleared notifications exist', async () => {
+			renderComponent(NotificationsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Purge Cleared')).toBeInTheDocument();
+			});
+		});
+
+		it('does not show Purge Cleared button when no cleared notifications', async () => {
+			const { fetchNotifications } = await import('$lib/api/notifications');
+			vi.mocked(fetchNotifications).mockResolvedValueOnce([
+				{ id: 1, title: 'Job Complete', message: 'Movie ripped successfully', seen: false, trigger_time: '2025-06-15T12:00:00Z' }
+			]);
+			renderComponent(NotificationsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Job Complete')).toBeInTheDocument();
+			});
+			expect(screen.queryByText('Purge Cleared')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('empty state', () => {
+		it('shows empty state when no notifications', async () => {
+			const { fetchNotifications } = await import('$lib/api/notifications');
+			vi.mocked(fetchNotifications).mockResolvedValueOnce([]);
+			renderComponent(NotificationsPage);
+			await waitFor(() => {
+				expect(screen.getByText('No new notifications')).toBeInTheDocument();
+			});
 		});
 	});
 
