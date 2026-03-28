@@ -157,10 +157,10 @@
 				<p class="text-sm font-semibold text-gray-700 dark:text-gray-300">GPU</p>
 				<span class="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{gpu.vendor}</span>
 			</div>
-			<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+			<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
 				{#if gpu.utilization_percent != null}
 					<div>
-						<p class="text-xs text-gray-500 dark:text-gray-400">Utilization</p>
+						<p class="text-xs text-gray-500 dark:text-gray-400">Load</p>
 						<p class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">{gpu.utilization_percent.toFixed(0)}%</p>
 					</div>
 				{/if}
@@ -180,6 +180,24 @@
 					<div>
 						<p class="text-xs text-gray-500 dark:text-gray-400">Temperature</p>
 						<p class="mt-1 text-2xl font-bold text-orange-500">{gpu.temperature_c.toFixed(0)}&deg;C</p>
+					</div>
+				{/if}
+				{#if gpu.power_draw_w != null}
+					<div>
+						<p class="text-xs text-gray-500 dark:text-gray-400">Power</p>
+						<p class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">{gpu.power_draw_w.toFixed(0)}<span class="text-base font-normal text-gray-400">{#if gpu.power_limit_w != null} / {gpu.power_limit_w.toFixed(0)}{/if} W</span></p>
+					</div>
+				{/if}
+				{#if gpu.clock_core_mhz != null}
+					<div>
+						<p class="text-xs text-gray-500 dark:text-gray-400">Core Clock</p>
+						<p class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">{gpu.clock_core_mhz.toFixed(0)}<span class="text-base font-normal text-gray-400"> MHz</span></p>
+					</div>
+				{/if}
+				{#if gpu.clock_memory_mhz != null}
+					<div>
+						<p class="text-xs text-gray-500 dark:text-gray-400">Memory Clock</p>
+						<p class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">{gpu.clock_memory_mhz.toFixed(0)}<span class="text-base font-normal text-gray-400"> MHz</span></p>
 					</div>
 				{/if}
 			</div>

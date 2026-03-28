@@ -222,6 +222,10 @@ class GpuSnapshotSchema(BaseModel):
     memory_total_mb: float | None = None
     temperature_c: float | None = None
     encoder_percent: float | None = None
+    power_draw_w: float | None = None
+    power_limit_w: float | None = None
+    clock_core_mhz: float | None = None
+    clock_memory_mhz: float | None = None
 
 
 class SystemStatsSchema(BaseModel):
