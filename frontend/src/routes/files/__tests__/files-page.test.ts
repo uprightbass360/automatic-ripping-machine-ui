@@ -3,6 +3,7 @@ import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-
 import FilesPage from '../+page.svelte';
 
 import { fetchRoots, fetchDirectory } from '$lib/api/files';
+import { fetchOrphanFolders, cleanupTranscoder } from '$lib/api/maintenance';
 
 vi.mock('$app/stores', async () => {
 	const { readable } = await import('svelte/store');
@@ -30,6 +31,13 @@ vi.mock('$lib/api/files', () => ({
 	deleteFile: vi.fn(() => Promise.resolve()),
 	createDirectory: vi.fn(() => Promise.resolve()),
 	fixPermissions: vi.fn(() => Promise.resolve({ fixed: 3 }))
+}));
+
+vi.mock('$lib/api/maintenance', () => ({
+	fetchOrphanFolders: vi.fn(() => Promise.resolve({ total_size_bytes: 0, folders: [] })),
+	deleteFolder: vi.fn(() => Promise.resolve({ success: true })),
+	bulkDeleteFolders: vi.fn(() => Promise.resolve({ removed: [], errors: [] })),
+	cleanupTranscoder: vi.fn(() => Promise.resolve({ success: true, deleted: 0, errors: [] }))
 }));
 
 vi.stubGlobal('confirm', vi.fn(() => true));
@@ -134,6 +142,67 @@ describe('Files Page', () => {
 			renderComponent(FilesPage);
 			await waitFor(() => {
 				expect(screen.getByText('Permission denied')).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('orphan folders', () => {
+		it('shows orphan folders button in toolbar', async () => {
+			renderComponent(FilesPage);
+			await waitFor(() => {
+				expect(screen.getByTitle('Orphan folders')).toBeInTheDocument();
+			});
+		});
+
+		it('opens orphan folders modal when clicked', async () => {
+			renderComponent(FilesPage);
+			await waitFor(() => {
+				expect(screen.getByTitle('Orphan folders')).toBeInTheDocument();
+			});
+			await fireEvent.click(screen.getByTitle('Orphan folders'));
+			await waitFor(() => {
+				expect(screen.getByText('Orphan Folders')).toBeInTheDocument();
+				expect(screen.getByText('Folders not associated with any job')).toBeInTheDocument();
+			});
+		});
+
+		it('displays folder list in modal', async () => {
+			vi.mocked(fetchOrphanFolders).mockResolvedValueOnce({
+				total_size_bytes: 5000000,
+				folders: [
+					{ path: '/media/raw/orphan1', name: 'orphan1', size_bytes: 3000000, category: 'raw' },
+					{ path: '/media/completed/orphan2', name: 'orphan2', size_bytes: 2000000, category: 'completed' }
+				]
+			});
+			renderComponent(FilesPage);
+			await waitFor(() => {
+				expect(screen.getByTitle('Orphan folders')).toBeInTheDocument();
+			});
+			await fireEvent.click(screen.getByTitle('Orphan folders'));
+			await waitFor(() => {
+				expect(screen.getByText('orphan1')).toBeInTheDocument();
+				expect(screen.getByText('orphan2')).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('transcoder cleanup', () => {
+		it('shows transcoder cleanup button in toolbar', async () => {
+			renderComponent(FilesPage);
+			await waitFor(() => {
+				expect(screen.getByTitle('Clean up transcoder jobs')).toBeInTheDocument();
+			});
+		});
+
+		it('opens confirm dialog when clicked', async () => {
+			renderComponent(FilesPage);
+			await waitFor(() => {
+				expect(screen.getByTitle('Clean up transcoder jobs')).toBeInTheDocument();
+			});
+			await fireEvent.click(screen.getByTitle('Clean up transcoder jobs'));
+			await waitFor(() => {
+				expect(screen.getByText('Clean Up Transcoder')).toBeInTheDocument();
+				expect(screen.getByText('Delete all completed and failed transcoder jobs from the transcoder database?')).toBeInTheDocument();
 			});
 		});
 	});

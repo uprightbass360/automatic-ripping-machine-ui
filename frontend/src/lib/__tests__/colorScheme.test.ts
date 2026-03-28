@@ -49,6 +49,20 @@ describe('COLOR_SCHEMES', () => {
 		const ids = COLOR_SCHEMES.map((s) => s.id);
 		expect(new Set(ids).size).toBe(ids.length);
 	});
+
+	it('every scheme includes a --radius token', () => {
+		for (const scheme of COLOR_SCHEMES) {
+			expect(scheme.tokens['--radius'], `scheme '${scheme.id}' should have --radius`).toBeDefined();
+		}
+	});
+
+	it('--radius values are valid CSS lengths', () => {
+		const validPattern = /^(\d+(\.\d+)?(rem|px|em)|0)$/;
+		for (const scheme of COLOR_SCHEMES) {
+			const radius = scheme.tokens['--radius'];
+			expect(radius, `scheme '${scheme.id}' --radius '${radius}' should be a valid CSS length`).toMatch(validPattern);
+		}
+	});
 });
 
 describe('schemeLocksMode', () => {

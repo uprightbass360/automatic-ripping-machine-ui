@@ -80,6 +80,36 @@ vi.mock('$lib/stores/colorScheme', async () => {
 	};
 });
 
+vi.mock('$lib/api/system', () => ({
+	restartArm: vi.fn(() => Promise.resolve()),
+	restartTranscoder: vi.fn(() => Promise.resolve())
+}));
+
+vi.mock('$lib/api/dashboard', () => ({
+	checkMakemkvKey: vi.fn(() => Promise.resolve({ valid: true, message: 'OK' }))
+}));
+
+vi.mock('$lib/api/maintenance', () => ({
+	fetchImageCacheStats: vi.fn(() => Promise.resolve({ count: 5, size_bytes: 5242880, size_mb: '5.0' })),
+	clearImageCache: vi.fn(() => Promise.resolve({ success: true, cleared: 5, freed_bytes: 5242880 }))
+}));
+
+vi.mock('$lib/stores/polling', async () => {
+	const { writable } = await import('svelte/store');
+	return {
+		createPollingStore: vi.fn(() => ({
+			subscribe: writable([]).subscribe,
+			data: writable([]),
+			loading: writable(false),
+			error: writable(null),
+			initialized: writable(true),
+			refresh: vi.fn(),
+			start: vi.fn(),
+			stop: vi.fn()
+		}))
+	};
+});
+
 describe('Settings Page', () => {
 	afterEach(() => cleanup());
 
@@ -143,6 +173,35 @@ describe('Settings Page', () => {
 			await waitFor(() => {
 				expect(screen.getByText('TV Series')).toBeInTheDocument();
 			});
+		});
+
+		it('shows Appearance tab', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const matches = screen.getAllByText('Appearance');
+			expect(matches.length).toBeGreaterThanOrEqual(1);
+		});
+
+		it('image cache section loads when Appearance tab active', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			// Click Appearance tab
+			const appearanceTab = screen.getAllByText('Appearance');
+			await fireEvent.click(appearanceTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Image Cache')).toBeInTheDocument();
+			});
+			// Verify cache stats are rendered
+			await waitFor(() => {
+				expect(screen.getByText(/5 cached images/)).toBeInTheDocument();
+				expect(screen.getByText(/5\.0 MB/)).toBeInTheDocument();
+			});
+			// Verify Clear Cache button exists
+			expect(screen.getByText('Clear Cache')).toBeInTheDocument();
 		});
 
 		it('renders drives tab with collapsible diagnostics toggle', async () => {

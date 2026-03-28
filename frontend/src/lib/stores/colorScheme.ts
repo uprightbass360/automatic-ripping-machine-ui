@@ -43,7 +43,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(232, 240, 255)',           // blue-tinted light
 			'--color-page-dark': 'rgb(13, 16, 28)',         // dark navy
 			'--color-surface': 'rgb(241, 247, 255)',        // blue-tinted surface
-			'--color-surface-dark': 'rgb(22, 28, 45)'      // blue-tinted dark
+			'--color-surface-dark': 'rgb(22, 28, 45)',      // blue-tinted dark
+			'--radius': '0.5rem'
 		}
 	},
 	{
@@ -63,7 +64,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(228, 248, 245)',           // teal-tinted light
 			'--color-page-dark': 'rgb(12, 19, 20)',         // dark teal
 			'--color-surface': 'rgb(238, 252, 249)',        // teal-tinted surface
-			'--color-surface-dark': 'rgb(9, 69, 79)'        // teal-tinted dark
+			'--color-surface-dark': 'rgb(9, 69, 79)',        // teal-tinted dark
+			'--radius': '0.5rem'
 		}
 	},
 	{
@@ -83,7 +85,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(228, 248, 238)',           // emerald-tinted light
 			'--color-page-dark': 'rgb(12, 19, 15)',         // dark forest
 			'--color-surface': 'rgb(237, 252, 244)',        // emerald-tinted surface
-			'--color-surface-dark': 'rgb(21, 54, 37)'       // emerald-tinted dark
+			'--color-surface-dark': 'rgb(21, 54, 37)',       // emerald-tinted dark
+			'--radius': '0.5rem'
 		}
 	},
 	{
@@ -103,7 +106,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(255, 235, 235)',           // red-tinted light
 			'--color-page-dark': 'rgb(38, 0, 0)',           // dark red
 			'--color-surface': 'rgb(255, 243, 243)',        // red-tinted surface
-			'--color-surface-dark': 'rgb(68, 1, 0)'         // red alert dark
+			'--color-surface-dark': 'rgb(68, 1, 0)',         // red alert dark
+			'--radius': '0.5rem'
 		}
 	},
 	{
@@ -123,7 +127,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(252, 232, 243)',           // pink-tinted light
 			'--color-page-dark': 'rgb(47, 0, 23)',          // dark rose
 			'--color-surface': 'rgb(253, 242, 249)',        // pink-tinted surface
-			'--color-surface-dark': 'rgb(132, 28, 81)'      // rose dark
+			'--color-surface-dark': 'rgb(132, 28, 81)',      // rose dark
+			'--radius': '0.5rem'
 		}
 	},
 	{
@@ -143,7 +148,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(243, 235, 255)',           // purple-tinted light
 			'--color-page-dark': 'rgb(16, 13, 26)',         // dark violet
 			'--color-surface': 'rgb(247, 243, 255)',        // purple-tinted surface
-			'--color-surface-dark': 'rgb(48, 22, 92)'       // grape dark
+			'--color-surface-dark': 'rgb(48, 22, 92)',       // grape dark
+			'--radius': '0.5rem'
 		}
 	},
 	{
@@ -164,7 +170,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(15, 23, 42)',              // slate-900
 			'--color-page-dark': 'rgb(15, 23, 42)',         // slate-900
 			'--color-surface': 'rgb(30, 27, 75)',           // indigo-950
-			'--color-surface-dark': 'rgb(30, 27, 75)'       // indigo-950
+			'--color-surface-dark': 'rgb(30, 27, 75)',       // indigo-950
+			'--radius': '0.5rem'
 		}
 	},
 	{
@@ -185,7 +192,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(26, 26, 26)',               // dark gray
 			'--color-page-dark': 'rgb(26, 26, 26)',          // dark gray
 			'--color-surface': 'rgb(13, 13, 13)',            // cinema black
-			'--color-surface-dark': 'rgb(13, 13, 13)'        // cinema black
+			'--color-surface-dark': 'rgb(13, 13, 13)',        // cinema black
+			'--radius': '0.5rem'
 		}
 	},
 	{
@@ -206,7 +214,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(5, 5, 10)',                  // bg dark
 			'--color-page-dark': 'rgb(5, 5, 10)',             // bg dark
 			'--color-surface': 'rgb(12, 12, 18)',             // surface
-			'--color-surface-dark': 'rgb(12, 12, 18)'         // surface
+			'--color-surface-dark': 'rgb(12, 12, 18)',         // surface
+			'--radius': '0px'
 		}
 	},
 	{
@@ -227,7 +236,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(5, 5, 5)',                   // near-black
 			'--color-page-dark': 'rgb(5, 5, 5)',              // near-black
 			'--color-surface': 'rgb(2, 11, 36)',              // dark blue
-			'--color-surface-dark': 'rgb(2, 11, 36)'          // dark blue
+			'--color-surface-dark': 'rgb(2, 11, 36)',          // dark blue
+			'--radius': '0.5rem'
 		}
 	},
 	{
@@ -248,7 +258,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(0, 0, 0)',                   // pure black
 			'--color-page-dark': 'rgb(0, 0, 0)',
 			'--color-surface': 'rgb(0, 0, 0)',                // pure black
-			'--color-surface-dark': 'rgb(0, 0, 0)'
+			'--color-surface-dark': 'rgb(0, 0, 0)',
+			'--radius': '20px'
 		}
 	},
 	{
@@ -269,7 +280,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(2, 6, 23)',                  // deep navy
 			'--color-page-dark': 'rgb(2, 6, 23)',
 			'--color-surface': 'rgb(10, 25, 47)',             // navy
-			'--color-surface-dark': 'rgb(10, 25, 47)'
+			'--color-surface-dark': 'rgb(10, 25, 47)',
+			'--radius': '0px'
 		}
 	},
 	{
@@ -290,7 +302,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(30, 30, 30)',                // dark bg
 			'--color-page-dark': 'rgb(30, 30, 30)',
 			'--color-surface': 'rgb(49, 49, 49)',             // stone
-			'--color-surface-dark': 'rgb(49, 49, 49)'
+			'--color-surface-dark': 'rgb(49, 49, 49)',
+			'--radius': '0px'
 		}
 	},
 	{
@@ -311,7 +324,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(5, 5, 5)',                 // CRT black
 			'--color-page-dark': 'rgb(5, 5, 5)',            // CRT black
 			'--color-surface': 'rgb(8, 8, 8)',              // barely-off-black
-			'--color-surface-dark': 'rgb(8, 8, 8)'          // barely-off-black
+			'--color-surface-dark': 'rgb(8, 8, 8)',          // barely-off-black
+			'--radius': '0px'
 		}
 	},
 	{
@@ -332,7 +346,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(0, 41, 123)',                // darker blue page
 			'--color-page-dark': 'rgb(0, 41, 123)',
 			'--color-surface': 'rgb(0, 51, 153)',             // standard blue surface
-			'--color-surface-dark': 'rgb(0, 51, 153)'
+			'--color-surface-dark': 'rgb(0, 51, 153)',
+			'--radius': '0px'
 		}
 	},
 	{
@@ -353,7 +368,8 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 			'--color-page': 'rgb(22, 14, 38)',                 // #160E26 Deep Purple
 			'--color-page-dark': 'rgb(22, 14, 38)',            // #160E26 Deep Purple
 			'--color-surface': 'rgb(35, 22, 64)',              // #231640 Purple
-			'--color-surface-dark': 'rgb(35, 22, 64)'          // #231640 Purple
+			'--color-surface-dark': 'rgb(35, 22, 64)',          // #231640 Purple
+			'--radius': '0.5rem'
 		}
 	}
 ];
@@ -501,6 +517,10 @@ export async function loadThemeCss(id: string): Promise<void> {
 if (browser) {
 	colorScheme.subscribe(async (id) => {
 		localStorage.setItem('colorScheme', id);
+		// Apply tokens synchronously so there's no flash of default-blue
+		// between page load and API response.  loadThemeCss will re-apply
+		// with custom CSS once the fetch completes.
+		applyScheme(id);
 		await loadThemeCss(id);
 	});
 }
