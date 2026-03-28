@@ -10,7 +10,9 @@ import {
 	dismissAllNotifications,
 	purgeNotifications,
 	cleanupTranscoder,
-	clearRaw
+	clearRaw,
+	fetchImageCacheStats,
+	clearImageCache
 } from '$lib/api/maintenance';
 
 const mockFetch = vi.fn();
@@ -120,6 +122,30 @@ describe('maintenance API', () => {
 		mockFetch.mockResolvedValueOnce(ok({ success: true, deleted: 3, errors: [] }));
 		const result = await cleanupTranscoder();
 		expect(result.deleted).toBe(3);
+	});
+
+	it('fetchImageCacheStats calls GET /api/maintenance/image-cache-stats', async () => {
+		const data = { count: 42, size_bytes: 52428800, size_mb: '50.0', oldest: '2026-01-01', path: '/tmp/cache' };
+		mockFetch.mockResolvedValueOnce(ok(data));
+		const result = await fetchImageCacheStats();
+		expect(result).toEqual(data);
+		expect(mockFetch).toHaveBeenCalledWith(
+			'/api/maintenance/image-cache-stats',
+			expect.objectContaining({
+				headers: expect.objectContaining({ 'Content-Type': 'application/json' })
+			})
+		);
+	});
+
+	it('clearImageCache calls POST and returns cleared count', async () => {
+		mockFetch.mockResolvedValueOnce(ok({ success: true, cleared: 42, freed_bytes: 52428800 }));
+		const result = await clearImageCache();
+		expect(mockFetch).toHaveBeenCalledWith(
+			'/api/maintenance/clear-image-cache',
+			expect.objectContaining({ method: 'POST' })
+		);
+		expect(result.cleared).toBe(42);
+		expect(result.freed_bytes).toBe(52428800);
 	});
 
 	it('clearRaw calls POST and returns cleared count', async () => {
