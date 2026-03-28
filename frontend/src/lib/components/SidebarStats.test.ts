@@ -17,7 +17,11 @@ const gpuData = {
 	encoder_percent: 90,
 	memory_used_mb: 2048,
 	memory_total_mb: 8192,
-	temperature_c: 68
+	temperature_c: 68,
+	power_draw_w: 185,
+	power_limit_w: 300,
+	clock_core_mhz: 1800,
+	clock_memory_mhz: 7000
 };
 
 const transcoderStatsWithGpu = { ...stats, cpu_percent: 80, gpu: gpuData };
@@ -99,11 +103,17 @@ describe('SidebarStats', () => {
 			});
 			await fireEvent.click(screen.getByText('GPU'));
 			expect(screen.getByText('nvidia')).toBeInTheDocument();
-			expect(screen.getByText('Utilization')).toBeInTheDocument();
+			expect(screen.getByText('Load')).toBeInTheDocument();
 			expect(screen.getByText('75%')).toBeInTheDocument();
 			expect(screen.getByText('Encoder')).toBeInTheDocument();
 			expect(screen.getByText('90%')).toBeInTheDocument();
 			expect(screen.getByText('2.0 / 8.0 GB')).toBeInTheDocument();
+			expect(screen.getByText('Power')).toBeInTheDocument();
+			expect(screen.getByText(/185W/)).toBeInTheDocument();
+			expect(screen.getByText('Core Clock')).toBeInTheDocument();
+			expect(screen.getByText('1800 MHz')).toBeInTheDocument();
+			expect(screen.getByText('Memory Clock')).toBeInTheDocument();
+			expect(screen.getByText('7000 MHz')).toBeInTheDocument();
 		});
 
 		it('shows GPU temperature', async () => {

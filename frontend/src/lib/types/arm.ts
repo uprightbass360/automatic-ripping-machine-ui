@@ -171,6 +171,10 @@ export interface GpuSnapshot {
 	memory_total_mb: number | null;
 	temperature_c: number | null;
 	encoder_percent: number | null;
+	power_draw_w: number | null;
+	power_limit_w: number | null;
+	clock_core_mhz: number | null;
+	clock_memory_mhz: number | null;
 }
 
 export interface SystemStats {

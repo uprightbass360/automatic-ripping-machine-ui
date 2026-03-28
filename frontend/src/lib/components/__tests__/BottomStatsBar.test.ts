@@ -29,7 +29,11 @@ const gpuData = {
 	encoder_percent: 95,
 	memory_used_mb: 4096,
 	memory_total_mb: 8192,
-	temperature_c: 72
+	temperature_c: 72,
+	power_draw_w: 220,
+	power_limit_w: 300,
+	clock_core_mhz: 1950,
+	clock_memory_mhz: 7500
 };
 
 const hwInfo = { cpu: 'Intel i7-12700', memory_total_gb: 16 };
@@ -181,12 +185,27 @@ describe('BottomStatsBar', () => {
 			});
 			await fireEvent.click(screen.getByText('GPU'));
 			expect(screen.getByText('nvidia')).toBeInTheDocument();
-			expect(screen.getByText('Utilization')).toBeInTheDocument();
+			expect(screen.getByText('Load')).toBeInTheDocument();
 			expect(screen.getByText('82%')).toBeInTheDocument();
 			expect(screen.getByText('Encoder')).toBeInTheDocument();
 			expect(screen.getByText('95%')).toBeInTheDocument();
 			expect(screen.getByText('VRAM')).toBeInTheDocument();
 			expect(screen.getByText('4.0 / 8.0 GB')).toBeInTheDocument();
+		});
+
+		it('shows power and clock on GPU tab', async () => {
+			renderComponent(BottomStatsBar, {
+				props: {
+					systemInfo: hwInfo,
+					systemStats,
+					transcoderInfo,
+					transcoderStats: { ...transcoderStats, gpu: gpuData }
+				}
+			});
+			await fireEvent.click(screen.getByText('GPU'));
+			expect(screen.getByText(/220W/)).toBeInTheDocument();
+			expect(screen.getByText(/300W/)).toBeInTheDocument();
+			expect(screen.getByText('1950 MHz')).toBeInTheDocument();
 		});
 
 		it('shows GPU temperature on GPU tab', async () => {
