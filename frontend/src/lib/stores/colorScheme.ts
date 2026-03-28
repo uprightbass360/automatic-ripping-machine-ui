@@ -395,7 +395,9 @@ function applyScheme(id: string) {
 	for (const [prop, value] of Object.entries(scheme.tokens)) {
 		root.style.setProperty(prop, value);
 	}
+
 	root.dataset.scheme = scheme.id;
+
 
 	// Inject theme CSS into a managed <style> element
 	injectThemeCss(scheme);
@@ -459,14 +461,15 @@ export async function loadThemesFromApi(): Promise<void> {
 			merged.set(s.id, { ...s, builtin: true });
 		}
 
-		// Overlay API themes
+		// Overlay API themes (merge tokens so built-in defaults like --radius aren't lost)
 		for (const t of apiThemes) {
+			const existing = merged.get(t.id);
 			merged.set(t.id, {
 				id: t.id,
 				label: t.label,
 				swatch: t.swatch,
 				mode: t.mode,
-				tokens: t.tokens,
+				tokens: { ...(existing?.tokens ?? {}), ...t.tokens },
 				author: t.author,
 				description: t.description,
 				builtin: t.builtin ?? false
