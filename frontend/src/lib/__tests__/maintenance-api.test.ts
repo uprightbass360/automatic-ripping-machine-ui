@@ -125,7 +125,7 @@ describe('maintenance API', () => {
 	});
 
 	it('fetchImageCacheStats calls GET /api/maintenance/image-cache-stats', async () => {
-		const data = { count: 42, size_bytes: 52428800, size_mb: '50.0', oldest: '2026-01-01', path: '/tmp/cache' };
+		const data = { count: 42, size_bytes: 52428800, size_mb: '50.0', oldest: '2026-01-01', path: '/home/arm/cache' };
 		mockFetch.mockResolvedValueOnce(ok(data));
 		const result = await fetchImageCacheStats();
 		expect(result).toEqual(data);
