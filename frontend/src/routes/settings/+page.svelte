@@ -13,6 +13,8 @@
 	import DriveCard from '$lib/components/DriveCard.svelte';
 	import { restartArm, restartTranscoder } from '$lib/api/system';
 	import { checkMakemkvKey } from '$lib/api/dashboard';
+	import { fetchImageCacheStats, clearImageCache, type ImageCacheStats } from '$lib/api/maintenance';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let settings = $state<SettingsData | null>(null);
 	let error = $state<string | null>(null);
@@ -178,6 +180,32 @@
 	let themeJsonFile = $state<File | null>(null);
 	let themeName = $state('');
 	let themeCssText = $state('');
+
+	// --- Image cache state ---
+	let cacheStats = $state<ImageCacheStats | null>(null);
+	let cacheLoading = $state(false);
+	let cacheBusy = $state(false);
+	let cacheConfirmOpen = $state(false);
+
+	async function loadCacheStats() {
+		cacheLoading = true;
+		try { cacheStats = await fetchImageCacheStats(); }
+		catch { cacheStats = null; }
+		cacheLoading = false;
+	}
+
+	async function handleClearCache() {
+		cacheBusy = true;
+		cacheConfirmOpen = false;
+		try {
+			const result = await clearImageCache();
+			themeFeedback = { type: 'success', message: `Cleared ${result.cleared} cached image${result.cleared !== 1 ? 's' : ''} (${(result.freed_bytes / 1048576).toFixed(1)} MB)` };
+			cacheStats = await fetchImageCacheStats();
+		} catch (e) {
+			themeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to clear cache' };
+		}
+		cacheBusy = false;
+	}
 
 	async function handleThemeUpload() {
 		if (!themeJsonFile) return;
@@ -345,6 +373,7 @@
 		window.location.hash = tab;
 		if (tab === 'music') loadAbcdeConfig();
 		if (tab === 'system') loadSystemInfo();
+		if (tab === 'appearance') loadCacheStats();
 		// Reset scroll to top when switching tabs
 		document.querySelector('main')?.scrollTo(0, 0);
 	}
@@ -382,11 +411,13 @@
 		// Handle initial hash tab (trigger side effects)
 		if (activeTab === 'music') loadAbcdeConfig();
 		if (activeTab === 'system') loadSystemInfo();
+		if (activeTab === 'appearance') loadCacheStats();
 		function onHashChange() {
 			const { tab, panel } = parseHash();
 			activeTab = tab;
 			if (tab === 'music') loadAbcdeConfig();
 			if (tab === 'system') loadSystemInfo();
+			if (tab === 'appearance') loadCacheStats();
 			if (panel) {
 				const groups = TAB_ARM_GROUPS[tab] ?? [];
 				const match = groups.find((g) => g.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') === panel.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
@@ -2381,6 +2412,27 @@
 					</div>
 				</div>
 
+				<!-- Image Cache -->
+				<div class="rounded-lg border border-primary/20 bg-surface p-6 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+					<div class="flex items-center justify-between">
+						<div>
+							<h3 class="text-base font-semibold text-gray-900 dark:text-white">Image Cache</h3>
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+								{#if cacheLoading}Loading...
+								{:else if cacheStats}{cacheStats.count} cached image{cacheStats.count !== 1 ? 's' : ''} ({cacheStats.size_mb} MB)
+								{:else}Unable to load cache stats
+								{/if}
+							</p>
+						</div>
+						<button type="button"
+							onclick={() => (cacheConfirmOpen = true)}
+							disabled={cacheBusy || !cacheStats?.count}
+							class="rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-500/10 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-500/15">
+							Clear Cache
+						</button>
+					</div>
+				</div>
+
 				<!-- Feature request prompt -->
 				<div class="flex justify-center pt-2">
 					<span class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
@@ -2543,3 +2595,13 @@
 		</div>
 	</div>
 {/if}
+
+<ConfirmDialog
+	open={cacheConfirmOpen}
+	title="Clear Image Cache"
+	message="Delete all cached poster images? They will be re-fetched on next view."
+	confirmLabel="Clear"
+	variant="danger"
+	onconfirm={handleClearCache}
+	oncancel={() => (cacheConfirmOpen = false)}
+/>
