@@ -2,6 +2,12 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import LogsPage from '../+page.svelte';
 
+vi.mock('$lib/api/maintenance', () => ({
+	fetchOrphanLogs: vi.fn(() => Promise.resolve({ root: '/tmp', total_size_bytes: 0, files: [] })),
+	deleteLog: vi.fn(() => Promise.resolve({ success: true })),
+	bulkDeleteLogs: vi.fn(() => Promise.resolve({ removed: [], errors: [] }))
+}));
+
 vi.mock('$lib/api/logs', () => ({
 	fetchLogs: vi.fn(() => Promise.resolve([
 		{ filename: 'job_001.log', size: 1024, modified: '2025-06-15T12:00:00Z' },
@@ -64,6 +70,61 @@ describe('Logs Page', () => {
 			await fireEvent.click(screen.getByText('Transcoder'));
 			await waitFor(() => {
 				expect(screen.getByText('transcode_001.log')).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('orphan logs modal', () => {
+		it('shows Orphan Logs button in header', async () => {
+			renderComponent(LogsPage);
+			expect(screen.getByText('Orphan Logs')).toBeInTheDocument();
+		});
+
+		it('opens orphan modal and loads data when clicked', async () => {
+			const { fetchOrphanLogs } = await import('$lib/api/maintenance');
+			renderComponent(LogsPage);
+			await fireEvent.click(screen.getByText('Orphan Logs'));
+			await waitFor(() => {
+				expect(fetchOrphanLogs).toHaveBeenCalled();
+				expect(screen.getByText('Orphan Log Files')).toBeInTheDocument();
+			});
+		});
+
+		it('displays orphan log files in modal', async () => {
+			const { fetchOrphanLogs } = await import('$lib/api/maintenance');
+			vi.mocked(fetchOrphanLogs).mockResolvedValueOnce({
+				root: '/tmp/logs',
+				total_size_bytes: 4096,
+				files: [
+					{ path: '/tmp/logs/orphan1.log', relative_path: 'orphan1.log', size_bytes: 1024 },
+					{ path: '/tmp/logs/orphan2.log', relative_path: 'orphan2.log', size_bytes: 3072 }
+				]
+			});
+			renderComponent(LogsPage);
+			await fireEvent.click(screen.getByText('Orphan Logs'));
+			await waitFor(() => {
+				expect(screen.getByText('orphan1.log')).toBeInTheDocument();
+				expect(screen.getByText('orphan2.log')).toBeInTheDocument();
+			});
+		});
+
+		it('can close orphan modal', async () => {
+			renderComponent(LogsPage);
+			await fireEvent.click(screen.getByText('Orphan Logs'));
+			await waitFor(() => {
+				expect(screen.getByText('Orphan Log Files')).toBeInTheDocument();
+			});
+			await fireEvent.click(screen.getByText('Close'));
+			await waitFor(() => {
+				expect(screen.queryByText('Orphan Log Files')).not.toBeInTheDocument();
+			});
+		});
+
+		it('handles empty orphan logs', async () => {
+			renderComponent(LogsPage);
+			await fireEvent.click(screen.getByText('Orphan Logs'));
+			await waitFor(() => {
+				expect(screen.getByText('No orphan log files found.')).toBeInTheDocument();
 			});
 		});
 	});
