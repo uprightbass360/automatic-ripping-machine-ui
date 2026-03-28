@@ -111,6 +111,44 @@ describe('BottomStatsBar', () => {
 		expect(workEl.closest('a')).toBeNull();
 	});
 
+	it('shows GPU utilization when transcoder has GPU data', async () => {
+		const gpuTranscoderStats = {
+			...transcoderStats,
+			gpu: {
+				vendor: 'nvidia',
+				utilization_percent: 82,
+				encoder_percent: 95,
+				memory_used_mb: 4096,
+				memory_total_mb: 8192,
+				temperature_c: 72
+			}
+		};
+		renderComponent(BottomStatsBar, {
+			props: {
+				systemInfo: hwInfo,
+				systemStats,
+				transcoderInfo,
+				transcoderStats: gpuTranscoderStats
+			}
+		});
+		await fireEvent.click(screen.getByText('Transcoder'));
+		expect(screen.getByText('GPU')).toBeInTheDocument();
+		expect(screen.getByText('82%')).toBeInTheDocument();
+	});
+
+	it('does not show GPU bar when gpu is null', async () => {
+		renderComponent(BottomStatsBar, {
+			props: {
+				systemInfo: hwInfo,
+				systemStats,
+				transcoderInfo,
+				transcoderStats: { ...transcoderStats, gpu: null }
+			}
+		});
+		await fireEvent.click(screen.getByText('Transcoder'));
+		expect(screen.queryByText('GPU')).not.toBeInTheDocument();
+	});
+
 	it('shows transcoder offline message when transcoderOnline is false', async () => {
 		renderComponent(BottomStatsBar, {
 			props: {
