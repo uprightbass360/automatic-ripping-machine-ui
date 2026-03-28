@@ -107,7 +107,7 @@
 			<!-- Utilization -->
 			{#if gpu.utilization_percent != null}
 				<div class="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-					<span class="shrink-0">Util</span>
+					<span class="shrink-0">Utilization</span>
 					<div class="h-1 w-16 rounded-full bg-primary/15 dark:bg-primary/15">
 						<div class="h-1 rounded-full transition-all duration-500 {gpuColor(gpu.utilization_percent)}" style="width: {Math.min(100, gpu.utilization_percent)}%"></div>
 					</div>
@@ -120,7 +120,7 @@
 			<!-- Encoder -->
 			{#if gpu.encoder_percent != null}
 				<div class="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-					<span class="shrink-0">Enc</span>
+					<span class="shrink-0">Encoder</span>
 					<div class="h-1 w-16 rounded-full bg-primary/15 dark:bg-primary/15">
 						<div class="h-1 rounded-full transition-all duration-500 {gpuColor(gpu.encoder_percent)}" style="width: {Math.min(100, gpu.encoder_percent)}%"></div>
 					</div>
