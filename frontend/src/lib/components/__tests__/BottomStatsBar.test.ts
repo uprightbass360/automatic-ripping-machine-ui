@@ -181,9 +181,9 @@ describe('BottomStatsBar', () => {
 			});
 			await fireEvent.click(screen.getByText('GPU'));
 			expect(screen.getByText('nvidia')).toBeInTheDocument();
-			expect(screen.getByText('Util')).toBeInTheDocument();
+			expect(screen.getByText('Utilization')).toBeInTheDocument();
 			expect(screen.getByText('82%')).toBeInTheDocument();
-			expect(screen.getByText('Enc')).toBeInTheDocument();
+			expect(screen.getByText('Encoder')).toBeInTheDocument();
 			expect(screen.getByText('95%')).toBeInTheDocument();
 			expect(screen.getByText('VRAM')).toBeInTheDocument();
 			expect(screen.getByText('4.0 / 8.0 GB')).toBeInTheDocument();
