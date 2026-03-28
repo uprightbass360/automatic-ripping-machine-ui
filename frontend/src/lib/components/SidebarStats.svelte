@@ -38,6 +38,15 @@
 		const path = key ? rootPaths[key] : null;
 		return path ? `/files?path=${encodeURIComponent(path)}` : null;
 	}
+
+	function vendorPillClasses(vendor: string): string {
+		switch (vendor.toLowerCase()) {
+			case 'nvidia': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+			case 'amd': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+			case 'intel': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+			default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+		}
+	}
 </script>
 
 <div data-stats class="border-t border-primary/20 px-3 py-3 dark:border-primary/20">
@@ -74,12 +83,12 @@
 			<p class="text-xs text-orange-500 dark:text-orange-400">Cannot reach the transcoder service</p>
 		{:else if transcoderStats?.gpu}
 			{@const gpu = transcoderStats.gpu}
-			<p class="mb-2 text-xs text-gray-600 dark:text-gray-400">
-				<span class="font-medium capitalize">{gpu.vendor}</span>
+			<div class="mb-2 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+				<span class="rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize {vendorPillClasses(gpu.vendor)}">{gpu.vendor}</span>
 				{#if gpu.temperature_c != null}
-					<span class="text-orange-500">&nbsp;{gpu.temperature_c.toFixed(0)}&deg;C</span>
+					<span class="text-orange-500">{gpu.temperature_c.toFixed(0)}&deg;C</span>
 				{/if}
-			</p>
+			</div>
 			<div class="space-y-2">
 				{#if gpu.utilization_percent != null}
 					<div>
