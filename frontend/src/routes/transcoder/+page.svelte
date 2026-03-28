@@ -87,6 +87,15 @@
 	});
 
 	const tabs = ['all', 'pending', 'processing', 'completed', 'failed'];
+
+	function vendorPillClasses(vendor: string): string {
+		switch (vendor.toLowerCase()) {
+			case 'nvidia': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+			case 'amd': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+			case 'intel': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+			default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -155,7 +164,7 @@
 		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 			<div class="mb-3 flex items-center gap-2">
 				<p class="text-sm font-semibold text-gray-700 dark:text-gray-300">GPU</p>
-				<span class="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{gpu.vendor}</span>
+				<span class="rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize {vendorPillClasses(gpu.vendor)}">{gpu.vendor}</span>
 			</div>
 			<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
 				{#if gpu.utilization_percent != null}
