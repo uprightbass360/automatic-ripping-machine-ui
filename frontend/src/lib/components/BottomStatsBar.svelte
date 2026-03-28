@@ -28,6 +28,9 @@
 	function storageColor(pct: number): string {
 		return pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-emerald-500';
 	}
+	function gpuColor(pct: number): string {
+		return pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-amber-500';
+	}
 
 	// Map storage display names to file root keys for deep linking.
 	// Storage paths differ between ripper and transcoder, but file roots
@@ -98,6 +101,19 @@
 					<div class="h-1 rounded-full transition-all duration-500 {memColor(activeStats.memory.percent)}" style="width: {Math.min(100, activeStats.memory.percent)}%"></div>
 				</div>
 				<span class="shrink-0 whitespace-nowrap">{activeStats.memory.used_gb} / {activeStats.memory.total_gb} GB</span>
+			</div>
+
+			<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
+		{/if}
+
+		<!-- GPU -->
+		{#if activeStats.gpu?.utilization_percent != null}
+			<div class="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+				<span class="shrink-0">GPU</span>
+				<div class="h-1 w-16 rounded-full bg-primary/15 dark:bg-primary/15">
+					<div class="h-1 rounded-full transition-all duration-500 {gpuColor(activeStats.gpu.utilization_percent)}" style="width: {Math.min(100, activeStats.gpu.utilization_percent)}%"></div>
+				</div>
+				<span class="shrink-0">{activeStats.gpu.utilization_percent.toFixed(0)}%</span>
 			</div>
 
 			<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
