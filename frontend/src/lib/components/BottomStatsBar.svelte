@@ -104,10 +104,10 @@
 
 			<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
 
-			<!-- Utilization -->
+			<!-- Load -->
 			{#if gpu.utilization_percent != null}
 				<div class="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-					<span class="shrink-0">Utilization</span>
+					<span class="shrink-0">Load</span>
 					<div class="h-1 w-16 rounded-full bg-primary/15 dark:bg-primary/15">
 						<div class="h-1 rounded-full transition-all duration-500 {gpuColor(gpu.utilization_percent)}" style="width: {Math.min(100, gpu.utilization_percent)}%"></div>
 					</div>
@@ -147,6 +147,18 @@
 			<!-- Temperature -->
 			{#if gpu.temperature_c != null}
 				<span class="shrink-0 text-[11px] text-orange-500">{gpu.temperature_c.toFixed(0)}&deg;C</span>
+				<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
+			{/if}
+
+			<!-- Power -->
+			{#if gpu.power_draw_w != null}
+				<span class="shrink-0 text-[11px] text-gray-500 dark:text-gray-400">{gpu.power_draw_w.toFixed(0)}W{#if gpu.power_limit_w != null} / {gpu.power_limit_w.toFixed(0)}W{/if}</span>
+				<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>
+			{/if}
+
+			<!-- Clocks -->
+			{#if gpu.clock_core_mhz != null}
+				<span class="shrink-0 text-[11px] text-gray-500 dark:text-gray-400">{gpu.clock_core_mhz.toFixed(0)} MHz</span>
 			{/if}
 		{:else}
 			<span class="text-xs text-gray-400 dark:text-gray-500">No GPU detected</span>

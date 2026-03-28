@@ -42,7 +42,11 @@ vi.mock('$lib/stores/dashboard', async () => {
 				encoder_percent: 95,
 				memory_used_mb: 4096,
 				memory_total_mb: 8192,
-				temperature_c: 72
+				temperature_c: 72,
+				power_draw_w: 200,
+				power_limit_w: 300,
+				clock_core_mhz: 1850,
+				clock_memory_mhz: 7200
 			}
 		},
 		active_transcodes: [], system_stats: null, transcoder_info: null
@@ -69,12 +73,15 @@ describe('Transcoder Page', () => {
 		it('renders GPU card with vendor badge and metrics', () => {
 			renderComponent(TranscoderPage);
 			expect(screen.getByText('nvidia')).toBeInTheDocument();
-			expect(screen.getByText('Utilization')).toBeInTheDocument();
+			expect(screen.getByText('Load')).toBeInTheDocument();
 			expect(screen.getByText('82%')).toBeInTheDocument();
 			expect(screen.getByText('Encoder')).toBeInTheDocument();
 			expect(screen.getByText('95%')).toBeInTheDocument();
 			expect(screen.getByText('VRAM')).toBeInTheDocument();
 			expect(screen.getByText('Temperature')).toBeInTheDocument();
+			expect(screen.getByText('Power')).toBeInTheDocument();
+			expect(screen.getByText('Core Clock')).toBeInTheDocument();
+			expect(screen.getByText('Memory Clock')).toBeInTheDocument();
 		});
 	});
 });

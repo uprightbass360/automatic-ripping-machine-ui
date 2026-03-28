@@ -84,7 +84,7 @@
 				{#if gpu.utilization_percent != null}
 					<div>
 						<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
-							<span>Utilization</span>
+							<span>Load</span>
 							<span>{gpu.utilization_percent.toFixed(0)}%</span>
 						</div>
 						<ProgressBar
@@ -119,6 +119,24 @@
 							color={vramPct >= 90 ? 'bg-red-500' : vramPct >= 70 ? 'bg-yellow-500' : 'bg-amber-500'}
 							showLabel={false}
 						/>
+					</div>
+				{/if}
+				{#if gpu.power_draw_w != null}
+					<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+						<span>Power</span>
+						<span>{gpu.power_draw_w.toFixed(0)}W{#if gpu.power_limit_w != null} / {gpu.power_limit_w.toFixed(0)}W{/if}</span>
+					</div>
+				{/if}
+				{#if gpu.clock_core_mhz != null}
+					<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+						<span>Core Clock</span>
+						<span>{gpu.clock_core_mhz.toFixed(0)} MHz</span>
+					</div>
+				{/if}
+				{#if gpu.clock_memory_mhz != null}
+					<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+						<span>Memory Clock</span>
+						<span>{gpu.clock_memory_mhz.toFixed(0)} MHz</span>
 					</div>
 				{/if}
 			</div>
