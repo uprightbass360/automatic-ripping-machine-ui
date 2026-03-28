@@ -389,13 +389,15 @@
 		</div>
 		{@const activeRoot = roots.find(r => currentPath.startsWith(r.path))}
 		{#if activeRoot}
-			<div class="mt-2 text-xs text-gray-400 dark:text-gray-500">
-				<p class="mb-1 font-semibold uppercase tracking-wide">Paths</p>
-				<p><span class="font-medium">Container:</span> <code class="font-mono">{activeRoot.path}</code></p>
-				{#if activeRoot.host_path}
-					<p><span class="font-medium">Host:</span> <code class="font-mono">{activeRoot.host_path}</code></p>
-				{/if}
-			</div>
+			<details class="mt-2 text-xs text-gray-400 dark:text-gray-500">
+				<summary class="cursor-pointer select-none font-semibold uppercase tracking-wide hover:text-gray-500 dark:hover:text-gray-400">Paths</summary>
+				<div class="mt-1">
+					<p><span class="font-medium">Container:</span> <code class="font-mono">{activeRoot.path}</code></p>
+					{#if activeRoot.host_path}
+						<p><span class="font-medium">Host:</span> <code class="font-mono">{activeRoot.host_path}</code></p>
+					{/if}
+				</div>
+			</details>
 		{/if}
 	{/if}
 

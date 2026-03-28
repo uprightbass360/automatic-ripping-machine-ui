@@ -19,6 +19,7 @@
     "--color-page": "rgb(30, 30, 30)",
     "--color-page-dark": "rgb(30, 30, 30)",
     "--color-surface": "rgb(49, 49, 49)",
-    "--color-surface-dark": "rgb(49, 49, 49)"
+    "--color-surface-dark": "rgb(49, 49, 49)",
+    "--radius": "0px"
   }
 }

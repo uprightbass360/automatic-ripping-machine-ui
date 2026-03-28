@@ -18,7 +18,17 @@
 	--color-surface: rgb(241, 247, 255);
 	--color-surface-dark: rgb(22, 28, 45);
 
+	--radius-sm: calc(var(--radius) * 0.25);
+	--radius-md: calc(var(--radius) * 0.75);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) * 1.5);
+	--radius-2xl: calc(var(--radius) * 2);
+
 	--animate-indeterminate: indeterminate 1.5s ease-in-out infinite;
+}
+
+:root {
+	--radius: 0.5rem;
 }
 
 @keyframes indeterminate {
