@@ -9,7 +9,8 @@ const systemStats = {
 	storage: [
 		{ name: 'Raw', path: '/home/arm/media/raw/', total_gb: 1000, used_gb: 100, free_gb: 900, percent: 10 },
 		{ name: 'Completed', path: '/home/arm/media/completed/', total_gb: 1000, used_gb: 200, free_gb: 800, percent: 20 }
-	]
+	],
+	gpu: null
 };
 
 const transcoderStats = {
@@ -18,7 +19,17 @@ const transcoderStats = {
 	memory: { used_gb: 8, total_gb: 32, percent: 25 },
 	storage: [
 		{ name: 'Work', path: '/transcode/work/', total_gb: 500, used_gb: 50, free_gb: 450, percent: 10 }
-	]
+	],
+	gpu: null
+};
+
+const gpuData = {
+	vendor: 'nvidia',
+	utilization_percent: 82,
+	encoder_percent: 95,
+	memory_used_mb: 4096,
+	memory_total_mb: 8192,
+	temperature_c: 72
 };
 
 const hwInfo = { cpu: 'Intel i7-12700', memory_total_gb: 16 };
@@ -111,44 +122,6 @@ describe('BottomStatsBar', () => {
 		expect(workEl.closest('a')).toBeNull();
 	});
 
-	it('shows GPU utilization when transcoder has GPU data', async () => {
-		const gpuTranscoderStats = {
-			...transcoderStats,
-			gpu: {
-				vendor: 'nvidia',
-				utilization_percent: 82,
-				encoder_percent: 95,
-				memory_used_mb: 4096,
-				memory_total_mb: 8192,
-				temperature_c: 72
-			}
-		};
-		renderComponent(BottomStatsBar, {
-			props: {
-				systemInfo: hwInfo,
-				systemStats,
-				transcoderInfo,
-				transcoderStats: gpuTranscoderStats
-			}
-		});
-		await fireEvent.click(screen.getByText('Transcoder'));
-		expect(screen.getByText('GPU')).toBeInTheDocument();
-		expect(screen.getByText('82%')).toBeInTheDocument();
-	});
-
-	it('does not show GPU bar when gpu is null', async () => {
-		renderComponent(BottomStatsBar, {
-			props: {
-				systemInfo: hwInfo,
-				systemStats,
-				transcoderInfo,
-				transcoderStats: { ...transcoderStats, gpu: null }
-			}
-		});
-		await fireEvent.click(screen.getByText('Transcoder'));
-		expect(screen.queryByText('GPU')).not.toBeInTheDocument();
-	});
-
 	it('shows transcoder offline message when transcoderOnline is false', async () => {
 		renderComponent(BottomStatsBar, {
 			props: {
@@ -170,5 +143,63 @@ describe('BottomStatsBar', () => {
 		// But no CPU/Mem/Storage
 		expect(screen.queryByText('CPU')).not.toBeInTheDocument();
 		expect(screen.queryByText('Mem')).not.toBeInTheDocument();
+	});
+
+	describe('GPU tab', () => {
+		it('shows GPU toggle when transcoder has GPU data', () => {
+			renderComponent(BottomStatsBar, {
+				props: {
+					systemInfo: hwInfo,
+					systemStats,
+					transcoderInfo,
+					transcoderStats: { ...transcoderStats, gpu: gpuData }
+				}
+			});
+			expect(screen.getByText('GPU')).toBeInTheDocument();
+		});
+
+		it('does not show GPU toggle when gpu is null', () => {
+			renderComponent(BottomStatsBar, {
+				props: {
+					systemInfo: hwInfo,
+					systemStats,
+					transcoderInfo,
+					transcoderStats
+				}
+			});
+			expect(screen.queryByRole('button', { name: 'GPU' })).not.toBeInTheDocument();
+		});
+
+		it('shows GPU metrics when GPU tab clicked', async () => {
+			renderComponent(BottomStatsBar, {
+				props: {
+					systemInfo: hwInfo,
+					systemStats,
+					transcoderInfo,
+					transcoderStats: { ...transcoderStats, gpu: gpuData }
+				}
+			});
+			await fireEvent.click(screen.getByText('GPU'));
+			expect(screen.getByText('nvidia')).toBeInTheDocument();
+			expect(screen.getByText('Util')).toBeInTheDocument();
+			expect(screen.getByText('82%')).toBeInTheDocument();
+			expect(screen.getByText('Enc')).toBeInTheDocument();
+			expect(screen.getByText('95%')).toBeInTheDocument();
+			expect(screen.getByText('VRAM')).toBeInTheDocument();
+			expect(screen.getByText('4.0 / 8.0 GB')).toBeInTheDocument();
+		});
+
+		it('shows GPU temperature on GPU tab', async () => {
+			renderComponent(BottomStatsBar, {
+				props: {
+					systemInfo: hwInfo,
+					systemStats,
+					transcoderInfo,
+					transcoderStats: { ...transcoderStats, gpu: gpuData }
+				}
+			});
+			await fireEvent.click(screen.getByText('GPU'));
+			expect(screen.getByText(/72/)).toBeInTheDocument();
+		});
 	});
 });
