@@ -296,37 +296,34 @@
 		<div class="rounded-lg border border-primary/15 dark:border-primary/15">
 			<button
 				onclick={toggleLogsSection}
-				class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-primary/5 dark:text-white dark:hover:bg-primary/10"
+				class="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-primary/5 dark:hover:bg-primary/10"
 			>
-				<div class="flex items-center gap-2">
-					<svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-						/>
-					</svg>
-					Orphan Logs
-					{#if summary?.orphan_logs != null}
-						<span
-							class="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary-text dark:text-primary-text-dark"
-							>{summary.orphan_logs}</span
-						>
-					{:else if summary && summary.orphan_logs === null}
-						<span class="text-xs text-gray-400">unavailable</span>
-					{/if}
-				</div>
+				<svg class="h-5 w-5 text-primary-text dark:text-primary-text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+					/>
+				</svg>
+				Orphan Logs
+				{#if summary?.orphan_logs != null}
+					<span
+						class="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary-text dark:text-primary-text-dark"
+						>{summary.orphan_logs}</span
+					>
+				{:else if summary && summary.orphan_logs === null}
+					<span class="text-xs text-gray-400">unavailable</span>
+				{/if}
 				<svg
-					class="h-4 w-4 transition-transform {logsOpen ? 'rotate-180' : ''}"
+					class="ml-auto h-4 w-4 transition-transform {logsOpen ? 'rotate-180' : ''}"
 					fill="none"
 					stroke="currentColor"
 					viewBox="0 0 24 24"
+					stroke-width="2"
 				>
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						stroke-width="2"
 						d="M19 9l-7 7-7-7"
 					/>
 				</svg>
@@ -383,37 +380,34 @@
 		<div class="rounded-lg border border-primary/15 dark:border-primary/15">
 			<button
 				onclick={toggleFoldersSection}
-				class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-primary/5 dark:text-white dark:hover:bg-primary/10"
+				class="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-primary/5 dark:hover:bg-primary/10"
 			>
-				<div class="flex items-center gap-2">
-					<svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-						/>
-					</svg>
-					Orphan Folders
-					{#if summary?.orphan_folders != null}
-						<span
-							class="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary-text dark:text-primary-text-dark"
-							>{summary.orphan_folders}</span
-						>
-					{:else if summary && summary.orphan_folders === null}
-						<span class="text-xs text-gray-400">unavailable</span>
-					{/if}
-				</div>
+				<svg class="h-5 w-5 text-primary-text dark:text-primary-text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+					/>
+				</svg>
+				Orphan Folders
+				{#if summary?.orphan_folders != null}
+					<span
+						class="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary-text dark:text-primary-text-dark"
+						>{summary.orphan_folders}</span
+					>
+				{:else if summary && summary.orphan_folders === null}
+					<span class="text-xs text-gray-400">unavailable</span>
+				{/if}
 				<svg
-					class="h-4 w-4 transition-transform {foldersOpen ? 'rotate-180' : ''}"
+					class="ml-auto h-4 w-4 transition-transform {foldersOpen ? 'rotate-180' : ''}"
 					fill="none"
 					stroke="currentColor"
 					viewBox="0 0 24 24"
+					stroke-width="2"
 				>
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						stroke-width="2"
 						d="M19 9l-7 7-7-7"
 					/>
 				</svg>
@@ -473,38 +467,35 @@
 				onclick={() => {
 					notificationsOpen = !notificationsOpen;
 				}}
-				class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-primary/5 dark:text-white dark:hover:bg-primary/10"
+				class="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-primary/5 dark:hover:bg-primary/10"
 			>
-				<div class="flex items-center gap-2">
-					<svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-						/>
-					</svg>
-					Notifications
-					{#if summary}
-						{#if summary.unseen_notifications != null || summary.cleared_notifications != null}
-							<span class="text-xs text-gray-500 dark:text-gray-400">
-								{#if summary.unseen_notifications != null}{summary.unseen_notifications} unseen{/if}{#if summary.unseen_notifications != null && summary.cleared_notifications != null},
-								{/if}{#if summary.cleared_notifications != null}{summary.cleared_notifications}
-									cleared{/if}
-							</span>
-						{/if}
+				<svg class="h-5 w-5 text-primary-text dark:text-primary-text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+					/>
+				</svg>
+				Notifications
+				{#if summary}
+					{#if summary.unseen_notifications != null || summary.cleared_notifications != null}
+						<span class="text-xs text-gray-500 dark:text-gray-400">
+							{#if summary.unseen_notifications != null}{summary.unseen_notifications} unseen{/if}{#if summary.unseen_notifications != null && summary.cleared_notifications != null},
+							{/if}{#if summary.cleared_notifications != null}{summary.cleared_notifications}
+								cleared{/if}
+						</span>
 					{/if}
-				</div>
+				{/if}
 				<svg
-					class="h-4 w-4 transition-transform {notificationsOpen ? 'rotate-180' : ''}"
+					class="ml-auto h-4 w-4 transition-transform {notificationsOpen ? 'rotate-180' : ''}"
 					fill="none"
 					stroke="currentColor"
 					viewBox="0 0 24 24"
+					stroke-width="2"
 				>
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						stroke-width="2"
 						d="M19 9l-7 7-7-7"
 					/>
 				</svg>
@@ -539,37 +530,34 @@
 				onclick={() => {
 					transcoderOpen = !transcoderOpen;
 				}}
-				class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-primary/5 dark:text-white dark:hover:bg-primary/10"
+				class="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-primary/5 dark:hover:bg-primary/10"
 			>
-				<div class="flex items-center gap-2">
-					<svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
-						/>
-					</svg>
-					Transcoder Jobs
-					{#if summary?.stale_transcoder_jobs != null}
-						<span
-							class="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary-text dark:text-primary-text-dark"
-							>{summary.stale_transcoder_jobs}</span
-						>
-					{:else if summary && summary.stale_transcoder_jobs === null}
-						<span class="text-xs text-gray-400">unavailable</span>
-					{/if}
-				</div>
+				<svg class="h-5 w-5 text-primary-text dark:text-primary-text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+					/>
+				</svg>
+				Transcoder Jobs
+				{#if summary?.stale_transcoder_jobs != null}
+					<span
+						class="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary-text dark:text-primary-text-dark"
+						>{summary.stale_transcoder_jobs}</span
+					>
+				{:else if summary && summary.stale_transcoder_jobs === null}
+					<span class="text-xs text-gray-400">unavailable</span>
+				{/if}
 				<svg
-					class="h-4 w-4 transition-transform {transcoderOpen ? 'rotate-180' : ''}"
+					class="ml-auto h-4 w-4 transition-transform {transcoderOpen ? 'rotate-180' : ''}"
 					fill="none"
 					stroke="currentColor"
 					viewBox="0 0 24 24"
+					stroke-width="2"
 				>
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						stroke-width="2"
 						d="M19 9l-7 7-7-7"
 					/>
 				</svg>
