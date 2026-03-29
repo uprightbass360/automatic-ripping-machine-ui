@@ -19,8 +19,8 @@ vi.mock('$lib/api/folder', () => ({
 
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
-vi.mock('$lib/stores/importWizard', () => {
-	const { writable } = require('svelte/store');
+vi.mock('$lib/stores/importWizard', async () => {
+	const { writable } = await import('svelte/store');
 	return { showImportWizard: writable(false) };
 });
 
