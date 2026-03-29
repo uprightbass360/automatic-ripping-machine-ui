@@ -1,5 +1,26 @@
 # Changelog
 
+## [14.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.1.0...v14.2.0) (2026-03-29)
+
+
+### Features
+
+* add dedicated GPU tab to sidebar and bottom stats bar ([6316a34](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6316a34a937cb556f125fb20ccb7a42e947803cd))
+* add power draw, clocks to GPU metrics; rename Utilization to Load ([b6d8c0f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b6d8c0f446ea377fe18f6c76a0244738a8b0eb87))
+* color-coded vendor pills — nvidia green, amd red, intel blue ([554ef76](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/554ef76f11e1e88aef7b7f68fba0948954f89660))
+* display GPU utilization metrics in transcoder tab, sidebar, and bottom bar ([d83f507](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d83f50708b0f1d222892cc03014ebcb9181d5568))
+* folder import wizard polish and review widget improvements ([7e57577](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7e575773e14eefae9d8f5396585d9987db918b19))
+
+
+### Bug Fixes
+
+* add missing cleared property to notification test mock data ([37da7bd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/37da7bd77c0671215fae27720d7c7d07576315e6))
+* merge API theme tokens with built-in defaults to preserve --radius ([9681406](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/96814069dd0c4732374a2b43fba86c85477678ff))
+* replace require() with await import() in FolderBrowser test ([5556fcc](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5556fccd3b0ff943d52a435f2994dc5678184c09))
+* theme flash, panel accent colors, maintenance text sizes, radius tokens, and collapsible file paths ([cd99c43](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cd99c4393035f5c5a33db064f6fa691a85f2f3c8))
+* use full words for GPU labels in bottom stats bar ([9afce2a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9afce2a5ecf79c18fa5bb8b3e942520004ebef56))
+* use non-public path in test mock data for SonarCloud ([a0e8d7e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a0e8d7ebba58ef8671528d331a5fac4fceeb5897))
+
 ## [14.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.0.1...v14.1.0) (2026-03-27)
 
 
