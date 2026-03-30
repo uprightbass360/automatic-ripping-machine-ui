@@ -180,6 +180,17 @@
 		loadNamingPreviews();
 	}
 
+	async function handleTypeToggle(newType: string) {
+		infoType = newType;
+		touched.type = true;
+		try {
+			await updateJobTitle(job.job_id, { video_type: newType });
+			onrefresh?.();
+		} catch (e) {
+			errorMessage = e instanceof Error ? e.message : 'Failed to update type';
+		}
+	}
+
 	let waitTime = $derived(Number(detail?.config?.MANUAL_WAIT_TIME) || 60);
 	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
 	let isVideo = $derived(
@@ -194,6 +205,21 @@
 	let discLabelDiffers = $derived(
 		!!job.label && !!job.title && job.label.toLowerCase() !== job.title.toLowerCase()
 	);
+
+	let isMultiTitleMovie = $derived(
+		job.multi_title && (job.video_type === 'movie' || infoType === 'movie')
+	);
+
+	let defaultApplied = false;
+	$effect(() => {
+		if (!defaultApplied && job.multi_title &&
+			(!job.video_type || job.video_type === 'unknown') &&
+			(job.disctype === 'dvd' || job.disctype === 'bluray' || job.disctype === 'bluray4k')) {
+			defaultApplied = true;
+			infoType = 'movie';
+			updateJobTitle(job.job_id, { video_type: 'movie' }).then(() => onrefresh?.());
+		}
+	});
 
 	async function loadDetail() {
 		try {
@@ -397,6 +423,22 @@
 				</h3>
 				{#if job.multi_title}
 					<span class="shrink-0 rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
+					<div class="flex shrink-0 rounded-sm bg-primary/10 p-0.5 dark:bg-primary/10">
+						<button
+							onclick={() => handleTypeToggle('movie')}
+							class="rounded-sm px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider transition-colors
+								{infoType === 'movie' || job.video_type === 'movie'
+									? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
+									: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
+						>Movie</button>
+						<button
+							onclick={() => handleTypeToggle('series')}
+							class="rounded-sm px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider transition-colors
+								{infoType === 'series' || job.video_type === 'series'
+									? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
+									: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
+						>Series</button>
+					</div>
 				{/if}
 				{#if job.imdb_id}
 					<a
@@ -444,7 +486,7 @@
 		>
 			Info
 		</button>
-		{#if isVideo}
+		{#if isVideo && !isMultiTitleMovie}
 			<button
 				onclick={() => toggleSection('title')}
 				class="{btnBase} {showTitleSearch
@@ -563,6 +605,7 @@
 						</div>
 					{/if}
 
+					{#if !isMultiTitleMovie}
 					<!-- Identity -->
 					<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Identity</h4>
 					<div class="space-y-2">
@@ -595,33 +638,41 @@
 							</div>
 						{/if}
 					</div>
+					{/if}
 					<hr class="border-primary/10 dark:border-primary/15" />
 					<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Media Metadata</h4>
 					<div class="space-y-2">
 						<div class="grid gap-3 {isMusic ? 'grid-cols-2' : 'grid-cols-3'}">
+							{#if !isMultiTitleMovie}
 							<label>
 								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Year</span>
 								<input type="text" bind:value={infoYear} oninput={() => { touched.year = true; }} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 							</label>
+							{/if}
 							<label>
 								<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</span>
 								<select bind:value={infoType} onchange={() => { touched.type = true; }} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white">
+									{#if !infoType || infoType === 'unknown'}
+										<option value="" disabled selected>Select type...</option>
+									{/if}
 									<option value="movie">Movie</option>
 									<option value="series">Series</option>
 									<option value="music">Music</option>
 								</select>
 							</label>
-							{#if !isMusic}
+							{#if !isMusic && !isMultiTitleMovie}
 								<label>
 									<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">IMDb ID</span>
 									<input type="text" bind:value={infoImdbId} oninput={() => { touched.imdbId = true; }} placeholder="tt..." class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 								</label>
 							{/if}
 						</div>
+						{#if !isMultiTitleMovie}
 						<label class="block">
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{isMusic ? 'Cover Art URL' : 'Poster URL'}</span>
 							<input type="text" bind:value={infoPosterUrl} oninput={() => { touched.posterUrl = true; }} placeholder="https://..." class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
 						</label>
+						{/if}
 						{#if infoPlot}
 							<div class="rounded-md bg-primary/5 px-3 py-2 text-sm italic text-gray-600 dark:bg-primary/10 dark:text-gray-400">{infoPlot}</div>
 						{/if}
