@@ -364,7 +364,7 @@
 		'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors';
 </script>
 
-<div class="overflow-hidden rounded-lg border-2 border-primary bg-surface shadow-md dark:border-primary dark:bg-surface-dark">
+<div class="overflow-hidden rounded-lg ring-2 ring-primary bg-surface shadow-md dark:bg-surface-dark">
 	<!-- Status bar -->
 	<div class="flex items-center justify-between bg-primary px-4 py-1.5">
 		<div class="flex items-center gap-2">

@@ -74,6 +74,8 @@
 @layer components {
 	.section-frame {
 		--_accent: var(--frame-accent, var(--color-primary, #3b82f6));
+		border-radius: var(--radius);
+		overflow: hidden;
 	}
 
 	.section-frame-bar-top {
@@ -81,7 +83,6 @@
 		align-items: center;
 		gap: 0.75rem;
 		height: 2rem;
-		border-radius: var(--radius) var(--radius) 0 0;
 		background: var(--_accent);
 		padding: 0 1rem;
 		font-size: 0.75rem;
@@ -93,7 +94,6 @@
 
 	.section-frame-bar-bottom {
 		height: 0.25rem;
-		border-radius: 0 0 var(--radius) var(--radius);
 		background: var(--_accent);
 		opacity: 0.4;
 	}

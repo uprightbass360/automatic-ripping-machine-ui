@@ -186,6 +186,7 @@
 	let cacheLoading = $state(false);
 	let cacheBusy = $state(false);
 	let cacheConfirmOpen = $state(false);
+	let cacheFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
 	async function loadCacheStats() {
 		cacheLoading = true;
@@ -199,10 +200,10 @@
 		cacheConfirmOpen = false;
 		try {
 			const result = await clearImageCache();
-			themeFeedback = { type: 'success', message: `Cleared ${result.cleared} cached image${result.cleared !== 1 ? 's' : ''} (${(result.freed_bytes / 1048576).toFixed(1)} MB)` };
+			cacheFeedback = { type: 'success', message: `Cleared ${result.cleared} cached image${result.cleared !== 1 ? 's' : ''} (${(result.freed_bytes / 1048576).toFixed(1)} MB)` };
 			cacheStats = await fetchImageCacheStats();
 		} catch (e) {
-			themeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to clear cache' };
+			cacheFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to clear cache' };
 		}
 		cacheBusy = false;
 	}
@@ -2431,6 +2432,11 @@
 							Clear Cache
 						</button>
 					</div>
+					{#if cacheFeedback}
+						<p class="mt-2 text-sm {cacheFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+							{cacheFeedback.message}
+						</p>
+					{/if}
 				</div>
 
 				<!-- Feature request prompt -->
