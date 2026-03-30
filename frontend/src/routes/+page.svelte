@@ -281,12 +281,12 @@
 					type="text"
 					placeholder="Search titles..."
 					oninput={onSearch}
-					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 pl-3 pr-8 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 				/>
 				<select
 					value={statusFilter}
 					onchange={(e) => setFilter('status', (e.target as HTMLSelectElement).value)}
-					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 pl-3 pr-8 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 				>
 					<option value="">All Statuses</option>
 					<option value="active">Active</option>
@@ -298,7 +298,7 @@
 				<select
 					value={videoTypeFilter}
 					onchange={(e) => setFilter('videoType', (e.target as HTMLSelectElement).value)}
-					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 pl-3 pr-8 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 				>
 					<option value="">All Types</option>
 					<option value="movie">Movie</option>
@@ -319,6 +319,7 @@
 						<table class="w-full text-left text-sm">
 							<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 								<tr>
+									<th class="w-8 px-4 py-3"></th>
 									<th class="px-4 py-3 font-medium">Title</th>
 									<th class="px-4 py-3 font-medium">Year</th>
 									<th class="px-4 py-3 font-medium">Status</th>

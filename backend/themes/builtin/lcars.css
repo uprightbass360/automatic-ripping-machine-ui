@@ -232,8 +232,28 @@
 	background: #000 !important;
 }
 
-[data-scheme="lcars"] header button:hover {
+[data-scheme="lcars"] header .text-gray-700,
+[data-scheme="lcars"] header .text-gray-600,
+[data-scheme="lcars"] header .text-gray-200,
+[data-scheme="lcars"] header .text-gray-300 {
+	color: #000 !important;
+}
+
+[data-scheme="lcars"] header button:not(.fixed):hover {
 	background: rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-scheme="lcars"] header > div:last-child button {
+	color: #fff !important;
+}
+
+[data-scheme="lcars"] .absolute.rounded-lg.bg-surface,
+[data-scheme="lcars"] .absolute.rounded-lg.dark\:bg-surface-dark,
+[data-scheme="lcars"] .absolute.z-50.bg-surface,
+[data-scheme="lcars"] .absolute.z-50.dark\:bg-surface-dark {
+	border-radius: 8px !important;
+	background-color: #1a1a2e !important;
+	border: 1px solid rgb(255, 153, 0) !important;
 }
 
 [data-scheme="lcars"] main {
@@ -509,6 +529,10 @@
 	color: #f90 !important;
 }
 
+[data-scheme="lcars"] main .overflow-x-auto.rounded-lg {
+	border-radius: 0 !important;
+}
+
 [data-scheme="lcars"] main table {
 	width: 100%;
 	border-collapse: collapse;
@@ -536,14 +560,16 @@
 }
 
 [data-scheme="lcars"] main thead .bg-page,
-
-[data-scheme="lcars"] main thead.bg-page {
+[data-scheme="lcars"] main thead.bg-page,
+[data-scheme="lcars"] main thead.dark\:bg-primary\/5 {
 	background: #c9c !important;
+	border-radius: 0 !important;
+	padding: 0 !important;
 }
 
 [data-scheme="lcars"] main div.bg-page,
 
-[data-scheme="lcars"] main .dark\:bg-primary\/5 {
+[data-scheme="lcars"] main .dark\:bg-primary\/5:not(thead) {
 	background: rgba(153, 153, 255, 0.05) !important;
 	border: none !important;
 	border-radius: 21px !important;
@@ -1104,8 +1130,25 @@
 	border: none !important;
 	border-radius: 20px !important;
 	color: #fff !important;
-	padding: 0.5rem 2.25rem !important;
+	padding: 0.5rem 2.75rem 0.5rem 2.25rem !important;
 	font-weight: bold !important;
+	cursor: pointer !important;
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M2 4l4 4 4-4'/%3E%3C/svg%3E") !important;
+	background-repeat: no-repeat !important;
+	background-position: right 1.25rem center !important;
+	background-size: 12px !important;
+}
+
+[data-scheme="lcars"] .lcars-input:not(select),
+[data-scheme="lcars"] main input[type="text"],
+[data-scheme="lcars"] main input[type="number"],
+[data-scheme="lcars"] main input[type="password"] {
+	background-image: none !important;
+	appearance: auto !important;
+	-webkit-appearance: auto !important;
+	padding: 0.5rem 2.25rem !important;
 }
 
 [data-scheme="lcars"] .lcars-input::placeholder,
