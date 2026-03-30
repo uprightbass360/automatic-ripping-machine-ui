@@ -36,11 +36,12 @@ vi.mock('$lib/api/logs', () => ({
 	fetchLogContent: vi.fn(() => Promise.resolve({ content: '' }))
 }));
 
-import { startWaitingJob, cancelWaitingJob, fetchJob, fetchNamingPreview } from '$lib/api/jobs';
+import { startWaitingJob, cancelWaitingJob, fetchJob, fetchNamingPreview, updateJobTitle } from '$lib/api/jobs';
 const mockStart = vi.mocked(startWaitingJob);
 const mockCancel = vi.mocked(cancelWaitingJob);
 const mockFetchJob = vi.mocked(fetchJob);
 const mockFetchNamingPreview = vi.mocked(fetchNamingPreview);
+const mockUpdateJobTitle = vi.mocked(updateJobTitle);
 
 vi.stubGlobal('confirm', vi.fn(() => true));
 
@@ -311,6 +312,135 @@ describe('DiscReviewWidget', () => {
 			// Falls back to raw filename
 			await waitFor(() => {
 				expect(screen.getByText('title_t00.mkv')).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('multi-title toggle', () => {
+		it('renders Movie/Series buttons when multi_title=true', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: 'movie', disctype: 'dvd' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Movie')).toBeInTheDocument();
+				expect(screen.getByText('Series')).toBeInTheDocument();
+			});
+		});
+
+		it('does NOT render Movie/Series toggle when multi_title=false', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: false, video_type: 'movie', disctype: 'dvd' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Test Movie')).toBeInTheDocument();
+			});
+			expect(screen.queryByRole('button', { name: 'Movie' })).not.toBeInTheDocument();
+		});
+
+		it('calls updateJobTitle on toggle click', async () => {
+			mockUpdateJobTitle.mockResolvedValue(undefined as any);
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: 'movie', disctype: 'dvd' })
+				}
+			});
+			await waitFor(() => expect(screen.getByText('Series')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Series'));
+			await waitFor(() => {
+				expect(mockUpdateJobTitle).toHaveBeenCalledWith(1, { video_type: 'series' });
+			});
+		});
+	});
+
+	describe('auto-default video_type', () => {
+		it('fires updateJobTitle({video_type:"movie"}) for unknown+multi_title+dvd', async () => {
+			mockUpdateJobTitle.mockResolvedValue(undefined as any);
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: 'unknown', disctype: 'dvd' })
+				}
+			});
+			await waitFor(() => {
+				expect(mockUpdateJobTitle).toHaveBeenCalledWith(1, { video_type: 'movie' });
+			});
+		});
+
+		it('does NOT auto-default for series', async () => {
+			mockUpdateJobTitle.mockClear();
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: 'series', disctype: 'dvd' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Test Movie')).toBeInTheDocument();
+			});
+			expect(mockUpdateJobTitle).not.toHaveBeenCalledWith(1, { video_type: 'movie' });
+		});
+
+		it('does NOT auto-default for single-title', async () => {
+			mockUpdateJobTitle.mockClear();
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: false, video_type: 'unknown', disctype: 'dvd' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Test Movie')).toBeInTheDocument();
+			});
+			expect(mockUpdateJobTitle).not.toHaveBeenCalledWith(1, { video_type: 'movie' });
+		});
+
+		it('does NOT auto-default for null disctype', async () => {
+			mockUpdateJobTitle.mockClear();
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: 'unknown', disctype: null })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Test Movie')).toBeInTheDocument();
+			});
+			expect(mockUpdateJobTitle).not.toHaveBeenCalledWith(1, { video_type: 'movie' });
+		});
+	});
+
+	describe('field visibility for multi-title', () => {
+		it('hides Search button for multi-title movie', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: 'movie', disctype: 'dvd' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Start')).toBeInTheDocument();
+			});
+			expect(screen.queryByText('Search')).not.toBeInTheDocument();
+		});
+
+		it('shows Search button for multi-title series', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: 'series', disctype: 'dvd' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Search')).toBeInTheDocument();
+			});
+		});
+
+		it('shows Search button for single-title movie', async () => {
+			renderComponent(DiscReviewWidget, {
+				props: {
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: false, video_type: 'movie', disctype: 'dvd' })
+				}
+			});
+			await waitFor(() => {
+				expect(screen.getByText('Search')).toBeInTheDocument();
 			});
 		});
 	});
