@@ -1,5 +1,12 @@
 # Changelog
 
+## [14.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.2.0...v14.3.0) (2026-03-30)
+
+
+### Features
+
+* multi-title movie review — toggle, auto-default, conditional fields ([3b09134](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3b09134863ebcf4b5a5ddfd7e265db75ddf59ede))
+
 ## [14.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.1.0...v14.2.0) (2026-03-29)
 
 
