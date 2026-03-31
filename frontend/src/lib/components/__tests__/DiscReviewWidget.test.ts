@@ -107,4 +107,20 @@ describe('DiscReviewWidget', () => {
 			});
 		});
 	});
+
+	describe('naming preview error handling', () => {
+		it('falls back gracefully when fetchNamingPreview fails', async () => {
+			const { fetchNamingPreview } = await import('$lib/api/jobs');
+			vi.mocked(fetchNamingPreview).mockRejectedValueOnce(new Error('API unavailable'));
+
+			renderWidget();
+			await fireEvent.click(screen.getByText('Info'));
+			await waitFor(() => {
+				expect(screen.getByText('Title')).toBeInTheDocument();
+			});
+			// Widget should still render without crashing — title input shows raw title as fallback
+			const titleLabel = screen.getByText('Title');
+			expect(titleLabel).toBeInTheDocument();
+		});
+	});
 });
