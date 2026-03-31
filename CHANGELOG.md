@@ -1,5 +1,18 @@
 # Changelog
 
+## [14.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.3.0...v14.4.0) (2026-03-31)
+
+
+### Features
+
+* add 15 new built-in themes, reorder by hue ([a48bc2b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a48bc2b6f4ed28c7708922ac13d0f54c3d7caac7))
+
+
+### Bug Fixes
+
+* resolve svelte-check errors — a11y label and TypeScript mock types ([813f8b7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/813f8b77d35bae4dfbdabf00674475cd4218ffc7))
+* theme polish — section frame gaps, LCARS fixes, review panel border, cache feedback ([f518639](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f5186392c452db1dc14e0c95624598131b007e7b))
+
 ## [14.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.2.0...v14.3.0) (2026-03-30)
 
 
