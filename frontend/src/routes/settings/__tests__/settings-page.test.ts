@@ -204,6 +204,55 @@ describe('Settings Page', () => {
 			expect(screen.getByText('Clear Cache')).toBeInTheDocument();
 		});
 
+		it('shows dark mode toggle when scheme does not lock mode', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const appearanceTab = screen.getAllByText('Appearance');
+			await fireEvent.click(appearanceTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Dark Mode')).toBeInTheDocument();
+			});
+			expect(screen.getByLabelText('Dark mode')).toBeInTheDocument();
+			expect(screen.getByText('Toggle between light and dark mode.')).toBeInTheDocument();
+		});
+
+		it('calls toggleTheme when dark mode switch is clicked', async () => {
+			const { toggleTheme } = await import('$lib/stores/theme');
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const appearanceTab = screen.getAllByText('Appearance');
+			await fireEvent.click(appearanceTab[0]);
+			await waitFor(() => {
+				expect(screen.getByLabelText('Dark mode')).toBeInTheDocument();
+			});
+			await fireEvent.click(screen.getByLabelText('Dark mode'));
+			expect(toggleTheme).toHaveBeenCalled();
+		});
+
+		it('shows "Locked by theme" when schemeLocksMode is true', async () => {
+			const { schemeLocksMode } = await import('$lib/stores/colorScheme');
+			const { writable } = await import('svelte/store');
+			const locked = writable(true);
+			vi.mocked(schemeLocksMode).set = locked.set;
+			vi.mocked(schemeLocksMode).subscribe = locked.subscribe;
+			vi.mocked(schemeLocksMode).update = locked.update;
+
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const appearanceTab = screen.getAllByText('Appearance');
+			await fireEvent.click(appearanceTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Locked by theme')).toBeInTheDocument();
+			});
+			expect(screen.queryByLabelText('Dark mode')).not.toBeInTheDocument();
+		});
+
 		it('renders drives tab with collapsible diagnostics toggle', async () => {
 			renderComponent(SettingsPage);
 			await waitFor(() => {
