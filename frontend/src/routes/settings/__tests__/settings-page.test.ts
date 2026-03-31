@@ -237,9 +237,7 @@ describe('Settings Page', () => {
 			const { schemeLocksMode } = await import('$lib/stores/colorScheme');
 			const { writable } = await import('svelte/store');
 			const locked = writable(true);
-			vi.mocked(schemeLocksMode).set = locked.set;
-			vi.mocked(schemeLocksMode).subscribe = locked.subscribe;
-			vi.mocked(schemeLocksMode).update = locked.update;
+			Object.assign(schemeLocksMode, { set: locked.set, subscribe: locked.subscribe, update: locked.update });
 
 			renderComponent(SettingsPage);
 			await waitFor(() => {
