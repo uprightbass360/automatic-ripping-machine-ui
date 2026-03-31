@@ -204,6 +204,30 @@ describe('Settings Page', () => {
 			expect(screen.getByText('Clear Cache')).toBeInTheDocument();
 		});
 
+		it('shows cache feedback after clearing image cache', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const appearanceTab = screen.getAllByText('Appearance');
+			await fireEvent.click(appearanceTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Clear Cache')).toBeInTheDocument();
+			});
+			// Click Clear Cache to open confirm dialog
+			await fireEvent.click(screen.getByText('Clear Cache'));
+			// Confirm the dialog — confirmLabel is "Clear"
+			await waitFor(() => {
+				expect(screen.getByText('Clear Image Cache')).toBeInTheDocument();
+			});
+			const clearBtns = screen.getAllByText('Clear');
+			await fireEvent.click(clearBtns[clearBtns.length - 1]);
+			// Verify feedback message appears
+			await waitFor(() => {
+				expect(screen.getByText(/Cleared 5 cached images/)).toBeInTheDocument();
+			});
+		});
+
 		it('shows dark mode toggle when scheme does not lock mode', async () => {
 			renderComponent(SettingsPage);
 			await waitFor(() => {
