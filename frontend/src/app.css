@@ -109,6 +109,7 @@
 	}
 
 	/* Status badge semantic colors */
+	.status-scanning   { @apply bg-cyan-500; }
 	.status-active     { @apply bg-blue-500; }
 	.status-warning    { @apply bg-yellow-500; }
 	.status-processing { @apply bg-indigo-500; }

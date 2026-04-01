@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { formatBytes, statusColor, timeAgo, elapsedTime, formatDateTime } from '../utils/format';
+import { formatBytes, statusColor, statusLabel, timeAgo, elapsedTime, formatDateTime } from '../utils/format';
 
 describe('formatBytes', () => {
 	it.each([
@@ -26,7 +26,7 @@ describe('statusColor', () => {
 		['waiting', 'status-warning'],
 		['waiting_transcode', 'status-warning'],
 		['pending', 'status-warning'],
-		['identifying', 'status-active'],
+		['identifying', 'status-scanning'],
 		['ready', 'status-active'],
 		['active', 'status-active'],
 		['ripping', 'status-active'],
@@ -36,6 +36,21 @@ describe('statusColor', () => {
 		[null, 'status-unknown']
 	])('statusColor(%s) = %s', (input, expected) => {
 		expect(statusColor(input)).toBe(expected);
+	});
+});
+
+describe('statusLabel', () => {
+	it.each<[string | null, string]>([
+		['identifying', 'Scanning'],
+		['ripping', 'Ripping'],
+		['success', 'Success'],
+		['fail', 'Failed'],
+		['waiting', 'Waiting'],
+		['transcoding', 'Transcoding'],
+		['info', 'Scanning'],
+		[null, 'Unknown'],
+	])('statusLabel(%s) = %s', (input, expected) => {
+		expect(statusLabel(input)).toBe(expected);
 	});
 });
 
