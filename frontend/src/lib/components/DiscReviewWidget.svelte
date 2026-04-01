@@ -4,7 +4,7 @@
 	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
 	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
-	import { posterSrc } from '$lib/utils/poster';
+	import { posterSrc, posterFallback } from '$lib/utils/poster';
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
 	import MusicSearch from './MusicSearch.svelte';
@@ -39,7 +39,7 @@
 	let cancelling = $state(false);
 	let starting = $state(false);
 	let togglingMultiTitle = $state(false);
-	let editingTrackId = $state<number | null>(null);
+	let openSearchTrackIds = $state<Set<number>>(new Set());
 	let savingTrackField = $state<string | null>(null);
 	let togglingAllEnabled = $state(false);
 	let namingPreviews = $state<Record<string, NamingPreviewTrack>>({});
@@ -225,6 +225,7 @@
 		try {
 			detail = await fetchJob(job.job_id);
 			loadNamingPreviews();
+			autoOpenUnmatchedTracks();
 		} catch {
 			detail = null;
 		} finally {
@@ -309,10 +310,31 @@
 		}
 	}
 
-	function handleTrackTitleApply() {
-		editingTrackId = null;
+	function handleTrackTitleApply(trackId?: number) {
+		if (trackId != null) {
+			openSearchTrackIds = new Set([...openSearchTrackIds].filter(id => id !== trackId));
+		} else {
+			openSearchTrackIds = new Set();
+		}
 		onrefresh?.();
 		loadDetail();
+	}
+
+	function toggleTrackSearch(trackId: number) {
+		const next = new Set(openSearchTrackIds);
+		if (next.has(trackId)) next.delete(trackId);
+		else next.add(trackId);
+		openSearchTrackIds = next;
+	}
+
+	function autoOpenUnmatchedTracks() {
+		if (!job.multi_title || !detail?.tracks?.length) return;
+		const unmatched = detail.tracks
+			.filter(t => t.enabled && !t.title)
+			.map(t => t.track_id);
+		if (unmatched.length > 0) {
+			openSearchTrackIds = new Set(unmatched);
+		}
 	}
 
 	function handleCrcApply() {
@@ -397,6 +419,7 @@
 				src={posterSrc(job.poster_url)}
 				alt={job.title ?? 'Poster'}
 				class="h-24 shrink-0 rounded-sm object-cover {isMusic ? 'w-24' : 'w-16'}"
+				onerror={posterFallback}
 			/>
 		{:else}
 			<div class="flex h-24 shrink-0 items-center justify-center rounded-sm {isMusic ? 'w-24' : 'w-16'} {typeConfig.placeholderClasses}">
@@ -486,7 +509,7 @@
 		>
 			Info
 		</button>
-		{#if isVideo && !isMultiTitleMovie}
+		{#if isVideo && !job.multi_title}
 			<button
 				onclick={() => toggleSection('title')}
 				class="{btnBase} {showTitleSearch
@@ -767,6 +790,7 @@
 													</label>
 												</th>
 												<th class="px-3 py-1.5 font-medium">Filename</th>
+												{#if job.multi_title}<th class="w-8"></th>{/if}
 											{/if}
 										</tr>
 									</thead>
@@ -780,12 +804,12 @@
 												{:else}
 													<td
 														class="px-3 py-1.5 {job.multi_title ? 'cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10' : ''}"
-														onclick={() => { if (job.multi_title) editingTrackId = editingTrackId === track.track_id ? null : track.track_id; }}
+														onclick={() => { if (job.multi_title) toggleTrackSearch(track.track_id); }}
 													>
 														{#if track.title}
 															<div class="flex items-center gap-1.5">
 																{#if track.poster_url}
-																	<img src={posterSrc(track.poster_url)} alt="" class="h-6 w-4 rounded-sm object-cover" />
+																	<img src={posterSrc(track.poster_url)} alt="" class="h-6 w-4 rounded-sm object-cover" onerror={posterFallback} />
 																{/if}
 																<span class="font-medium text-gray-700 dark:text-gray-300">{track.title}</span>
 																{#if track.year}
@@ -861,11 +885,24 @@
 														{/if}
 													</td>
 												{/if}
+												{#if job.multi_title && !isMusic}
+													<td class="px-1 py-1.5">
+														<button
+															onclick={() => toggleTrackSearch(track.track_id)}
+															class="rounded p-1 transition-colors {openSearchTrackIds.has(track.track_id) ? 'text-primary' : 'text-gray-400 hover:text-primary dark:text-gray-500 dark:hover:text-primary'}"
+															title={openSearchTrackIds.has(track.track_id) ? 'Close search' : 'Search title'}
+														>
+															<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+																<circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+															</svg>
+														</button>
+													</td>
+												{/if}
 											</tr>
-											{#if job.multi_title && editingTrackId === track.track_id}
+											{#if job.multi_title && openSearchTrackIds.has(track.track_id)}
 												<tr>
 													<td colspan="99" class="px-3 py-2">
-														<TrackTitleSearch jobId={job.job_id} {track} onapply={handleTrackTitleApply} onclose={() => { editingTrackId = null; }} />
+														<TrackTitleSearch jobId={job.job_id} {track} onapply={() => handleTrackTitleApply(track.track_id)} onclear={() => { onrefresh?.(); loadDetail(); }} onclose={() => toggleTrackSearch(track.track_id)} />
 													</td>
 												</tr>
 											{/if}
@@ -961,6 +998,10 @@
 	{:else if showRipSettings && initialLoading}
 		<div class="border-t border-primary/20 p-4 text-sm text-gray-400 dark:border-primary/20">
 			Loading config...
+		</div>
+	{:else if showRipSettings}
+		<div class="border-t border-primary/20 p-4 text-sm text-gray-400 dark:border-primary/20">
+			Rip settings unavailable — ARM did not return config data.
 		</div>
 	{/if}
 

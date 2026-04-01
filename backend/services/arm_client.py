@@ -249,11 +249,13 @@ async def naming_preview_for_job(job_id: int) -> dict[str, Any] | None:
 # ---------------------------------------------------------------------------
 
 
-async def search_metadata(query: str, year: str | None = None) -> list[dict[str, Any]]:
+async def search_metadata(query: str, year: str | None = None, page: int = 1) -> list[dict[str, Any]]:
     """Search OMDb/TMDb via ARM. Raises httpx.HTTPStatusError on 4xx/5xx."""
     params: dict[str, str] = {"q": query}
     if year:
         params["year"] = year
+    if page > 1:
+        params["page"] = str(page)
     resp = await get_client().get("/api/v1/metadata/search", params=params)
     resp.raise_for_status()
     return resp.json()

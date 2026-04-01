@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Job, Track, MusicSearchResult, MusicDetail, TitleUpdate } from '$lib/types/arm';
 	import { searchMusicMetadata, fetchMusicDetail, updateJobTitle, setJobTracks } from '$lib/api/jobs';
-	import { posterSrc } from '$lib/utils/poster';
+	import { posterSrc, posterFallback } from '$lib/utils/poster';
 
 	interface Props {
 		job: Job;
@@ -378,7 +378,7 @@
 											alt={result.title}
 											class="aspect-square w-full object-cover"
 											loading="lazy"
-											onerror={() => handleImgError(result.poster_url!)}
+											onerror={posterFallback}
 										/>
 									{:else}
 										<div
@@ -461,7 +461,7 @@
 								<!-- Compact header -->
 								<div class="flex items-center gap-2 border-b border-primary/15 p-2 dark:border-primary/20">
 									{#if hasValidPoster(flipData.poster_url)}
-										<img src={posterSrc(flipData.poster_url)} alt="" class="h-8 w-8 shrink-0 rounded object-cover" />
+										<img src={posterSrc(flipData.poster_url)} alt="" class="h-8 w-8 shrink-0 rounded object-cover" onerror={posterFallback} />
 									{/if}
 									<div class="min-w-0 flex-1">
 										<p class="truncate text-xs font-semibold text-gray-900 dark:text-white">{flipData.title}</p>
@@ -560,7 +560,7 @@
 								src={posterSrc(detail.poster_url)}
 								alt={detail.title}
 								class="h-full w-full object-cover"
-								onerror={() => handleImgError(detail!.poster_url!)}
+								onerror={posterFallback}
 							/>
 						{:else}
 							<div

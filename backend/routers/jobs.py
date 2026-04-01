@@ -194,10 +194,11 @@ async def crc_lookup_endpoint(job_id: int):
 async def search_metadata(
     q: str = Query(..., min_length=1),
     year: str | None = None,
+    page: int = Query(1, ge=1),
 ):
     """Search OMDb/TMDb for titles matching the query (proxied through ARM)."""
     try:
-        return await arm_client.search_metadata(q, year)
+        return await arm_client.search_metadata(q, year, page=page)
     except httpx.HTTPStatusError as exc:
         log.warning("Metadata search failed for q=%r: %d", q, exc.response.status_code)
         # Pass through ARM's detail message (e.g. missing API key guidance)
