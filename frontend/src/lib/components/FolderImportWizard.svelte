@@ -4,7 +4,7 @@
 	import type { FolderScanResult, SearchResult, MediaDetail, FolderCreateRequest } from '$lib/types/arm';
 	import FolderBrowser from '$lib/components/FolderBrowser.svelte';
 
-	import { posterSrc } from '$lib/utils/poster';
+	import { posterSrc, posterFallback } from '$lib/utils/poster';
 
 	interface Props {
 		open: boolean;
@@ -249,6 +249,7 @@
 										src={posterSrc(editPosterUrl)}
 										alt={editTitle}
 										class="h-36 w-24 shrink-0 rounded-md object-cover"
+										onerror={posterFallback}
 									/>
 								{:else}
 									<div class="flex h-36 w-24 shrink-0 items-center justify-center rounded-md bg-primary/10 text-gray-400 dark:bg-primary/15">
@@ -336,6 +337,7 @@
 														alt={result.title}
 														class="aspect-[2/3] w-full object-cover"
 														loading="lazy"
+														onerror={posterFallback}
 													/>
 												{:else}
 													<div class="flex aspect-[2/3] w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15">
@@ -366,6 +368,7 @@
 									src={posterSrc(editPosterUrl)}
 									alt={editTitle}
 									class="h-40 w-28 shrink-0 rounded-md object-cover"
+									onerror={posterFallback}
 								/>
 							{:else}
 								<div class="flex h-40 w-28 shrink-0 items-center justify-center rounded-md bg-primary/10 text-gray-400 dark:bg-primary/15">

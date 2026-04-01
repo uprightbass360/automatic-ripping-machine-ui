@@ -3,7 +3,7 @@
 	import type { Job } from '$lib/types/arm';
 	import { fetchCrcLookup, submitToCrcDb, updateJobTitle } from '$lib/api/jobs';
 	import type { CrcLookupResponse, CrcLookupResult } from '$lib/api/jobs';
-	import { posterSrc } from '$lib/utils/poster';
+	import { posterSrc, posterFallback } from '$lib/utils/poster';
 
 	interface Props {
 		job: Job;
@@ -160,6 +160,7 @@
 							alt={result.title}
 							class="h-28 w-20 shrink-0 rounded-sm object-cover"
 							loading="lazy"
+							onerror={posterFallback}
 						/>
 					{/if}
 					<dl class="grid flex-1 grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">

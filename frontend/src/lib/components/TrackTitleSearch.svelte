@@ -1,23 +1,26 @@
 <script lang="ts">
 	import type { Track, TrackTitleUpdate, SearchResult, MediaDetail } from '$lib/types/arm';
 	import { searchMetadata, fetchMediaDetail, updateTrackTitle, clearTrackTitle } from '$lib/api/jobs';
-	import { posterSrc } from '$lib/utils/poster';
+	import { posterSrc, posterFallback } from '$lib/utils/poster';
 
 	interface Props {
 		jobId: number;
 		track: Track;
 		onapply?: () => void;
+		onclear?: () => void;
 		onclose?: () => void;
 	}
 
-	let { jobId, track, onapply, onclose }: Props = $props();
+	let { jobId, track, onapply, onclear, onclose }: Props = $props();
 
-	let query = $state(track.title || track.basename || '');
+	let query = $state(track.title || (track.basename?.replace(/\.\w+$/, '') ?? ''));
 	let yearInput = $state(track.year || '');
 	let imdbInput = $state('');
 	let searching = $state(false);
 	let results = $state<SearchResult[]>([]);
 	let searchError = $state<string | null>(null);
+	let searchPage = $state(1);
+	let hasMore = $state(false);
 
 	let detail = $state<MediaDetail | null>(null);
 	let loadingDetail = $state(false);
@@ -43,13 +46,15 @@
 		}
 	});
 
-	async function handleSearch() {
+	async function handleSearch(page = 1) {
 		const imdb = imdbInput.trim();
 		if (imdb) {
 			searching = true;
 			searchError = null;
 			results = [];
 			detail = null;
+			searchPage = 1;
+			hasMore = false;
 			try {
 				detail = await fetchMediaDetail(imdb);
 			} catch (e) {
@@ -62,11 +67,13 @@
 		if (!query.trim()) return;
 		searching = true;
 		searchError = null;
-		results = [];
 		detail = null;
 		try {
-			results = await searchMetadata(query.trim(), yearInput.trim() || undefined);
-			if (results.length === 0) searchError = 'No results found.';
+			const pageResults = await searchMetadata(query.trim(), yearInput.trim() || undefined, page);
+			results = pageResults;
+			searchPage = page;
+			hasMore = pageResults.length >= 10;
+			if (pageResults.length === 0 && page === 1) searchError = 'No results found.';
 		} catch (e) {
 			searchError = e instanceof Error ? e.message : 'Search failed';
 		} finally {
@@ -118,7 +125,9 @@
 		try {
 			await clearTrackTitle(jobId, track.track_id);
 			feedback = { type: 'success', message: 'Reverted to job title' };
-			onapply?.();
+			detail = null;
+			results = [];
+			onclear?.();
 		} catch (e) {
 			feedback = { type: 'error', message: e instanceof Error ? e.message : 'Clear failed' };
 		} finally {
@@ -158,7 +167,7 @@
 		<input type="text" bind:value={query} onkeydown={handleSearchKeydown} placeholder="Title..." class="min-w-[150px] flex-1 {inputBase}" />
 		<input type="text" bind:value={yearInput} onkeydown={handleSearchKeydown} placeholder="Year" class="w-16 {inputBase}" />
 		<input type="text" bind:value={imdbInput} onkeydown={handleSearchKeydown} placeholder="tt..." class="w-28 {inputBase}" />
-		<button onclick={handleSearch} disabled={searching || (!query.trim() && !imdbInput.trim())} class="{btnBase} bg-primary text-on-primary hover:bg-primary-hover">
+		<button onclick={handleSearch} disabled={searching || (!query.trim() && !imdbInput.trim())} class="{btnBase} w-[62px] text-center bg-primary text-on-primary hover:bg-primary-hover">
 			{searching ? '...' : 'Search'}
 		</button>
 	</div>
@@ -170,24 +179,57 @@
 				<p class="mt-0.5 text-amber-600 dark:text-amber-400">Configure API keys in <a href="/settings" class="underline hover:no-underline">Settings</a>.</p>
 			</div>
 		{:else}
-			<p class="text-xs text-gray-500 dark:text-gray-400">{searchError}</p>
+			<div class="flex items-center gap-3">
+				<p class="text-xs text-gray-500 dark:text-gray-400">{searchError}</p>
+				{#if query.trim()}
+					<button
+						onclick={() => { detail = { title: query.trim(), year: yearInput.trim(), media_type: 'movie', imdb_id: null, poster_url: null, plot: null, background_url: null }; searchError = null; }}
+						class="text-xs font-medium text-primary hover:underline"
+					>Set manually</button>
+				{/if}
+			</div>
 		{/if}
 	{/if}
 
 	<!-- Results -->
 	{#if !detail && results.length > 0}
-		<div class="flex flex-wrap gap-2">
-			{#each results as result}
-				<button onclick={() => handleSelect(result)} class="flex items-center gap-2 rounded-md border border-primary/15 px-2 py-1 text-left text-xs hover:border-primary/40 dark:border-primary/20">
+		<div class="flex items-center gap-1.5">
+			<button
+				onclick={() => handleSearch(searchPage - 1)}
+				disabled={searching || searchPage <= 1}
+				class="flex h-12 w-7 shrink-0 items-center justify-center rounded-md border border-primary/20 text-primary hover:bg-primary/10 disabled:opacity-30"
+				title="Previous page"
+			>
+				<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+			</button>
+			{#each results.slice(0, 8) as result}
+				<button onclick={() => handleSelect(result)} class="flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-primary/15 px-1.5 py-1 text-left hover:border-primary/40 dark:border-primary/20" title="{result.title} ({result.year})">
 					{#if result.poster_url}
-						<img src={posterSrc(result.poster_url)} alt="" class="h-10 w-7 rounded-sm object-cover" loading="lazy" />
+						<img src={posterSrc(result.poster_url)} alt="" class="h-10 w-7 shrink-0 rounded-sm object-cover" loading="lazy" onerror={posterFallback} />
 					{/if}
-					<div>
-						<p class="font-medium text-gray-900 dark:text-white">{result.title}</p>
-						<p class="text-gray-500 dark:text-gray-400">{result.year} &middot; {result.media_type}</p>
+					<div class="min-w-0">
+						<p class="truncate text-[10px] font-medium text-gray-900 dark:text-white">{result.title}</p>
+						<p class="truncate text-[9px] text-gray-500 dark:text-gray-400">{result.year}</p>
 					</div>
 				</button>
 			{/each}
+			<button
+				onclick={() => handleSearch(searchPage + 1)}
+				disabled={searching || !hasMore}
+				class="flex h-12 w-7 shrink-0 items-center justify-center rounded-md border border-primary/20 text-primary hover:bg-primary/10 disabled:opacity-30"
+				title="Next page"
+			>
+				<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+			</button>
+			<button
+				onclick={() => { detail = { title: query.trim(), year: yearInput.trim(), media_type: 'movie', imdb_id: imdbInput.trim() || null, poster_url: null, plot: null, background_url: null }; }}
+				class="flex h-12 w-8 shrink-0 items-center justify-center rounded-md border border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 dark:border-primary/30 dark:hover:bg-primary/10"
+				title="Set title manually without searching"
+			>
+				<svg class="h-4 w-4 text-primary/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+				</svg>
+			</button>
 		</div>
 	{/if}
 

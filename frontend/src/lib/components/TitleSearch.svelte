@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Job, SearchResult, MediaDetail, TitleUpdate } from '$lib/types/arm';
 	import { searchMetadata, fetchMediaDetail, updateJobTitle } from '$lib/api/jobs';
-	import { posterSrc } from '$lib/utils/poster';
+	import { posterSrc, posterFallback } from '$lib/utils/poster';
 
 	interface Props {
 		job: Job;
@@ -220,6 +220,7 @@
 							alt={result.title}
 							class="aspect-[2/3] w-full object-cover"
 							loading="lazy"
+							onerror={posterFallback}
 						/>
 					{:else}
 						<div

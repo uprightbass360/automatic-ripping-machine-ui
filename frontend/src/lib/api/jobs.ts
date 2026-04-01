@@ -54,9 +54,10 @@ export function fixJobPermissions(id: number): Promise<unknown> {
 	return apiFetch(`/api/jobs/${id}/fix-permissions`, { method: 'POST' });
 }
 
-export function searchMetadata(query: string, year?: string): Promise<SearchResult[]> {
+export function searchMetadata(query: string, year?: string, page = 1): Promise<SearchResult[]> {
 	const params = new URLSearchParams({ q: query });
 	if (year) params.set('year', year);
+	if (page > 1) params.set('page', String(page));
 	return apiFetch<SearchResult[]>(`/api/metadata/search?${params}`);
 }
 
