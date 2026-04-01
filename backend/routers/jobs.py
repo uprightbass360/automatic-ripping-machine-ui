@@ -1,4 +1,5 @@
 import logging
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
@@ -192,9 +193,9 @@ async def crc_lookup_endpoint(job_id: int):
 
 @router.get("/metadata/search", response_model=list[SearchResultSchema], responses=_502_ARM)
 async def search_metadata(
-    q: str = Query(..., min_length=1),
-    year: str | None = None,
-    page: int = Query(1, ge=1),
+    q: Annotated[str, Query(min_length=1)],
+    year: Annotated[str | None, Query()] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
 ):
     """Search OMDb/TMDb for titles matching the query (proxied through ARM)."""
     try:
