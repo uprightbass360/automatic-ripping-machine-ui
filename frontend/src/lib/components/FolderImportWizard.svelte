@@ -4,7 +4,7 @@
 	import type { FolderScanResult, SearchResult, MediaDetail, FolderCreateRequest } from '$lib/types/arm';
 	import FolderBrowser from '$lib/components/FolderBrowser.svelte';
 
-	import { posterSrc, posterFallback } from '$lib/utils/poster';
+	import PosterImage from './PosterImage.svelte';
 
 	interface Props {
 		open: boolean;
@@ -245,11 +245,10 @@
 							<!-- Poster preview + editable fields -->
 							<div class="flex gap-4">
 								{#if editPosterUrl}
-									<img
-										src={posterSrc(editPosterUrl)}
+									<PosterImage
+										url={editPosterUrl}
 										alt={editTitle}
 										class="h-36 w-24 shrink-0 rounded-md object-cover"
-										onerror={posterFallback}
 									/>
 								{:else}
 									<div class="flex h-36 w-24 shrink-0 items-center justify-center rounded-md bg-primary/10 text-gray-400 dark:bg-primary/15">
@@ -332,12 +331,10 @@
 												class="flex flex-col overflow-hidden rounded-lg border text-left transition-all border-primary/20 hover:border-primary/40 dark:border-primary/20 dark:hover:border-primary/40"
 											>
 												{#if result.poster_url}
-													<img
-														src={posterSrc(result.poster_url)}
+													<PosterImage
+														url={result.poster_url}
 														alt={result.title}
 														class="aspect-[2/3] w-full object-cover"
-														loading="lazy"
-														onerror={posterFallback}
 													/>
 												{:else}
 													<div class="flex aspect-[2/3] w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15">
@@ -364,11 +361,10 @@
 					<div class="shrink-0 rounded-lg border border-primary/20 p-4 dark:border-primary/20">
 						<div class="flex gap-4">
 							{#if editPosterUrl}
-								<img
-									src={posterSrc(editPosterUrl)}
+								<PosterImage
+									url={editPosterUrl}
 									alt={editTitle}
 									class="h-40 w-28 shrink-0 rounded-md object-cover"
-									onerror={posterFallback}
 								/>
 							{:else}
 								<div class="flex h-40 w-28 shrink-0 items-center justify-center rounded-md bg-primary/10 text-gray-400 dark:bg-primary/15">
