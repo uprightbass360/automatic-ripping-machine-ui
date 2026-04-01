@@ -167,7 +167,7 @@
 		<input type="text" bind:value={query} onkeydown={handleSearchKeydown} placeholder="Title..." class="min-w-[150px] flex-1 {inputBase}" />
 		<input type="text" bind:value={yearInput} onkeydown={handleSearchKeydown} placeholder="Year" class="w-16 {inputBase}" />
 		<input type="text" bind:value={imdbInput} onkeydown={handleSearchKeydown} placeholder="tt..." class="w-28 {inputBase}" />
-		<button onclick={handleSearch} disabled={searching || (!query.trim() && !imdbInput.trim())} class="{btnBase} w-[62px] text-center bg-primary text-on-primary hover:bg-primary-hover">
+		<button onclick={() => handleSearch()} disabled={searching || (!query.trim() && !imdbInput.trim())} class="{btnBase} w-[62px] text-center bg-primary text-on-primary hover:bg-primary-hover">
 			{searching ? '...' : 'Search'}
 		</button>
 	</div>
