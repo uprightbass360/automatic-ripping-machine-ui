@@ -410,26 +410,17 @@ describe('DiscReviewWidget', () => {
 	});
 
 	describe('field visibility for multi-title', () => {
-		it('hides Search button for multi-title movie', async () => {
+		it.each([
+			['movie', 'Start'],
+			['series', 'Info'],
+		])('hides Search button for multi-title %s', async (videoType, visibleButton) => {
 			renderComponent(DiscReviewWidget, {
 				props: {
-					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: 'movie', disctype: 'dvd' })
+					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: videoType, disctype: 'dvd' })
 				}
 			});
 			await waitFor(() => {
-				expect(screen.getByText('Start')).toBeInTheDocument();
-			});
-			expect(screen.queryByText('Search')).not.toBeInTheDocument();
-		});
-
-		it('hides Search button for multi-title series', async () => {
-			renderComponent(DiscReviewWidget, {
-				props: {
-					job: createJob({ status: 'waiting', wait_start_time: '2025-06-15T11:55:00Z', multi_title: true, video_type: 'series', disctype: 'dvd' })
-				}
-			});
-			await waitFor(() => {
-				expect(screen.getByText('Info')).toBeInTheDocument();
+				expect(screen.getByText(visibleButton)).toBeInTheDocument();
 			});
 			expect(screen.queryByText('Search')).not.toBeInTheDocument();
 		});
