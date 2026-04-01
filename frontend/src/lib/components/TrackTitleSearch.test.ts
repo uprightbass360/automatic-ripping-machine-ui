@@ -154,14 +154,14 @@ describe('TrackTitleSearch', () => {
 		});
 
 		it('calls clearTrackTitle on Clear Override click', async () => {
-			const onapply = vi.fn();
+			const onclear = vi.fn();
 			renderComponent(TrackTitleSearch, {
-				props: { jobId: 1, track: createTrack({ title: 'Override' }), onapply }
+				props: { jobId: 1, track: createTrack({ title: 'Override' }), onclear }
 			});
 			await fireEvent.click(screen.getByText('Clear Override'));
 			await waitFor(() => {
 				expect(mockClearTrackTitle).toHaveBeenCalledWith(1, 1);
-				expect(onapply).toHaveBeenCalled();
+				expect(onclear).toHaveBeenCalled();
 			});
 		});
 
