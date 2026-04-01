@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderComponent, screen, cleanup } from '$lib/test-utils';
+import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import TranscodeCard from './TranscodeCard.svelte';
 import type { TranscoderJob } from '$lib/types/transcoder';
 
@@ -38,7 +38,7 @@ describe('TranscodeCard', () => {
 		vi.useRealTimers();
 	});
 
-	describe('rendering', () => {
+	describe('collapsed state', () => {
 		it('renders job title', () => {
 			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
 			expect(screen.getByText('My Movie')).toBeInTheDocument();
@@ -60,14 +60,8 @@ describe('TranscodeCard', () => {
 
 		it('renders status badge', () => {
 			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
-			// "Transcoding" appears in both StatusBadge and status label
 			const matches = screen.getAllByText('Transcoding');
 			expect(matches.length).toBeGreaterThanOrEqual(1);
-		});
-
-		it('renders source filename below title', () => {
-			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
-			expect(screen.getByText('my_movie.mkv')).toBeInTheDocument();
 		});
 
 		it('shows elapsed time', () => {
@@ -75,19 +69,67 @@ describe('TranscodeCard', () => {
 			expect(screen.getByText('1h 55m')).toBeInTheDocument();
 		});
 
-		it('shows progress bar when progress is set', () => {
-			const { container } = renderComponent(TranscodeCard, {
-				props: { job: createTranscodeJob({ progress: 45 }) }
-			});
-			expect(container.querySelector('[data-progress-track]')).toBeInTheDocument();
-			expect(screen.getByText('45%')).toBeInTheDocument();
-		});
-
-		it('shows errors indicator when job has error', () => {
+		it('shows error indicator when job has error', () => {
 			renderComponent(TranscodeCard, {
 				props: { job: createTranscodeJob({ error: 'Encode failed' }) }
 			});
-			expect(screen.getByText('errors')).toBeInTheDocument();
+			expect(screen.getByTitle('Encode failed')).toBeInTheDocument();
+		});
+
+		it('does not show expanded detail by default', () => {
+			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
+			expect(screen.queryByText('View full details')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('expanded state', () => {
+		beforeEach(() => {
+			vi.useRealTimers(); // slide transition needs real timers
+		});
+
+		it('shows detail table on click', async () => {
+			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
+			await fireEvent.click(screen.getByText('My Movie'));
+			await waitFor(() => {
+				expect(screen.getByText('View full details')).toBeInTheDocument();
+			});
+		});
+
+		it('shows source filename in expanded table', async () => {
+			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
+			await fireEvent.click(screen.getByText('My Movie'));
+			await waitFor(() => {
+				expect(screen.getByText('my_movie.mkv')).toBeInTheDocument();
+			});
+		});
+
+		it('shows progress percentage in expanded table', async () => {
+			renderComponent(TranscodeCard, { props: { job: createTranscodeJob({ progress: 45 }) } });
+			await fireEvent.click(screen.getByText('My Movie'));
+			await waitFor(() => {
+				const matches = screen.getAllByText('45%');
+				expect(matches.length).toBeGreaterThanOrEqual(1);
+			});
+		});
+
+		it('shows error text when expanded', async () => {
+			renderComponent(TranscodeCard, {
+				props: { job: createTranscodeJob({ error: 'Encode failed' }) }
+			});
+			await fireEvent.click(screen.getByText('My Movie'));
+			await waitFor(() => {
+				expect(screen.getByText('Encode failed')).toBeInTheDocument();
+			});
+		});
+
+		it('shows ARM job ID when present', async () => {
+			renderComponent(TranscodeCard, {
+				props: { job: createTranscodeJob({ arm_job_id: '42' }) }
+			});
+			await fireEvent.click(screen.getByText('My Movie'));
+			await waitFor(() => {
+				expect(screen.getByText('(ARM #42)')).toBeInTheDocument();
+			});
 		});
 	});
 });

@@ -2,64 +2,208 @@
 	import type { TranscoderJob } from '$lib/types/transcoder';
 	import StatusBadge from './StatusBadge.svelte';
 	import ProgressBar from './ProgressBar.svelte';
-	import { elapsedTime, statusLabel } from '$lib/utils/format';
+	import { elapsedTime } from '$lib/utils/format';
+	import { discTypeLabel } from '$lib/utils/job-type';
+	import { posterSrc } from '$lib/utils/poster';
+	import DiscTypeIcon from './DiscTypeIcon.svelte';
+	import TimeAgo from './TimeAgo.svelte';
+	import { slide } from 'svelte/transition';
 
 	interface Props {
 		job: TranscoderJob;
 	}
 
 	let { job }: Props = $props();
+	let expanded = $state(false);
 
 	let displayTitle = $derived(
 		job.title || job.source_path?.split('/').pop() || `Transcode #${job.id}`
 	);
+	let sourceFile = $derived(job.source_path?.split('/').pop() ?? null);
+	let hasError = $derived(!!job.error);
+	let isActive = $derived(job.status === 'processing' || job.status === 'transcoding');
+
+	function toggle(e: MouseEvent) {
+		if ((e.target as HTMLElement).closest('a, button:not(.row-toggle)')) return;
+		expanded = !expanded;
+	}
 </script>
 
-<div class="rounded-lg border border-primary/20 border-l-4 border-l-primary bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-	<div class="flex gap-4">
-		<div class="flex h-24 w-16 shrink-0 items-center justify-center rounded-sm bg-primary/15 text-primary dark:bg-primary/15 dark:text-primary">
-			<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+<div
+	class="rounded-lg border border-primary/20 border-l-4 border-l-primary bg-surface shadow-xs transition dark:border-primary/20 dark:bg-surface-dark"
+	onclick={toggle}
+	role="button"
+	tabindex="0"
+>
+	<!-- Collapsed row -->
+	<div class="flex items-center gap-3 px-4 py-2.5 cursor-pointer">
+		<!-- Icon -->
+		{#if job.poster_url}
+			<img src={posterSrc(job.poster_url)} alt="" class="h-10 w-7 shrink-0 rounded-sm object-cover" />
+		{:else}
+			<div class="flex h-10 w-7 shrink-0 items-center justify-center rounded-sm bg-primary/15 text-primary dark:bg-primary/15">
+				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+					<circle cx="12" cy="12" r="10" />
+					<circle cx="12" cy="12" r="3" />
+				</svg>
+			</div>
+		{/if}
+
+		<!-- Title -->
+		<h3 class="min-w-0 flex-shrink truncate font-semibold text-sm text-gray-900 dark:text-white">
+			{displayTitle}
+		</h3>
+
+		<!-- Year -->
+		{#if job.year}
+			<span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{job.year}</span>
+		{/if}
+
+		<!-- Status badge -->
+		<div class="shrink-0">
+			<StatusBadge status={job.status} />
+		</div>
+
+		<!-- Type + disc badges -->
+		<div class="hidden sm:flex shrink-0 items-center gap-1.5">
+			{#if job.video_type}
+				<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs font-medium dark:bg-primary/15">{job.video_type}</span>
+			{/if}
+			{#if job.disctype}
+				<span class="inline-flex items-center gap-0.5 rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs dark:bg-primary/15">
+					<DiscTypeIcon disctype={job.disctype} size="h-3 w-3" />
+					{discTypeLabel(job.disctype)}
+				</span>
+			{/if}
+		</div>
+
+		<!-- Progress bar (inline) -->
+		{#if typeof job.progress === 'number' && job.progress > 0}
+			<div class="hidden lg:block flex-1 min-w-24">
+				<ProgressBar value={job.progress} color="bg-primary" />
+			</div>
+		{:else if isActive}
+			<div class="hidden lg:block flex-1 min-w-24">
+				<div class="h-2 overflow-hidden rounded-full bg-primary/15">
+					<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Elapsed -->
+		{#if job.started_at}
+			<span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{elapsedTime(job.started_at)}</span>
+		{/if}
+
+		<!-- Error indicator -->
+		{#if hasError}
+			<span class="shrink-0 text-red-500 dark:text-red-400" title={job.error ?? ''}>
+				<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+				</svg>
+			</span>
+		{/if}
+
+		<!-- Expand chevron -->
+		<button class="row-toggle shrink-0 p-0.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-transform" class:rotate-180={expanded} title={expanded ? 'Collapse' : 'Expand'}>
+			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
 			</svg>
-		</div>
-		<div class="min-w-0 flex-1">
-			<!-- Row 1: Title + Status -->
-			<div class="flex items-start justify-between gap-2">
-				<h3 class="truncate font-semibold text-gray-900 dark:text-white">
-					{displayTitle}
-				</h3>
-				<StatusBadge status={job.status} />
-			</div>
-
-			<!-- Row 2: Source file -->
-			{#if job.source_path && job.title}
-				<div class="mt-0.5 truncate font-mono text-xs text-gray-400 dark:text-gray-500">
-					{job.source_path.split('/').pop()}
-				</div>
-			{/if}
-
-			<!-- Row 3: Elapsed time -->
-			<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-				<span class="rounded-sm bg-primary-light-bg px-1.5 py-0.5 font-medium text-primary-text dark:bg-primary-light-bg-dark dark:text-primary-text-dark">{statusLabel(job.status)}</span>
-				{#if job.started_at}
-					<span>{elapsedTime(job.started_at)}</span>
-				{/if}
-			</div>
-
-			<!-- Row 4: Error -->
-			{#if job.error}
-				<div class="mt-1.5 flex items-center gap-0.5 text-xs text-red-500 dark:text-red-400" title={job.error}>
-					<svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-					</svg>
-					errors
-				</div>
-			{/if}
-		</div>
+		</button>
 	</div>
-	{#if typeof job.progress === 'number'}
-		<div class="mt-3">
-			<ProgressBar value={job.progress} color="bg-primary" />
+
+	<!-- Mobile progress -->
+	{#if isActive && !expanded}
+		<div class="lg:hidden px-4 pb-2.5">
+			{#if typeof job.progress === 'number' && job.progress > 0}
+				<ProgressBar value={job.progress} color="bg-primary" />
+			{:else}
+				<div class="h-2 overflow-hidden rounded-full bg-primary/15">
+					<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
+				</div>
+			{/if}
+		</div>
+	{/if}
+
+	<!-- Expanded detail -->
+	{#if expanded}
+		<div transition:slide={{ duration: 200 }} class="border-t border-primary/10 px-4 py-3 dark:border-primary/15">
+			<div class="flex gap-4">
+				{#if job.poster_url}
+					<img src={posterSrc(job.poster_url)} alt={displayTitle} class="h-32 w-22 shrink-0 rounded-sm object-cover" />
+				{/if}
+
+				<div class="min-w-0 flex-1">
+					<div class="mb-2">
+						<span class="text-sm font-semibold text-gray-900 dark:text-white">{displayTitle}</span>
+					</div>
+
+					<table class="w-full text-xs">
+						<tbody class="divide-y divide-primary/5 dark:divide-primary/10">
+							<tr>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Job ID</td>
+								<td class="py-1 text-gray-900 dark:text-white">{job.id}{#if job.arm_job_id} <span class="text-gray-400">(ARM #{job.arm_job_id})</span>{/if}</td>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">Status</td>
+								<td class="py-1"><StatusBadge status={job.status} /></td>
+							</tr>
+							<tr>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Type</td>
+								<td class="py-1 text-gray-900 dark:text-white">{job.video_type || '—'}</td>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">Disc</td>
+								<td class="py-1 text-gray-900 dark:text-white">{job.disctype || '—'}</td>
+							</tr>
+							<tr>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Year</td>
+								<td class="py-1 text-gray-900 dark:text-white">{job.year || '—'}</td>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">Tracks</td>
+								<td class="py-1 text-gray-900 dark:text-white">{job.total_tracks ?? '—'}</td>
+							</tr>
+							<tr>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Source</td>
+								<td class="py-1 font-mono text-gray-600 dark:text-gray-400 truncate" title={job.source_path}>{sourceFile || '—'}</td>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">Output</td>
+								<td class="py-1 font-mono text-gray-600 dark:text-gray-400 truncate" title={job.output_path ?? ''}>{job.output_path?.split('/').pop() || '—'}</td>
+							</tr>
+							<tr>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Started</td>
+								<td class="py-1 text-gray-900 dark:text-white">{#if job.started_at}<TimeAgo date={job.started_at} />{:else}—{/if}</td>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">
+									{#if job.completed_at}Completed{:else}Elapsed{/if}
+								</td>
+								<td class="py-1 text-gray-900 dark:text-white">
+									{#if job.completed_at}
+										<TimeAgo date={job.completed_at} />
+									{:else if job.started_at}
+										{elapsedTime(job.started_at)}
+									{:else}
+										—
+									{/if}
+								</td>
+							</tr>
+							<tr>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Progress</td>
+								<td class="py-1 text-gray-900 dark:text-white">{typeof job.progress === 'number' ? `${job.progress}%` : '—'}</td>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">Created</td>
+								<td class="py-1 text-gray-900 dark:text-white">{#if job.created_at}<TimeAgo date={job.created_at} />{:else}—{/if}</td>
+							</tr>
+						</tbody>
+					</table>
+
+					{#if hasError}
+						<div class="mt-2 flex items-center gap-1 text-xs text-red-500 dark:text-red-400">
+							<svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+							</svg>
+							<span>{job.error}</span>
+						</div>
+					{/if}
+
+					<div class="mt-2">
+						<a href="/transcoder/{job.id}" class="inline-block text-xs text-primary hover:underline">View full details</a>
+					</div>
+				</div>
+			</div>
 		</div>
 	{/if}
 </div>
