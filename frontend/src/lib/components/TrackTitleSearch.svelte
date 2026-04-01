@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Track, TrackTitleUpdate, SearchResult, MediaDetail } from '$lib/types/arm';
 	import { searchMetadata, fetchMediaDetail, updateTrackTitle, clearTrackTitle } from '$lib/api/jobs';
-	import { posterSrc, posterFallback } from '$lib/utils/poster';
+	import PosterImage from './PosterImage.svelte';
 
 	interface Props {
 		jobId: number;
@@ -205,7 +205,7 @@
 			{#each results.slice(0, 8) as result}
 				<button onclick={() => handleSelect(result)} class="flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-primary/15 px-1.5 py-1 text-left hover:border-primary/40 dark:border-primary/20" title="{result.title} ({result.year})">
 					{#if result.poster_url}
-						<img src={posterSrc(result.poster_url)} alt="" class="h-10 w-7 shrink-0 rounded-sm object-cover" loading="lazy" onerror={posterFallback} />
+						<PosterImage url={result.poster_url} class="h-10 w-7 shrink-0 rounded-sm object-cover" />
 					{/if}
 					<div class="min-w-0">
 						<p class="truncate text-[10px] font-medium text-gray-900 dark:text-white">{result.title}</p>
