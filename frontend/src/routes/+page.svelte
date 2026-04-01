@@ -7,6 +7,7 @@
 	import type { DashboardData, JobListResponse } from '$lib/types/arm';
 	import DiscReviewWidget from '$lib/components/DiscReviewWidget.svelte';
 	import JobCard from '$lib/components/JobCard.svelte';
+	import ActiveJobRow from '$lib/components/ActiveJobRow.svelte';
 	import JobRow from '$lib/components/JobRow.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
@@ -225,9 +226,9 @@
 	{#if scanningJobs.length > 0}
 		<section>
 			<SectionFrame variant="full" accent="var(--color-cyan-500, #06b6d4)" label="SCANNING — {scanningJobs.length} {scanningJobs.length === 1 ? 'DISC' : 'DISCS'}">
-				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				<div class="space-y-2">
 					{#each scanningJobs as job (job.job_id)}
-						<JobCard {job} driveNames={dash.drive_names} />
+						<ActiveJobRow {job} driveNames={dash.drive_names} />
 					{/each}
 				</div>
 			</SectionFrame>
@@ -238,9 +239,9 @@
 	{#if nonWaitingActiveJobs.length > 0}
 		<section>
 			<SectionFrame variant="full" accent="var(--color-primary)" label="ACTIVE RIPS — {nonWaitingActiveJobs.length} IN PROGRESS">
-				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				<div class="space-y-2">
 					{#each nonWaitingActiveJobs as job (job.job_id)}
-						<JobCard {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} />
+						<ActiveJobRow {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} />
 					{/each}
 				</div>
 			</SectionFrame>
@@ -251,7 +252,7 @@
 	{#if dash.active_transcodes.length > 0}
 		<section>
 			<SectionFrame variant="full" accent="var(--color-primary)" label="TRANSCODING — {dash.active_transcodes.length} ACTIVE">
-				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				<div class="space-y-2">
 					{#each dash.active_transcodes as tc}
 						<TranscodeCard job={tc} />
 					{/each}
