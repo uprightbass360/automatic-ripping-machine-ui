@@ -35,12 +35,15 @@
 	let dashError = $state<string | null>(null);
 
 	let dismissedJobIds = $state(new Set<number>());
+	let scanningJobs = $derived(
+		dash.active_jobs.filter(j => j.status?.toLowerCase() === 'identifying')
+	);
 	let waitingJobs = $derived(
 		dash.active_jobs.filter(j => j.status?.toLowerCase() === 'waiting' && !dismissedJobIds.has(j.job_id))
 	);
 	let nonWaitingActiveJobs = $derived(dash.active_jobs.filter(j => {
 		const s = j.status?.toLowerCase();
-		return s !== 'waiting' && s !== 'transcoding' && s !== 'waiting_transcode';
+		return s !== 'waiting' && s !== 'transcoding' && s !== 'waiting_transcode' && s !== 'identifying';
 	}));
 
 	let progressMap = $state<Record<number, RipProgress>>({});
@@ -212,6 +215,19 @@
 				<div class="grid gap-4">
 					{#each waitingJobs as job (job.job_id)}
 						<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
+					{/each}
+				</div>
+			</SectionFrame>
+		</section>
+	{/if}
+
+	<!-- Scanning -->
+	{#if scanningJobs.length > 0}
+		<section>
+			<SectionFrame variant="full" accent="var(--color-cyan-500, #06b6d4)" label="SCANNING — {scanningJobs.length} {scanningJobs.length === 1 ? 'DISC' : 'DISCS'}">
+				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+					{#each scanningJobs as job (job.job_id)}
+						<JobCard {job} driveNames={dash.drive_names} />
 					{/each}
 				</div>
 			</SectionFrame>

@@ -44,6 +44,7 @@ export function elapsedTime(startTime: string | null): string {
 export function statusColor(status: string | null): string {
 	switch (status?.toLowerCase()) {
 		case 'identifying':
+			return 'status-scanning';
 		case 'ready':
 		case 'active':
 		case 'ripping':
@@ -73,7 +74,7 @@ export function statusColor(status: string | null): string {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-	identifying: 'Identifying',
+	identifying: 'Scanning',
 	ready: 'Ready',
 	active: 'Active',
 	ripping: 'Ripping',
