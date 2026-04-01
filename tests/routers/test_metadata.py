@@ -47,7 +47,7 @@ class TestMetadataSearch:
                    new_callable=AsyncMock, return_value=[]) as mock_fn:
             resp = await app_client.get("/api/metadata/search?q=matrix&year=1999")
         assert resp.status_code == 200
-        mock_fn.assert_called_once_with("matrix", "1999")
+        mock_fn.assert_called_once_with("matrix", "1999", page=1)
 
     async def test_http_status_error_passthrough(self, app_client):
         with patch("backend.routers.jobs.arm_client.search_metadata",
