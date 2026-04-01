@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { posterSrc } from '../utils/poster';
+import { posterSrc, POSTER_PLACEHOLDER } from '../utils/poster';
 
 describe('posterSrc', () => {
-	it('returns empty string for null', () => {
-		expect(posterSrc(null)).toBe('');
+	it('returns placeholder for null', () => {
+		expect(posterSrc(null)).toBe(POSTER_PLACEHOLDER);
 	});
 
-	it('returns empty string for undefined', () => {
-		expect(posterSrc(undefined)).toBe('');
+	it('returns placeholder for undefined', () => {
+		expect(posterSrc(undefined)).toBe(POSTER_PLACEHOLDER);
 	});
 
-	it('returns empty string for empty string', () => {
-		expect(posterSrc('')).toBe('');
+	it('returns placeholder for empty string', () => {
+		expect(posterSrc('')).toBe(POSTER_PLACEHOLDER);
 	});
 
 	it('returns relative path unchanged', () => {
