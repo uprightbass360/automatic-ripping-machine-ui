@@ -3,7 +3,7 @@
 	import type { Job } from '$lib/types/arm';
 	import { fetchCrcLookup, submitToCrcDb, updateJobTitle } from '$lib/api/jobs';
 	import type { CrcLookupResponse, CrcLookupResult } from '$lib/api/jobs';
-	import { posterSrc, posterFallback } from '$lib/utils/poster';
+	import PosterImage from './PosterImage.svelte';
 
 	interface Props {
 		job: Job;
@@ -155,13 +155,7 @@
 				<div class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
 					<div class="flex gap-4">
 					{#if result.poster_url}
-						<img
-							src={posterSrc(result.poster_url)}
-							alt={result.title}
-							class="h-28 w-20 shrink-0 rounded-sm object-cover"
-							loading="lazy"
-							onerror={posterFallback}
-						/>
+						<PosterImage url={result.poster_url} alt={result.title} />
 					{/if}
 					<dl class="grid flex-1 grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
 						<dt class="text-gray-500 dark:text-gray-400">Title</dt>

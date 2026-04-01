@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Job } from '$lib/types/arm';
-	import { posterSrc, posterFallback } from '$lib/utils/poster';
+	import PosterImage from './PosterImage.svelte';
 	import StatusBadge from './StatusBadge.svelte';
 	import TimeAgo from './TimeAgo.svelte';
 	import ProgressBar from './ProgressBar.svelte';
@@ -33,12 +33,7 @@
 >
 	<div class="flex gap-4">
 		{#if job.poster_url}
-			<img
-				src={posterSrc(job.poster_url)}
-				alt={job.title ?? 'Poster'}
-				class="h-24 w-16 rounded-sm object-cover"
-				onerror={posterFallback}
-			/>
+			<PosterImage url={job.poster_url} alt={job.title ?? 'Poster'} class="h-24 w-16 rounded-sm object-cover" />
 		{:else}
 			<div class="flex h-24 w-16 items-center justify-center rounded-sm {typeConfig.placeholderClasses}">
 				<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

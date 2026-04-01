@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Job, SearchResult, MediaDetail, TitleUpdate } from '$lib/types/arm';
 	import { searchMetadata, fetchMediaDetail, updateJobTitle } from '$lib/api/jobs';
-	import { posterSrc, posterFallback } from '$lib/utils/poster';
+	import PosterImage from './PosterImage.svelte';
 
 	interface Props {
 		job: Job;
@@ -215,13 +215,7 @@
 						: 'border-primary/20 hover:border-primary/40 dark:border-primary/20 dark:hover:border-primary/40'}"
 				>
 					{#if result.poster_url}
-						<img
-							src={posterSrc(result.poster_url)}
-							alt={result.title}
-							class="aspect-[2/3] w-full object-cover"
-							loading="lazy"
-							onerror={posterFallback}
-						/>
+						<PosterImage url={result.poster_url} alt={result.title} class="aspect-[2/3] w-full object-cover" />
 					{:else}
 						<div
 							class="flex aspect-[2/3] w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15"
