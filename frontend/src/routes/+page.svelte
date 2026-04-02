@@ -179,29 +179,14 @@
 		}, 300);
 	}
 
-	function setStatusFilter(value: string) {
-		statusFilter = value;
-		page = 1;
-		loadJobs();
+	function applyFilterAndReload<T>(setter: (v: T) => void) {
+		return (value: T) => { setter(value); page = 1; loadJobs(); };
 	}
 
-	function setVideoTypeFilter(value: string) {
-		videoTypeFilter = value;
-		page = 1;
-		loadJobs();
-	}
-
-	function setDisctypeFilter(value: string) {
-		disctypeFilter = value;
-		page = 1;
-		loadJobs();
-	}
-
-	function setDaysFilter(value: number | undefined) {
-		daysFilter = value;
-		page = 1;
-		loadJobs();
-	}
+	const setStatusFilter = applyFilterAndReload<string>(v => statusFilter = v);
+	const setVideoTypeFilter = applyFilterAndReload<string>(v => videoTypeFilter = v);
+	const setDisctypeFilter = applyFilterAndReload<string>(v => disctypeFilter = v);
+	const setDaysFilter = applyFilterAndReload<number | undefined>(v => daysFilter = v);
 
 	function toggleSort(col: string) {
 		if (sortBy === col) {
@@ -297,30 +282,13 @@
 	onMount(() => {
 		let stopped = false;
 
-		async function pollDashboard() {
-			while (!stopped) {
-				await refreshDashboard();
-				await new Promise((r) => setTimeout(r, 5000));
-			}
+		function poll(fn: () => Promise<void>, intervalMs: number) {
+			(async () => { while (!stopped) { await fn(); await new Promise(r => setTimeout(r, intervalMs)); } })();
 		}
 
-		async function pollJobs() {
-			while (!stopped) {
-				await loadJobs();
-				await new Promise((r) => setTimeout(r, 10000));
-			}
-		}
-
-		async function pollProgressLoop() {
-			while (!stopped) {
-				await pollProgress();
-				await new Promise((r) => setTimeout(r, 3000));
-			}
-		}
-
-		pollDashboard();
-		pollJobs();
-		pollProgressLoop();
+		poll(refreshDashboard, 5000);
+		poll(loadJobs, 10000);
+		poll(pollProgress, 3000);
 		return () => { stopped = true; };
 	});
 </script>
