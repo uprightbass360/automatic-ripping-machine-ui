@@ -11,7 +11,6 @@
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
 	import SectionFrame from '$lib/components/SectionFrame.svelte';
-	import JobStatsPanel from '$lib/components/JobStatsPanel.svelte';
 	import JobFilterBar from '$lib/components/JobFilterBar.svelte';
 	import BulkActionsMenu from '$lib/components/BulkActionsMenu.svelte';
 	import JobPagination from '$lib/components/JobPagination.svelte';
@@ -305,6 +304,26 @@
 		<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
 	</div>
 
+	<!-- Job counts -->
+	{#if jobsStats}
+		<div class="flex flex-wrap gap-3">
+			{#each [
+				{ key: 'total' as const, label: 'Total', border: 'border-l-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-300' },
+				{ key: 'active' as const, label: 'Active', border: 'border-l-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-300' },
+				{ key: 'success' as const, label: 'Success', border: 'border-l-green-500', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-300' },
+				{ key: 'fail' as const, label: 'Failed', border: 'border-l-red-500', bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-300' },
+				{ key: 'waiting' as const, label: 'Waiting', border: 'border-l-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-300' }
+			] as card}
+				<div class="flex min-w-[100px] flex-1 items-center gap-3 rounded-lg border-l-4 {card.border} {card.bg} px-4 py-3">
+					<div>
+						<div class="text-2xl font-bold {card.text}">{jobsStats[card.key]}</div>
+						<div class="text-xs font-medium text-gray-500 dark:text-gray-400">{card.label}</div>
+					</div>
+				</div>
+			{/each}
+		</div>
+	{/if}
+
 	<!-- Global pause banner -->
 	{#if dashReady && !dash.ripping_enabled}
 		<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
@@ -406,10 +425,6 @@
 				</div>
 			</div>
 
-			<!-- Stats Bar -->
-			{#if jobsStats}
-				<JobStatsPanel stats={jobsStats} {statusFilter} onfilter={setStatusFilter} />
-			{/if}
 
 			<JobFilterBar
 				{statusFilter}
