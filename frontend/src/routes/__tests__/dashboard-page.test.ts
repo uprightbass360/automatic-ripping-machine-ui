@@ -197,9 +197,9 @@ describe('Dashboard Page', () => {
 		});
 
 		it.each([
-			['Movie', { video_type: 'movie' }, 'getByText'],
-			['Blu-ray', { disctype: 'bluray' }, 'getByText']
-		])('clicking %s pill calls fetchJobs with %o', async (label, expectedParams) => {
+			['Movie', { video_type: 'movie' }],
+			['Blu-ray', { disctype: 'bluray' }]
+		])('clicking %s pill calls fetchJobs with %o', async (label: string, expectedParams: Record<string, string>) => {
 			const { fetchJobs } = await import('$lib/api/jobs');
 			await renderDashboard();
 			await fireEvent.click(screen.getByText(label));
