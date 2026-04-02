@@ -23,6 +23,9 @@ vi.mock('$lib/api/jobs', () => ({
 		total: 1, page: 1, per_page: 25, pages: 1
 	})),
 	fetchJobProgress: vi.fn(() => Promise.resolve({ progress: null, tracks_ripped: 0, tracks_total: 0, no_of_titles: 0 })),
+	fetchJobStats: vi.fn(() => Promise.resolve({ total: 1, active: 0, success: 1, fail: 0, waiting: 0 })),
+	bulkDeleteJobs: vi.fn(() => Promise.resolve({ deleted: 0, errors: [] })),
+	bulkPurgeJobs: vi.fn(() => Promise.resolve({ purged: 0, errors: [] })),
 	abandonJob: vi.fn(),
 	deleteJob: vi.fn(),
 	fixJobPermissions: vi.fn()

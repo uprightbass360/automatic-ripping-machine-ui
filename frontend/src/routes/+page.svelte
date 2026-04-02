@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fetchDashboard } from '$lib/api/dashboard';
-	import { fetchJobs } from '$lib/api/jobs';
-	import { fetchJobProgress } from '$lib/api/jobs';
-	import type { RipProgress } from '$lib/api/jobs';
+	import { fetchJobs, fetchJobProgress, fetchJobStats, bulkDeleteJobs, bulkPurgeJobs } from '$lib/api/jobs';
+	import type { RipProgress, JobStats } from '$lib/api/jobs';
 	import type { DashboardData, JobListResponse } from '$lib/types/arm';
 	import DiscReviewWidget from '$lib/components/DiscReviewWidget.svelte';
 	import JobCard from '$lib/components/JobCard.svelte';
@@ -99,6 +98,7 @@
 
 	// --- Jobs section state ---
 	let jobsData = $state<JobListResponse | null>(null);
+	let jobsStats = $state<JobStats | null>(null);
 	let jobsError = $state<string | null>(null);
 	let jobsLoading = $state(true);
 
@@ -106,22 +106,58 @@
 	let perPage = $state(25);
 	let statusFilter = $state('');
 	let videoTypeFilter = $state('');
+	let disctypeFilter = $state('');
+	let daysFilter = $state<number | undefined>(undefined);
 	let searchQuery = $state('');
 	let viewMode = $state<'card' | 'table'>('card');
 
+	// Sorting
+	let sortBy = $state('start_time');
+	let sortDir = $state<'asc' | 'desc'>('desc');
+
+	// Selection
+	let selectedJobs = $state<Set<number>>(new Set());
+
+	// Gear menu
+	let gearOpen = $state(false);
+	let bulkBusy = $state(false);
+	let bulkFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	// Derived
+	let allVisibleSelected = $derived(
+		jobsData !== null && jobsData.jobs.length > 0 && jobsData.jobs.every((j) => selectedJobs.has(j.job_id))
+	);
+
 	let searchTimeout: ReturnType<typeof setTimeout>;
+
+	function jobFilterParams() {
+		return {
+			search: searchQuery || undefined,
+			video_type: videoTypeFilter || undefined,
+			disctype: disctypeFilter || undefined,
+			days: daysFilter
+		};
+	}
 
 	async function loadJobs() {
 		if (!jobsData) jobsLoading = true;
 		jobsError = null;
+		selectedJobs = new Set();
 		try {
-			jobsData = await fetchJobs({
-				page,
-				per_page: perPage,
-				status: statusFilter || undefined,
-				search: searchQuery || undefined,
-				video_type: videoTypeFilter || undefined
-			});
+			const fp = jobFilterParams();
+			const [jobsResult, statsResult] = await Promise.all([
+				fetchJobs({
+					page,
+					per_page: perPage,
+					status: statusFilter || undefined,
+					sort_by: sortBy,
+					sort_dir: sortDir,
+					...fp
+				}),
+				fetchJobStats(fp)
+			]);
+			jobsData = jobsResult;
+			jobsStats = statsResult;
 		} catch (e) {
 			jobsError = e instanceof Error ? e.message : 'Failed to load jobs';
 		} finally {
@@ -139,17 +175,151 @@
 		}, 300);
 	}
 
-	function setFilter(type: 'status' | 'videoType', value: string) {
-		if (type === 'status') statusFilter = value;
-		else videoTypeFilter = value;
+	function setStatusFilter(value: string) {
+		statusFilter = value;
 		page = 1;
 		loadJobs();
+	}
+
+	function setVideoTypeFilter(value: string) {
+		videoTypeFilter = value;
+		page = 1;
+		loadJobs();
+	}
+
+	function setDisctypeFilter(value: string) {
+		disctypeFilter = value;
+		page = 1;
+		loadJobs();
+	}
+
+	function setDaysFilter(value: number | undefined) {
+		daysFilter = value;
+		page = 1;
+		loadJobs();
+	}
+
+	function toggleSort(col: string) {
+		if (sortBy === col) {
+			sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+		} else {
+			sortBy = col;
+			sortDir = 'desc';
+		}
+		loadJobs();
+	}
+
+	function sortIcon(col: string): string {
+		if (sortBy !== col) return '\u21C5';
+		return sortDir === 'desc' ? '\u25BC' : '\u25B2';
+	}
+
+	function toggleSelect(jobId: number, selected: boolean) {
+		if (selected) {
+			selectedJobs.add(jobId);
+		} else {
+			selectedJobs.delete(jobId);
+		}
+		selectedJobs = new Set(selectedJobs);
+	}
+
+	function toggleSelectAll() {
+		if (!jobsData) return;
+		if (allVisibleSelected) {
+			selectedJobs = new Set();
+		} else {
+			selectedJobs = new Set(jobsData.jobs.map((j) => j.job_id));
+		}
+	}
+
+	async function handleBulkAction(
+		action: 'delete' | 'purge',
+		params: { job_ids?: number[]; status?: string },
+		description: string
+	) {
+		if (!confirm(`Are you sure you want to ${description}?`)) return;
+		bulkBusy = true;
+		bulkFeedback = null;
+		gearOpen = false;
+		try {
+			if (action === 'delete') {
+				const result = await bulkDeleteJobs(params);
+				bulkFeedback = {
+					type: result.errors.length > 0 ? 'error' : 'success',
+					message:
+						result.errors.length > 0
+							? `Deleted ${result.deleted}, but ${result.errors.length} error(s)`
+							: `Deleted ${result.deleted} job(s)`
+				};
+			} else {
+				const result = await bulkPurgeJobs(params);
+				bulkFeedback = {
+					type: result.errors.length > 0 ? 'error' : 'success',
+					message:
+						result.errors.length > 0
+							? `Purged ${result.purged}, but ${result.errors.length} error(s)`
+							: `Purged ${result.purged} job(s)`
+				};
+			}
+			await loadJobs();
+		} catch (e) {
+			bulkFeedback = {
+				type: 'error',
+				message: e instanceof Error ? e.message : 'Bulk action failed'
+			};
+		} finally {
+			bulkBusy = false;
+		}
 	}
 
 	function goPage(p: number) {
 		page = p;
 		loadJobs();
 	}
+
+	// Pill classes
+	const pillBase = 'px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer transition-colors';
+	const pillActive =
+		'bg-primary/20 text-primary-text dark:bg-primary/25 dark:text-primary-text-dark outline outline-2 outline-primary/40';
+	const pillInactive =
+		'bg-primary/5 text-gray-500 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-400 hover:dark:bg-primary/15';
+
+	// Stats card configs
+	const statsCards = [
+		{ key: 'total' as const, label: 'Total', filter: '', border: 'border-l-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-300' },
+		{ key: 'active' as const, label: 'Active', filter: 'active', border: 'border-l-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-300' },
+		{ key: 'success' as const, label: 'Success', filter: 'success', border: 'border-l-green-500', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-300' },
+		{ key: 'fail' as const, label: 'Failed', filter: 'fail', border: 'border-l-red-500', bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-300' },
+		{ key: 'waiting' as const, label: 'Waiting', filter: 'waiting', border: 'border-l-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-300' }
+	];
+
+	// Disc type mapping
+	const discTypes = [
+		{ label: 'All', value: '' },
+		{ label: 'Blu-ray', value: 'bluray' },
+		{ label: 'DVD', value: 'dvd' },
+		{ label: 'CD', value: 'music' },
+		{ label: 'Data', value: 'data' }
+	];
+
+	const daysOptions = [
+		{ label: 'All Time', value: undefined as number | undefined },
+		{ label: '7 days', value: 7 },
+		{ label: '30 days', value: 30 },
+		{ label: '90 days', value: 90 }
+	];
+
+	// Sortable columns
+	const columns = [
+		{ key: 'title', label: 'Title', sortable: true },
+		{ key: 'year', label: 'Year', sortable: true },
+		{ key: 'status', label: 'Status', sortable: true },
+		{ key: 'video_type', label: 'Type', sortable: true },
+		{ key: 'disctype', label: 'Disc', sortable: true },
+		{ key: 'devpath', label: 'Device', sortable: true },
+		{ key: 'start_time', label: 'Started', sortable: true },
+		{ key: 'actions', label: 'Actions', sortable: false }
+	];
 
 	onMount(() => {
 		let stopped = false;
@@ -185,6 +355,9 @@
 <svelte:head>
 	<title>ARM - Dashboard</title>
 </svelte:head>
+
+<!-- Close gear menu on click outside -->
+<svelte:window onclick={() => (gearOpen = false)} />
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
@@ -277,7 +450,7 @@
 	{/if}
 
 	<!-- All Jobs -->
-	<section class="space-y-4">
+	<section id="all-jobs" class="space-y-4">
 			<div class="flex flex-wrap items-center justify-between gap-4">
 				<h2 class="text-lg font-semibold text-gray-900 dark:text-white">All Jobs</h2>
 				<div class="flex gap-2">
@@ -292,37 +465,152 @@
 				</div>
 			</div>
 
-			<!-- Filters -->
-			<div class="flex flex-wrap gap-3">
+			<!-- Stats Bar -->
+			{#if jobsStats}
+				<div class="flex flex-wrap gap-3">
+					{#each statsCards as card}
+						<button
+							onclick={() => setStatusFilter(card.filter)}
+							class="flex min-w-[120px] flex-1 cursor-pointer items-center gap-3 rounded-lg border-l-4 {card.border} {card.bg} px-4 py-3 transition-shadow hover:shadow-md {statusFilter === card.filter ? 'ring-2 ring-primary/40' : ''}"
+						>
+							<div>
+								<div class="text-2xl font-bold {card.text}">{jobsStats[card.key]}</div>
+								<div class="text-xs font-medium text-gray-500 dark:text-gray-400">{card.label}</div>
+							</div>
+						</button>
+					{/each}
+				</div>
+			{/if}
+
+			<!-- Filter Row 1: Search | Status pills | Type pills -->
+			<div class="flex flex-wrap items-center gap-3">
 				<input
 					type="text"
 					placeholder="Search titles..."
 					oninput={onSearch}
-					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 pl-3 pr-8 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class="lcars-input w-48 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 				/>
-				<select
-					value={statusFilter}
-					onchange={(e) => setFilter('status', (e.target as HTMLSelectElement).value)}
-					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 pl-3 pr-8 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
-				>
-					<option value="">All Statuses</option>
-					<option value="active">Active</option>
-					<option value="ripping">Ripping</option>
-					<option value="transcoding">Transcoding</option>
-					<option value="success">Success</option>
-					<option value="fail">Failed</option>
-				</select>
-				<select
-					value={videoTypeFilter}
-					onchange={(e) => setFilter('videoType', (e.target as HTMLSelectElement).value)}
-					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 pl-3 pr-8 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
-				>
-					<option value="">All Types</option>
-					<option value="movie">Movie</option>
-					<option value="series">Series</option>
-					<option value="music">Music</option>
-				</select>
+
+				<div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+
+				<!-- Status pills -->
+				<div class="flex flex-wrap gap-1.5">
+					{#each [{ label: 'All', value: '' }, { label: 'Active', value: 'active' }, { label: 'Success', value: 'success' }, { label: 'Failed', value: 'fail' }, { label: 'Waiting', value: 'waiting' }] as pill}
+						<button
+							onclick={() => setStatusFilter(pill.value)}
+							class="{pillBase} {statusFilter === pill.value ? pillActive : pillInactive}"
+						>{pill.label}</button>
+					{/each}
+				</div>
+
+				<div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+
+				<!-- Type pills -->
+				<div class="flex flex-wrap gap-1.5">
+					{#each [{ label: 'All', value: '' }, { label: 'Movie', value: 'movie' }, { label: 'Series', value: 'series' }, { label: 'Music', value: 'music' }] as pill}
+						<button
+							onclick={() => setVideoTypeFilter(pill.value)}
+							class="{pillBase} {videoTypeFilter === pill.value ? pillActive : pillInactive}"
+						>{pill.label}</button>
+					{/each}
+				</div>
 			</div>
+
+			<!-- Filter Row 2: Disc pills | Time range | Selection count | Gear menu -->
+			<div class="flex flex-wrap items-center gap-3">
+				<!-- Disc pills -->
+				<div class="flex flex-wrap gap-1.5">
+					{#each discTypes as disc}
+						<button
+							onclick={() => setDisctypeFilter(disc.value)}
+							class="{pillBase} {disctypeFilter === disc.value ? pillActive : pillInactive}"
+						>{disc.label}</button>
+					{/each}
+				</div>
+
+				<div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+
+				<!-- Time range select -->
+				<select
+					value={daysFilter ?? ''}
+					onchange={(e) => {
+						const val = (e.target as HTMLSelectElement).value;
+						setDaysFilter(val ? Number(val) : undefined);
+					}}
+					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+				>
+					{#each daysOptions as opt}
+						<option value={opt.value ?? ''}>{opt.label}</option>
+					{/each}
+				</select>
+
+				<div class="flex-1"></div>
+
+				<!-- Selection count -->
+				{#if selectedJobs.size > 0}
+					<span class="text-sm font-medium text-gray-600 dark:text-gray-300">{selectedJobs.size} selected</span>
+				{/if}
+
+				<!-- Gear menu -->
+				<div class="relative">
+					<button
+						onclick={(e: MouseEvent) => { e.stopPropagation(); gearOpen = !gearOpen; }}
+						disabled={bulkBusy}
+						class="{pillBase} inline-flex items-center gap-1 bg-primary/10 text-gray-700 hover:bg-primary/20 dark:bg-primary/15 dark:text-gray-300 dark:hover:bg-primary/25 disabled:opacity-50"
+					>
+						{#if bulkBusy}
+							<span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+						{:else}
+							&#9881;
+						{/if}
+						Actions &#9662;
+					</button>
+
+					{#if gearOpen}
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<!-- svelte-ignore a11y_no_static_element_interactions -->
+						<div
+							onclick={(e: MouseEvent) => e.stopPropagation()}
+							class="absolute right-0 z-50 mt-1 w-56 rounded-lg border border-primary/20 bg-surface py-1 shadow-lg dark:border-primary/25 dark:bg-surface-dark"
+						>
+							{#if selectedJobs.size > 0}
+								<div class="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500">Selected ({selectedJobs.size})</div>
+								<button
+									onclick={() => handleBulkAction('delete', { job_ids: [...selectedJobs] }, `delete ${selectedJobs.size} selected job(s)`)}
+									class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
+								>Delete Selected</button>
+								<button
+									onclick={() => handleBulkAction('purge', { job_ids: [...selectedJobs] }, `purge ${selectedJobs.size} selected job(s) and their files`)}
+									class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+								>Purge Selected</button>
+								<div class="my-1 border-t border-gray-200 dark:border-gray-700"></div>
+							{/if}
+
+							<div class="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500">Bulk Actions</div>
+							<button
+								onclick={() => handleBulkAction('delete', { status: 'fail' }, `delete all failed jobs${jobsStats?.fail ? ` (${jobsStats.fail})` : ''}`)}
+								class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
+							>Delete All Failed{#if jobsStats?.fail} ({jobsStats.fail}){/if}</button>
+							<button
+								onclick={() => handleBulkAction('purge', { status: 'fail' }, `purge all failed jobs and their files`)}
+								class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+							>Purge All Failed</button>
+							<button
+								onclick={() => handleBulkAction('delete', { status: 'success' }, `delete all successful jobs${jobsStats?.success ? ` (${jobsStats.success})` : ''}`)}
+								class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
+							>Delete All Successful{#if jobsStats?.success} ({jobsStats.success}){/if}</button>
+						</div>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Bulk feedback banner -->
+			{#if bulkFeedback}
+				<div class="rounded-lg border px-4 py-3 text-sm {bulkFeedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400' : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'}">
+					{bulkFeedback.message}
+					<button onclick={() => (bulkFeedback = null)} class="ml-2 font-bold opacity-60 hover:opacity-100">&times;</button>
+				</div>
+			{/if}
 
 			{#if jobsError}
 				<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
@@ -336,20 +624,39 @@
 						<table class="w-full text-left text-sm">
 							<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 								<tr>
-									<th class="w-8 px-4 py-3"></th>
-									<th class="px-4 py-3 font-medium">Title</th>
-									<th class="px-4 py-3 font-medium">Year</th>
-									<th class="px-4 py-3 font-medium">Status</th>
-									<th class="px-4 py-3 font-medium">Type</th>
-									<th class="px-4 py-3 font-medium">Disc</th>
-									<th class="px-4 py-3 font-medium">Drive</th>
-									<th class="px-4 py-3 font-medium">Started</th>
-									<th class="px-4 py-3 font-medium">Actions</th>
+									<th class="px-4 py-3 w-8">
+										<input
+											type="checkbox"
+											checked={allVisibleSelected}
+											onchange={toggleSelectAll}
+											class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+										/>
+									</th>
+									{#each columns as col}
+										<th class="px-4 py-3 font-medium">
+											{#if col.sortable}
+												<button
+													onclick={() => toggleSort(col.key)}
+													class="inline-flex items-center gap-1 hover:text-primary-text dark:hover:text-primary-text-dark"
+												>
+													{col.label}
+													<span class="text-xs opacity-60">{sortIcon(col.key)}</span>
+												</button>
+											{:else}
+												{col.label}
+											{/if}
+										</th>
+									{/each}
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 								{#each jobsData.jobs as job (job.job_id)}
-									<JobRow {job} driveNames={dash.drive_names} onaction={loadJobs} />
+									<JobRow
+										{job}
+										onaction={loadJobs}
+										selected={selectedJobs.has(job.job_id)}
+										onselect={toggleSelect}
+									/>
 								{/each}
 							</tbody>
 						</table>
@@ -366,7 +673,7 @@
 				{#if jobsData.pages > 1}
 					<div class="flex items-center justify-between">
 						<p class="text-sm text-gray-500 dark:text-gray-400">
-							Showing {(jobsData.page - 1) * jobsData.per_page + 1}–{Math.min(jobsData.page * jobsData.per_page, jobsData.total)} of {jobsData.total}
+							Showing {(jobsData.page - 1) * jobsData.per_page + 1}&ndash;{Math.min(jobsData.page * jobsData.per_page, jobsData.total)} of {jobsData.total}
 						</p>
 						<div class="flex gap-1">
 							<button
