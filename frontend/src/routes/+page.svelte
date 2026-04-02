@@ -11,6 +11,10 @@
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TranscodeCard from '$lib/components/TranscodeCard.svelte';
 	import SectionFrame from '$lib/components/SectionFrame.svelte';
+	import JobStatsPanel from '$lib/components/JobStatsPanel.svelte';
+	import JobFilterBar from '$lib/components/JobFilterBar.svelte';
+	import BulkActionsMenu from '$lib/components/BulkActionsMenu.svelte';
+	import JobPagination from '$lib/components/JobPagination.svelte';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -277,37 +281,6 @@
 		loadJobs();
 	}
 
-	// Pill classes
-	const pillBase = 'px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer transition-colors';
-	const pillActive =
-		'bg-primary/20 text-primary-text dark:bg-primary/25 dark:text-primary-text-dark outline outline-2 outline-primary/40';
-	const pillInactive =
-		'bg-primary/5 text-gray-500 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-400 hover:dark:bg-primary/15';
-
-	// Stats card configs
-	const statsCards = [
-		{ key: 'total' as const, label: 'Total', filter: '', border: 'border-l-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-300' },
-		{ key: 'active' as const, label: 'Active', filter: 'active', border: 'border-l-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-300' },
-		{ key: 'success' as const, label: 'Success', filter: 'success', border: 'border-l-green-500', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-300' },
-		{ key: 'fail' as const, label: 'Failed', filter: 'fail', border: 'border-l-red-500', bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-300' },
-		{ key: 'waiting' as const, label: 'Waiting', filter: 'waiting', border: 'border-l-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-300' }
-	];
-
-	// Disc type mapping
-	const discTypes = [
-		{ label: 'All', value: '' },
-		{ label: 'Blu-ray', value: 'bluray' },
-		{ label: 'DVD', value: 'dvd' },
-		{ label: 'CD', value: 'music' },
-		{ label: 'Data', value: 'data' }
-	];
-
-	const daysOptions = [
-		{ label: 'All Time', value: undefined as number | undefined },
-		{ label: '7 days', value: 7 },
-		{ label: '30 days', value: 30 },
-		{ label: '90 days', value: 90 }
-	];
 
 	// Sortable columns
 	const columns = [
@@ -467,141 +440,32 @@
 
 			<!-- Stats Bar -->
 			{#if jobsStats}
-				<div class="flex flex-wrap gap-3">
-					{#each statsCards as card}
-						<button
-							onclick={() => setStatusFilter(card.filter)}
-							class="flex min-w-[120px] flex-1 cursor-pointer items-center gap-3 rounded-lg border-l-4 {card.border} {card.bg} px-4 py-3 transition-shadow hover:shadow-md {statusFilter === card.filter ? 'ring-2 ring-primary/40' : ''}"
-						>
-							<div>
-								<div class="text-2xl font-bold {card.text}">{jobsStats[card.key]}</div>
-								<div class="text-xs font-medium text-gray-500 dark:text-gray-400">{card.label}</div>
-							</div>
-						</button>
-					{/each}
-				</div>
+				<JobStatsPanel stats={jobsStats} {statusFilter} onfilter={setStatusFilter} />
 			{/if}
 
-			<!-- Filter Row 1: Search | Status pills | Type pills -->
+			<JobFilterBar
+				{statusFilter}
+				{videoTypeFilter}
+				{disctypeFilter}
+				{daysFilter}
+				onstatusfilter={setStatusFilter}
+				onvideotypefilter={setVideoTypeFilter}
+				ondisctypefilter={setDisctypeFilter}
+				ondaysfilter={setDaysFilter}
+				onsearch={onSearch}
+			/>
+
+			<!-- Filter Row 2 addons: Selection count | Gear menu -->
 			<div class="flex flex-wrap items-center gap-3">
-				<input
-					type="text"
-					placeholder="Search titles..."
-					oninput={onSearch}
-					class="lcars-input w-48 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm dark:border-primary/30 dark:bg-primary/10 dark:text-white"
-				/>
-
-				<div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
-
-				<!-- Status pills -->
-				<div class="flex flex-wrap gap-1.5">
-					{#each [{ label: 'All', value: '' }, { label: 'Active', value: 'active' }, { label: 'Success', value: 'success' }, { label: 'Failed', value: 'fail' }, { label: 'Waiting', value: 'waiting' }] as pill}
-						<button
-							onclick={() => setStatusFilter(pill.value)}
-							class="{pillBase} {statusFilter === pill.value ? pillActive : pillInactive}"
-						>{pill.label}</button>
-					{/each}
-				</div>
-
-				<div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
-
-				<!-- Type pills -->
-				<div class="flex flex-wrap gap-1.5">
-					{#each [{ label: 'All', value: '' }, { label: 'Movie', value: 'movie' }, { label: 'Series', value: 'series' }, { label: 'Music', value: 'music' }] as pill}
-						<button
-							onclick={() => setVideoTypeFilter(pill.value)}
-							class="{pillBase} {videoTypeFilter === pill.value ? pillActive : pillInactive}"
-						>{pill.label}</button>
-					{/each}
-				</div>
-			</div>
-
-			<!-- Filter Row 2: Disc pills | Time range | Selection count | Gear menu -->
-			<div class="flex flex-wrap items-center gap-3">
-				<!-- Disc pills -->
-				<div class="flex flex-wrap gap-1.5">
-					{#each discTypes as disc}
-						<button
-							onclick={() => setDisctypeFilter(disc.value)}
-							class="{pillBase} {disctypeFilter === disc.value ? pillActive : pillInactive}"
-						>{disc.label}</button>
-					{/each}
-				</div>
-
-				<div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
-
-				<!-- Time range select -->
-				<select
-					value={daysFilter ?? ''}
-					onchange={(e) => {
-						const val = (e.target as HTMLSelectElement).value;
-						setDaysFilter(val ? Number(val) : undefined);
-					}}
-					class="lcars-input rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-xs dark:border-primary/30 dark:bg-primary/10 dark:text-white"
-				>
-					{#each daysOptions as opt}
-						<option value={opt.value ?? ''}>{opt.label}</option>
-					{/each}
-				</select>
-
 				<div class="flex-1"></div>
-
-				<!-- Selection count -->
-				{#if selectedJobs.size > 0}
-					<span class="text-sm font-medium text-gray-600 dark:text-gray-300">{selectedJobs.size} selected</span>
-				{/if}
-
-				<!-- Gear menu -->
-				<div class="relative">
-					<button
-						onclick={(e: MouseEvent) => { e.stopPropagation(); gearOpen = !gearOpen; }}
-						disabled={bulkBusy}
-						class="{pillBase} inline-flex items-center gap-1 bg-primary/10 text-gray-700 hover:bg-primary/20 dark:bg-primary/15 dark:text-gray-300 dark:hover:bg-primary/25 disabled:opacity-50"
-					>
-						{#if bulkBusy}
-							<span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-						{:else}
-							&#9881;
-						{/if}
-						Actions &#9662;
-					</button>
-
-					{#if gearOpen}
-						<!-- svelte-ignore a11y_click_events_have_key_events -->
-						<!-- svelte-ignore a11y_no_static_element_interactions -->
-						<div
-							onclick={(e: MouseEvent) => e.stopPropagation()}
-							class="absolute right-0 z-50 mt-1 w-56 rounded-lg border border-primary/20 bg-surface py-1 shadow-lg dark:border-primary/25 dark:bg-surface-dark"
-						>
-							{#if selectedJobs.size > 0}
-								<div class="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500">Selected ({selectedJobs.size})</div>
-								<button
-									onclick={() => handleBulkAction('delete', { job_ids: [...selectedJobs] }, `delete ${selectedJobs.size} selected job(s)`)}
-									class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
-								>Delete Selected</button>
-								<button
-									onclick={() => handleBulkAction('purge', { job_ids: [...selectedJobs] }, `purge ${selectedJobs.size} selected job(s) and their files`)}
-									class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-								>Purge Selected</button>
-								<div class="my-1 border-t border-gray-200 dark:border-gray-700"></div>
-							{/if}
-
-							<div class="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500">Bulk Actions</div>
-							<button
-								onclick={() => handleBulkAction('delete', { status: 'fail' }, `delete all failed jobs${jobsStats?.fail ? ` (${jobsStats.fail})` : ''}`)}
-								class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
-							>Delete All Failed{#if jobsStats?.fail} ({jobsStats.fail}){/if}</button>
-							<button
-								onclick={() => handleBulkAction('purge', { status: 'fail' }, `purge all failed jobs and their files`)}
-								class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-							>Purge All Failed</button>
-							<button
-								onclick={() => handleBulkAction('delete', { status: 'success' }, `delete all successful jobs${jobsStats?.success ? ` (${jobsStats.success})` : ''}`)}
-								class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
-							>Delete All Successful{#if jobsStats?.success} ({jobsStats.success}){/if}</button>
-						</div>
-					{/if}
-				</div>
+				<BulkActionsMenu
+					{selectedJobs}
+					{jobsStats}
+					{gearOpen}
+					{bulkBusy}
+					onaction={handleBulkAction}
+					ontoggle={() => (gearOpen = !gearOpen)}
+				/>
 			</div>
 
 			<!-- Bulk feedback banner -->
@@ -670,35 +534,13 @@
 				{/if}
 
 				<!-- Pagination -->
-				{#if jobsData.pages > 1}
-					<div class="flex items-center justify-between">
-						<p class="text-sm text-gray-500 dark:text-gray-400">
-							Showing {(jobsData.page - 1) * jobsData.per_page + 1}&ndash;{Math.min(jobsData.page * jobsData.per_page, jobsData.total)} of {jobsData.total}
-						</p>
-						<div class="flex gap-1">
-							<button
-								disabled={jobsData.page <= 1}
-								onclick={() => goPage(jobsData!.page - 1)}
-								class="rounded-sm px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
-							>Prev</button>
-							{#each Array.from({ length: jobsData.pages }, (_, i) => i + 1) as p}
-								{#if p === jobsData.page || p === 1 || p === jobsData.pages || Math.abs(p - jobsData.page) <= 1}
-									<button
-										onclick={() => goPage(p)}
-										class="rounded-sm px-3 py-1 text-sm {p === jobsData.page ? 'bg-primary text-on-primary' : 'bg-primary/15 dark:bg-primary/15 dark:text-gray-300'}"
-									>{p}</button>
-								{:else if Math.abs(p - jobsData.page) === 2}
-									<span class="px-1 text-gray-400">...</span>
-								{/if}
-							{/each}
-							<button
-								disabled={jobsData.page >= jobsData.pages}
-								onclick={() => goPage(jobsData!.page + 1)}
-								class="rounded-sm px-3 py-1 text-sm disabled:opacity-50 bg-primary/15 dark:bg-primary/15 dark:text-gray-300"
-							>Next</button>
-						</div>
-					</div>
-				{/if}
+				<JobPagination
+					page={jobsData.page}
+					pages={jobsData.pages}
+					perPage={jobsData.per_page}
+					total={jobsData.total}
+					onpage={goPage}
+				/>
 
 				{#if jobsData.jobs.length === 0}
 					<p class="py-8 text-center text-gray-400">No jobs found.</p>
