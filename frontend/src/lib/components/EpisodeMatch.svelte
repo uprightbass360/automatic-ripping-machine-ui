@@ -254,9 +254,22 @@
 	});
 </script>
 
-<div class="space-y-3">
+<div class="space-y-3 min-h-[200px]">
+	<!-- Loading overlay -->
+	{#if loading}
+		<div class="flex items-center justify-center py-8">
+			<div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
+				<svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+				Matching episodes...
+			</div>
+		</div>
+	{/if}
+
 	<!-- Controls bar -->
-	<div class="flex flex-wrap items-center gap-3 rounded-lg bg-surface/50 p-3 ring-1 ring-primary/10 dark:bg-surface-dark/50 dark:ring-primary/10">
+	<div class="flex flex-wrap items-center gap-3 rounded-lg bg-surface/50 p-3 ring-1 ring-primary/10 dark:bg-surface-dark/50 dark:ring-primary/10" class:hidden={loading && matches.length === 0}>
 		<div class="flex items-center gap-1.5">
 			<span class="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Season</span>
 			<input
@@ -325,7 +338,15 @@
 	<!-- Match table -->
 	{#if matches.length > 0 || Object.keys(assignments).length > 0}
 		<div class="overflow-x-auto">
-			<table class="w-full text-sm">
+			<table class="w-full table-fixed text-sm">
+				<colgroup>
+					<col class="w-[25%]" />
+					<col class="w-[8%]" />
+					<col class="w-[28%]" />
+					<col class="w-[23%]" />
+					<col class="w-[8%]" />
+					<col class="w-[8%]" />
+				</colgroup>
 				<thead>
 					<tr class="border-b border-primary/10 dark:border-primary/10">
 						<th class="px-2 py-1.5 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Track</th>
@@ -348,7 +369,7 @@
 							<td class="px-2 py-2 text-gray-300 dark:text-gray-300">{formatDuration(track.length)}</td>
 							<td class="px-2 py-2">
 								<select
-									class="w-full max-w-xs rounded border border-primary/20 bg-surface px-1.5 py-0.5 text-xs dark:border-primary/20 dark:bg-surface-dark {assignments[tn] != null ? 'text-green-400' : 'text-gray-400'}"
+									class="w-full rounded border border-primary/20 bg-surface px-1.5 py-0.5 text-xs truncate dark:border-primary/20 dark:bg-surface-dark {assignments[tn] != null ? 'text-green-400' : 'text-gray-400'}"
 									value={assignments[tn] ?? ''}
 									onchange={(e) => {
 										const val = (e.target as HTMLSelectElement).value;
@@ -402,7 +423,7 @@
 				Change season/disc and re-match to try different assignments.
 			</span>
 		</div>
-	{:else if !loading && !error}
+	{:else if !loading && !error && !applying}
 		<div class="py-6 text-center text-sm text-gray-400 dark:text-gray-500">
 			{#if !job.tvdb_id && !job.imdb_id}
 				No IMDB or TVDB ID set. Use <strong>Search</strong> to identify the show first.
