@@ -254,22 +254,9 @@
 	});
 </script>
 
-<div class="space-y-3 min-h-[200px]">
-	<!-- Loading overlay -->
-	{#if loading}
-		<div class="flex items-center justify-center py-8">
-			<div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-				<svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-				</svg>
-				Matching episodes...
-			</div>
-		</div>
-	{/if}
-
-	<!-- Controls bar -->
-	<div class="flex flex-wrap items-center gap-3 rounded-lg bg-surface/50 p-3 ring-1 ring-primary/10 dark:bg-surface-dark/50 dark:ring-primary/10" class:hidden={loading && matches.length === 0}>
+<div class="space-y-3">
+	<!-- Controls bar (always visible) -->
+	<div class="flex flex-wrap items-center gap-3 rounded-lg bg-surface/50 p-3 ring-1 ring-primary/10 dark:bg-surface-dark/50 dark:ring-primary/10">
 		<div class="flex items-center gap-1.5">
 			<span class="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Season</span>
 			<input
@@ -423,7 +410,17 @@
 				Change season/disc and re-match to try different assignments.
 			</span>
 		</div>
-	{:else if !loading && !error && !applying}
+	{:else if loading}
+		<div class="flex items-center justify-center py-8">
+			<div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
+				<svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+				Matching episodes...
+			</div>
+		</div>
+	{:else if !error && !applying}
 		<div class="py-6 text-center text-sm text-gray-400 dark:text-gray-500">
 			{#if !job.tvdb_id && !job.imdb_id}
 				No IMDB or TVDB ID set. Use <strong>Search</strong> to identify the show first.
