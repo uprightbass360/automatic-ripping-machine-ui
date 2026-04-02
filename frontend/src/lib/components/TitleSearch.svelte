@@ -7,9 +7,10 @@
 		job: Job;
 		onapply?: () => void;
 		onapplydetail?: (d: { plot?: string | null }) => void;
+		onepisodes?: () => void;
 	}
 
-	let { job, onapply, onapplydetail }: Props = $props();
+	let { job, onapply, onapplydetail, onepisodes }: Props = $props();
 
 	let query = $state(job.title || job.label || '');
 	let yearInput = $state(job.year || '');
@@ -23,7 +24,7 @@
 	let loadingDetail = $state(false);
 
 	let applying = $state(false);
-	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let feedback = $state<{ type: 'success' | 'error'; message: string; showEpisodes?: boolean } | null>(null);
 
 	// Editable metadata fields (populated from detail)
 	let editTitle = $state('');
@@ -115,7 +116,7 @@
 		try {
 			await updateJobTitle(job.job_id, data);
 			const isSeries = data.video_type === 'series';
-			feedback = { type: 'success', message: isSeries ? 'Title updated — use TVDB Episodes to match tracks' : 'Title updated' };
+			feedback = { type: 'success', message: 'Title updated', showEpisodes: isSeries };
 			onapply?.();
 		} catch (e) {
 			feedback = { type: 'error', message: e instanceof Error ? e.message : 'Update failed' };
@@ -334,6 +335,14 @@
 						>
 							{feedback.message}
 						</span>
+						{#if feedback.showEpisodes && onepisodes}
+							<button
+								onclick={onepisodes}
+								class="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+							>
+								Match Episodes
+							</button>
+						{/if}
 					{/if}
 				</div>
 			</div>

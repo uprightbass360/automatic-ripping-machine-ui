@@ -509,7 +509,7 @@
 		>
 			Info
 		</button>
-		{#if isVideo && !job.multi_title}
+		{#if isVideo && (!job.multi_title || job.video_type === 'series')}
 			<button
 				onclick={() => toggleSection('title')}
 				class="{btnBase} {showTitleSearch
@@ -975,7 +975,7 @@
 
 	{#if showTitleSearch && isVideo}
 		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
-			<TitleSearch {job} onapply={handleTitleApply} onapplydetail={(d) => { infoPlot = d.plot ?? null; }} />
+			<TitleSearch {job} onapply={handleTitleApply} onapplydetail={(d) => { infoPlot = d.plot ?? null; }} onepisodes={() => toggleSection('tvdb')} />
 		</div>
 	{/if}
 
