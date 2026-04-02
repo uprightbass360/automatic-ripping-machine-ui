@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, cleanup, waitFor, fireEvent } from '$lib/test-utils';
 import DashboardPage from '../+page.svelte';
 
@@ -222,7 +222,7 @@ describe('Dashboard Page', () => {
 			// Click the "Failed" status pill
 			const failedPills = screen.getAllByText('Failed');
 			// The pill button (not the stats card label)
-			const failedPill = failedPills.find(el => el.tagName === 'BUTTON' && el.closest('.flex.flex-wrap.gap-1\\.5'));
+			const failedPill = failedPills.find(el => el.tagName === 'BUTTON' && el.closest(String.raw`.flex.flex-wrap.gap-1\.5`));
 			if (failedPill) {
 				await fireEvent.click(failedPill);
 				await waitFor(() => {
@@ -404,8 +404,8 @@ describe('Dashboard Page', () => {
 			// Find the gear button (it's a button element containing "Actions")
 			const actionsBtns = screen.getAllByText(/Actions/);
 			const gearBtn = actionsBtns.find(el => el.tagName === 'BUTTON');
-			expect(gearBtn).toBeTruthy();
-			await fireEvent.click(gearBtn!);
+			if (!gearBtn) throw new Error('Gear button not found');
+			await fireEvent.click(gearBtn);
 
 			await waitFor(() => {
 				expect(screen.getByText('Bulk Actions')).toBeInTheDocument();
@@ -438,8 +438,8 @@ describe('Dashboard Page', () => {
 			// Open gear menu - find the gear button specifically
 			const actionsBtns = screen.getAllByText(/Actions/);
 			const gearBtn = actionsBtns.find(el => el.tagName === 'BUTTON');
-			expect(gearBtn).toBeTruthy();
-			await fireEvent.click(gearBtn!);
+			if (!gearBtn) throw new Error('Gear button not found');
+			await fireEvent.click(gearBtn);
 
 			await waitFor(() => {
 				expect(screen.getByText('Delete Selected')).toBeInTheDocument();
