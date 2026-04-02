@@ -56,8 +56,6 @@
 	async function refreshDashboard() {
 		try {
 			dash = await fetchDashboard();
-			// DEV PREVIEW: inject fake transcode for UI testing
-			dash.active_transcodes = [...dash.active_transcodes, { id: 42, title: 'Kolchak: The Night Stalker S01E03', source_path: '/home/arm/media/raw/Kolchak/title_t03.mkv', status: 'processing', progress: 67, error: null, logfile: 'transcode_42.log', video_type: 'series', year: '1974', disctype: 'dvd', arm_job_id: '98', output_path: '/home/arm/media/completed/Kolchak/S01E03.mkv', total_tracks: 4, poster_url: null, config_overrides: null, created_at: '2026-04-01T17:00:00Z', started_at: '2026-04-01T17:05:00Z', completed_at: null }];
 			dashReady = true;
 			dashError = null;
 		} catch (e) {
