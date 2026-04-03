@@ -519,7 +519,7 @@
 				Search
 			</button>
 		{/if}
-		{#if isVideo && (job.video_type === 'series' || job.imdb_id)}
+		{#if isVideo && job.video_type === 'series'}
 			<button
 				onclick={() => toggleSection('tvdb')}
 				class="{btnBase} {showTvdb
@@ -735,10 +735,10 @@
 								</select>
 							</label>
 						{/if}
-						<label>
+						<div>
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc Label</span>
-							<input type="text" bind:value={infoLabel} oninput={() => { touched.label = true; }} class="w-full rounded-sm border border-primary/25 bg-primary/5 px-2 py-1 font-mono text-xs text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white" />
-						</label>
+							<p class="px-2 py-1 font-mono text-xs text-gray-900 dark:text-white">{job.label || '--'}</p>
+						</div>
 						<div>
 							<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Drive</span>
 							<p class="px-2 py-1 text-sm text-gray-900 dark:text-white">{driveName ?? job.devpath ?? '--'}</p>
@@ -816,8 +816,10 @@
 																	<span class="text-gray-400">({track.year})</span>
 																{/if}
 															</div>
-														{:else}
+														{:else if !tooShort}
 															<span class="text-gray-400">{job.title || job.label || 'Untitled'}{#if job.year} ({job.year}){/if}</span>
+														{:else}
+															<span class="text-gray-300 dark:text-gray-600">--</span>
 														{/if}
 													</td>
 												{/if}
@@ -866,7 +868,7 @@
 															</div>
 														{:else}
 															{@const customFn = track.custom_filename}
-															{@const renderedFn = namingPreviews[track.track_number ?? '']?.rendered_title || track.filename || track.basename || '--'}
+															{@const renderedFn = tooShort ? (track.filename || track.basename || '--') : (namingPreviews[track.track_number ?? '']?.rendered_title || track.filename || track.basename || '--')}
 															<button
 																onclick={() => { editingFilenameTrackId = track.track_id; editingFilenameValue = customFn || renderedFn; }}
 																class="w-full text-left font-mono text-xs {customFn ? 'text-amber-500 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'} hover:underline"
@@ -885,7 +887,7 @@
 														{/if}
 													</td>
 												{/if}
-												{#if job.multi_title && !isMusic}
+												{#if job.multi_title && !isMusic && !tooShort}
 													<td class="px-1 py-1.5">
 														<button
 															onclick={() => toggleTrackSearch(track.track_id)}
@@ -897,9 +899,11 @@
 															</svg>
 														</button>
 													</td>
+												{:else if job.multi_title && !isMusic}
+													<td></td>
 												{/if}
 											</tr>
-											{#if job.multi_title && openSearchTrackIds.has(track.track_id)}
+											{#if job.multi_title && !tooShort && openSearchTrackIds.has(track.track_id)}
 												<tr>
 													<td colspan="99" class="px-3 py-2">
 														<TrackTitleSearch jobId={job.job_id} {track} onapply={() => handleTrackTitleApply(track.track_id)} onclear={() => { onrefresh?.(); loadDetail(); }} onclose={() => toggleTrackSearch(track.track_id)} />

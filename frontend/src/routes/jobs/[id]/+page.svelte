@@ -544,8 +544,10 @@
 														{/if}
 													</div>
 												</div>
-											{:else}
+											{:else if !tooShort}
 												<span class="text-xs text-gray-400">{job.title || job.label || 'Untitled'}{#if job.year} ({job.year}){/if}</span>
+											{:else}
+												<span class="text-xs text-gray-300 dark:text-gray-600">--</span>
 											{/if}
 										</td>
 									{/if}

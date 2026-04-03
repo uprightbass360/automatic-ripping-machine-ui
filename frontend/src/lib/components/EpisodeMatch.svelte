@@ -348,10 +348,18 @@
 					{#each mainTracks as track}
 						{@const tn = track.track_number ?? ''}
 						{@const ep = getEpisodeForTrack(tn)}
+						{@const previewSeason = matchedSeason ?? (Number(seasonInput) || 1)}
+						{@const previewName = ep && assignments[tn] != null ? `${job.title} S${String(previewSeason).padStart(2, '0')}E${String(ep.number).padStart(2, '0')}.mkv` : null}
 						<tr class="border-b border-primary/5 dark:border-primary/5">
-							<td class="px-2 py-2">
+							<td class="px-2 py-2 truncate">
 								<span class="text-xs text-gray-500">T{tn}</span>
-								<span class="ml-1 text-xs text-gray-400 dark:text-gray-500">{(track.filename ?? '').slice(0, 30)}</span>
+								{#if namingPreviews[tn]?.rendered_title}
+									<span class="ml-1 text-xs text-green-400" title="{namingPreviews[tn].rendered_title}.mkv">{namingPreviews[tn].rendered_title}.mkv</span>
+								{:else if previewName}
+									<span class="ml-1 text-xs text-cyan-400" title="Preview">{previewName}</span>
+								{:else}
+									<span class="ml-1 text-xs text-gray-400 dark:text-gray-500">{(track.filename ?? '').slice(0, 30)}</span>
+								{/if}
 							</td>
 							<td class="px-2 py-2 text-gray-300 dark:text-gray-300">{formatDuration(track.length)}</td>
 							<td class="px-2 py-2">
