@@ -270,6 +270,16 @@ async def get_jobs(
         return None
 
 
+async def get_workers() -> dict[str, Any] | None:
+    """Fetch per-worker status from the transcoder."""
+    try:
+        resp = await get_client().get("/workers")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
 async def get_stats() -> dict[str, Any] | None:
     try:
         resp = await get_client().get("/stats")

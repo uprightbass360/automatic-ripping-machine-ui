@@ -8,6 +8,15 @@ from backend.services import transcoder_client
 router = APIRouter(prefix="/api/transcoder", tags=["transcoder"])
 
 
+@router.get("/workers")
+async def get_workers() -> dict[str, Any]:
+    """Per-worker status for dashboard display."""
+    data = await transcoder_client.get_workers()
+    if data is None:
+        return {"max_concurrent": 0, "active_count": 0, "workers": []}
+    return data
+
+
 @router.get("/stats", response_model=TranscoderStatsResponse)
 async def get_stats():
     stats = await transcoder_client.get_stats()
