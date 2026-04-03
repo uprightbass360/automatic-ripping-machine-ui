@@ -1,8 +1,12 @@
-import type { TranscoderJobListResponse, TranscoderStats } from '$lib/types/transcoder';
+import type { TranscoderJobListResponse, TranscoderStats, WorkersResponse } from '$lib/types/transcoder';
 import { apiFetch } from './client';
 
 export function fetchTranscoderStats(): Promise<TranscoderStats> {
 	return apiFetch<TranscoderStats>('/api/transcoder/stats');
+}
+
+export function fetchTranscoderWorkers(): Promise<WorkersResponse> {
+	return apiFetch<WorkersResponse>('/api/transcoder/workers');
 }
 
 export function fetchTranscoderJobs(params?: {

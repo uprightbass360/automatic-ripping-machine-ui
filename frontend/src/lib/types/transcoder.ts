@@ -33,10 +33,26 @@ export interface TranscoderStatsData {
 	cancelled: number;
 	worker_running: boolean;
 	current_job: string | null;
+	active_count: number;
+	max_concurrent: number;
 	[key: string]: unknown;
 }
 
 export interface TranscoderStats {
 	online: boolean;
 	stats: TranscoderStatsData | null;
+}
+
+export interface WorkerStatus {
+	worker_id: number;
+	status: 'idle' | 'processing';
+	current_job: string | null;
+	current_job_id: number | null;
+	started_at: string | null;
+}
+
+export interface WorkersResponse {
+	max_concurrent: number;
+	active_count: number;
+	workers: WorkerStatus[];
 }
