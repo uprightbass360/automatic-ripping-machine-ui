@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { createPollingStore } from '$lib/stores/polling';
-	import { fetchTranscoderStats, fetchTranscoderJobs, retryTranscoderJob, deleteTranscoderJob, retranscodeTranscoderJob } from '$lib/api/transcoder';
+	import { fetchTranscoderStats, fetchTranscoderJobs, fetchTranscoderWorkers, retryTranscoderJob, deleteTranscoderJob, retranscodeTranscoderJob } from '$lib/api/transcoder';
 	import { fetchStructuredTranscoderLogContent } from '$lib/api/logs';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
-	import type { TranscoderStats, TranscoderJobListResponse } from '$lib/types/transcoder';
+	import type { TranscoderStats, TranscoderJobListResponse, WorkersResponse } from '$lib/types/transcoder';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import DiscTypeIcon from '$lib/components/DiscTypeIcon.svelte';
@@ -15,9 +15,11 @@
 
 	const emptyStats: TranscoderStats = { online: false, stats: null };
 	const emptyJobs: TranscoderJobListResponse = { jobs: [], total: 0 };
+	const emptyWorkers: WorkersResponse = { max_concurrent: 0, active_count: 0, workers: [] };
 
 	const stats = createPollingStore(fetchTranscoderStats, emptyStats, 5000);
 	const statsError = stats.error;
+	const workers = createPollingStore(fetchTranscoderWorkers, emptyWorkers, 5000);
 	let activeTab = $state('all');
 	let jobs = $state<TranscoderJobListResponse>(emptyJobs);
 	let loadingJobs = $state(false);
@@ -82,8 +84,9 @@
 
 	onMount(() => {
 		stats.start();
+		workers.start();
 		loadJobs();
-		return () => stats.stop();
+		return () => { stats.stop(); workers.stop(); };
 	});
 
 	const tabs = ['all', 'pending', 'processing', 'completed', 'failed'];
@@ -123,16 +126,49 @@
 		</div>
 	{/if}
 
-	<!-- Stats cards -->
+	<!-- Worker pool + Stats cards -->
 	{#if $stats.online && $stats.stats}
 		{@const s = $stats.stats}
-		<div class="flex items-center gap-2">
-			<div class="h-2.5 w-2.5 rounded-full {s.worker_running ? 'bg-green-500' : 'bg-yellow-500'}"></div>
-			<span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-				Worker {s.worker_running ? 'running' : 'idle'}{#if s.worker_running && s.current_job}
-					<span class="text-gray-500 dark:text-gray-400"> &mdash; {s.current_job}</span>
-				{/if}
-			</span>
+		{@const w = $workers}
+		<!-- Worker pool status -->
+		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+			<div class="mb-3 flex items-center justify-between">
+				<div class="flex items-center gap-2">
+					<div class="h-2.5 w-2.5 rounded-full {s.worker_running ? 'bg-green-500' : 'bg-yellow-500'}"></div>
+					<span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+						Workers {w.active_count}/{w.max_concurrent} active
+					</span>
+				</div>
+				<span class="text-xs text-gray-400 dark:text-gray-500">Queue: {s.pending} pending</span>
+			</div>
+			{#if w.workers.length > 0}
+				<div class="grid gap-2 {w.max_concurrent > 1 ? 'sm:grid-cols-2 lg:grid-cols-3' : ''}">
+					{#each w.workers as worker}
+						<div class="flex items-center gap-3 rounded-md border px-3 py-2
+							{worker.status === 'processing'
+								? 'border-indigo-200 bg-indigo-50/50 dark:border-indigo-800 dark:bg-indigo-900/20'
+								: 'border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/30'}">
+							<div class="h-2 w-2 rounded-full {worker.status === 'processing' ? 'bg-indigo-500 animate-pulse' : 'bg-gray-400'}"></div>
+							<div class="min-w-0 flex-1">
+								<p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+									Worker {worker.worker_id}
+									{#if worker.status === 'processing' && worker.current_job}
+										<span class="font-normal text-gray-500 dark:text-gray-400"> &mdash; {worker.current_job}</span>
+									{/if}
+								</p>
+								{#if worker.status === 'processing' && worker.started_at}
+									{@const dur = formatDuration(worker.started_at)}
+									{#if dur}
+										<p class="text-xs text-indigo-600 dark:text-indigo-400">Running for {dur}</p>
+									{/if}
+								{:else}
+									<p class="text-xs text-gray-400 dark:text-gray-500">Idle</p>
+								{/if}
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/if}
 		</div>
 		<div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
 			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">

@@ -5,13 +5,21 @@ import TranscoderPage from '../+page.svelte';
 vi.mock('$lib/api/transcoder', () => ({
 	fetchTranscoderStats: vi.fn(() => Promise.resolve({
 		online: true,
-		stats: { pending: 2, processing: 1, completed: 10, failed: 0, cancelled: 0, worker_running: true, current_job: null }
+		stats: { pending: 2, processing: 1, completed: 10, failed: 0, cancelled: 0, worker_running: true, current_job: null, active_count: 1, max_concurrent: 2 }
 	})),
 	fetchTranscoderJobs: vi.fn(() => Promise.resolve({
 		jobs: [
 			{ id: 1, title: 'Movie 1', source_path: '/raw/movie1.mkv', status: 'processing', progress: 50, error: null, logfile: 'tc_1.log', video_type: 'movie', year: '2024', disctype: 'bluray', arm_job_id: null, output_path: null, total_tracks: null, poster_url: null, config_overrides: null, created_at: '2025-06-15T10:00:00Z', started_at: '2025-06-15T10:05:00Z', completed_at: null }
 		],
 		total: 1
+	})),
+	fetchTranscoderWorkers: vi.fn(() => Promise.resolve({
+		max_concurrent: 2,
+		active_count: 1,
+		workers: [
+			{ worker_id: 0, status: 'processing', current_job: 'Movie 1', current_job_id: 1, started_at: '2025-06-15T10:05:00Z' },
+			{ worker_id: 1, status: 'idle', current_job: null, current_job_id: null, started_at: null }
+		]
 	})),
 	retryTranscoderJob: vi.fn(),
 	deleteTranscoderJob: vi.fn(),
