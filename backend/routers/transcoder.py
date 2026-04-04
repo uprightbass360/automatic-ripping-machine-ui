@@ -108,7 +108,7 @@ async def retranscode_transcoder_job(job_id: int):
         "title": job.get("title", "Unknown"),
         "body": job.get("title", "Unknown"),
         "path": job.get("source_path", ""),
-        "job_id": job.get("arm_job_id"),
+        "job_id": job.get("arm_job_id") or job.get("id"),
         "status": "success",
         "video_type": job.get("video_type", "movie"),
         "year": job.get("year", ""),
