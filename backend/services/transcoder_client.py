@@ -194,10 +194,12 @@ async def send_webhook(payload: dict) -> dict[str, Any]:
 async def get_job(job_id: int) -> dict[str, Any] | None:
     """Fetch a single transcoder job by ID."""
     try:
-        resp = await get_client().get(f"/jobs/{job_id}")
+        resp = await get_client().get("/jobs", params={"job_id": job_id, "limit": 1})
         resp.raise_for_status()
-        return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        data = resp.json()
+        jobs = data.get("jobs", [])
+        return jobs[0] if jobs else None
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError, IndexError):
         return None
 
 
