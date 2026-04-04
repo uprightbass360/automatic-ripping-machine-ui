@@ -70,8 +70,16 @@
 		loadJobs();
 	}
 
+	let actionFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
 	async function handleRetranscode(id: number) {
-		await retranscodeTranscoderJob(id);
+		actionFeedback = null;
+		try {
+			await retranscodeTranscoderJob(id);
+			actionFeedback = { type: 'success', message: 'Job re-queued for transcoding' };
+		} catch (e) {
+			actionFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Re-transcode failed' };
+		}
 		loadJobs();
 	}
 
@@ -252,6 +260,13 @@
 	<!-- Jobs section -->
 	<section class="space-y-4">
 		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcode Jobs</h2>
+
+		{#if actionFeedback}
+			<div class="rounded-lg border px-4 py-3 text-sm {actionFeedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400' : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'}">
+				{actionFeedback.message}
+				<button onclick={() => (actionFeedback = null)} class="ml-2 font-medium hover:opacity-75">Dismiss</button>
+			</div>
+		{/if}
 
 		<!-- Tabs -->
 		<div class="flex gap-1 border-b border-primary/20 dark:border-primary/20">
