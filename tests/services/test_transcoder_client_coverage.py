@@ -117,16 +117,16 @@ async def test_health_runtime_error():
 
 async def test_get_job_success():
     mock_client = AsyncMock(spec=httpx.AsyncClient)
-    mock_client.get.return_value = _mock_response({"id": 42, "status": "completed"})
+    mock_client.get.return_value = _mock_response({"jobs": [{"id": 42, "status": "completed"}], "total": 1})
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.get_job(42)
     assert result == {"id": 42, "status": "completed"}
-    mock_client.get.assert_awaited_once_with("/jobs/42")
+    mock_client.get.assert_awaited_once_with("/jobs", params={"job_id": 42, "limit": 1})
 
 
 async def test_get_job_not_found():
     mock_client = AsyncMock(spec=httpx.AsyncClient)
-    mock_client.get.return_value = _mock_response({}, status_code=404)
+    mock_client.get.return_value = _mock_response({"jobs": [], "total": 0})
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.get_job(999)
     assert result is None
