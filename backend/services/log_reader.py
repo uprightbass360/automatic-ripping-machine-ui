@@ -23,6 +23,12 @@ _WRAPPER_BRACKET_RE = re.compile(
     r'^(\w{3}\s+\w{3}\s+\d+\s+[\d:]+(?:\s+[AP]M)?\s+\w+\s+\d{4})\s+\[(\w+)\]\s*(.*)',
 )
 
+# ISO timestamp with bracket logger: "{YYYY-MM-DD HH:MM:SS} [{logger}] {message}"
+# e.g. "2026-03-20 14:24:48 [rescan_drive] No disc in /dev/sr0"
+_ISO_BRACKET_RE = re.compile(
+    r'^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+\[(\w+)\]\s*(.*)',
+)
+
 # Wrapper script format without logger: "{timestamp} {message}"
 # e.g. "Sun Mar  1 04:34:15 EST 2026 Entering docker wrapper"
 _WRAPPER_PLAIN_RE = re.compile(
@@ -150,6 +156,19 @@ def _parse_log_line(line: str) -> dict:
 
     # Wrapper script format with [LOGGER]: "Sat Apr 4 02:33:31 EDT 2026 [ARM] message"
     m = _WRAPPER_BRACKET_RE.match(line)
+    if m:
+        return {
+            "timestamp": m.group(1).strip(),
+            "level": "info",
+            "logger": m.group(2),
+            "event": m.group(3),
+            "job_id": None,
+            "label": None,
+            "raw": line,
+        }
+
+    # ISO timestamp with bracket logger: "2026-03-20 14:24:48 [rescan_drive] message"
+    m = _ISO_BRACKET_RE.match(line)
     if m:
         return {
             "timestamp": m.group(1).strip(),
