@@ -327,9 +327,12 @@
 									</div>
 									<div class="flex shrink-0 gap-2">
 										{#if job.status === 'completed' || job.status === 'failed'}
+										{@const sourceDeleted = job.status === 'completed' && (job.config_overrides?.delete_source !== false)}
 											<button
 												onclick={() => handleRetranscode(job.id)}
-												class="rounded-sm bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700"
+												disabled={sourceDeleted}
+												title={sourceDeleted ? 'Source files were deleted after transcoding' : 'Re-queue this job for transcoding'}
+												class="rounded-sm px-2.5 py-1 text-xs font-medium {sourceDeleted ? 'bg-gray-400 text-gray-200 cursor-not-allowed dark:bg-gray-600' : 'bg-indigo-600 text-white hover:bg-indigo-700'}"
 											>Re-transcode</button>
 										{/if}
 										{#if job.status === 'failed'}
