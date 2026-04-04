@@ -90,11 +90,32 @@
 		}
 	}
 
+	let jobsTimer: ReturnType<typeof setInterval> | null = null;
+
+	function startJobsPolling() {
+		stopJobsPolling();
+		jobsTimer = setInterval(loadJobs, 5000);
+	}
+
+	function stopJobsPolling() {
+		if (jobsTimer) { clearInterval(jobsTimer); jobsTimer = null; }
+	}
+
+	// Auto-refresh jobs when any are processing or pending
+	$effect(() => {
+		const s = $stats.stats;
+		if (s && (s.processing > 0 || s.pending > 0)) {
+			startJobsPolling();
+		} else {
+			stopJobsPolling();
+		}
+	});
+
 	onMount(() => {
 		stats.start();
 		workers.start();
 		loadJobs();
-		return () => { stats.stop(); workers.stop(); };
+		return () => { stats.stop(); workers.stop(); stopJobsPolling(); };
 	});
 
 	const tabs = ['all', 'pending', 'processing', 'completed', 'failed'];
