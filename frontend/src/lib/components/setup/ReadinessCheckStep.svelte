@@ -35,8 +35,10 @@
 	}
 
 	function pathStatus(p: PreflightPath): Status {
-		if (p.exists && p.match && p.writable) return 'pass';
-		return 'fail';
+		if (!p.exists) return 'fail';
+		if (!p.match) return 'fail';
+		if (p.require_writable && !p.writable) return 'fail';
+		return 'pass';
 	}
 
 	function chownCommand(p: PreflightPath, r: PreflightResult): string {
@@ -51,7 +53,7 @@
 			if (!c.success && c.fixable) items.push(c.name);
 		}
 		for (const p of result.paths) {
-			if (!(p.exists && p.match && p.writable) && p.fixable) items.push(p.name);
+			if (pathStatus(p) === 'fail' && p.fixable) items.push(p.name);
 		}
 		return items;
 	});
@@ -197,7 +199,9 @@
 							</div>
 							<div class="text-right">
 								{#if status === 'pass'}
-									<span class="text-xs text-green-600 dark:text-green-400">OK</span>
+									<span class="text-xs text-green-600 dark:text-green-400">
+										{#if !path.require_writable && !path.writable}Read-only{:else}OK{/if}
+									</span>
 								{:else}
 									<span class="text-xs text-red-600 dark:text-red-400">
 										{#if !path.exists}Missing{:else if !path.match}Owner mismatch{:else}Not writable{/if}

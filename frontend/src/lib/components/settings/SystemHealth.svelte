@@ -23,8 +23,10 @@
 	}
 
 	function pathStatus(p: PreflightPath): Status {
-		if (p.exists && p.match && p.writable) return 'pass';
-		return 'fail';
+		if (!p.exists) return 'fail';
+		if (!p.match) return 'fail';
+		if (p.require_writable && !p.writable) return 'fail';
+		return 'pass';
 	}
 
 	function chownCommand(p: PreflightPath, r: PreflightResult): string {
@@ -75,7 +77,7 @@
 
 	let writablePathCount = $derived.by(() => {
 		if (!result) return 0;
-		return result.paths.filter((p) => p.exists && p.match && p.writable).length;
+		return result.paths.filter((p) => pathStatus(p) === 'pass').length;
 	});
 
 	let hasIssues = $derived.by(() => {
@@ -84,7 +86,7 @@
 			(c) => !c.success && c.message !== 'Not configured'
 		);
 		const pathFails = result.paths.some(
-			(p) => !(p.exists && p.match && p.writable)
+			(p) => pathStatus(p) !== 'pass'
 		);
 		return checkFails || pathFails;
 	});
@@ -95,7 +97,7 @@
 			(c) => !c.success && c.message !== 'Not configured'
 		).length;
 		const pathCount = result.paths.filter(
-			(p) => !(p.exists && p.match && p.writable)
+			(p) => pathStatus(p) !== 'pass'
 		).length;
 		return checkCount + pathCount;
 	});
@@ -107,7 +109,7 @@
 			if (!c.success && c.fixable) items.push(c.name);
 		}
 		for (const p of result.paths) {
-			if (!(p.exists && p.match && p.writable) && p.fixable) items.push(p.name);
+			if (pathStatus(p) !== 'pass' && p.fixable) items.push(p.name);
 		}
 		return items;
 	});
@@ -120,7 +122,7 @@
 			lastChecked = Date.now();
 			// Auto-expand when issues found, collapse when all pass
 			expanded = result.checks.some((c) => !c.success && c.message !== 'Not configured')
-				|| result.paths.some((p) => !(p.exists && p.match && p.writable));
+				|| result.paths.some((p) => pathStatus(p) !== 'pass');
 		} catch {
 			error = 'Failed to run health checks';
 		} finally {
@@ -136,7 +138,7 @@
 			lastChecked = Date.now();
 			// Re-evaluate expansion
 			expanded = result.checks.some((c) => !c.success && c.message !== 'Not configured')
-				|| result.paths.some((p) => !(p.exists && p.match && p.writable));
+				|| result.paths.some((p) => pathStatus(p) !== 'pass');
 		} catch {
 			error = 'Fix attempt failed';
 		} finally {
@@ -243,7 +245,7 @@
 					</h3>
 					<p class="text-xs text-gray-500 dark:text-gray-400">
 						{validKeyCount} key{validKeyCount === 1 ? '' : 's'} valid
-						- {writablePathCount} path{writablePathCount === 1 ? '' : 's'} writable
+						- {writablePathCount} path{writablePathCount === 1 ? '' : 's'} OK
 						- ARM {result.arm_uid}:{result.arm_gid}
 						- Last checked {lastCheckedText}
 					</p>
@@ -317,7 +319,7 @@
 									</div>
 									<div class="text-right">
 										<span class="text-xs text-red-600 dark:text-red-400">
-											{#if !path.exists}Missing{:else if !path.match}Owner {path.owner_uid}:{path.owner_gid} (expected {path.expected_uid}:{path.expected_gid}){:else}Not writable{/if}
+											{#if !path.exists}Missing{:else if !path.match}Owner {path.owner_uid}:{path.owner_gid} (expected {path.expected_uid}:{path.expected_gid}){:else if path.require_writable}Not writable{:else}Read-only{/if}
 										</span>
 									</div>
 								</div>

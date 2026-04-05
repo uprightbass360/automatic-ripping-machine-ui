@@ -37,6 +37,7 @@ export interface PreflightPath {
 	expected_gid: number;
 	match: boolean;
 	fixable: boolean;
+	require_writable: boolean;
 }
 
 export interface PreflightResult {
