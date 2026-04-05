@@ -25,7 +25,10 @@
 	let savingSpeed = $state(false);
 
 	$effect.pre(() => {
-		speedInput = drive.rip_speed != null ? String(drive.rip_speed) : '';
+		const serverValue = drive.rip_speed != null ? String(drive.rip_speed) : '';
+		if (!showSettings) {
+			speedInput = serverValue;
+		}
 	});
 
 	async function saveSpeed() {
@@ -223,7 +226,7 @@
 			{#if drive.connection}<span>{drive.connection}</span>{/if}
 			{#if drive.connection && drive.firmware} · {/if}
 			{#if drive.firmware}<span class="font-mono text-[10px]">FW {drive.firmware}</span>{/if}
-			{#if drive.rip_speed}
+			{#if drive.rip_speed != null}
 				<span class="ml-1 inline-flex items-center gap-0.5 rounded-sm bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-medium text-blue-400">
 					<svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
 					{drive.rip_speed}x speed
@@ -343,8 +346,9 @@
 				>
 					<div class="mb-2 text-[9px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Drive Settings</div>
 					<div class="flex items-center justify-between gap-2">
-						<label class="text-[11px] text-gray-600 dark:text-gray-300">Rip Speed</label>
+						<label for="rip-speed-{drive.drive_id}" class="text-[11px] text-gray-600 dark:text-gray-300">Rip Speed</label>
 						<input
+							id="rip-speed-{drive.drive_id}"
 							type="number"
 							min="1"
 							max="99"
