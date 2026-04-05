@@ -20,6 +20,45 @@
 	let removing = $state(false);
 	let ejecting = $state(false);
 	let togglingMode = $state(false);
+	let showSettings = $state(false);
+	let speedInput = $state('');
+	let savingSpeed = $state(false);
+
+	$effect.pre(() => {
+		speedInput = drive.rip_speed != null ? String(drive.rip_speed) : '';
+	});
+
+	async function saveSpeed() {
+		const trimmed = speedInput.trim();
+		const newSpeed = trimmed === '' ? null : parseInt(trimmed, 10);
+
+		// Skip save if value hasn't changed
+		if (newSpeed === (drive.rip_speed ?? null)) return;
+
+		// Basic validation - let the API reject out-of-range
+		if (newSpeed !== null && (isNaN(newSpeed) || newSpeed < 1 || newSpeed > 99)) return;
+
+		savingSpeed = true;
+		try {
+			await updateDrive(drive.drive_id, { rip_speed: newSpeed });
+			onupdate?.();
+		} catch {
+			// revert input on failure
+			speedInput = drive.rip_speed != null ? String(drive.rip_speed) : '';
+		} finally {
+			savingSpeed = false;
+		}
+	}
+
+	function onSpeedKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			(e.target as HTMLInputElement).blur();
+		}
+		if (e.key === 'Escape') {
+			speedInput = drive.rip_speed != null ? String(drive.rip_speed) : '';
+			showSettings = false;
+		}
+	}
 
 	let isStale = $derived(!drive.mount || drive.stale === true);
 
@@ -110,6 +149,19 @@
 			togglingMode = false;
 		}
 	}
+
+	let settingsRef: HTMLElement | undefined;
+
+	$effect(() => {
+		if (!showSettings) return;
+		function handleClick(e: MouseEvent) {
+			if (settingsRef && !settingsRef.contains(e.target as Node)) {
+				showSettings = false;
+			}
+		}
+		document.addEventListener('click', handleClick, true);
+		return () => document.removeEventListener('click', handleClick, true);
+	});
 </script>
 
 <div class="rounded-lg border border-primary/20 bg-surface p-2.5 shadow-xs dark:border-primary/20 dark:bg-surface-dark {isStale ? 'opacity-60' : ''}">
@@ -166,11 +218,17 @@
 		{#if drive.mount}
 			{#if drive.maker || drive.model} · {/if}<span class="font-mono text-[10px]">{drive.mount}</span>
 		{/if}
-		{#if drive.connection || drive.firmware}
+		{#if drive.connection || drive.firmware || drive.rip_speed}
 			<br/>
 			{#if drive.connection}<span>{drive.connection}</span>{/if}
 			{#if drive.connection && drive.firmware} · {/if}
 			{#if drive.firmware}<span class="font-mono text-[10px]">FW {drive.firmware}</span>{/if}
+			{#if drive.rip_speed}
+				<span class="ml-1 inline-flex items-center gap-0.5 rounded-sm bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-medium text-blue-400">
+					<svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+					{drive.rip_speed}x speed
+				</span>
+			{/if}
 		{/if}
 	</div>
 
@@ -259,6 +317,48 @@
 			</svg>
 			{scanning ? 'Scanning...' : scanCooldown ? 'Sent' : 'Scan'}
 		</button>
+
+		<div class="h-6 w-px bg-primary/10 dark:bg-primary/15"></div>
+
+		<div class="relative" bind:this={settingsRef}>
+			<button
+				onclick={() => (showSettings = !showSettings)}
+				class="flex items-center justify-center rounded-md px-1.5 py-1.5 text-xs transition-colors
+					{showSettings
+						? 'bg-primary/20 text-primary-text dark:text-white'
+						: 'bg-primary/10 text-gray-500 hover:bg-primary/20 hover:text-primary-text dark:text-gray-400 dark:hover:text-primary-text-dark'}"
+				title="Drive settings"
+			>
+				<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+				</svg>
+			</button>
+
+			{#if showSettings}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div
+					class="absolute bottom-full right-0 z-10 mb-1.5 w-52 rounded-lg border border-primary/20 bg-surface p-3 shadow-lg dark:border-primary/20 dark:bg-surface-dark"
+					onkeydown={(e) => { if (e.key === 'Escape') showSettings = false; }}
+				>
+					<div class="mb-2 text-[9px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Drive Settings</div>
+					<div class="flex items-center justify-between gap-2">
+						<label class="text-[11px] text-gray-600 dark:text-gray-300">Rip Speed</label>
+						<input
+							type="number"
+							min="1"
+							max="99"
+							bind:value={speedInput}
+							onblur={saveSpeed}
+							onkeydown={onSpeedKeydown}
+							disabled={savingSpeed}
+							class="w-16 rounded-md border border-primary/25 bg-primary/5 px-2 py-1 text-center text-xs text-gray-900 dark:border-primary/30 dark:bg-primary/10 dark:text-white disabled:opacity-50"
+						/>
+					</div>
+					<p class="mt-1.5 text-[9px] leading-snug text-gray-400 dark:text-gray-500">Empty = max speed. Lower values help with read errors on problematic discs.</p>
+				</div>
+			{/if}
+		</div>
 
 		{#if isStale && !drive.current_job}
 			<button
