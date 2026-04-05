@@ -2,7 +2,7 @@ export function timeAgo(dateString: string | null): string {
 	if (!dateString) return 'N/A';
 	const date = new Date(dateString);
 	const now = new Date();
-	const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+	const seconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000));
 
 	if (seconds < 60) return `${seconds}s ago`;
 	const minutes = Math.floor(seconds / 60);
@@ -79,7 +79,7 @@ const STATUS_LABELS: Record<string, string> = {
 	active: 'Active',
 	ripping: 'Ripping',
 	importing: 'Processing',
-	copying: 'Copying Files',
+	copying: 'Copying',
 	ejecting: 'Ejecting',
 	processing: 'Transcoding',
 	transcoding: 'Transcoding',

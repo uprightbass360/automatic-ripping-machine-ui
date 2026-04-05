@@ -385,9 +385,15 @@
 	{#if dash.active_transcodes.length > 0}
 		<section>
 			<SectionFrame variant="full" accent="var(--color-primary)" label="TRANSCODING — {dash.active_transcodes.length} ACTIVE">
-				<div class="space-y-2">
-					{#each dash.active_transcodes as tc}
-						<TranscodeCard job={tc} />
+				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+					{#each dash.active_transcodes as tc (tc.id)}
+						{#if tc.arm_job_id}
+							<a href="/jobs/{tc.arm_job_id}" class="block transition-opacity hover:opacity-80">
+								<TranscodeCard job={tc} />
+							</a>
+						{:else}
+							<TranscodeCard job={tc} />
+						{/if}
 					{/each}
 				</div>
 			</SectionFrame>
