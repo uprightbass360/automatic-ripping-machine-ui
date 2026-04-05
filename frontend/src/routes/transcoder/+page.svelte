@@ -315,7 +315,7 @@
 			<p class="py-8 text-center text-gray-400">No transcode jobs found.</p>
 		{:else}
 			<div class="space-y-3">
-				{#each jobs.jobs as job}
+				{#each jobs.jobs as job (job.id)}
 					{@const typeConfig = getVideoTypeConfig(job.video_type)}
 					<div class="rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 						<div class="flex gap-4">
