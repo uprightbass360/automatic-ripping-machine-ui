@@ -15,6 +15,7 @@
 	import { checkMakemkvKey } from '$lib/api/dashboard';
 	import { fetchImageCacheStats, clearImageCache, type ImageCacheStats } from '$lib/api/maintenance';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import SystemHealth from '$lib/components/settings/SystemHealth.svelte';
 
 	let settings = $state<SettingsData | null>(null);
 	let error = $state<string | null>(null);
@@ -1340,6 +1341,8 @@
 				<button type="button" onclick={() => setTab('system')} class={tabClass('system')}>System</button>
 			</nav>
 		</div>
+
+		<SystemHealth />
 
 		<!-- Transcoding Tab -->
 		{#if activeTab === 'transcoding'}
