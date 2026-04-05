@@ -140,6 +140,7 @@ export interface Drive {
 	mdisc: number | null;
 	serial_id: string | null;
 	uhd_capable: boolean | null;
+	rip_speed: number | null;
 	current_job: Job | null;
 }
 
