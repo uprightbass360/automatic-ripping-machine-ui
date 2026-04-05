@@ -33,3 +33,21 @@ async def restart_transcoder() -> dict[str, Any]:
     if result is None:
         raise HTTPException(status_code=503, detail="Transcoder is unreachable")
     return result
+
+
+@router.post("/system/preflight")
+async def run_preflight() -> dict[str, Any]:
+    """Run ARM preflight checks (proxied to ARM backend)."""
+    result = await arm_client.run_preflight()
+    if result is None:
+        raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+    return result
+
+
+@router.post("/system/preflight/fix")
+async def fix_preflight(body: dict) -> dict[str, Any]:
+    """Fix preflight issues (proxied to ARM backend)."""
+    result = await arm_client.fix_preflight(body.get("fix", []))
+    if result is None:
+        raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+    return result

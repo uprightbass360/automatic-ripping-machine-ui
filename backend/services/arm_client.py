@@ -462,3 +462,16 @@ async def check_makemkv_key() -> dict[str, Any] | None:
     from forum.makemkv.com over the network.
     """
     return await _request("POST", "/api/v1/system/makemkv-key-check", timeout=30.0)
+
+
+# --- Preflight checks ---
+
+
+async def run_preflight() -> dict[str, Any] | None:
+    """Run ARM preflight checks. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/system/preflight")
+
+
+async def fix_preflight(items: list[str]) -> dict[str, Any] | None:
+    """Fix specified preflight issues, then re-check. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/system/preflight/fix", json={"fix": items})
