@@ -14,7 +14,7 @@ export function ejectDrive(
 
 export function updateDrive(
 	driveId: number,
-	data: { name?: string; description?: string; uhd_capable?: boolean; drive_mode?: string }
+	data: { name?: string; description?: string; uhd_capable?: boolean; drive_mode?: string; rip_speed?: number | null }
 ): Promise<{ success: boolean; drive_id: number }> {
 	return apiFetch(`/api/drives/${driveId}`, {
 		method: 'PATCH',
