@@ -6,6 +6,7 @@
 	import StepIndicator from './StepIndicator.svelte';
 	import WelcomeStep from './WelcomeStep.svelte';
 	import DriveScanStep from './DriveScanStep.svelte';
+	import ReadinessCheckStep from './ReadinessCheckStep.svelte';
 	import SettingsReviewStep from './SettingsReviewStep.svelte';
 
 	interface SetupStep {
@@ -23,6 +24,7 @@
 	const steps: SetupStep[] = [
 		{ id: 'welcome', label: 'Welcome', component: WelcomeStep },
 		{ id: 'drives', label: 'Drives', component: DriveScanStep },
+		{ id: 'readiness', label: 'Readiness', component: ReadinessCheckStep },
 		{ id: 'settings', label: 'Settings', component: SettingsReviewStep },
 	];
 
@@ -68,6 +70,8 @@
 			<WelcomeStep {status} />
 		{:else if currentStep.id === 'drives'}
 			<DriveScanStep />
+		{:else if currentStep.id === 'readiness'}
+			<ReadinessCheckStep />
 		{:else if currentStep.id === 'settings'}
 			<SettingsReviewStep />
 		{/if}
