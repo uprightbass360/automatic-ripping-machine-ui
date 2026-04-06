@@ -519,7 +519,7 @@
 				Search
 			</button>
 		{/if}
-		{#if isVideo && (job.video_type === 'series' || job.imdb_id)}
+		{#if isVideo && job.video_type === 'series' && job.imdb_id}
 			<button
 				onclick={() => toggleSection('tvdb')}
 				class="{btnBase} {showTvdb
