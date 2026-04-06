@@ -120,7 +120,7 @@
 	);
 
 	let hasCrcData = $derived(
-		job?.disctype === 'dvd' || !!job?.crc_id
+		!isMusicDisc && (job?.disctype === 'dvd' || !!job?.crc_id)
 	);
 
 	function formatTvEpisodeName(track: { episode_number?: string | null; episode_name?: string | null }): string {
@@ -370,7 +370,7 @@
 				{#if job.logfile}
 					<InlineLogFeed logfile={job.logfile} maxEntries={15} title="ARM Ripper Log" />
 				{/if}
-				{#if transcoderLogfile}
+				{#if transcoderLogfile && !isMusicDisc && job?.disctype !== 'data'}
 					<InlineLogFeed
 						logfile={transcoderLogfile}
 						maxEntries={15}
