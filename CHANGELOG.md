@@ -1,5 +1,65 @@
 # Changelog
 
+## [15.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.4.0...v15.0.0) (2026-04-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Jobs in 'ready' status now appear in the Scanning section instead of Active Rips. The idle message is hidden during scanning.
+
+### Features
+
+* add gear menu with rip speed setting to drive card ([5ceff0b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5ceff0bdce232e3571ac059fee05232bca4ee0f2))
+* add preflight proxy routes to UI backend ([e23ce0d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e23ce0dd7502856a58e1e7c104fff2424a1f13b1))
+* add preflight TypeScript API types and functions ([556278d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/556278d143321c66130ccb2016aeb57a8b551e3c))
+* add ReadinessCheckStep component for setup wizard ([cd053be](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cd053be8d18e8c4d8fbd6190f8a30fcdfcf10006))
+* add rip_speed to Drive type ([2d01225](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2d01225c2b8b4cfe3c39c30281e0ebdb1155d2ee))
+* add rip_speed to updateDrive API wrapper ([8a91327](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8a913270687d6d31062955919763d8888244bd80))
+* add Scanning panel to dashboard for identifying jobs ([5049140](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/504914019be3166438c232df89621f727a79f775))
+* add System Health panel to Settings page ([006281c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/006281c62bad9dc0f5dbcae33895c8aacc004979))
+* add SystemHealth panel component for Settings page ([7df165f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7df165ffff963527b829dbbbb0ce86dc5132ac38))
+* add transcoder nav link and fix status bar link ([7d33dcd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7d33dcd35cce2854112e3499c74df6853a81c381))
+* add worker pool API proxy and types ([57da96f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/57da96f3e4c0ed572996a6e3c642fea26b660c17))
+* collapsible ActiveJobRow for dashboard rips, scanning, and transcodes ([981e31e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/981e31e3202d20fbd272a0c7a7c3f3bfaacee67e))
+* dashboard scanning state, job detail visibility controls ([e680c81](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e680c81ec6f3ef80d5e56f8d5661463b723d16b1))
+* disable Re-transcode button when source files are deleted ([6535cfc](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6535cfcf273ccae770d79cc39bdd9d922a537f50))
+* insert ReadinessCheckStep as step 3 in setup wizard ([7309567](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/730956777501b2380668697f36f61c14441c270a))
+* merge Jobs page into Dashboard and remove standalone /jobs route ([c13a418](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c13a418893c5d8a192ea1d66296c1abaddf43274))
+* metadata search pagination and poster fallback handling ([5dfcbc0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5dfcbc0f2cdbd37303531f668fde429a8e06f140))
+* unified collapsible row style for rips and transcodes ([5340c82](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5340c82e20c0ee2d23ac359caffef77545cd4ee5))
+* worker pool display on transcoder page ([1b32e59](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1b32e590c4805e8c4a63632e36c21172f85695cf))
+
+
+### Bug Fixes
+
+* add error handling and feedback for retranscode action ([4a23ee6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4a23ee6cbe115966197988f13e7cfb8c146482cd))
+* add missing rip_speed field to DriveCard test fixture ([0dfcd97](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0dfcd97b89fff62e636afef55e067bf98135eba6))
+* auto-refresh job list when transcoding is active ([9136009](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9136009dd61bec7e837eb12d624f86f456846c81))
+* cache setup completion to prevent wizard flash on navigation ([e0371df](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e0371dfff4d11599d9394c1ce48af71bf89f36b0))
+* episode matching UX — stable table, loading state, search + match flow ([c8baa81](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c8baa814f62edf20269be7109ce9aeae57cd8b65))
+* get_job uses query param instead of non-existent path route ([9c6161b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9c6161b5fe80d177ba770c87de61e429e708e121))
+* handle read-only paths in preflight UI - show as green with 'Read-only' label ([a850008](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a850008cefd5e4e49b328953c226c776e38b790c))
+* hide idle message when scanning jobs are active ([c0550d0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c0550d0e854557669421b42f73c59fdecea2d964))
+* hide transcoder log and CRC database for music and data jobs ([15f3c9c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/15f3c9c9df62a00a1cdd8c1c0c146d90178dc1b9))
+* keep controls visible during episode match loading to prevent vertical jump ([f863f23](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f863f230d4e43fb072ca26e011790edda26ba3a1))
+* move job counts to dashboard top, remove Jobs nav link ([d79d6fd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d79d6fd306572f8b7868475a8292bfd095ded465))
+* only show Episodes button for series with IMDB ID, not all movies ([f9a592d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f9a592d02b5a6475cf5887642ca6889e5f9153d1))
+* parse ISO timestamp bracket log format (rescan_drive) ([afbabc4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/afbabc4a4a7997069b97f92bed5642c2031ac3a8))
+* parse wrapper script log lines into structured fields ([a309c7c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a309c7c298b619968b9060aa8d763e309087a893))
+* prevent input clobber during polling, improve accessibility and null guard ([9d1f0dc](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9d1f0dc2c9fe6258416998dadf87e8eed2e646d1))
+* remove dev preview fake transcode data from dashboard ([99cebaf](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/99cebaf9fd9a480c99ef4d2c37241643c0aabc89))
+* resolve SonarCloud warnings — unused import, raw string, non-null assertions ([e186c8b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e186c8b122a6bf629c6ddad4012a0a6fcd3613d3))
+* retranscode fallback to transcoder job ID when arm_job_id is null ([a078d23](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a078d230df3710a2aa5fd8c032ed1d07d9912679))
+* show 'ready' jobs in scanning section, not active rips ([7ac0b11](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7ac0b11ca4212590b8197aff5b88bf3c6175dbad))
+* transcoder page scroll jump, home page transcode links, negative timeAgo ([44ffa4e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/44ffa4eec7ca68d1b57c6c30c343134cda625bf6))
+* TS type error on search button and test assertion for page param ([b8d43b9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b8d43b98921aafec3c2cce9b9cf359c8df13eea1))
+* TypeScript type error in it.each filter pill test ([5a18b53](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5a18b5347545f2a2d4561415f55966b2364c4555))
+* update Episodes button tests for series+imdb_id requirement ([a015500](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a015500e2e1e15bb7b0c6e263aa3918cd3746357))
+* update StatusBadge test to match current 'Copying' label ([cae6ded](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cae6ded6a20235b72ea2ca4df50a6b4c9e59113f))
+* update test — Search button now visible for multi-title series ([2416c9d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2416c9d410a03f52babc991267c62ee9d472062d))
+* update tests for poster placeholder, multi-title search, and onclear ([c1448a8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c1448a83f447e16bfbe34710326e3c5596b34773))
+* use Annotated type hints for FastAPI query params (SonarCloud) ([8f9b04a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8f9b04aa65a57c8f68ca2b8a494b9c7a56e54223))
+
 ## [14.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.3.0...v14.4.0) (2026-03-31)
 
 
