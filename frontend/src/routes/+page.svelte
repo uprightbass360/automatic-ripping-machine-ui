@@ -404,7 +404,7 @@
 	{/if}
 
 	<!-- Idle state -->
-	{#if dashReady && waitingJobs.length === 0 && nonWaitingActiveJobs.length === 0 && dash.active_transcodes.length === 0}
+	{#if dashReady && scanningJobs.length === 0 && waitingJobs.length === 0 && nonWaitingActiveJobs.length === 0 && dash.active_transcodes.length === 0}
 		<section>
 			<div class="rounded-lg border border-primary/20 bg-surface p-6 text-center shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<svg class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
