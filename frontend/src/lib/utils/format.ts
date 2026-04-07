@@ -68,6 +68,8 @@ export function statusColor(status: string | null): string {
 		case 'waiting_transcode':
 		case 'pending':
 			return 'status-warning';
+		case 'skipped':
+			return 'status-unknown';
 		default:
 			return 'status-unknown';
 	}
@@ -92,6 +94,7 @@ const STATUS_LABELS: Record<string, string> = {
 	waiting: 'Waiting',
 	waiting_transcode: 'Waiting to Transcode',
 	pending: 'Pending',
+	skipped: 'Skipped',
 	info: 'Scanning',
 	cancelled: 'Cancelled',
 };

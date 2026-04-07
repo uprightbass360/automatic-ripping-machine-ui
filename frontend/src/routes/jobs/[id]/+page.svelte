@@ -598,7 +598,7 @@
 											{track.ripped ? 'Yes' : 'No'}
 										</span>
 									</td>
-									<td class="px-4 py-3"><StatusBadge status={track.status} /></td>
+									<td class="px-4 py-3"><StatusBadge status={!track.enabled ? 'skipped' : track.status} /></td>
 									</tr>
 								{#if editingTrackId === track.track_id}
 									<tr>
