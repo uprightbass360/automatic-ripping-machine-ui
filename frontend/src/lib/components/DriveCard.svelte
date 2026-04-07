@@ -23,6 +23,48 @@
 	let showSettings = $state(false);
 	let speedInput = $state('');
 	let savingSpeed = $state(false);
+	let showAdvanced = $state(false);
+	let savingPrescan = $state(false);
+
+	// Prescan override inputs - empty string means "use global default"
+	let prescanCacheInput = $state('');
+	let prescanTimeoutInput = $state('');
+	let prescanRetriesInput = $state('');
+	let discEnumTimeoutInput = $state('');
+
+	// Sync server values to inputs when settings panel closes
+	$effect.pre(() => {
+		if (!showSettings) {
+			prescanCacheInput = drive.prescan_cache_mb != null ? String(drive.prescan_cache_mb) : '';
+			prescanTimeoutInput = drive.prescan_timeout != null ? String(drive.prescan_timeout) : '';
+			prescanRetriesInput = drive.prescan_retries != null ? String(drive.prescan_retries) : '';
+			discEnumTimeoutInput = drive.disc_enum_timeout != null ? String(drive.disc_enum_timeout) : '';
+		}
+	});
+
+	const PRESCAN_FIELDS = [
+		{ key: 'prescan_cache_mb' as const, label: 'Pre-scan Cache', unit: 'MB', min: 1, max: 1024, input: () => prescanCacheInput, setInput: (v: string) => { prescanCacheInput = v; }, current: () => drive.prescan_cache_mb, tooltip: 'Community recommends 64-128 for scratched or damaged discs' },
+		{ key: 'prescan_timeout' as const, label: 'Pre-scan Timeout', unit: 's', min: 30, max: 3600, input: () => prescanTimeoutInput, setInput: (v: string) => { prescanTimeoutInput = v; }, current: () => drive.prescan_timeout, tooltip: 'Community recommends 600 for slow or damaged DVD/BD media' },
+		{ key: 'prescan_retries' as const, label: 'Pre-scan Retries', unit: '', min: 1, max: 10, input: () => prescanRetriesInput, setInput: (v: string) => { prescanRetriesInput = v; }, current: () => drive.prescan_retries, tooltip: 'Community recommends 3-5 retries for problematic drives' },
+		{ key: 'disc_enum_timeout' as const, label: 'Enum Timeout', unit: 's', min: 10, max: 600, input: () => discEnumTimeoutInput, setInput: (v: string) => { discEnumTimeoutInput = v; }, current: () => drive.disc_enum_timeout, tooltip: 'Community recommends 120 for drives that are slow to spin up' },
+	] as const;
+
+	async function savePrescanField(field: typeof PRESCAN_FIELDS[number]) {
+		const trimmed = field.input().trim();
+		const newVal = trimmed === '' ? null : parseInt(trimmed, 10);
+		if (newVal === (field.current() ?? null)) return;
+		if (newVal !== null && (isNaN(newVal) || newVal < field.min || newVal > field.max)) return;
+
+		savingPrescan = true;
+		try {
+			await updateDrive(drive.drive_id, { [field.key]: newVal });
+			onupdate?.();
+		} catch {
+			field.setInput(field.current() != null ? String(field.current()) : '');
+		} finally {
+			savingPrescan = false;
+		}
+	}
 
 	$effect.pre(() => {
 		const serverValue = drive.rip_speed != null ? String(drive.rip_speed) : '';
@@ -232,6 +274,12 @@
 					{drive.rip_speed}x speed
 				</span>
 			{/if}
+			{@const prescanOverrideCount = [drive.prescan_cache_mb, drive.prescan_timeout, drive.prescan_retries, drive.disc_enum_timeout].filter(v => v != null).length}
+			{#if prescanOverrideCount > 0}
+				<span class="ml-1 inline-flex items-center gap-0.5 rounded-sm bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-medium text-amber-600 dark:text-amber-400">
+					{prescanOverrideCount} custom
+				</span>
+			{/if}
 		{/if}
 	</div>
 
@@ -341,7 +389,7 @@
 			{#if showSettings}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
-					class="absolute bottom-full right-0 z-10 mb-1.5 w-52 rounded-lg border border-primary/20 bg-surface p-3 shadow-lg dark:border-primary/20 dark:bg-surface-dark"
+					class="absolute bottom-full right-0 z-10 mb-1.5 w-60 rounded-lg border border-primary/20 bg-surface p-3 shadow-lg dark:border-primary/20 dark:bg-surface-dark"
 					onkeydown={(e) => { if (e.key === 'Escape') showSettings = false; }}
 				>
 					<div class="mb-2 text-[9px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Drive Settings</div>
@@ -360,6 +408,48 @@
 						/>
 					</div>
 					<p class="mt-1.5 text-[9px] leading-snug text-gray-400 dark:text-gray-500">Empty = max speed. Lower values help with read errors on problematic discs.</p>
+					<button
+						onclick={() => (showAdvanced = !showAdvanced)}
+						class="mt-2 flex w-full items-center justify-between border-t border-primary/15 pt-2 text-[9px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+					>
+						Advanced
+						<svg class="h-3 w-3 transform transition-transform {showAdvanced ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+						</svg>
+					</button>
+					{#if showAdvanced}
+						<div class="mt-2 space-y-2">
+							{#each PRESCAN_FIELDS as field}
+								<div>
+									<div class="flex items-center justify-between gap-2">
+										<label for="prescan-{field.key}-{drive.drive_id}" class="text-[11px] text-gray-600 dark:text-gray-300">
+											{field.label}{#if field.unit}&nbsp;<span class="text-[9px] text-gray-400">({field.unit})</span>{/if}
+										</label>
+										<input
+											id="prescan-{field.key}-{drive.drive_id}"
+											type="number"
+											min={field.min}
+											max={field.max}
+											placeholder="global"
+											value={field.input()}
+											oninput={(e) => field.setInput((e.target as HTMLInputElement).value)}
+											onblur={() => savePrescanField(field)}
+											onkeydown={(e) => {
+												if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+												if (e.key === 'Escape') {
+													field.setInput(field.current() != null ? String(field.current()) : '');
+													showSettings = false;
+												}
+											}}
+											disabled={savingPrescan}
+											class="w-16 rounded-md border border-primary/25 bg-primary/5 px-2 py-1 text-center text-xs text-gray-900 placeholder:text-gray-400 dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder:text-gray-500 disabled:opacity-50"
+										/>
+									</div>
+									<p class="mt-0.5 text-[8px] leading-snug text-gray-400 dark:text-gray-500">{field.tooltip}</p>
+								</div>
+							{/each}
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>
