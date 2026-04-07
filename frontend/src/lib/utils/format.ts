@@ -59,6 +59,7 @@ export function statusColor(status: string | null): string {
 		case 'success':
 		case 'completed':
 		case 'complete':
+		case 'transcoded':
 			return 'status-success';
 		case 'fail':
 		case 'failed':
@@ -95,6 +96,7 @@ const STATUS_LABELS: Record<string, string> = {
 	waiting_transcode: 'Waiting to Transcode',
 	pending: 'Pending',
 	skipped: 'Skipped',
+	transcoded: 'Transcoded',
 	info: 'Scanning',
 	cancelled: 'Cancelled',
 };
