@@ -372,7 +372,7 @@
 				{#if job.logfile}
 					<InlineLogFeed logfile={job.logfile} maxEntries={15} title="ARM Ripper Log" />
 				{/if}
-				{#if transcoderLogfile && !isMusicDisc && job?.disctype !== 'data'}
+				{#if transcoderLogfile && !isMusicDisc && job?.disctype !== 'data' && job?.status !== 'ripping' && job?.status !== 'ready' && job?.status !== 'identifying' && job?.status !== 'waiting'}
 					<InlineLogFeed
 						logfile={transcoderLogfile}
 						maxEntries={15}
