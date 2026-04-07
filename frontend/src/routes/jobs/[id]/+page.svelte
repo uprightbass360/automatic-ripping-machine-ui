@@ -278,20 +278,20 @@
 					{#if job.multi_title}
 						<span class="rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
 					{/if}
-				</div>
-
-				<!-- Action bar -->
-				<div class="flex flex-wrap items-center gap-2">
 					{#if job.imdb_id && !isMusicDisc}
 						<a
 							href="https://www.imdb.com/title/{job.imdb_id}"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium bg-yellow-400 text-black hover:bg-yellow-500 transition-colors"
+							class="inline-flex items-center gap-1 rounded-sm bg-yellow-400 px-2 py-0.5 text-xs font-bold text-black"
 						>
 							IMDb
 						</a>
 					{/if}
+				</div>
+
+				<!-- Action bar -->
+				<div class="flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-surface px-3 py-2 dark:border-primary/20 dark:bg-surface-dark">
 					{#if job.logfile}
 						<a
 							href="/logs/{job.logfile}"
@@ -308,13 +308,13 @@
 						>
 							{retranscoding ? 'Queuing...' : 'Re-transcode'}
 						</button>
-						{#if retranscodeFeedback}
-							<span class="text-xs {retranscodeFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-								{retranscodeFeedback.message}
-							</span>
-						{/if}
 					{/if}
 					<JobActions {job} onaction={loadJob} ondelete={() => goto('/')} compact={true} />
+					{#if retranscodeFeedback}
+						<span class="text-xs {retranscodeFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+							{retranscodeFeedback.message}
+						</span>
+					{/if}
 				</div>
 
 				<dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-3">
