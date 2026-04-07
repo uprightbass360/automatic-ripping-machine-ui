@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { fetchJob, retranscodeJob, fetchMusicDetail, toggleMultiTitle, updateTrack } from '$lib/api/jobs';
+	import { fetchJob, retranscodeJob, fetchMusicDetail, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
+	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
 	import { fetchStructuredTranscoderLogContent, fetchTranscoderLogForArmJob } from '$lib/api/logs';
 	import type { JobDetail, MusicDetail } from '$lib/types/arm';
@@ -38,6 +39,7 @@
 	let togglingAllEnabled = $state(false);
 	let editingFilenameTrackId = $state<number | null>(null);
 	let editingFilenameValue = $state('');
+	let namingPreviews = $state<Record<string, NamingPreviewTrack>>({});
 
 	let minlength = $derived(Number(job?.config?.MINLENGTH) || 120);
 
@@ -172,6 +174,16 @@
 		const id = Number($page.params.id);
 		try {
 			job = await fetchJob(id);
+			// Fetch naming previews for rendered filenames
+			fetchNamingPreview(id).then((preview) => {
+				const map: Record<string, NamingPreviewTrack> = {};
+				for (const t of preview.tracks || []) {
+					map[t.track_number] = t;
+				}
+				namingPreviews = map;
+			}).catch(() => {
+				namingPreviews = {};
+			});
 			// Look up transcoder log for this ARM job
 			fetchTranscoderLogForArmJob(id).then((info) => {
 				transcoderLogfile = info.found ? (info.logfile ?? null) : null;
@@ -551,7 +563,8 @@
 												</div>
 											{:else}
 												{@const customFn = track.custom_filename}
-												{@const defaultFn = track.filename ?? track.basename ?? '--'}
+												{@const renderedFn = namingPreviews[track.track_number ?? '']?.rendered_title}
+												{@const defaultFn = renderedFn || track.filename || track.basename || '--'}
 												<button
 													onclick={() => { editingFilenameTrackId = track.track_id; editingFilenameValue = customFn || defaultFn; }}
 													class="w-full text-left font-mono text-xs {customFn ? 'text-amber-500 dark:text-amber-400' : 'text-gray-700 dark:text-gray-300'} hover:underline truncate"
