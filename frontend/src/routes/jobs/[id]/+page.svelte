@@ -527,7 +527,7 @@
 									{#if isMusicDisc}
 										<td class="max-w-[300px] truncate px-4 py-3">{track.title || track.filename || '--'}</td>
 									{:else}
-										<td class="max-w-[250px] truncate px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{track.filename ?? track.basename ?? '--'}</td>
+										<td class="max-w-[250px] truncate px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{track.enabled ? (track.filename ?? track.basename ?? '--') : ''}</td>
 									{/if}
 									{#if !isMusicDisc}
 										<td
