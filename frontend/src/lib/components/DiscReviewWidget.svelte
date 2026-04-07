@@ -823,9 +823,14 @@
 												{/if}
 												{#if !isMusic}
 													<td class="px-2 py-1.5 text-center">
-														{#if track.episode_number}
-															<span class="rounded-sm bg-blue-100 px-1 py-0.5 text-[9px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">E{track.episode_number}</span>
-														{/if}
+														<input
+															type="text"
+															value={track.episode_number ?? ''}
+															onchange={(e) => handleTrackFieldUpdate(track.track_id, 'episode_number', e.currentTarget.value.trim())}
+															placeholder="--"
+															disabled={tooShort || !track.enabled}
+															class="w-10 rounded-sm border border-primary/25 bg-primary/5 px-1 py-0.5 text-center text-xs text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary disabled:opacity-30 dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+														/>
 													</td>
 												{/if}
 												<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{formatLength(track.length)}</td>
