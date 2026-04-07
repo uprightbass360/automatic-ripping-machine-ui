@@ -17,7 +17,9 @@ function createDrive(overrides: Partial<Drive> = {}): Drive {
 		maker: 'LG', model: 'WH16NS40', serial: null, connection: null,
 		read_cd: true, read_dvd: true, read_bd: true,
 		firmware: null, location: null, stale: false, mdisc: null, serial_id: null,
-		uhd_capable: false, current_job: null, rip_speed: null, ...overrides
+		uhd_capable: false, current_job: null, rip_speed: null,
+		prescan_cache_mb: null, prescan_timeout: null, prescan_retries: null, disc_enum_timeout: null,
+		...overrides
 	};
 }
 

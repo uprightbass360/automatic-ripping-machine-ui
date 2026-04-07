@@ -56,7 +56,7 @@ async def eject_drive(drive_id: int, method: str = "toggle"):
 
 @router.patch("/drives/{drive_id}", responses={400: {"description": "No fields to update"}, 404: {"description": "Update failed"}, 502: {"description": "ARM unreachable"}})
 async def update_drive(drive_id: int, body: DriveUpdateRequest):
-    data = body.model_dump(exclude_none=True)
+    data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
     result = await arm_client.update_drive(drive_id, data)
