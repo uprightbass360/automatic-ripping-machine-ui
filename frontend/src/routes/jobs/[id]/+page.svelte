@@ -280,10 +280,27 @@
 					{/if}
 				</div>
 
-				<JobActions {job} onaction={loadJob} ondelete={() => goto('/')} />
-
-				{#if isVideoDisc && (job.status === 'success' || job.status === 'fail')}
-					<div class="flex items-center gap-3">
+				<!-- Action bar -->
+				<div class="flex flex-wrap items-center gap-2">
+					{#if job.imdb_id && !isMusicDisc}
+						<a
+							href="https://www.imdb.com/title/{job.imdb_id}"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium bg-yellow-400 text-black hover:bg-yellow-500 transition-colors"
+						>
+							IMDb
+						</a>
+					{/if}
+					{#if job.logfile}
+						<a
+							href="/logs/{job.logfile}"
+							class="rounded-lg px-3 py-1.5 text-sm font-medium bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15 transition-colors"
+						>
+							Log
+						</a>
+					{/if}
+					{#if isVideoDisc && (job.status === 'success' || job.status === 'fail')}
 						<button
 							onclick={handleRetranscode}
 							disabled={retranscoding}
@@ -292,23 +309,13 @@
 							{retranscoding ? 'Queuing...' : 'Re-transcode'}
 						</button>
 						{#if retranscodeFeedback}
-							<span class="text-sm {retranscodeFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+							<span class="text-xs {retranscodeFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
 								{retranscodeFeedback.message}
 							</span>
 						{/if}
-					</div>
-				{/if}
-
-				{#if job.imdb_id && !isMusicDisc}
-					<a
-						href="https://www.imdb.com/title/{job.imdb_id}"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="inline-flex items-center gap-1 rounded-sm bg-yellow-400 px-2 py-0.5 text-xs font-bold text-black"
-					>
-						IMDb
-					</a>
-				{/if}
+					{/if}
+					<JobActions {job} onaction={loadJob} ondelete={() => goto('/')} compact={true} />
+				</div>
 
 				<dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-3">
 					<div>
