@@ -36,6 +36,8 @@
 	let editingTrackId = $state<number | null>(null);
 	let savingTrackField = $state<string | null>(null);
 	let togglingAllEnabled = $state(false);
+	let editingFilenameTrackId = $state<number | null>(null);
+	let editingFilenameValue = $state('');
 
 	let minlength = $derived(Number(job?.config?.MINLENGTH) || 120);
 
@@ -527,7 +529,46 @@
 									{#if isMusicDisc}
 										<td class="max-w-[300px] truncate px-4 py-3">{track.title || track.filename || '--'}</td>
 									{:else}
-										<td class="max-w-[250px] truncate px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{track.enabled ? (track.filename ?? track.basename ?? '--') : ''}</td>
+										<td class="max-w-[250px] px-4 py-3">
+											{#if !track.enabled}
+												<span class="text-xs text-gray-400"></span>
+											{:else if editingFilenameTrackId === track.track_id}
+												<div class="flex items-center gap-1">
+													<input
+														type="text"
+														bind:value={editingFilenameValue}
+														onkeydown={(e) => { if (e.key === 'Enter') { updateTrack(job.job_id, track.track_id, { custom_filename: editingFilenameValue }); editingFilenameTrackId = null; loadJob(); } if (e.key === 'Escape') editingFilenameTrackId = null; }}
+														class="w-full min-w-[120px] rounded-sm border border-amber-400 bg-transparent px-1 py-0.5 font-mono text-xs text-amber-600 focus:outline-hidden focus:ring-1 focus:ring-amber-400 dark:border-amber-600 dark:text-amber-400"
+													/>
+													<button
+														onclick={async () => { await updateTrack(job.job_id, track.track_id, { custom_filename: editingFilenameValue }); editingFilenameTrackId = null; loadJob(); }}
+														class="rounded bg-green-600 px-1.5 py-0.5 text-[10px] text-white hover:bg-green-700"
+													>Save</button>
+													<button
+														onclick={() => { editingFilenameTrackId = null; }}
+														class="rounded border border-gray-400 px-1 py-0.5 text-[10px] text-gray-400 hover:bg-gray-800"
+													>x</button>
+												</div>
+											{:else}
+												{@const customFn = track.custom_filename}
+												{@const defaultFn = track.filename ?? track.basename ?? '--'}
+												<button
+													onclick={() => { editingFilenameTrackId = track.track_id; editingFilenameValue = customFn || defaultFn; }}
+													class="w-full text-left font-mono text-xs {customFn ? 'text-amber-500 dark:text-amber-400' : 'text-gray-700 dark:text-gray-300'} hover:underline truncate"
+												>
+													{customFn || defaultFn}
+												</button>
+												{#if customFn}
+													<div class="flex items-center gap-1">
+														<span class="text-[9px] text-gray-500">was: {defaultFn}</span>
+														<button
+															onclick={async () => { await updateTrack(job.job_id, track.track_id, { custom_filename: '' }); loadJob(); }}
+															class="text-[9px] text-red-400 hover:text-red-300"
+														>clear</button>
+													</div>
+												{/if}
+											{/if}
+										</td>
 									{/if}
 									{#if !isMusicDisc}
 										<td
