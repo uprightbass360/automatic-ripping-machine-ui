@@ -408,48 +408,37 @@
 						/>
 					</div>
 					<p class="mt-1.5 text-[9px] leading-snug text-gray-400 dark:text-gray-500">Empty = max speed. Lower values help with read errors on problematic discs.</p>
-					<button
-						onclick={() => (showAdvanced = !showAdvanced)}
-						class="mt-2 flex w-full items-center justify-between border-t border-primary/15 pt-2 text-[9px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
-					>
-						Advanced
-						<svg class="h-3 w-3 transform transition-transform {showAdvanced ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-						</svg>
-					</button>
-					{#if showAdvanced}
-						<div class="mt-2 space-y-2">
-							{#each PRESCAN_FIELDS as field}
-								<div>
-									<div class="flex items-center justify-between gap-2">
-										<label for="prescan-{field.key}-{drive.drive_id}" class="text-[11px] text-gray-600 dark:text-gray-300">
-											{field.label}{#if field.unit}&nbsp;<span class="text-[9px] text-gray-400">({field.unit})</span>{/if}
-										</label>
-										<input
-											id="prescan-{field.key}-{drive.drive_id}"
-											type="number"
-											min={field.min}
-											max={field.max}
-											placeholder="global"
-											value={field.input()}
-											oninput={(e) => field.setInput((e.target as HTMLInputElement).value)}
-											onblur={() => savePrescanField(field)}
-											onkeydown={(e) => {
-												if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-												if (e.key === 'Escape') {
-													field.setInput(field.current() != null ? String(field.current()) : '');
-													showSettings = false;
-												}
-											}}
-											disabled={savingPrescan}
-											class="w-16 rounded-md border border-primary/25 bg-primary/5 px-2 py-1 text-center text-xs text-gray-900 placeholder:text-gray-400 dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder:text-gray-500 disabled:opacity-50"
-										/>
-									</div>
-									<p class="mt-0.5 text-[8px] leading-snug text-gray-400 dark:text-gray-500">{field.tooltip}</p>
+					<div class="mt-2 space-y-2 border-t border-primary/15 pt-2">
+						{#each PRESCAN_FIELDS as field}
+							<div>
+								<div class="flex items-center justify-between gap-2">
+									<label for="prescan-{field.key}-{drive.drive_id}" class="text-[11px] text-gray-600 dark:text-gray-300">
+										{field.label}{#if field.unit}&nbsp;<span class="text-[9px] text-gray-400">({field.unit})</span>{/if}
+									</label>
+									<input
+										id="prescan-{field.key}-{drive.drive_id}"
+										type="number"
+										min={field.min}
+										max={field.max}
+										placeholder="global"
+										value={field.input()}
+										oninput={(e) => field.setInput((e.target as HTMLInputElement).value)}
+										onblur={() => savePrescanField(field)}
+										onkeydown={(e) => {
+											if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+											if (e.key === 'Escape') {
+												field.setInput(field.current() != null ? String(field.current()) : '');
+												showSettings = false;
+											}
+										}}
+										disabled={savingPrescan}
+										class="w-16 rounded-md border border-primary/25 bg-primary/5 px-2 py-1 text-center text-xs text-gray-900 placeholder:text-gray-400 dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder:text-gray-500 disabled:opacity-50"
+									/>
 								</div>
-							{/each}
-						</div>
-					{/if}
+								<p class="mt-0.5 text-[8px] leading-snug text-gray-400 dark:text-gray-500">{field.tooltip}</p>
+							</div>
+						{/each}
+					</div>
 				</div>
 			{/if}
 		</div>
