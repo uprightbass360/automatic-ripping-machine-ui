@@ -141,6 +141,10 @@ export interface Drive {
 	serial_id: string | null;
 	uhd_capable: boolean | null;
 	rip_speed: number | null;
+	prescan_cache_mb: number | null;
+	prescan_timeout: number | null;
+	prescan_retries: number | null;
+	disc_enum_timeout: number | null;
 	current_job: Job | null;
 }
 
