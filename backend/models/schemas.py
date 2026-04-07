@@ -384,6 +384,11 @@ class DriveUpdateRequest(BaseModel):
     description: str | None = None
     uhd_capable: bool | None = None
     drive_mode: str | None = None
+    rip_speed: int | None = None
+    prescan_cache_mb: int | None = None
+    prescan_timeout: int | None = None
+    prescan_retries: int | None = None
+    disc_enum_timeout: int | None = None
 
 
 class NamingPreviewRequest(BaseModel):
