@@ -507,7 +507,7 @@
 								<th class="px-4 py-3 font-medium">#</th>
 								<th class="px-4 py-3 font-medium">{isMusicDisc ? 'Name' : 'Filename'}</th>
 								{#if !isMusicDisc}
-									<th class="px-4 py-3 font-medium">Title Override</th>
+									<th class="px-4 py-3 font-medium">Title</th>
 								{/if}
 								{#if !isMusicDisc && job.video_type === 'series'}
 									<th class="px-4 py-3 font-medium">Episode</th>
