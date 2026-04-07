@@ -78,19 +78,20 @@
 				<div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{job.stage}</div>
 			{/if}
 			{#if hasErrors}
+				{@const isWarning = job.status === 'success'}
 				{#if job.logfile}
-					<a href="/logs/{job.logfile}" class="mt-0.5 flex items-center gap-0.5 text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300" title={job.errors ?? ''}>
+					<a href="/logs/{job.logfile}" class="mt-0.5 flex items-center gap-0.5 text-xs {isWarning ? 'text-yellow-500 hover:text-yellow-600 dark:text-yellow-400 dark:hover:text-yellow-300' : 'text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300'}" title={job.errors ?? ''}>
 						<svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
 							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
 						</svg>
-						errors
+						{isWarning ? 'warnings' : 'errors'}
 					</a>
 				{:else}
-					<div class="mt-0.5 flex items-center gap-0.5 text-xs text-red-500 dark:text-red-400" title={job.errors ?? ''}>
+					<div class="mt-0.5 flex items-center gap-0.5 text-xs {isWarning ? 'text-yellow-500 dark:text-yellow-400' : 'text-red-500 dark:text-red-400'}" title={job.errors ?? ''}>
 						<svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
 							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
 						</svg>
-						errors
+						{isWarning ? 'warnings' : 'errors'}
 					</div>
 				{/if}
 			{/if}

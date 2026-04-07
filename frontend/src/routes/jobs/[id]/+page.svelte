@@ -362,8 +362,10 @@
 				</dl>
 
 				{#if job.errors}
-					<div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-						<strong>Errors:</strong> {job.errors}
+					<div class="rounded-lg border p-3 text-sm {job.status === 'success'
+						? 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+						: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'}">
+						<strong>{job.status === 'success' ? 'Warnings:' : 'Errors:'}</strong> {job.errors}
 					</div>
 				{/if}
 
