@@ -723,7 +723,10 @@
 		ARM_CHILDREN: { label: 'ARM Child Servers', description: 'Comma-delimited list of child ARM server URLs' },
 		DELRAWFILES: { label: 'Delete Raw Files', description: 'Remove raw MakeMKV output after processing' },
 		DRIVE_READY_TIMEOUT: { label: 'Drive Ready Timeout', description: 'Seconds to wait for the drive to become ready after disc insertion' },
-		PRESCAN_TIMEOUT: { label: 'Pre-Scan Timeout', description: 'Seconds to wait for MakeMKV pre-scan to complete per attempt. Large discs (40+ titles) may need 600s or more.' },
+		PRESCAN_TIMEOUT: { label: 'Pre-Scan Timeout', description: 'Seconds to wait for MakeMKV pre-scan to complete per attempt. Community recommends 600 for slow or damaged DVD/BD media.' },
+		PRESCAN_CACHE_MB: { label: 'Pre-Scan Cache Size', description: 'MakeMKV cache in MB for pre-scan phases. Community recommends 64-128 for scratched or damaged discs.' },
+		PRESCAN_RETRIES: { label: 'Pre-Scan Retries', description: 'Number of pre-scan attempts before giving up. Community recommends 3-5 for problematic drives.' },
+		DISC_ENUM_TIMEOUT: { label: 'Disc Enum Timeout', description: 'Seconds to wait for MakeMKV disc enumeration. Community recommends 120 for drives that are slow to spin up.' },
 		// TV Series
 		USE_DISC_LABEL_FOR_TV: { label: 'Use Disc Label for TV', description: 'Parse disc label for season/episode info on TV series discs' },
 		GROUP_TV_DISCS_UNDER_SERIES: { label: 'Group TV Discs Under Series', description: 'Group multi-disc TV sets under a single series folder' },
