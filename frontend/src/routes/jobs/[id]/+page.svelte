@@ -553,16 +553,23 @@
 									{/if}
 									{#if !isMusicDisc && job.video_type === 'series'}
 									<td class="px-4 py-3">
-										{#if track.episode_number}
-											<span class="font-medium text-blue-700 dark:text-blue-400">
-												{formatTvEpisodeName(track)}
-											</span>
+										<div class="flex items-center gap-1.5">
+											<input
+												type="text"
+												value={track.episode_number ?? ''}
+												onchange={async (e) => {
+													const val = e.currentTarget.value.trim();
+													await updateTrack(job.job_id, track.track_id, { episode_number: val });
+													loadJob();
+												}}
+												placeholder="--"
+												disabled={tooShort || !track.enabled}
+												class="w-12 rounded-sm border border-primary/25 bg-primary/5 px-1.5 py-0.5 text-center text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary disabled:opacity-30 dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+											/>
 											{#if track.episode_name}
-												<span class="ml-1 text-xs text-gray-500 dark:text-gray-400">{track.episode_name}</span>
+												<span class="text-xs text-gray-500 dark:text-gray-400">{track.episode_name}</span>
 											{/if}
-										{:else}
-											<span class="text-xs text-gray-400">--</span>
-										{/if}
+										</div>
 									</td>
 								{/if}
 								<td class="px-4 py-3">{track.length != null ? `${Math.floor(track.length / 60)}:${String(track.length % 60).padStart(2, '0')}` : ''}</td>
