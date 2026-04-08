@@ -19,6 +19,7 @@
 	import EpisodeMatch from '$lib/components/EpisodeMatch.svelte';
 	import { formatDateTime, timeAgo, statusLabel } from '$lib/utils/format';
 	import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
+	import { buildMetadataFields } from '$lib/utils/job-fields';
 
 	let job = $state<JobDetail | null>(null);
 	let error = $state<string | null>(null);
@@ -126,6 +127,8 @@
 	let hasCrcData = $derived(
 		!isMusicDisc && (job?.disctype === 'dvd' || !!job?.crc_id)
 	);
+
+	let metadataFields = $derived(job ? buildMetadataFields(job) : []);
 
 	function formatTvEpisodeName(track: { episode_number?: string | null; episode_name?: string | null }): string {
 		if (!job || !track.episode_number) return '--';
@@ -248,63 +251,39 @@
 	<div class="py-8 text-center text-gray-400">Loading...</div>
 {:else}
 	<div class="space-y-6">
-		<!-- Back link -->
-		<a href="/" class="inline-flex items-center gap-1 text-sm text-primary-text hover:underline dark:text-primary-text-dark">
-			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-			</svg>
-			Back to Dashboard
-		</a>
+		<!-- Breadcrumb -->
+		<nav class="text-sm">
+			<a href="/" class="text-primary-text hover:underline dark:text-primary-text-dark">Dashboard</a>
+			<span class="mx-1.5 text-gray-400 dark:text-gray-500">&rsaquo;</span>
+			<span class="text-gray-500 dark:text-gray-400">{job.title || job.label || 'Untitled'}</span>
+		</nav>
 
-		<!-- Header -->
-		<div class="flex flex-col gap-6 md:flex-row">
-			{#if job.poster_url}
-				<img
-					src={posterSrc(job.poster_url)}
-					alt={job.title ?? 'Poster'}
-					class="rounded-lg object-cover shadow-md {isMusicDisc ? 'h-48 w-48' : 'h-64 w-44'}"
-					onerror={posterFallback}
-				/>
-			{/if}
-			<div class="flex-1 space-y-3">
-				<div class="flex flex-wrap items-center gap-3">
-					<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-						{job.title || job.label || 'Untitled'}
-					</h1>
-					{#if job.year}
-						<span class="text-lg text-gray-500 dark:text-gray-400">({job.year})</span>
-					{/if}
-					<StatusBadge status={isFolderImport && job.status === 'ripping' ? 'importing' : job.status} />
-					{#if job.multi_title}
-						<span class="rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
-					{/if}
-					{#if job.imdb_id && !isMusicDisc}
-						<a
-							href="https://www.imdb.com/title/{job.imdb_id}"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="inline-flex items-center gap-1 rounded-sm bg-yellow-400 px-2 py-0.5 text-xs font-bold text-black"
-						>
-							IMDb
-						</a>
-					{/if}
-				</div>
+		<!-- Main header container -->
+		<div class="rounded-lg border border-primary/20 bg-surface shadow-xs overflow-hidden dark:border-primary/20 dark:bg-surface-dark">
 
-				<!-- Action bar -->
-				<div class="flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-surface px-3 py-2 dark:border-primary/20 dark:bg-surface-dark">
-					{#if job.logfile}
-						<a
-							href="/logs/{job.logfile}"
-							class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15"
-						>
-							Log
-						</a>
-					{/if}
+			<!-- Title bar -->
+			<div class="flex flex-wrap items-center gap-2 border-b border-primary/15 px-5 py-3 dark:border-primary/15">
+				<h1 class="text-xl font-bold text-gray-900 dark:text-white">
+					{job.title || job.label || 'Untitled'}
+				</h1>
+				{#if job.year && job.year !== '0000'}
+					<span class="text-base text-gray-400 dark:text-gray-500">({job.year})</span>
+				{/if}
+				<StatusBadge status={isFolderImport && job.status === 'ripping' ? 'importing' : job.status} />
+				{#if job.multi_title}
+					<span class="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
+				{/if}
+				{#if job.imdb_id && !isMusicDisc}
+					<a href="https://www.imdb.com/title/{job.imdb_id}" target="_blank" rel="noopener noreferrer" class="rounded-full bg-yellow-400 px-2.5 py-0.5 text-[10px] font-bold text-black">IMDb</a>
+				{/if}
+
+				<!-- Action buttons pushed right -->
+				<div class="flex flex-wrap items-center gap-2 ml-auto">
 					{#if isVideoDisc && (job.status === 'success' || job.status === 'fail')}
 						<button
 							onclick={handleRetranscode}
 							disabled={retranscoding}
-							class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+							class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
 						>
 							{retranscoding ? 'Queuing...' : 'Re-transcode'}
 						</button>
@@ -316,96 +295,132 @@
 						</span>
 					{/if}
 				</div>
+			</div>
 
-				<dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-3">
-					<div>
-						<dt class="text-gray-500 dark:text-gray-400">Status</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{statusLabel(job.status)}</dd>
-					</div>
-					{#if job.stage}
-						<div>
-							<dt class="text-gray-500 dark:text-gray-400">Stage</dt>
-							<dd class="font-medium text-gray-900 dark:text-white">{job.stage}</dd>
+			<!-- Poster + Metadata grid -->
+			<div class="flex items-start">
+				<!-- Poster -->
+				<div class="shrink-0 border-r border-primary/15 p-4 dark:border-primary/15">
+					{#if job.poster_url}
+						<img
+							src={posterSrc(job.poster_url)}
+							alt={job.title ?? 'Poster'}
+							class="rounded-md object-cover shadow-sm {isMusicDisc ? 'h-[120px] w-[120px]' : 'w-[120px]'}"
+							style={isMusicDisc ? '' : 'aspect-ratio: 2/3'}
+							onerror={posterFallback}
+						/>
+					{:else}
+						<div
+							class="flex items-center justify-center rounded-md border border-dashed border-primary/20 bg-primary/5 dark:border-primary/15 dark:bg-primary/5 {isMusicDisc ? 'h-[120px] w-[120px]' : 'w-[120px]'}"
+							style={isMusicDisc ? '' : 'aspect-ratio: 2/3'}
+						>
+							<svg class="h-8 w-8 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+								<circle cx="12" cy="12" r="10" />
+								<circle cx="12" cy="12" r="3" />
+							</svg>
 						</div>
 					{/if}
-					{#if !isMusicDisc}
-						<div>
-							<dt class="text-gray-500 dark:text-gray-400">Video Type</dt>
-							<dd class="font-medium text-gray-900 dark:text-white">{job.video_type ?? 'N/A'}</dd>
-						</div>
-					{/if}
-					<div>
-						<dt class="text-gray-500 dark:text-gray-400">Disc Type</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{discTypeLabel(job.disctype)}</dd>
-					</div>
-					{#if job.disc_number}
-						<div>
-							<dt class="text-gray-500 dark:text-gray-400">Disc</dt>
-							<dd class="font-medium text-gray-900 dark:text-white">{job.disc_number}{#if job.disc_total} of {job.disc_total}{/if}</dd>
-						</div>
-					{/if}
-					{#if isVideoDisc}
-						<div>
-							<dt class="text-gray-500 dark:text-gray-400">Title Mode</dt>
-							<dd>
-								<select
-									value={job.multi_title ? 'multi' : 'single'}
-									onchange={(e) => { const v = e.currentTarget.value; if ((v === 'multi') !== !!job?.multi_title) handleToggleMultiTitle(); }}
-									disabled={togglingMultiTitle}
-									class="rounded-sm border border-primary/25 bg-primary/5 px-1 py-0.5 text-sm font-medium text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
-								>
-									<option value="single">Single Title</option>
-									<option value="multi">Multi-Title</option>
-								</select>
-							</dd>
-						</div>
-					{/if}
-					<div>
-						<dt class="text-gray-500 dark:text-gray-400">Device</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{job.devpath ?? 'N/A'}</dd>
-					</div>
-					<div>
-						<dt class="text-gray-500 dark:text-gray-400">{isMusicDisc ? 'Tracks' : 'Titles'}</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{job.no_of_titles ?? 'N/A'}</dd>
-					</div>
-					<div>
-						<dt class="text-gray-500 dark:text-gray-400">Started</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{formatDateTime(job.start_time)}</dd>
-					</div>
-					<div>
-						<dt class="text-gray-500 dark:text-gray-400">Finished</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{formatDateTime(job.stop_time)}</dd>
-					</div>
-					<div>
-						<dt class="text-gray-500 dark:text-gray-400">Duration</dt>
-						<dd class="font-medium text-gray-900 dark:text-white">{job.job_length ?? 'N/A'}</dd>
-					</div>
-				</dl>
+				</div>
 
-				{#if job.errors}
-					<div class="rounded-lg border p-3 text-sm {job.status === 'success'
-						? 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-						: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'}">
-						<strong>{job.status === 'success' ? 'Warnings:' : 'Errors:'}</strong> {job.errors}
-					</div>
+				<!-- Metadata grid -->
+				<div class="flex-1 grid grid-cols-4">
+					{#each metadataFields as field, i}
+						{@const isRightEdge = (i + 1) % 4 === 0}
+						<div class="px-4 py-3 border-b border-primary/15 dark:border-primary/15 {!isRightEdge ? 'border-r' : ''}">
+							{#if !field.empty}
+								<div class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">{field.label}</div>
+								{#if field.isSelect}
+									<div class="mt-1">
+										<select
+											value={job.multi_title ? 'multi' : 'single'}
+											onchange={(e) => { const v = e.currentTarget.value; if ((v === 'multi') !== !!job?.multi_title) handleToggleMultiTitle(); }}
+											disabled={togglingMultiTitle}
+											class="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+										>
+											<option value="single">Single Title</option>
+											<option value="multi">Multi-Title</option>
+										</select>
+									</div>
+								{:else if field.link}
+									<a href={field.link} target="_blank" rel="noopener noreferrer" class="mt-1 block text-sm font-medium text-primary hover:underline dark:text-primary {field.mono ? 'font-mono text-xs' : ''}">{field.value}</a>
+								{:else}
+									<div class="mt-1 text-sm font-medium text-gray-900 dark:text-white {field.mono ? 'font-mono text-xs truncate' : ''}" title={field.mono ? field.value : undefined}>{field.value}</div>
+								{/if}
+							{/if}
+						</div>
+					{/each}
+				</div>
+			</div>
+
+			<!-- Panel toggle bar -->
+			<div class="flex border-t border-primary/15 bg-surface/50 dark:border-primary/15 dark:bg-surface-dark/50">
+				{#if isVideoDisc}
+					<button
+						onclick={() => (activePanel = activePanel === 'title' ? null : 'title')}
+						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'title' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+					>Identify</button>
 				{/if}
-
-				{#if job.logfile}
-					<InlineLogFeed logfile={job.logfile} maxEntries={15} title="ARM Ripper Log" />
+				{#if isMusicDisc}
+					<button
+						onclick={() => (activePanel = activePanel === 'music' ? null : 'music')}
+						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'music' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+					>Search Music</button>
 				{/if}
-				{#if transcoderLogfile && !isMusicDisc && job?.disctype !== 'data' && job?.status !== 'ripping' && job?.status !== 'ready' && job?.status !== 'identifying' && job?.status !== 'waiting'}
-					<InlineLogFeed
-						logfile={transcoderLogfile}
-						maxEntries={15}
-						title="Transcoder Log"
-						fetchFn={fetchStructuredTranscoderLogContent}
-						logLinkBase="/logs/transcoder"
-					/>
+				{#if job.config}
+					<button
+						onclick={() => (activePanel = activePanel === 'rip' ? null : 'rip')}
+						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'rip' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+					>Rip Settings</button>
+				{/if}
+				{#if isVideoDisc && (job.video_type === 'series' || job.imdb_id)}
+					<button
+						onclick={() => (activePanel = activePanel === 'tvdb' ? null : 'tvdb')}
+						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'tvdb' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+					>Episodes</button>
+				{/if}
+				{#if isVideoDisc}
+					<button
+						onclick={() => (activePanel = activePanel === 'transcode' ? null : 'transcode')}
+						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'transcode' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+					>Transcode Settings</button>
+				{/if}
+				{#if hasCrcData}
+					<button
+						onclick={() => (activePanel = activePanel === 'crc' ? null : 'crc')}
+						class="flex-1 px-4 py-2.5 text-center text-sm font-medium transition-colors {activePanel === 'crc' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+					>CRC Lookup</button>
 				{/if}
 			</div>
+
+			<!-- Active panel content -->
+			{#if activePanel === 'title'}
+				<div class="border-t border-primary/15 p-5 dark:border-primary/15">
+					<TitleSearch {job} onapply={handleTitleApply} />
+				</div>
+			{:else if activePanel === 'music'}
+				<div class="border-t border-primary/15 p-5 dark:border-primary/15">
+					<MusicSearch {job} onapply={handleTitleApply} />
+				</div>
+			{:else if activePanel === 'crc'}
+				<div class="border-t border-primary/15 p-5 dark:border-primary/15">
+					<CrcLookup {job} onapply={loadJob} />
+				</div>
+			{:else if activePanel === 'rip'}
+				<div class="border-t border-primary/15 p-5 dark:border-primary/15">
+					<RipSettings {job} config={job.config!} isMusic={isMusicDisc} multiTitle={!!job.multi_title} onsaved={handleConfigSaved} />
+				</div>
+			{:else if activePanel === 'tvdb'}
+				<div class="border-t border-primary/15 p-5 dark:border-primary/15">
+					<EpisodeMatch {job} onapply={loadJob} />
+				</div>
+			{:else if activePanel === 'transcode'}
+				<div class="border-t border-primary/15 p-5 dark:border-primary/15">
+					<TranscodeOverrides {job} onsaved={loadJob} />
+				</div>
+			{/if}
 		</div>
 
-		<!-- Auto vs Manual title info -->
+		<!-- Auto vs Manual title info (outside container) -->
 		{#if hasAutoManualDiff}
 			<div class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm dark:border-amber-800 dark:bg-amber-900/20">
 				<svg class="h-4 w-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,83 +432,25 @@
 			</div>
 		{/if}
 
-		<!-- Toggle button bar -->
-		<div class="flex flex-wrap gap-2">
-			{#if isVideoDisc}
-				<button
-					onclick={() => (activePanel = activePanel === 'title' ? null : 'title')}
-					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePanel === 'title' ? 'bg-indigo-200 text-indigo-800 dark:bg-indigo-800/50 dark:text-indigo-300' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50'}"
-				>
-					Identify
-				</button>
-			{/if}
-			{#if isMusicDisc}
-				<button
-					onclick={() => (activePanel = activePanel === 'music' ? null : 'music')}
-					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePanel === 'music' ? 'bg-indigo-200 text-indigo-800 dark:bg-indigo-800/50 dark:text-indigo-300' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50'}"
-				>
-					Search Music
-				</button>
-			{/if}
-			{#if hasCrcData}
-				<button
-					onclick={() => (activePanel = activePanel === 'crc' ? null : 'crc')}
-					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePanel === 'crc' ? 'bg-primary/15 text-gray-900 ring-1 ring-primary/40 dark:bg-primary/20 dark:text-white dark:ring-primary/40' : 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
-				>
-					CRC Database
-				</button>
-			{/if}
-			{#if job.config}
-				<button
-					onclick={() => (activePanel = activePanel === 'rip' ? null : 'rip')}
-					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePanel === 'rip' ? 'bg-primary/15 text-gray-900 ring-1 ring-primary/40 dark:bg-primary/20 dark:text-white dark:ring-primary/40' : 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
-				>
-					Rip Settings
-				</button>
-			{/if}
-			{#if isVideoDisc && (job.video_type === 'series' || job.imdb_id)}
-				<button
-					onclick={() => (activePanel = activePanel === 'tvdb' ? null : 'tvdb')}
-					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePanel === 'tvdb' ? 'bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-300' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}"
-				>
-					Episodes
-				</button>
-			{/if}
-			{#if isVideoDisc}
-				<button
-					onclick={() => (activePanel = activePanel === 'transcode' ? null : 'transcode')}
-					class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePanel === 'transcode' ? 'bg-primary/15 text-gray-900 ring-1 ring-primary/40 dark:bg-primary/20 dark:text-white dark:ring-primary/40' : 'bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15'}"
-				>
-					Transcode Settings
-				</button>
-			{/if}
-		</div>
+		{#if job.errors}
+			<div class="rounded-lg border p-3 text-sm {job.status === 'success'
+				? 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+				: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'}">
+				<strong>{job.status === 'success' ? 'Warnings:' : 'Errors:'}</strong> {job.errors}
+			</div>
+		{/if}
 
-		<!-- Active panel content -->
-		{#if activePanel === 'title'}
-			<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
-				<TitleSearch {job} onapply={handleTitleApply} />
-			</section>
-		{:else if activePanel === 'music'}
-			<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
-				<MusicSearch {job} onapply={handleTitleApply} />
-			</section>
-		{:else if activePanel === 'crc'}
-			<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
-				<CrcLookup {job} onapply={loadJob} />
-			</section>
-		{:else if activePanel === 'rip'}
-			<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
-				<RipSettings {job} config={job.config!} isMusic={isMusicDisc} multiTitle={!!job.multi_title} onsaved={handleConfigSaved} />
-			</section>
-		{:else if activePanel === 'tvdb'}
-			<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
-				<EpisodeMatch {job} onapply={loadJob} />
-			</section>
-		{:else if activePanel === 'transcode'}
-			<section class="rounded-lg border border-primary/20 p-4 dark:border-primary/20">
-				<TranscodeOverrides {job} onsaved={loadJob} />
-			</section>
+		{#if job.logfile}
+			<InlineLogFeed logfile={job.logfile} maxEntries={15} title="ARM Ripper Log" />
+		{/if}
+		{#if transcoderLogfile && !isMusicDisc && job?.disctype !== 'data' && job?.status !== 'ripping' && job?.status !== 'ready' && job?.status !== 'identifying' && job?.status !== 'waiting'}
+			<InlineLogFeed
+				logfile={transcoderLogfile}
+				maxEntries={15}
+				title="Transcoder Log"
+				fetchFn={fetchStructuredTranscoderLogContent}
+				logLinkBase="/logs/transcoder"
+			/>
 		{/if}
 
 		<!-- Tracks -->
