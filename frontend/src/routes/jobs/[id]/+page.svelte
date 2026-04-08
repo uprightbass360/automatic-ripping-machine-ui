@@ -652,7 +652,7 @@
 										</td>
 									{/if}
 									<td class="px-4 py-3">
-										{#if track.enabled}
+										{#if track.enabled && !tooShort}
 											<span class="rounded-sm px-1.5 py-0.5 text-[10px] font-semibold {track.ripped
 												? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
 												: 'bg-gray-100 text-gray-400 dark:bg-gray-700/50 dark:text-gray-500'}"
@@ -661,7 +661,7 @@
 											</span>
 										{/if}
 									</td>
-									<td class="px-4 py-3"><StatusBadge status={!track.enabled ? 'skipped' : track.status} /></td>
+									<td class="px-4 py-3"><StatusBadge status={!track.enabled || tooShort ? 'skipped' : track.status} /></td>
 									</tr>
 								{#if editingTrackId === track.track_id}
 									<tr>
