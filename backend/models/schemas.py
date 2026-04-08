@@ -180,6 +180,11 @@ class DriveSchema(BaseModel):
     mdisc: int | None = None
     serial_id: str | None = None
     uhd_capable: bool | None = None
+    rip_speed: int | None = None
+    prescan_cache_mb: int | None = None
+    prescan_timeout: int | None = None
+    prescan_retries: int | None = None
+    disc_enum_timeout: int | None = None
     current_job: JobSchema | None = None
 
     model_config = {"from_attributes": True}
