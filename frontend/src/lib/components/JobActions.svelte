@@ -97,7 +97,7 @@
 	let btnBase = $derived(
 		compact
 			? 'rounded px-2 py-0.5 text-xs font-medium disabled:opacity-50 transition-colors'
-			: 'rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50 transition-colors'
+			: 'rounded-full px-3 py-1.5 text-xs font-medium disabled:opacity-50 transition-colors'
 	);
 </script>
 
@@ -116,7 +116,7 @@
 			<button
 				onclick={handleFixPerms}
 				disabled={loading !== null}
-				class="{btnBase} bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+				class="{btnBase} bg-blue-100 text-blue-700 ring-1 ring-blue-200 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-800 dark:hover:bg-blue-900/50"
 			>
 				{loading === 'fixperms' ? 'Fixing...' : 'Fix Permissions'}
 			</button>
@@ -125,7 +125,7 @@
 			<button
 				onclick={handleDelete}
 				disabled={loading !== null}
-				class="{btnBase} bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+				class="{btnBase} bg-red-100 text-red-700 ring-1 ring-red-200 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:ring-red-800 dark:hover:bg-red-900/50"
 			>
 				{loading === 'delete' ? 'Deleting...' : 'Delete'}
 			</button>
@@ -134,7 +134,7 @@
 			<button
 				onclick={handlePurge}
 				disabled={loading !== null}
-				class="{btnBase} bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50"
+				class="{btnBase} bg-orange-100 text-orange-700 ring-1 ring-orange-200 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:ring-orange-800 dark:hover:bg-orange-900/50"
 			>
 				{loading === 'purge' ? 'Purging...' : 'Purge'}
 			</button>
