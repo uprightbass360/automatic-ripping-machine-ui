@@ -91,16 +91,11 @@ describe('DriveCard', () => {
 		});
 	});
 
-	describe('advanced settings panel', () => {
-		it('shows Advanced button and prescan inputs when expanded', async () => {
+	describe('prescan settings panel', () => {
+		it('shows prescan inputs in settings panel', async () => {
 			renderDrive();
-			// Open settings gear
 			await fireEvent.click(screen.getByTitle('Drive settings'));
 			expect(screen.getByText('Drive Settings')).toBeInTheDocument();
-			expect(screen.getByText('Advanced')).toBeInTheDocument();
-
-			// Expand advanced section
-			await fireEvent.click(screen.getByText('Advanced'));
 			expect(screen.getByText('Pre-scan Cache')).toBeInTheDocument();
 			expect(screen.getByText('Pre-scan Timeout')).toBeInTheDocument();
 			expect(screen.getByText('Pre-scan Retries')).toBeInTheDocument();
@@ -110,7 +105,6 @@ describe('DriveCard', () => {
 		it('shows tooltips for prescan fields', async () => {
 			renderDrive();
 			await fireEvent.click(screen.getByTitle('Drive settings'));
-			await fireEvent.click(screen.getByText('Advanced'));
 			expect(screen.getByText(/Community recommends 64-128/)).toBeInTheDocument();
 			expect(screen.getByText(/Community recommends 600/)).toBeInTheDocument();
 			expect(screen.getByText(/Community recommends 3-5/)).toBeInTheDocument();
@@ -120,7 +114,6 @@ describe('DriveCard', () => {
 		it('populates prescan inputs from drive values', async () => {
 			renderDrive({ prescan_cache_mb: 128, prescan_retries: 5 });
 			await fireEvent.click(screen.getByTitle('Drive settings'));
-			await fireEvent.click(screen.getByText('Advanced'));
 			const cacheInput = screen.getByLabelText(/Pre-scan Cache/) as HTMLInputElement;
 			const retriesInput = screen.getByLabelText(/Pre-scan Retries/) as HTMLInputElement;
 			expect(cacheInput.value).toBe('128');
@@ -131,7 +124,6 @@ describe('DriveCard', () => {
 			const { updateDrive } = await import('$lib/api/drives');
 			renderDrive();
 			await fireEvent.click(screen.getByTitle('Drive settings'));
-			await fireEvent.click(screen.getByText('Advanced'));
 			const cacheInput = screen.getByLabelText(/Pre-scan Cache/) as HTMLInputElement;
 			await fireEvent.input(cacheInput, { target: { value: '64' } });
 			await fireEvent.blur(cacheInput);
