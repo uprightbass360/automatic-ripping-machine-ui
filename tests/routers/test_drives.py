@@ -202,3 +202,29 @@ async def test_scan_drive_generic_error(app_client):
     ):
         resp = await app_client.post("/api/drives/1/scan")
     assert resp.status_code == 400
+
+
+# --- POST /api/drives/rescan ---
+
+
+async def test_rescan_drives_success(app_client):
+    """POST /api/drives/rescan returns success from ARM."""
+    with patch(
+        "backend.routers.drives.arm_client.rescan_drives",
+        new_callable=AsyncMock,
+        return_value={"success": True, "before": 1, "after": 1, "removed": 0},
+    ):
+        resp = await app_client.post("/api/drives/rescan")
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+
+
+async def test_rescan_drives_arm_unreachable(app_client):
+    """POST /api/drives/rescan returns 502 when ARM is down."""
+    with patch(
+        "backend.routers.drives.arm_client.rescan_drives",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.post("/api/drives/rescan")
+    assert resp.status_code == 502

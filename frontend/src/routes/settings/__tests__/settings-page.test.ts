@@ -56,7 +56,8 @@ vi.mock('$lib/api/drives', () => ({
 	updateDrive: vi.fn(() => Promise.resolve()),
 	scanDrive: vi.fn(() => Promise.resolve()),
 	deleteDrive: vi.fn(() => Promise.resolve()),
-	fetchDriveDiagnostic: vi.fn(() => Promise.resolve({ success: true, drives: [], issues: [], udevd_running: true, kernel_drives: [] }))
+	fetchDriveDiagnostic: vi.fn(() => Promise.resolve({ success: true, drives: [], issues: [], udevd_running: true, kernel_drives: [] })),
+	rescanDrives: vi.fn(() => Promise.resolve({ success: true }))
 }));
 
 vi.mock('$lib/api/themes', () => ({
