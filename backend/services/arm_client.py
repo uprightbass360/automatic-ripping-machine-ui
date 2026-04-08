@@ -206,6 +206,11 @@ async def scan_drive(drive_id: int) -> dict[str, Any] | None:
     return await _request("POST", f"/api/v1/drives/{drive_id}/scan")
 
 
+async def rescan_drives() -> dict[str, Any] | None:
+    """Re-detect optical drives and update the database. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/drives/rescan")
+
+
 async def drive_diagnostic() -> dict[str, Any] | None:
     """Run udev and device diagnostics. Returns None if ARM is unreachable."""
     return await _request("GET", "/api/v1/drives/diagnostic")
