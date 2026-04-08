@@ -88,6 +88,25 @@ def is_available() -> bool:
 ACTIVE_STATUSES = {"identifying", "ready", "active", "ripping", "copying", "ejecting", "transcoding", "waiting", "info", "waiting_transcode"}
 
 
+def _minlength(job) -> int:
+    """Return MINLENGTH for a job from its config, defaulting to 0."""
+    try:
+        if job.config and job.config.MINLENGTH:
+            return int(job.config.MINLENGTH)
+    except (ValueError, TypeError):
+        pass
+    return 0
+
+
+def _rippable_tracks(job) -> list:
+    """Return tracks above minlength (the ones ARM will actually rip)."""
+    tracks = list(job.tracks) if job.tracks else []
+    ml = _minlength(job)
+    if ml <= 0:
+        return tracks
+    return [t for t in tracks if t.length is None or t.length >= ml]
+
+
 def get_active_jobs() -> list[dict]:
     """Return active jobs as dicts enriched with track progress counts."""
     try:
@@ -99,9 +118,9 @@ def get_active_jobs() -> list[dict]:
             result = []
             for job in jobs:
                 job_dict = {col.name: getattr(job, col.name) for col in Job.__table__.columns}
-                tracks = list(job.tracks) if job.tracks else []
-                job_dict["tracks_total"] = len(tracks)
-                job_dict["tracks_ripped"] = sum(1 for t in tracks if t.ripped)
+                rippable = _rippable_tracks(job)
+                job_dict["tracks_total"] = len(rippable)
+                job_dict["tracks_ripped"] = sum(1 for t in rippable if t.ripped)
                 result.append(job_dict)
             return result
     except Exception:
@@ -266,10 +285,10 @@ def get_job_track_counts(job_id: int) -> dict:
             job = session.scalars(stmt).unique().first()
             if not job:
                 return {"tracks_total": 0, "tracks_ripped": 0}
-            tracks = list(job.tracks) if job.tracks else []
+            rippable = _rippable_tracks(job)
             return {
-                "tracks_total": len(tracks),
-                "tracks_ripped": sum(1 for t in tracks if t.ripped),
+                "tracks_total": len(rippable),
+                "tracks_ripped": sum(1 for t in rippable if t.ripped),
             }
     except Exception:
         return {"tracks_total": 0, "tracks_ripped": 0}
