@@ -42,7 +42,8 @@ vi.mock('$lib/api/jobs', () => ({
 	updateTrackTitle: vi.fn(() => Promise.resolve()),
 	clearTrackTitle: vi.fn(() => Promise.resolve()),
 	tvdbMatch: vi.fn(() => Promise.resolve({ success: true, matches: [] })),
-	fetchTvdbEpisodes: vi.fn(() => Promise.resolve({ episodes: [] }))
+	fetchTvdbEpisodes: vi.fn(() => Promise.resolve({ episodes: [] })),
+	fetchNamingPreview: vi.fn(() => Promise.resolve({ previews: [] }))
 }));
 
 vi.mock('$lib/api/logs', () => ({
