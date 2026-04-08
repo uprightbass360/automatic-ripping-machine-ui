@@ -74,7 +74,7 @@
 		if (!job) return;
 		savingTrackField = `${trackId}-${field}`;
 		try {
-			await updateTrack(job.job_id, trackId, { [field]: value });
+			await updateTrack(job!.job_id, trackId, { [field]: value });
 			await loadJob();
 		} catch {
 			// next refresh will reconcile
@@ -556,11 +556,11 @@
 													<input
 														type="text"
 														bind:value={editingFilenameValue}
-														onkeydown={(e) => { if (e.key === 'Enter') { updateTrack(job.job_id, track.track_id, { custom_filename: editingFilenameValue }); editingFilenameTrackId = null; loadJob(); } if (e.key === 'Escape') editingFilenameTrackId = null; }}
+														onkeydown={(e) => { if (e.key === 'Enter') { updateTrack(job!.job_id, track.track_id, { custom_filename: editingFilenameValue }); editingFilenameTrackId = null; loadJob(); } if (e.key === 'Escape') editingFilenameTrackId = null; }}
 														class="w-full min-w-[120px] rounded-sm border border-amber-400 bg-transparent px-1 py-0.5 font-mono text-xs text-amber-600 focus:outline-hidden focus:ring-1 focus:ring-amber-400 dark:border-amber-600 dark:text-amber-400"
 													/>
 													<button
-														onclick={async () => { await updateTrack(job.job_id, track.track_id, { custom_filename: editingFilenameValue }); editingFilenameTrackId = null; loadJob(); }}
+														onclick={async () => { await updateTrack(job!.job_id, track.track_id, { custom_filename: editingFilenameValue }); editingFilenameTrackId = null; loadJob(); }}
 														class="rounded bg-green-600 px-1.5 py-0.5 text-[10px] text-white hover:bg-green-700"
 													>Save</button>
 													<button
@@ -582,7 +582,7 @@
 													<div class="flex items-center gap-1">
 														<span class="text-[9px] text-gray-500">was: {defaultFn}</span>
 														<button
-															onclick={async () => { await updateTrack(job.job_id, track.track_id, { custom_filename: '' }); loadJob(); }}
+															onclick={async () => { await updateTrack(job!.job_id, track.track_id, { custom_filename: '' }); loadJob(); }}
 															class="text-[9px] text-red-400 hover:text-red-300"
 														>clear</button>
 													</div>
@@ -620,7 +620,7 @@
 												value={track.episode_number ?? ''}
 												onchange={async (e) => {
 													const val = e.currentTarget.value.trim();
-													await updateTrack(job.job_id, track.track_id, { episode_number: val });
+													await updateTrack(job!.job_id, track.track_id, { episode_number: val });
 													loadJob();
 												}}
 												placeholder="--"
