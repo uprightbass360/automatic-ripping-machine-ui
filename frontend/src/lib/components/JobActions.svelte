@@ -96,13 +96,13 @@
 
 	let btnBase = $derived(
 		compact
-			? 'rounded px-2 py-0.5 text-xs font-medium disabled:opacity-50'
-			: 'rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50'
+			? 'rounded px-2 py-0.5 text-xs font-medium disabled:opacity-50 transition-colors'
+			: 'rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50 transition-colors'
 	);
 </script>
 
 {#if canAbandon || canDelete || canFixPerms || canPurge}
-	<div class="flex items-center gap-1.5 flex-wrap">
+	<div class="contents">
 		{#if canAbandon}
 			<button
 				onclick={handleAbandon}
