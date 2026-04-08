@@ -180,7 +180,7 @@ describe('JobActions', () => {
 				props: { job: createJob({ status: 'success' }), compact: false }
 			});
 			const deleteBtn = screen.getByText('Delete');
-			expect(deleteBtn).toHaveClass('text-sm');
+			expect(deleteBtn).toHaveClass('text-xs');
 		});
 	});
 });
