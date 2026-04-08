@@ -8,7 +8,7 @@
 	import { colorScheme, COLOR_SCHEMES, schemeLocksMode, allSchemes, loadThemesFromApi } from '$lib/stores/colorScheme';
 	import { uploadTheme, deleteTheme as deleteThemeApi } from '$lib/api/themes';
 	import { createPollingStore } from '$lib/stores/polling';
-	import { fetchDrives, fetchDriveDiagnostic } from '$lib/api/drives';
+	import { fetchDrives, fetchDriveDiagnostic, rescanDrives } from '$lib/api/drives';
 	import type { DiagnosticResult } from '$lib/api/drives';
 	import DriveCard from '$lib/components/DriveCard.svelte';
 	import { restartArm, restartTranscoder } from '$lib/api/system';
@@ -400,7 +400,9 @@
 	}
 
 	onMount(() => {
-		drives.start();
+		// Rescan drives to pick up hardware info (model, serial) that
+		// may not have been available at container startup.
+		rescanDrives().catch(() => {}).then(() => drives.start());
 		loadSettings().then(() => {
 			if (pendingPanel) {
 				// Find the panel label case-insensitively

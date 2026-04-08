@@ -69,3 +69,7 @@ export interface DiagnosticResult {
 export function fetchDriveDiagnostic(): Promise<DiagnosticResult> {
 	return apiFetch<DiagnosticResult>('/api/drives/diagnostic');
 }
+
+export function rescanDrives(): Promise<{ success: boolean }> {
+	return apiFetch('/api/drives/rescan', { method: 'POST' });
+}
