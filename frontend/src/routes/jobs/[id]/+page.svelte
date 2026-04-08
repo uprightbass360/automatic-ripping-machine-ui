@@ -291,12 +291,11 @@
 				</div>
 
 				<!-- Action bar -->
-				{@const btnClass = 'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50'}
 				<div class="flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-surface px-3 py-2 dark:border-primary/20 dark:bg-surface-dark">
 					{#if job.logfile}
 						<a
 							href="/logs/{job.logfile}"
-							class="{btnClass} bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15"
+							class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 bg-primary/5 text-gray-700 ring-1 ring-primary/25 hover:bg-primary/10 dark:bg-primary/10 dark:text-gray-200 dark:ring-primary/30 dark:hover:bg-primary/15"
 						>
 							Log
 						</a>
@@ -305,7 +304,7 @@
 						<button
 							onclick={handleRetranscode}
 							disabled={retranscoding}
-							class="{btnClass} bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+							class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
 						>
 							{retranscoding ? 'Queuing...' : 'Re-transcode'}
 						</button>
