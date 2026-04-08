@@ -18,6 +18,9 @@ vi.mock('$lib/api/jobs', () => ({
 		stop_time: '2025-06-15T11:00:00Z', job_length: '1h 0m', devpath: '/dev/sr0',
 		imdb_id: 'tt1234567', poster_url: null, errors: null, stage: null,
 		no_of_titles: 3, logfile: 'job_1.log', crc_id: 'abc123', multi_title: false,
+		source_type: 'disc', source_path: null, path: null, raw_path: null, transcode_path: null,
+		disc_number: null, disc_total: null, season: null, season_auto: null, tvdb_id: null,
+		artist: null, artist_auto: null, album: null, album_auto: null,
 		tracks: [
 			{ track_id: 1, job_id: 1, track_number: '1', length: 7200, aspect_ratio: '16:9', fps: 24, enabled: true, basename: 'title_01', filename: 'title_01.mkv', orig_filename: 'title_01.mkv', new_filename: null, ripped: true, status: 'success', error: null, source: null, title: null, year: null, imdb_id: null, poster_url: null, video_type: null, episode_number: null, episode_name: null }
 		],
@@ -63,7 +66,14 @@ describe('Job Detail Page', () => {
 		it('renders job title after loading', async () => {
 			renderComponent(JobDetailPage);
 			await waitFor(() => {
-				expect(screen.getByText('Test Movie')).toBeInTheDocument();
+				expect(screen.getByRole('heading', { name: 'Test Movie' })).toBeInTheDocument();
+			});
+		});
+
+		it('renders breadcrumb navigation', async () => {
+			renderComponent(JobDetailPage);
+			await waitFor(() => {
+				expect(screen.getByText('Dashboard')).toBeInTheDocument();
 			});
 		});
 
