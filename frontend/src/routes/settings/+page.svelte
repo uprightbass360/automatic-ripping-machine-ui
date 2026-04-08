@@ -2467,7 +2467,12 @@
 				{:else}
 					<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{#each $drives as drive (drive.drive_id)}
-							<DriveCard {drive} onupdate={() => drives.refresh()} />
+							<DriveCard {drive} onupdate={() => drives.refresh()} globalDefaults={{
+								prescan_cache_mb: Number(settings?.arm_config?.PRESCAN_CACHE_MB) || 1,
+								prescan_timeout: Number(settings?.arm_config?.PRESCAN_TIMEOUT) || 300,
+								prescan_retries: Number(settings?.arm_config?.PRESCAN_RETRIES) || 3,
+								disc_enum_timeout: Number(settings?.arm_config?.DISC_ENUM_TIMEOUT) || 60,
+							}} />
 						{/each}
 					</div>
 				{/if}
