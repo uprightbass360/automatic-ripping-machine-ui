@@ -228,6 +228,11 @@ class SystemDrives(Base):
     mdisc = Column(Integer)
     serial_id = Column(String(100))
     uhd_capable = Column(Boolean)
+    rip_speed = Column(Integer)
+    prescan_cache_mb = Column(Integer)
+    prescan_timeout = Column(Integer)
+    prescan_retries = Column(Integer)
+    disc_enum_timeout = Column(Integer)
 
 
 class SystemInfo(Base):
