@@ -7,9 +7,15 @@
 	interface Props {
 		drive: Drive;
 		onupdate?: () => void;
+		globalDefaults?: {
+			prescan_cache_mb?: number;
+			prescan_timeout?: number;
+			prescan_retries?: number;
+			disc_enum_timeout?: number;
+		};
 	}
 
-	let { drive, onupdate }: Props = $props();
+	let { drive, onupdate, globalDefaults = {} }: Props = $props();
 
 	let editing = $state(false);
 	let editName = $state('');
@@ -43,17 +49,22 @@
 	});
 
 	const PRESCAN_FIELDS = [
-		{ key: 'prescan_cache_mb' as const, label: 'Pre-scan Cache', unit: 'MB', min: 1, max: 1024, input: () => prescanCacheInput, setInput: (v: string) => { prescanCacheInput = v; }, current: () => drive.prescan_cache_mb, tooltip: 'Community recommends 64-128 for scratched or damaged discs' },
-		{ key: 'prescan_timeout' as const, label: 'Pre-scan Timeout', unit: 's', min: 30, max: 3600, input: () => prescanTimeoutInput, setInput: (v: string) => { prescanTimeoutInput = v; }, current: () => drive.prescan_timeout, tooltip: 'Community recommends 600 for slow or damaged DVD/BD media' },
-		{ key: 'prescan_retries' as const, label: 'Pre-scan Retries', unit: '', min: 1, max: 10, input: () => prescanRetriesInput, setInput: (v: string) => { prescanRetriesInput = v; }, current: () => drive.prescan_retries, tooltip: 'Community recommends 3-5 retries for problematic drives' },
-		{ key: 'disc_enum_timeout' as const, label: 'Enum Timeout', unit: 's', min: 10, max: 600, input: () => discEnumTimeoutInput, setInput: (v: string) => { discEnumTimeoutInput = v; }, current: () => drive.disc_enum_timeout, tooltip: 'Community recommends 120 for drives that are slow to spin up' },
+		{ key: 'prescan_cache_mb' as const, label: 'Pre-scan Cache', unit: 'MB', min: 1, max: 1024, input: () => prescanCacheInput, setInput: (v: string) => { prescanCacheInput = v; }, current: () => drive.prescan_cache_mb, globalDefault: () => globalDefaults.prescan_cache_mb, tooltip: 'Community recommends 64-128 for scratched or damaged discs' },
+		{ key: 'prescan_timeout' as const, label: 'Pre-scan Timeout', unit: 's', min: 30, max: 3600, input: () => prescanTimeoutInput, setInput: (v: string) => { prescanTimeoutInput = v; }, current: () => drive.prescan_timeout, globalDefault: () => globalDefaults.prescan_timeout, tooltip: 'Community recommends 600 for slow or damaged DVD/BD media' },
+		{ key: 'prescan_retries' as const, label: 'Pre-scan Retries', unit: '', min: 1, max: 10, input: () => prescanRetriesInput, setInput: (v: string) => { prescanRetriesInput = v; }, current: () => drive.prescan_retries, globalDefault: () => globalDefaults.prescan_retries, tooltip: 'Community recommends 3-5 retries for problematic drives' },
+		{ key: 'disc_enum_timeout' as const, label: 'Enum Timeout', unit: 's', min: 10, max: 600, input: () => discEnumTimeoutInput, setInput: (v: string) => { discEnumTimeoutInput = v; }, current: () => drive.disc_enum_timeout, globalDefault: () => globalDefaults.disc_enum_timeout, tooltip: 'Community recommends 120 for drives that are slow to spin up' },
 	] as const;
 
 	async function savePrescanField(field: typeof PRESCAN_FIELDS[number]) {
 		const trimmed = field.input().trim();
-		const newVal = trimmed === '' ? null : parseInt(trimmed, 10);
-		if (newVal === (field.current() ?? null)) return;
+		let newVal = trimmed === '' ? null : parseInt(trimmed, 10);
 		if (newVal !== null && (isNaN(newVal) || newVal < field.min || newVal > field.max)) return;
+		// If the value matches the global default, store null (use global)
+		if (newVal !== null && newVal === field.globalDefault()) {
+			newVal = null;
+			field.setInput('');
+		}
+		if (newVal === (field.current() ?? null)) return;
 
 		savingPrescan = true;
 		try {
@@ -420,7 +431,7 @@
 										type="number"
 										min={field.min}
 										max={field.max}
-										placeholder="global"
+										placeholder={field.globalDefault() != null ? String(field.globalDefault()) : ''}
 										value={field.input()}
 										oninput={(e) => field.setInput((e.target as HTMLInputElement).value)}
 										onblur={() => savePrescanField(field)}
