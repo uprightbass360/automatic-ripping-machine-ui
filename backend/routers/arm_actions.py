@@ -61,9 +61,10 @@ async def start_waiting_job(job_id: int) -> dict[str, Any]:
 
 
 @router.post("/{job_id}/pause", responses=_502_503_ARM)
-async def pause_waiting_job(job_id: int) -> dict[str, Any]:
-    """Toggle per-job pause for a waiting job (proxies to ARM)."""
-    return _check_result(await arm_client.pause_waiting_job(job_id))
+async def pause_waiting_job(job_id: int, body: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Set or toggle per-job pause for a waiting job (proxies to ARM)."""
+    paused = body.get("paused") if body else None
+    return _check_result(await arm_client.pause_waiting_job(job_id, paused=paused))
 
 
 @router.put("/{job_id}/tracks", responses=_502_503_ARM)
