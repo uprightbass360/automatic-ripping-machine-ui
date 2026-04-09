@@ -130,6 +130,14 @@
 
 	let metadataFields = $derived(job ? buildMetadataFields(job) : []);
 
+	const panelTabBase = 'flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15';
+	const panelTabActive = 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10';
+	const panelTabInactive = 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300';
+	function panelTabClass(id: string, last = false): string {
+		const base = last ? panelTabBase.replace(' border-r border-primary/15', '') : panelTabBase;
+		return `${base} ${activePanel === id ? panelTabActive : panelTabInactive}`;
+	}
+
 	function formatTvEpisodeName(track: { episode_number?: string | null; episode_name?: string | null }): string {
 		if (!job || !track.episode_number) return '--';
 		const pattern = job.config?.TV_TITLE_PATTERN ?? '{title} S{season}E{episode}';
@@ -355,40 +363,22 @@
 			<!-- Panel toggle bar -->
 			<div class="flex border-t border-primary/15 bg-surface/50 dark:border-primary/15 dark:bg-surface-dark/50">
 				{#if isVideoDisc}
-					<button
-						onclick={() => (activePanel = activePanel === 'title' ? null : 'title')}
-						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'title' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-					>Identify</button>
+					<button onclick={() => (activePanel = activePanel === 'title' ? null : 'title')} class={panelTabClass('title')}>Identify</button>
 				{/if}
 				{#if isMusicDisc}
-					<button
-						onclick={() => (activePanel = activePanel === 'music' ? null : 'music')}
-						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'music' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-					>Search Music</button>
+					<button onclick={() => (activePanel = activePanel === 'music' ? null : 'music')} class={panelTabClass('music')}>Search Music</button>
 				{/if}
 				{#if job.config}
-					<button
-						onclick={() => (activePanel = activePanel === 'rip' ? null : 'rip')}
-						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'rip' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-					>Rip Settings</button>
+					<button onclick={() => (activePanel = activePanel === 'rip' ? null : 'rip')} class={panelTabClass('rip')}>Rip Settings</button>
 				{/if}
 				{#if isVideoDisc && (job.video_type === 'series' || job.imdb_id)}
-					<button
-						onclick={() => (activePanel = activePanel === 'tvdb' ? null : 'tvdb')}
-						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'tvdb' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-					>Episodes</button>
+					<button onclick={() => (activePanel = activePanel === 'tvdb' ? null : 'tvdb')} class={panelTabClass('tvdb')}>Episodes</button>
 				{/if}
 				{#if isVideoDisc}
-					<button
-						onclick={() => (activePanel = activePanel === 'transcode' ? null : 'transcode')}
-						class="flex-1 border-r border-primary/15 px-4 py-2.5 text-center text-sm font-medium transition-colors dark:border-primary/15 {activePanel === 'transcode' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-					>Transcode Settings</button>
+					<button onclick={() => (activePanel = activePanel === 'transcode' ? null : 'transcode')} class={panelTabClass('transcode')}>Transcode Settings</button>
 				{/if}
 				{#if hasCrcData}
-					<button
-						onclick={() => (activePanel = activePanel === 'crc' ? null : 'crc')}
-						class="flex-1 px-4 py-2.5 text-center text-sm font-medium transition-colors {activePanel === 'crc' ? 'text-primary border-b-2 border-b-primary bg-primary/5 dark:bg-primary/10' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-					>CRC Lookup</button>
+					<button onclick={() => (activePanel = activePanel === 'crc' ? null : 'crc')} class={panelTabClass('crc', true)}>CRC Lookup</button>
 				{/if}
 			</div>
 
