@@ -91,7 +91,23 @@ describe('TranscodeCard', () => {
 			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
 			await fireEvent.click(screen.getByText('My Movie'));
 			await waitFor(() => {
+				expect(screen.getByText('my_movie.mkv')).toBeInTheDocument();
+			});
+		});
+
+		it('shows view full details link when arm_job_id is set', async () => {
+			renderComponent(TranscodeCard, { props: { job: createTranscodeJob({ arm_job_id: '42' }) } });
+			await fireEvent.click(screen.getByText('My Movie'));
+			await waitFor(() => {
 				expect(screen.getByText('View full details')).toBeInTheDocument();
+			});
+		});
+
+		it('hides view full details link when arm_job_id is null', async () => {
+			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
+			await fireEvent.click(screen.getByText('My Movie'));
+			await waitFor(() => {
+				expect(screen.queryByText('View full details')).not.toBeInTheDocument();
 			});
 		});
 
