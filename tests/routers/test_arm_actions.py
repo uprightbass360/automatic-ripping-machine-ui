@@ -134,3 +134,27 @@ async def test_pause_waiting_job_503_when_unreachable(app_client):
     ):
         resp = await app_client.post("/api/jobs/1/pause")
     assert resp.status_code == 503
+
+
+async def test_pause_waiting_job_explicit_true(app_client):
+    """POST /api/jobs/{id}/pause with {paused: true} forwards paused=True."""
+    with patch(
+        "backend.routers.arm_actions.arm_client.pause_waiting_job",
+        new_callable=AsyncMock, return_value={"success": True, "paused": True},
+    ) as mock_pause:
+        resp = await app_client.post("/api/jobs/1/pause", json={"paused": True})
+    assert resp.status_code == 200
+    assert resp.json()["paused"] is True
+    mock_pause.assert_called_once_with(1, paused=True)
+
+
+async def test_pause_waiting_job_explicit_false(app_client):
+    """POST /api/jobs/{id}/pause with {paused: false} forwards paused=False."""
+    with patch(
+        "backend.routers.arm_actions.arm_client.pause_waiting_job",
+        new_callable=AsyncMock, return_value={"success": True, "paused": False},
+    ) as mock_pause:
+        resp = await app_client.post("/api/jobs/1/pause", json={"paused": False})
+    assert resp.status_code == 200
+    assert resp.json()["paused"] is False
+    mock_pause.assert_called_once_with(1, paused=False)
