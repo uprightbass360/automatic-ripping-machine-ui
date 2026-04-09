@@ -199,9 +199,11 @@
 						</div>
 					{/if}
 
-					<div class="mt-2">
-						<a href="/transcoder/{job.id}" class="inline-block text-xs text-primary hover:underline">View full details</a>
-					</div>
+					{#if job.arm_job_id}
+						<div class="mt-2">
+							<a href="/jobs/{job.arm_job_id}" class="inline-block text-xs text-primary hover:underline">View full details</a>
+						</div>
+					{/if}
 				</div>
 			</div>
 		</div>
