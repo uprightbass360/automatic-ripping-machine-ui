@@ -68,9 +68,14 @@ def get_rip_progress(job_id: int) -> dict:
                 result["stage"] = last_prgt
 
     if last_prgc:
-        index = int(last_prgc.group(1)) + 1
+        index = int(last_prgc.group(1))
         name = last_prgc.group(2)
-        result["stage"] = f"Title {index}: {name}"
+        result["stage"] = f"Title {index + 1}: {name}"
+        # During the "Saving to MKV file" phase, titles before the current
+        # index are complete.  Use this as a real-time ripped count so the
+        # UI can show progress before FILE_ADDED marks them in the DB.
+        if name == "Saving to MKV file":
+            result["tracks_ripped"] = index
 
     return result
 
