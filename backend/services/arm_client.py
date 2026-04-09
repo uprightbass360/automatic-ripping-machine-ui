@@ -135,9 +135,12 @@ async def start_waiting_job(job_id: int) -> dict[str, Any] | None:
     return await _request("POST", f"/api/v1/jobs/{job_id}/start")
 
 
-async def pause_waiting_job(job_id: int) -> dict[str, Any] | None:
-    """Toggle per-job pause for a waiting job. Returns None if ARM is unreachable."""
-    return await _request("POST", f"/api/v1/jobs/{job_id}/pause")
+async def pause_waiting_job(job_id: int, paused: bool | None = None) -> dict[str, Any] | None:
+    """Set or toggle per-job pause for a waiting job. Returns None if ARM is unreachable."""
+    kwargs: dict[str, Any] = {}
+    if paused is not None:
+        kwargs["json"] = {"paused": paused}
+    return await _request("POST", f"/api/v1/jobs/{job_id}/pause", **kwargs)
 
 
 async def set_ripping_enabled(enabled: bool) -> dict[str, Any] | None:

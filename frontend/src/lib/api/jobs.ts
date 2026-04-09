@@ -42,8 +42,11 @@ export function startWaitingJob(id: number): Promise<unknown> {
 	return apiFetch(`/api/jobs/${id}/start`, { method: 'POST' });
 }
 
-export function pauseWaitingJob(id: number): Promise<unknown> {
-	return apiFetch(`/api/jobs/${id}/pause`, { method: 'POST' });
+export function pauseWaitingJob(id: number, paused?: boolean): Promise<unknown> {
+	return apiFetch(`/api/jobs/${id}/pause`, {
+		method: 'POST',
+		body: paused !== undefined ? JSON.stringify({ paused }) : undefined,
+	});
 }
 
 export function deleteJob(id: number): Promise<unknown> {
