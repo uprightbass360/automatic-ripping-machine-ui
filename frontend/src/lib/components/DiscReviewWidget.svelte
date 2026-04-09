@@ -25,6 +25,7 @@
 	}
 
 	let { job, driveNames = {}, paused = false, onrefresh, ondismiss }: Props = $props();
+	let effectivePaused = $derived(paused || !!job.manual_pause);
 	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
 
 	let detail = $state<JobDetail | null>(null);
@@ -397,16 +398,10 @@
 			<CountdownTimer
 			startTime={job.wait_start_time ?? job.start_time ?? ''}
 			waitSeconds={waitTime}
-			{paused}
+			paused={effectivePaused}
 			inverted
 			onpause={() => { pauseWaitingJob(job.job_id).then(() => onrefresh?.()); }}
-			onresume={() => {
-				if (paused) {
-					startWaitingJob(job.job_id).then(() => onrefresh?.());
-				} else {
-					pauseWaitingJob(job.job_id).then(() => onrefresh?.());
-				}
-			}}
+			onresume={() => { pauseWaitingJob(job.job_id).then(() => onrefresh?.()); }}
 		/>
 		{/if}
 	</div>
