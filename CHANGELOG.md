@@ -1,5 +1,58 @@
 # Changelog
 
+## [15.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.0.0...v15.1.0) (2026-04-09)
+
+
+### Features
+
+* add buildMetadataFields utility for job detail header grid ([2cfea60](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2cfea601b35be9fa27a5be204f77f58d784ef03f))
+* add per-drive prescan settings to DriveCard advanced section ([35bde2c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/35bde2ccd663a2b7e37449f1f2e6645ee7d57478))
+* add prescan override fields to Drive type and API ([c0e56eb](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c0e56eb7bfcfabf2cb341e30f631fab8426a4579))
+* add prescan settings to global MakeMKV settings panel ([af2ff86](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/af2ff8649112f9e19eb8da5d83c4f3fb9fc13ba0))
+* consolidate job actions into single action bar below title ([2ab38ae](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2ab38ae529f8f747577a1dc6d1524f1867774edc))
+* editable episode number per-track in review widget track table ([9237720](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9237720f694c0b8e6405ae8cac8581da938fb6f4))
+* editable episode number per-track on job detail page ([1bb16ea](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1bb16eac6abfff8d38ae8b6b3af963c4a16d8161))
+* editable filenames on job detail page matching DiscReviewWidget ([8c14d33](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8c14d3336ac92d18caf78cc681d5e7c9cac746a0))
+* rescan drives on settings page load to populate hardware info ([97f30ce](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/97f30ce05c01dd9b9bba96d682499be66f6f0b7b))
+* rewrite job detail header with breadcrumb, metadata grid, and integrated panels ([09a7f8c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/09a7f8ccf5597f45b08285a94973d09c15e82323))
+* show global default values as placeholders in drive settings, clear override when matching global ([dfabb70](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/dfabb7070ba50b08c6ac1d73b749c843607b6582))
+* show rendered filenames from naming engine on job detail page ([0b68a5c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0b68a5c3d041c2f0511e7936671f621d8a99d76c))
+
+
+### Bug Fixes
+
+* add ARM_LABELS for prescan settings, fix null-clearing in drive proxy, update test fixture ([e5cf24b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e5cf24b81b1c4f182c75c54235202e704680fdaa))
+* add missing fetchNamingPreview mock, update DriveCard tests for flattened settings panel ([d3372b8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d3372b860fb00e527518b2853511ca17d6cfaafb))
+* add missing rip_speed and prescan override fields to DriveUpdateRequest ([619e62c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/619e62c402a35fc5b7fe76b76e4095e592d020fd))
+* add non-null assertions for job in track update handlers ([1ec5b65](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1ec5b657219dabbbc5c58e5b00e558e2c1591aa3))
+* add prescan and rip_speed fields to DriveSchema response model ([736e4c5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/736e4c5e53746ba35dbc7b24895b04f9f745ca25))
+* add rip_speed and prescan columns to UI's SystemDrives model ([3b95c1f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3b95c1f8ab9e13c70e3743b6a72e2f97fa50c41a))
+* append Z to transcoder UTC timestamps for correct browser parsing ([301dfb7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/301dfb76b0ebefb0eeaf6e9c5a31653253a1404b))
+* deduplicate panel toggle button classes to pass SonarCloud ([56b0c0c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/56b0c0c217c44634abc71ec125a7018575ff4ef2))
+* filter track counts by minlength so short tracks aren't counted ([99656e3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/99656e3bedcf37b920116014b516a0d678261046))
+* flatten drive settings - remove Advanced toggle, show all settings in one panel ([158c11d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/158c11d196d63973e7e1673104e91bc35f919e23))
+* hide 'unknown' video type badge on transcoder cards ([861482c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/861482ce3667f4de52f6e9ac6aa93bf0497ab56c))
+* hide filename for skipped tracks on job detail page ([a951b47](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a951b471ebbf41a26741d23e846a9644359a43a1))
+* hide ripped badge for skipped tracks, add transcoded status color (green) ([5c2426c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5c2426cce5468a239c92f864cd97ed2e61dec4d7))
+* hide transcoder log section for pre-rip job states ([2bf65a4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2bf65a4ede4bf2fa747d30c6de6557e5a10abadf))
+* link TranscodeCard details to ARM job page, hide when no arm_job_id ([1caf599](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1caf59904bac112a92403e7e1bb6cbabb42d38e9))
+* move IMDb back to title line, style action bar as bordered container ([ac18c9b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ac18c9ba3bbb75a0633842127e6e59cd79d4d494))
+* prevent scroll jump on transcoder page during polling ([6ae67d6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6ae67d6614b095fea6605bec645ea2177176b665))
+* remove invalid [@const](https://github.com/const), inline button class ([9627ebf](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9627ebf2067e8c0a61b6eff01d10a4340e7ff379))
+* rename 'Title Override' column to 'Title' ([2da3ced](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2da3ced0a0ac87857bee5c1588f1e1b36d000197))
+* replace regex with string match to resolve SonarCloud hotspot ([a75097f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a75097f0d9ce8d79a364cdb35cb46d3255150984))
+* send explicit paused value instead of toggle on pause/resume ([82762e9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/82762e9b362355ec143d0a000691f04a4dec1cef))
+* show 'Skipped' status for disabled tracks instead of 'Pending' ([4d703aa](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4d703aa4e9675cb46025cef870ed66793487767e))
+* show real-time ripped track count from PRGC progress messages ([646d6b9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/646d6b9864c19457d1dca90e840263ddc8de6eef))
+* show Skipped status and hide Ripped badge for below-minlength tracks ([61c676e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/61c676e82bdacaf6b2e8c59f20743afd32cc25c5))
+* show warnings (yellow) instead of errors (red) for successful jobs with issues ([58ce092](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/58ce0924d28f822c79938330988c05c45c1731b1))
+* simplify CountdownTimer to use paused prop as sole truth ([2a79130](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2a79130a9c06aa584c2b426fab545c27cf26401a))
+* unify action bar button sizing and styling on job detail page ([23f3802](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/23f3802bd43aec8c3dfdd6d16ee51c7de27b3483))
+* update JobActions buttons to pill style with outlined destructive actions ([e9a58e9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e9a58e954f8a3960d514d7557b41191e6f5e00c8))
+* use fixed blue color for Fix Permissions button instead of theme-dependent primary ([9f2ece8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9f2ece852406dd6552a69bd74d576ec8b31132c7))
+* use full-width row layout for transcoder cards on home page ([142313e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/142313e16e6e073be7cdf21a6d1d6de5d5c82f2c))
+* wire manual_pause into DiscReviewWidget pause state ([5450aca](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5450aca4a09144956edb461cbba242023fbde897))
+
 ## [15.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v14.4.0...v15.0.0) (2026-04-06)
 
 
