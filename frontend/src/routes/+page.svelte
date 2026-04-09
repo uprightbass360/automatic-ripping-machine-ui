@@ -388,7 +388,7 @@
 	{#if dash.active_transcodes.length > 0}
 		<section>
 			<SectionFrame variant="full" accent="var(--color-primary)" label="TRANSCODING — {dash.active_transcodes.length} ACTIVE">
-				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				<div class="space-y-2">
 					{#each dash.active_transcodes as tc (tc.id)}
 						{#if tc.arm_job_id}
 							<a href="/jobs/{tc.arm_job_id}" class="block transition-opacity hover:opacity-80">
