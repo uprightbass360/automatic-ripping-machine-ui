@@ -46,8 +46,8 @@
 		return parts[parts.length - 1] ?? '';
 	}
 
-	async function loadJobs() {
-		loadingJobs = true;
+	async function loadJobs(showLoading = true) {
+		if (showLoading) loadingJobs = true;
 		jobsError = null;
 		try {
 			const statusParam = activeTab === 'all' ? undefined : activeTab;
@@ -94,7 +94,7 @@
 
 	function startJobsPolling() {
 		stopJobsPolling();
-		jobsTimer = setInterval(loadJobs, 5000);
+		jobsTimer = setInterval(() => loadJobs(false), 5000);
 	}
 
 	function stopJobsPolling() {
@@ -309,7 +309,7 @@
 			<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
 				{jobsError}
 			</div>
-		{:else if loadingJobs}
+		{:else if loadingJobs && jobs.jobs.length === 0}
 			<div class="py-8 text-center text-gray-400">Loading...</div>
 		{:else if jobs.jobs.length === 0}
 			<p class="py-8 text-center text-gray-400">No transcode jobs found.</p>
