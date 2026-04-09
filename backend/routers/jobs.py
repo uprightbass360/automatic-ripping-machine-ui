@@ -166,7 +166,16 @@ def get_job_progress(job_id: int):
         )
     else:
         result = progress.get_rip_progress(job.job_id)
+    # Merge DB counts, but keep the higher tracks_ripped value.
+    # The progress file provides a real-time count from PRGC messages
+    # (titles currently being saved), while the DB count comes from
+    # FILE_ADDED messages (titles fully saved).  During ripping the
+    # progress-file count leads; after completion the DB count is
+    # authoritative.
+    progress_ripped = result.get("tracks_ripped", 0) or 0
+    db_ripped = counts.get("tracks_ripped", 0) or 0
     result.update(counts)
+    result["tracks_ripped"] = max(progress_ripped, db_ripped)
     # Include no_of_titles so the frontend can show title count even before
     # Track rows are created in the DB (early scan/decrypt phase).
     result["no_of_titles"] = getattr(job, "no_of_titles", None)
