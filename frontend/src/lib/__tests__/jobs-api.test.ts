@@ -64,7 +64,26 @@ describe('simple job endpoints', () => {
 
 	it('pauseWaitingJob POSTs', async () => {
 		await pauseWaitingJob(1);
-		expect(mockApiFetch).toHaveBeenCalledWith('/api/jobs/1/pause', { method: 'POST' });
+		expect(mockApiFetch).toHaveBeenCalledWith('/api/jobs/1/pause', {
+			method: 'POST',
+			body: undefined,
+		});
+	});
+
+	it('pauseWaitingJob sends explicit paused=true in body', async () => {
+		await pauseWaitingJob(1, true);
+		expect(mockApiFetch).toHaveBeenCalledWith('/api/jobs/1/pause', expect.objectContaining({
+			method: 'POST',
+			body: JSON.stringify({ paused: true }),
+		}));
+	});
+
+	it('pauseWaitingJob sends explicit paused=false in body', async () => {
+		await pauseWaitingJob(1, false);
+		expect(mockApiFetch).toHaveBeenCalledWith('/api/jobs/1/pause', expect.objectContaining({
+			method: 'POST',
+			body: JSON.stringify({ paused: false }),
+		}));
 	});
 
 	it('deleteJob DELETEs', async () => {
