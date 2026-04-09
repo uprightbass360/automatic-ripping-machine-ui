@@ -2,11 +2,36 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import httpx
 
 from backend.config import settings
+
+# Transcoder stores timestamps in UTC but without a trailing Z.
+# JavaScript's Date() parses bare ISO strings as local time, causing
+# time-ago displays to show "0s ago" for recent UTC timestamps.
+_TS_FIELDS = {"created_at", "started_at", "completed_at"}
+_ISO_NO_TZ = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
+
+
+def _normalize_timestamps(data: Any) -> Any:
+    """Append 'Z' to bare ISO timestamps in transcoder responses."""
+    if isinstance(data, dict):
+        return {
+            k: _append_z(v) if k in _TS_FIELDS and isinstance(v, str) else _normalize_timestamps(v)
+            for k, v in data.items()
+        }
+    if isinstance(data, list):
+        return [_normalize_timestamps(item) for item in data]
+    return data
+
+
+def _append_z(val: str) -> str:
+    if _ISO_NO_TZ.match(val) and not val.endswith("Z") and "+" not in val:
+        return val + "Z"
+    return val
 
 _CONFIG_ENDPOINT = "/config"
 _client: httpx.AsyncClient | None = None
@@ -267,7 +292,7 @@ async def get_jobs(
             params["arm_job_id"] = arm_job_id
         resp = await get_client().get("/jobs", params=params)
         resp.raise_for_status()
-        return resp.json()
+        return _normalize_timestamps(resp.json())
     except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
         return None
 
