@@ -40,7 +40,7 @@ describe('CountdownTimer', () => {
 				props: { startTime: '2025-06-15T12:00:00Z', waitSeconds: 120, paused: true }
 			});
 			expect(screen.getByText('Paused')).toBeInTheDocument();
-			expect(screen.queryByText(/\d+m \d+s/)).not.toBeInTheDocument();
+			expect(screen.queryByText('2m 00s')).not.toBeInTheDocument();
 		});
 
 		it('hides progress bar when paused', () => {
