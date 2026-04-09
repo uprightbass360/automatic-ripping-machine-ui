@@ -67,7 +67,7 @@
 
 		<!-- Type + disc badges -->
 		<div class="hidden sm:flex shrink-0 items-center gap-1.5">
-			{#if job.video_type}
+			{#if job.video_type && job.video_type !== 'unknown'}
 				<span class="rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs font-medium dark:bg-primary/15">{job.video_type}</span>
 			{/if}
 			{#if job.disctype}
