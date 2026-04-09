@@ -34,6 +34,22 @@ describe('CountdownTimer', () => {
 			});
 			expect(screen.getByText('Paused')).toBeInTheDocument();
 		});
+
+		it('displays Paused when paused with time remaining', () => {
+			renderComponent(CountdownTimer, {
+				props: { startTime: '2025-06-15T12:00:00Z', waitSeconds: 120, paused: true }
+			});
+			expect(screen.getByText('Paused')).toBeInTheDocument();
+			expect(screen.queryByText(/\d+m \d+s/)).not.toBeInTheDocument();
+		});
+
+		it('hides progress bar when paused', () => {
+			const { container } = renderComponent(CountdownTimer, {
+				props: { startTime: '2025-06-15T12:00:00Z', waitSeconds: 120, paused: true }
+			});
+			const progressBar = container.querySelector('[data-progress-fill]');
+			expect(progressBar).not.toBeInTheDocument();
+		});
 	});
 
 	describe('interactions', () => {
