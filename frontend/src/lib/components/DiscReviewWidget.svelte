@@ -400,8 +400,8 @@
 			waitSeconds={waitTime}
 			paused={effectivePaused}
 			inverted
-			onpause={() => { pauseWaitingJob(job.job_id).then(() => onrefresh?.()); }}
-			onresume={() => { pauseWaitingJob(job.job_id).then(() => onrefresh?.()); }}
+			onpause={() => { pauseWaitingJob(job.job_id, true).then(() => onrefresh?.()); }}
+			onresume={() => { pauseWaitingJob(job.job_id, false).then(() => onrefresh?.()); }}
 		/>
 		{/if}
 	</div>
