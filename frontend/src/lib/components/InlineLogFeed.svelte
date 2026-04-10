@@ -54,7 +54,11 @@
 		debug: 'border-l-transparent',
 	};
 
+	let failCount = $state(0);
+	const MAX_FAILURES = 3;
+
 	async function load() {
+		if (failCount >= MAX_FAILURES) return;
 		try {
 			const data = await fetchFn(
 				logfile,
@@ -64,8 +68,16 @@
 			);
 			entries = data.entries.toReversed();
 			error = null;
+			failCount = 0;
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load log';
+			const msg = e instanceof Error ? e.message : 'Failed to load log';
+			if (msg.includes('404')) {
+				failCount++;
+				if (failCount >= MAX_FAILURES) {
+					if (timer) { clearInterval(timer); timer = null; }
+				}
+			}
+			error = msg;
 		} finally {
 			loading = false;
 		}
