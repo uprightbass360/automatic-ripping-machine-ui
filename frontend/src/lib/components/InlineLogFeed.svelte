@@ -100,7 +100,7 @@
 	});
 </script>
 
-{#if error}
+{#if error && !error.includes('404')}
 	<div class={containerClass ?? ''}>
 		<div class="text-sm text-red-400">{error}</div>
 	</div>
