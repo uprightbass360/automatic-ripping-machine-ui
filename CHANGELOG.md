@@ -1,5 +1,12 @@
 # Changelog
 
+## [15.1.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.1.0...v15.1.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* stop InlineLogFeed polling after 3 consecutive 404s ([04e0fb2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/04e0fb28d73571b7fbad68d72c96130d2821d3cb))
+
 ## [15.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.0.0...v15.1.0) (2026-04-09)
 
 
