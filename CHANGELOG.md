@@ -1,5 +1,12 @@
 # Changelog
 
+## [15.1.2](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.1.1...v15.1.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* hide InlineLogFeed when log file returns 404 ([56b78d6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/56b78d62399e523652c36dba1d086b0f8e105eaf))
+
 ## [15.1.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.1.0...v15.1.1) (2026-04-10)
 
 
