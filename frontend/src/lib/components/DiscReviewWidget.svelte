@@ -5,7 +5,6 @@
 	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
-	import PosterImage from './PosterImage.svelte';
 	import CountdownTimer from './CountdownTimer.svelte';
 	import TitleSearch from './TitleSearch.svelte';
 	import MusicSearch from './MusicSearch.svelte';
@@ -410,7 +409,26 @@
 	<!-- Header -->
 	<div class="flex gap-4 p-4">
 		<!-- Poster -->
-		<PosterImage url={job.poster_url} alt={job.title ?? 'Poster'} class="h-24 shrink-0 rounded-sm object-cover {isMusic ? 'w-24' : 'w-16'}" />
+		{#if job.poster_url}
+			<img
+				src={posterSrc(job.poster_url)}
+				alt={job.title ?? 'Poster'}
+				class="h-24 shrink-0 rounded-sm object-cover {isMusic ? 'w-24' : 'w-16'}"
+				onerror={posterFallback}
+			/>
+		{:else}
+			<div class="flex h-24 shrink-0 items-center justify-center rounded-sm {isMusic ? 'w-24' : 'w-16'} {typeConfig.placeholderClasses}">
+				<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+					{#if isMusic}
+						<path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+					{:else}
+						<circle cx="12" cy="12" r="10" />
+						<circle cx="12" cy="12" r="3" />
+						<circle cx="12" cy="12" r="6.5" stroke-width="0.75" opacity="0.4" />
+					{/if}
+				</svg>
+			</div>
+		{/if}
 
 		<!-- Info -->
 		<div class="min-w-0 flex-1">
