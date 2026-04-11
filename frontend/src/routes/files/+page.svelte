@@ -495,6 +495,16 @@
 		{/if}
 	{/if}
 
+	<!-- Read-only mount banner -->
+	{#if isReadonly}
+		<div class="flex items-center gap-2 rounded-lg border border-amber-300/50 bg-amber-50/50 px-4 py-2.5 dark:border-amber-700/50 dark:bg-amber-900/20">
+			<svg class="h-4 w-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+			</svg>
+			<p class="text-sm text-amber-700 dark:text-amber-400">This directory is on a read-only mount. File operations are disabled.</p>
+		</div>
+	{/if}
+
 	<!-- Breadcrumb + toolbar row -->
 	{#if currentPath && roots.length > 0}
 		<div class="flex items-center justify-between gap-3">
