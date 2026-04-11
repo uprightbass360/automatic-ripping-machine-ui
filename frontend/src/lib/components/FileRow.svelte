@@ -7,6 +7,7 @@
 		entry: FileEntry;
 		currentPath: string;
 		selected: boolean;
+		readonly?: boolean;
 		onnavigate: (path: string) => void;
 		onrename: (path: string, name: string) => void;
 		ondelete: (path: string, name: string) => void;
@@ -14,7 +15,7 @@
 		onfixpermissions: (path: string, name: string) => void;
 	}
 
-	let { entry, currentPath, selected, onnavigate, onrename, ondelete, ontoggle, onfixpermissions }: Props = $props();
+	let { entry, currentPath, selected, readonly: ro = false, onnavigate, onrename, ondelete, ontoggle, onfixpermissions }: Props = $props();
 
 	let editing = $state(false);
 	let editName = $state('');
@@ -128,8 +129,9 @@
 			<button
 				type="button"
 				onclick={() => onfixpermissions(fullPath, entry.name)}
-				class="rounded p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-				title="Fix permissions"
+				disabled={ro}
+				class="rounded p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 disabled:opacity-30 disabled:pointer-events-none"
+				title={ro ? 'Read-only mount' : 'Fix permissions'}
 			>
 				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -139,8 +141,9 @@
 			<button
 				type="button"
 				onclick={startRename}
-				class="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-				title="Rename"
+				disabled={ro}
+				class="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300 disabled:opacity-30 disabled:pointer-events-none"
+				title={ro ? 'Read-only mount' : 'Rename'}
 			>
 				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -150,8 +153,9 @@
 			<button
 				type="button"
 				onclick={() => ondelete(fullPath, entry.name)}
-				class="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-				title="Delete"
+				disabled={ro}
+				class="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 disabled:opacity-30 disabled:pointer-events-none"
+				title={ro ? 'Read-only mount' : 'Delete'}
 			>
 				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

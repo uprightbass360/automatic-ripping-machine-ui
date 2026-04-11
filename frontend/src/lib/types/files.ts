@@ -3,6 +3,7 @@ export interface FileRoot {
 	label: string;
 	path: string;
 	host_path?: string;
+	readonly?: boolean;
 }
 
 export interface FileEntry {
@@ -21,4 +22,5 @@ export interface DirectoryListing {
 	path: string;
 	parent: string | null;
 	entries: FileEntry[];
+	readonly?: boolean;
 }
