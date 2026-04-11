@@ -1,5 +1,12 @@
 # Changelog
 
+## [15.1.3](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.1.2...v15.1.3) (2026-04-11)
+
+
+### Bug Fixes
+
+* add missing poster placeholder SVG ([dbad9a3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/dbad9a3118ba4f59d5c67067be06ebb697eae002))
+
 ## [15.1.2](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.1.1...v15.1.2) (2026-04-10)
 
 
