@@ -419,54 +419,59 @@
 
 	<!-- All Jobs -->
 	<section id="all-jobs" class="space-y-4">
-			<div class="flex flex-wrap items-center justify-between gap-4">
-				<h2 class="text-lg font-semibold text-gray-900 dark:text-white">All Jobs</h2>
-				<div class="flex gap-2">
-					<button
-						onclick={() => viewMode = 'card'}
-						class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'card' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
-					>Cards</button>
-					<button
-						onclick={() => viewMode = 'table'}
-						class="rounded-lg px-3 py-1.5 text-sm {viewMode === 'table' ? 'bg-primary text-on-primary' : 'bg-primary/15 text-gray-700 dark:bg-primary/15 dark:text-gray-300'}"
-					>Table</button>
+			<!-- Controls panel -->
+			<div class="rounded-lg border border-primary/20 bg-surface shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+				<!-- Header: Title + View toggle + Bulk actions -->
+				<div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">All Jobs</h2>
+					<div class="flex items-center gap-3">
+						<div class="flex gap-1">
+							<button
+								onclick={() => viewMode = 'card'}
+								class="rounded-md px-3 py-1.5 text-xs font-medium {viewMode === 'card' ? 'bg-primary text-on-primary' : 'bg-primary/10 text-gray-600 hover:bg-primary/15 dark:bg-primary/15 dark:text-gray-300'}"
+							>Cards</button>
+							<button
+								onclick={() => viewMode = 'table'}
+								class="rounded-md px-3 py-1.5 text-xs font-medium {viewMode === 'table' ? 'bg-primary text-on-primary' : 'bg-primary/10 text-gray-600 hover:bg-primary/15 dark:bg-primary/15 dark:text-gray-300'}"
+							>Table</button>
+						</div>
+						<div class="h-5 w-px bg-primary/20 dark:bg-primary/20"></div>
+						<BulkActionsMenu
+							{selectedJobs}
+							{jobsStats}
+							{gearOpen}
+							{bulkBusy}
+							onaction={handleBulkAction}
+							ontoggle={() => (gearOpen = !gearOpen)}
+						/>
+					</div>
 				</div>
+
+				<!-- Filters -->
+				<div class="border-t border-primary/15 px-4 py-3 dark:border-primary/15">
+					<JobFilterBar
+						{statusFilter}
+						{videoTypeFilter}
+						{disctypeFilter}
+						{daysFilter}
+						onstatusfilter={setStatusFilter}
+						onvideotypefilter={setVideoTypeFilter}
+						ondisctypefilter={setDisctypeFilter}
+						ondaysfilter={setDaysFilter}
+						onsearch={onSearch}
+					/>
+				</div>
+
+				<!-- Bulk feedback banner -->
+				{#if bulkFeedback}
+					<div class="border-t border-primary/15 px-4 py-3 text-sm dark:border-primary/15 {bulkFeedback.type === 'success' ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}">
+						{bulkFeedback.message}
+						<button onclick={() => (bulkFeedback = null)} class="ml-2 font-bold opacity-60 hover:opacity-100">&times;</button>
+					</div>
+				{/if}
 			</div>
 
-
-			<JobFilterBar
-				{statusFilter}
-				{videoTypeFilter}
-				{disctypeFilter}
-				{daysFilter}
-				onstatusfilter={setStatusFilter}
-				onvideotypefilter={setVideoTypeFilter}
-				ondisctypefilter={setDisctypeFilter}
-				ondaysfilter={setDaysFilter}
-				onsearch={onSearch}
-			/>
-
-			<!-- Filter Row 2 addons: Selection count | Gear menu -->
-			<div class="flex flex-wrap items-center gap-3">
-				<div class="flex-1"></div>
-				<BulkActionsMenu
-					{selectedJobs}
-					{jobsStats}
-					{gearOpen}
-					{bulkBusy}
-					onaction={handleBulkAction}
-					ontoggle={() => (gearOpen = !gearOpen)}
-				/>
-			</div>
-
-			<!-- Bulk feedback banner -->
-			{#if bulkFeedback}
-				<div class="rounded-lg border px-4 py-3 text-sm {bulkFeedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400' : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'}">
-					{bulkFeedback.message}
-					<button onclick={() => (bulkFeedback = null)} class="ml-2 font-bold opacity-60 hover:opacity-100">&times;</button>
-				</div>
-			{/if}
-
+			<div style="min-height: 60vh;">
 			{#if jobsError}
 				<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
 					{jobsError}
@@ -542,5 +547,6 @@
 					<p class="py-8 text-center text-gray-400">No jobs found.</p>
 				{/if}
 			{/if}
+			</div>
 	</section>
 </div>
