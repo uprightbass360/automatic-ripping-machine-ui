@@ -5,6 +5,7 @@
 	import { fetchJob, retranscodeJob, fetchMusicDetail, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
 	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
+	import PosterImage from '$lib/components/PosterImage.svelte';
 	import { fetchStructuredTranscoderLogContent, fetchTranscoderLogForArmJob } from '$lib/api/logs';
 	import type { JobDetail, MusicDetail } from '$lib/types/arm';
 	import JobActions from '$lib/components/JobActions.svelte';
@@ -309,25 +310,12 @@
 			<div class="flex items-start">
 				<!-- Poster -->
 				<div class="shrink-0 border-r border-primary/15 p-4 dark:border-primary/15">
-					{#if job.poster_url}
-						<img
-							src={posterSrc(job.poster_url)}
-							alt={job.title ?? 'Poster'}
-							class="rounded-md object-cover shadow-sm {isMusicDisc ? 'h-[120px] w-[120px]' : 'w-[120px]'}"
-							style={isMusicDisc ? '' : 'aspect-ratio: 2/3'}
-							onerror={posterFallback}
-						/>
-					{:else}
-						<div
-							class="flex items-center justify-center rounded-md border border-dashed border-primary/20 bg-primary/5 dark:border-primary/15 dark:bg-primary/5 {isMusicDisc ? 'h-[120px] w-[120px]' : 'w-[120px]'}"
-							style={isMusicDisc ? '' : 'aspect-ratio: 2/3'}
-						>
-							<svg class="h-8 w-8 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-								<circle cx="12" cy="12" r="10" />
-								<circle cx="12" cy="12" r="3" />
-							</svg>
-						</div>
-					{/if}
+					<PosterImage
+						url={job.poster_url}
+						alt={job.title ?? 'Poster'}
+						class="rounded-md object-cover shadow-sm {isMusicDisc ? 'h-[120px] w-[120px]' : 'w-[120px]'}"
+						style={isMusicDisc ? '' : 'aspect-ratio: 2/3'}
+					/>
 				</div>
 
 				<!-- Metadata grid -->
