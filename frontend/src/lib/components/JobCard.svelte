@@ -32,17 +32,7 @@
 	class="block rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs transition hover:shadow-md dark:border-primary/20 dark:bg-surface-dark"
 >
 	<div class="flex gap-4">
-		{#if job.poster_url}
-			<PosterImage url={job.poster_url} alt={job.title ?? 'Poster'} class="h-24 w-16 rounded-sm object-cover" />
-		{:else}
-			<div class="flex h-24 w-16 items-center justify-center rounded-sm {typeConfig.placeholderClasses}">
-				<svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="12" r="10" />
-					<circle cx="12" cy="12" r="3" />
-					<circle cx="12" cy="12" r="6.5" stroke-width="0.75" opacity="0.4" />
-				</svg>
-			</div>
-		{/if}
+		<PosterImage url={job.poster_url} alt={job.title ?? 'Poster'} class="h-24 w-16 rounded-sm object-cover" />
 		<div class="min-w-0 flex-1">
 			<!-- Row 1: Title + Status -->
 			<div class="flex items-start justify-between gap-2">
