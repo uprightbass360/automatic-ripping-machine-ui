@@ -181,46 +181,54 @@ describe('Dashboard Page', () => {
 		);
 	});
 
-	describe('filter pills', () => {
+	describe('filter dropdowns', () => {
 		afterEach(() => cleanup());
 
-		it.each(['Movie', 'Series', 'Music', 'Blu-ray', 'DVD', 'CD', 'Data'])(
-			'renders %s filter pill', async (label) => {
-				await renderDashboard();
-				expect(screen.getByText(label)).toBeInTheDocument();
-			}
-		);
-
-		it('renders All pill buttons', async () => {
+		it('renders filter dropdowns for status, type, disc, and days', async () => {
 			await renderDashboard();
-			expect(screen.getAllByText('All').length).toBeGreaterThanOrEqual(1);
+			const selects = screen.getAllByRole('combobox');
+			expect(selects.length).toBeGreaterThanOrEqual(4);
 		});
 
-		it.each([
-			['Movie', { video_type: 'movie' }],
-			['Blu-ray', { disctype: 'bluray' }]
-		])('clicking %s pill calls fetchJobs with %o', async (label: string, expectedParams: Record<string, string>) => {
+		it('renders search input', async () => {
+			await renderDashboard();
+			expect(screen.getByPlaceholderText('Search titles...')).toBeInTheDocument();
+		});
+
+		it('changing type dropdown calls fetchJobs with video_type', async () => {
 			const { fetchJobs } = await import('$lib/api/jobs');
 			await renderDashboard();
-			await fireEvent.click(screen.getByText(label));
+			const selects = screen.getAllByRole('combobox');
+			// Type dropdown is the second select
+			const typeSelect = selects[1];
+			await fireEvent.change(typeSelect, { target: { value: 'movie' } });
 			await waitFor(() => {
-				expect(fetchJobs).toHaveBeenCalledWith(expect.objectContaining(expectedParams));
+				expect(fetchJobs).toHaveBeenCalledWith(expect.objectContaining({ video_type: 'movie' }));
 			});
 		});
 
-		it('clicking Failed status pill calls fetchJobs with status filter', async () => {
+		it('changing disc dropdown calls fetchJobs with disctype', async () => {
 			const { fetchJobs } = await import('$lib/api/jobs');
 			await renderDashboard();
-			const failedPills = screen.getAllByText('Failed');
-			const failedPill = failedPills.find(el => el.tagName === 'BUTTON' && el.closest(String.raw`.flex.flex-wrap.gap-1\.5`));
-			if (failedPill) {
-				await fireEvent.click(failedPill);
-				await waitFor(() => {
-					expect(fetchJobs).toHaveBeenCalledWith(
-						expect.objectContaining({ status: 'fail', page: 1 })
-					);
-				});
-			}
+			const selects = screen.getAllByRole('combobox');
+			// Disc dropdown is the third select
+			const discSelect = selects[2];
+			await fireEvent.change(discSelect, { target: { value: 'bluray' } });
+			await waitFor(() => {
+				expect(fetchJobs).toHaveBeenCalledWith(expect.objectContaining({ disctype: 'bluray' }));
+			});
+		});
+
+		it('changing status dropdown calls fetchJobs with status', async () => {
+			const { fetchJobs } = await import('$lib/api/jobs');
+			await renderDashboard();
+			const selects = screen.getAllByRole('combobox');
+			// Status dropdown is the first select
+			const statusSelect = selects[0];
+			await fireEvent.change(statusSelect, { target: { value: 'fail' } });
+			await waitFor(() => {
+				expect(fetchJobs).toHaveBeenCalledWith(expect.objectContaining({ status: 'fail' }));
+			});
 		});
 	});
 
