@@ -52,6 +52,8 @@
 		return s !== 'waiting' && s !== 'transcoding' && s !== 'waiting_transcode' && s !== 'identifying' && s !== 'ready';
 	}));
 
+	let pageReady = $derived(dashReady && jobsData !== null);
+
 	let progressMap = $state<Record<number, RipProgress>>({});
 
 	function dismissJob(jobId: number) {
@@ -308,24 +310,22 @@
 	</div>
 
 	<!-- Job counts -->
-	{#if jobsStats}
-		<div class="flex flex-wrap gap-3">
-			{#each [
-				{ key: 'total' as const, label: 'Total', border: 'border-l-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-300' },
-				{ key: 'active' as const, label: 'Active', border: 'border-l-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-300' },
-				{ key: 'success' as const, label: 'Success', border: 'border-l-green-500', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-300' },
-				{ key: 'fail' as const, label: 'Failed', border: 'border-l-red-500', bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-300' },
-				{ key: 'waiting' as const, label: 'Waiting', border: 'border-l-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-300' }
-			] as card}
-				<div class="flex min-w-[100px] flex-1 items-center gap-3 rounded-lg border-l-4 {card.border} {card.bg} px-4 py-3">
-					<div>
-						<div class="text-2xl font-bold {card.text}">{jobsStats[card.key]}</div>
-						<div class="text-xs font-medium text-gray-500 dark:text-gray-400">{card.label}</div>
-					</div>
+	<div class="flex flex-wrap gap-3">
+		{#each [
+			{ key: 'total' as const, label: 'Total', border: 'border-l-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-300' },
+			{ key: 'active' as const, label: 'Active', border: 'border-l-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-300' },
+			{ key: 'success' as const, label: 'Success', border: 'border-l-green-500', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-300' },
+			{ key: 'fail' as const, label: 'Failed', border: 'border-l-red-500', bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-300' },
+			{ key: 'waiting' as const, label: 'Waiting', border: 'border-l-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-300' }
+		] as card}
+			<div class="flex min-w-[100px] flex-1 items-center gap-3 rounded-lg border-l-4 {card.border} {card.bg} px-4 py-3">
+				<div>
+					<div class="text-2xl font-bold {card.text}">{jobsStats?.[card.key] ?? '—'}</div>
+					<div class="text-xs font-medium text-gray-500 dark:text-gray-400">{card.label}</div>
 				</div>
-			{/each}
-		</div>
-	{/if}
+			</div>
+		{/each}
+	</div>
 
 	<!-- Global pause banner -->
 	{#if dashReady && !dash.ripping_enabled}
@@ -404,7 +404,7 @@
 	{/if}
 
 	<!-- Idle state -->
-	{#if dashReady && scanningJobs.length === 0 && waitingJobs.length === 0 && nonWaitingActiveJobs.length === 0 && dash.active_transcodes.length === 0}
+	{#if pageReady && scanningJobs.length === 0 && waitingJobs.length === 0 && nonWaitingActiveJobs.length === 0 && dash.active_transcodes.length === 0}
 		<section>
 			<div class="rounded-lg border border-primary/20 bg-surface p-6 text-center shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<svg class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -473,7 +473,12 @@
 					{jobsError}
 				</div>
 			{:else if jobsLoading}
-				<div class="py-8 text-center text-gray-400">Loading...</div>
+				<div class="flex items-center justify-center py-8">
+					<svg class="h-6 w-6 animate-spin text-gray-300 dark:text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+					</svg>
+				</div>
 			{:else if jobsData}
 				{#if viewMode === 'table'}
 					<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
