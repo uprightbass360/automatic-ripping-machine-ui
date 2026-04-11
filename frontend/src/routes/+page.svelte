@@ -52,8 +52,6 @@
 		return s !== 'waiting' && s !== 'transcoding' && s !== 'waiting_transcode' && s !== 'identifying' && s !== 'ready';
 	}));
 
-	let pageReady = $derived(dashReady && jobsData !== null);
-
 	let progressMap = $state<Record<number, RipProgress>>({});
 
 	function dismissJob(jobId: number) {
@@ -106,6 +104,7 @@
 
 	// --- Jobs section state ---
 	let jobsData = $state<JobListResponse | null>(null);
+	let pageReady = $derived(dashReady && jobsData !== null);
 	let jobsStats = $state<JobStats | null>(null);
 	let jobsError = $state<string | null>(null);
 	let jobsLoading = $state(true);
