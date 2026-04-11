@@ -16,6 +16,10 @@
 	let sidebarOpen = $state(false);
 	let togglingPause = $state(false);
 	let quickMenuOpen = $state(false);
+	const rippingCount = $derived($dashboard.active_jobs.filter(j => {
+		const s = j.status?.toLowerCase();
+		return s !== 'transcoding' && s !== 'waiting_transcode';
+	}).length);
 
 	function closeQuickMenu() {
 		quickMenuOpen = false;
@@ -165,8 +169,8 @@
 				<!-- Live activity -->
 				<div class="flex items-center gap-3 text-xs">
 					<a href="/settings#drives" class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">{$dashboard.db_available ? $dashboard.drives_online : '--'} drive{$dashboard.drives_online !== 1 ? 's' : ''}</a>
-					{#if $dashboard.active_jobs.length > 0}
-						<span class="font-semibold text-blue-600 dark:text-blue-400">{$dashboard.active_jobs.length} ripping</span>
+					{#if rippingCount > 0}
+						<span class="font-semibold text-blue-600 dark:text-blue-400">{rippingCount} ripping</span>
 					{/if}
 					{#if $dashboard.active_transcodes.length > 0}
 						<span class="font-semibold text-indigo-600 dark:text-indigo-400">{$dashboard.active_transcodes.length} transcoding</span>
