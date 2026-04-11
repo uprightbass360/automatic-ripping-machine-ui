@@ -4,7 +4,7 @@
 	import ProgressBar from './ProgressBar.svelte';
 	import { elapsedTime } from '$lib/utils/format';
 	import { discTypeLabel } from '$lib/utils/job-type';
-	import { posterSrc } from '$lib/utils/poster';
+	import PosterImage from './PosterImage.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import TimeAgo from './TimeAgo.svelte';
 	import { slide } from 'svelte/transition';
@@ -38,17 +38,8 @@
 >
 	<!-- Collapsed row -->
 	<div class="flex items-center gap-3 px-4 py-2.5 cursor-pointer">
-		<!-- Icon -->
-		{#if job.poster_url}
-			<img src={posterSrc(job.poster_url)} alt="" class="h-10 w-7 shrink-0 rounded-sm object-cover" />
-		{:else}
-			<div class="flex h-10 w-7 shrink-0 items-center justify-center rounded-sm bg-primary/15 text-primary dark:bg-primary/15">
-				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-					<circle cx="12" cy="12" r="10" />
-					<circle cx="12" cy="12" r="3" />
-				</svg>
-			</div>
-		{/if}
+		<!-- Poster thumbnail -->
+		<PosterImage url={job.poster_url} alt="" class="h-10 w-7 shrink-0 rounded-sm object-cover" />
 
 		<!-- Title -->
 		<h3 class="min-w-0 flex-shrink truncate font-semibold text-sm text-gray-900 dark:text-white">
@@ -130,9 +121,7 @@
 	{#if expanded}
 		<div transition:slide={{ duration: 200 }} class="border-t border-primary/10 px-4 py-3 dark:border-primary/15">
 			<div class="flex gap-4">
-				{#if job.poster_url}
-					<img src={posterSrc(job.poster_url)} alt={displayTitle} class="h-32 w-22 shrink-0 rounded-sm object-cover" />
-				{/if}
+				<PosterImage url={job.poster_url} alt={displayTitle} class="h-32 w-22 shrink-0 rounded-sm object-cover" />
 
 				<div class="min-w-0 flex-1">
 					<div class="mb-2">
