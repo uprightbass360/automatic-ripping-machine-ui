@@ -1,5 +1,25 @@
 # Changelog
 
+## [15.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.1.3...v15.2.0) (2026-04-11)
+
+
+### Features
+
+* disable file actions on read-only mounts ([c108534](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c108534e7908a42b137b1264572915a7dc6fc33d))
+* show read-only mount banner on files page ([a2d1d86](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a2d1d86b8a618707596191b940ecd5e5adb98b19))
+
+
+### Bug Fixes
+
+* file browser root tab highlights most specific matching root ([4af2721](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4af272104868abe149408109b44dcee415f5a6fc))
+* move pageReady declaration after jobsData to fix svelte-check ([953b162](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/953b1625ec294fe4fa74ff64a4456bc2e1abf35b))
+* reduce dashboard loading blink and layout shift ([2072c37](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2072c3749286347869ba9aa3a6839e7c378547c2))
+* replace filter pills with dropdown selects on dashboard ([8b05efd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8b05efd10f618d7142d401d6dd11007b14c53298))
+* topnav ripping count excludes jobs in transcoding status ([1933017](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/193301777a65e7c58d70e8cb19308b51e600d114))
+* unify poster placeholder across all components ([cf8cb3a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cf8cb3ae480f70616055f1aec3b98a0c15ea4c3c))
+* use disc icon for missing poster art across all views ([fe0d0a1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fe0d0a141dd1ddbf790f8f86c108ebaeacf78e04))
+* use PosterImage on job detail page, add style prop ([ed90012](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ed9001227793652487233a6845c00b63dde25ec6))
+
 ## [15.1.3](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.1.2...v15.1.3) (2026-04-11)
 
 
