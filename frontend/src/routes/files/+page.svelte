@@ -56,6 +56,17 @@
 
 	let isReadonly = $derived(listing?.readonly === true);
 
+	// Find the most specific (longest path) matching root for the current path
+	let activeRootPath = $derived.by(() => {
+		let best = '';
+		for (const r of roots) {
+			if ((currentPath === r.path || currentPath.startsWith(r.path + '/')) && r.path.length > best.length) {
+				best = r.path;
+			}
+		}
+		return best;
+	});
+
 	let sortedEntries = $derived.by(() => {
 		if (!listing) return [];
 		return [...listing.entries].sort((a, b) => {
@@ -460,8 +471,8 @@
 					<button
 						type="button"
 						onclick={() => navigate(root.path)}
-						class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
-							{currentPath.startsWith(root.path)
+							class="whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors
+							{root.path === activeRootPath
 								? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark'
 								: 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}"
 					>
@@ -470,7 +481,7 @@
 				{/each}
 			</nav>
 		</div>
-		{@const activeRoot = roots.find(r => currentPath.startsWith(r.path))}
+		{@const activeRoot = roots.find(r => r.path === activeRootPath)}
 		{#if activeRoot}
 			<details class="mt-2 text-xs text-gray-400 dark:text-gray-500">
 				<summary class="cursor-pointer select-none font-semibold uppercase tracking-wide hover:text-gray-500 dark:hover:text-gray-400">Paths</summary>
