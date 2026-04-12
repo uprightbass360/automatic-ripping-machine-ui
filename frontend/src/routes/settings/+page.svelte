@@ -737,6 +737,7 @@
 		AUDIO_FORMAT: { label: 'Audio Format', description: 'Output format for music CD ripping (passed to abcde -o)' },
 		ABCDE_CONFIG_FILE: { label: 'abcde Config File', description: 'Path to the abcde configuration file for CD ripping' },
 		RIP_SPEED_PROFILE: { label: 'Rip Speed Profile', description: '"safe" = full paranoia (best for scratched discs), "fast" = less paranoia (~2-4x faster), "fastest" = no error correction (pristine discs only)' },
+		CD_RIP_TIMEOUT: { label: 'CD Rip Timeout', description: 'Seconds to wait for cdparanoia output before killing a stalled rip. Set 0 to disable. Default 600 (10 min).' },
 		MUSIC_MULTI_DISC_SUBFOLDERS: { label: 'Multi-Disc Subfolders', description: 'Create per-disc subfolders for multi-CD sets (e.g. Artist/Album/Disc 1/)' },
 		MUSIC_DISC_FOLDER_PATTERN: { label: 'Disc Folder Pattern', description: 'Folder name for each disc in a multi-disc set. {num} = disc number. Examples: "Disc {num}", "CD {num}"' },
 		// Metadata
@@ -869,8 +870,8 @@
 			{ label: 'Metadata', subpanels: [
 				{ keys: ['GET_AUDIO_TITLE'] },
 			]},
-			{ label: 'Rip Speed', subpanels: [
-				{ keys: ['RIP_SPEED_PROFILE'] },
+			{ label: 'CD Ripping', subpanels: [
+				{ keys: ['RIP_SPEED_PROFILE', 'CD_RIP_TIMEOUT'] },
 			]},
 			{ label: 'Naming Patterns', subpanels: [
 				{ keys: ['MUSIC_TITLE_PATTERN', 'MUSIC_FOLDER_PATTERN'] },
