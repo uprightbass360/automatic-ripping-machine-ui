@@ -376,7 +376,7 @@
 			<SectionFrame variant="full" accent="var(--color-primary)" label="ACTIVE RIPS — {nonWaitingActiveJobs.length} IN PROGRESS">
 				<div class="space-y-2">
 					{#each nonWaitingActiveJobs as job (job.job_id)}
-						<ActiveJobRow {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} />
+						<ActiveJobRow {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} tracksRipped={progressMap[job.job_id]?.tracks_ripped} tracksTotal={progressMap[job.job_id]?.tracks_total} />
 					{/each}
 				</div>
 			</SectionFrame>
