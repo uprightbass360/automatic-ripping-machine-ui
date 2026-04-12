@@ -104,4 +104,17 @@ describe('Job Detail Page', () => {
 			expect(container).toBeInTheDocument();
 		});
 	});
+
+	describe('error handling', () => {
+		it('redirects to home on 404', async () => {
+			const { fetchJob } = await import('$lib/api/jobs');
+			const { goto } = await import('$app/navigation');
+			vi.mocked(fetchJob).mockRejectedValueOnce(new Error('404 Not Found'));
+
+			renderComponent(JobDetailPage);
+			await waitFor(() => {
+				expect(goto).toHaveBeenCalledWith('/');
+			});
+		});
+	});
 });
