@@ -99,8 +99,14 @@ def _minlength(job) -> int:
 
 
 def _rippable_tracks(job) -> list:
-    """Return tracks above minlength (the ones ARM will actually rip)."""
+    """Return tracks above minlength (the ones ARM will actually rip).
+
+    Music discs skip the minlength filter — all CD tracks are ripped
+    regardless of length (MINLENGTH is a video-only setting).
+    """
     tracks = list(job.tracks) if job.tracks else []
+    if getattr(job, "disctype", None) == "music":
+        return tracks
     ml = _minlength(job)
     if ml <= 0:
         return tracks
