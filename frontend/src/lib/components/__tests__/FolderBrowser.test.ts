@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import FolderBrowser from '../FolderBrowser.svelte';
+import { createFolderEntry } from '../__fixtures__/files';
 
 import { fetchIngressRoot, fetchIngressDirectory } from '$lib/api/folder';
+
+const movieFolder = createFolderEntry('Movie_Folder');
+const tvShowFolder = createFolderEntry('TV_Show', '2025-06-14T10:00:00Z');
+const subFolder = createFolderEntry('Subfolder');
 
 vi.mock('$lib/api/folder', () => ({
 	fetchIngressRoot: vi.fn(() => Promise.resolve([
@@ -10,10 +15,7 @@ vi.mock('$lib/api/folder', () => ({
 	])),
 	fetchIngressDirectory: vi.fn(() => Promise.resolve({
 		path: '/home/arm/ingress',
-		entries: [
-			{ name: 'Movie_Folder', type: 'directory', size: 4294967296, modified: '2025-06-15T12:00:00Z', extension: '', category: 'directory', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' },
-			{ name: 'TV_Show', type: 'directory', size: 2147483648, modified: '2025-06-14T10:00:00Z', extension: '', category: 'directory', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' }
-		]
+		entries: [movieFolder, tvShowFolder]
 	}))
 }));
 
@@ -29,6 +31,35 @@ const mockFetchIngressDirectory = vi.mocked(fetchIngressDirectory);
 // jsdom does not implement scrollTo
 HTMLElement.prototype.scrollTo = vi.fn();
 
+function renderBrowser() {
+	return renderComponent(FolderBrowser, { onselect: vi.fn() });
+}
+
+async function waitForEntries() {
+	await waitFor(() => {
+		expect(screen.getByText('Movie_Folder')).toBeInTheDocument();
+	});
+}
+
+/** Navigate into Movie_Folder and wait for the ".." back-row to appear. */
+async function navigateIntoSubfolder() {
+	mockFetchIngressDirectory.mockResolvedValueOnce({
+		path: '/home/arm/ingress',
+		entries: [{ ...movieFolder, size: 4294967296 }]
+	} as any).mockResolvedValueOnce({
+		path: '/home/arm/ingress/Movie_Folder',
+		entries: [{ ...subFolder, size: 1024 }]
+	} as any);
+
+	renderBrowser();
+	await waitForEntries();
+
+	await fireEvent.dblClick(screen.getByText('Movie_Folder'));
+	await waitFor(() => {
+		expect(screen.getByText('..')).toBeInTheDocument();
+	});
+}
+
 describe('FolderBrowser', () => {
 	afterEach(() => {
 		cleanup();
@@ -36,14 +67,14 @@ describe('FolderBrowser', () => {
 	});
 
 	it('renders path bar with current path', async () => {
-		renderComponent(FolderBrowser, { onselect: vi.fn() });
+		renderBrowser();
 		await waitFor(() => {
 			expect(screen.getByText('/home/arm/ingress')).toBeInTheDocument();
 		});
 	});
 
 	it('renders directory entries in table', async () => {
-		renderComponent(FolderBrowser, { onselect: vi.fn() });
+		renderBrowser();
 		await waitFor(() => {
 			expect(screen.getByText('Movie_Folder')).toBeInTheDocument();
 			expect(screen.getByText('TV_Show')).toBeInTheDocument();
@@ -51,54 +82,13 @@ describe('FolderBrowser', () => {
 	});
 
 	it('shows .. row when navigated past root', async () => {
-		mockFetchIngressDirectory.mockResolvedValueOnce({
-			path: '/home/arm/ingress',
-			entries: [
-				{ name: 'Movie_Folder', type: 'directory', size: 4294967296, modified: '2025-06-15T12:00:00Z', extension: '', category: 'directory', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' }
-			]
-		} as any).mockResolvedValueOnce({
-			path: '/home/arm/ingress/Movie_Folder',
-			entries: [
-				{ name: 'Subfolder', type: 'directory', size: 1024, modified: '2025-06-15T12:00:00Z', extension: '', category: 'directory', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' }
-			]
-		} as any);
-
-		renderComponent(FolderBrowser, { onselect: vi.fn() });
-		await waitFor(() => {
-			expect(screen.getByText('Movie_Folder')).toBeInTheDocument();
-		});
-
-		// Double-click to navigate into Movie_Folder
-		await fireEvent.dblClick(screen.getByText('Movie_Folder'));
-		await waitFor(() => {
-			expect(screen.getByText('..')).toBeInTheDocument();
-		});
+		await navigateIntoSubfolder();
+		// ".." is already asserted inside navigateIntoSubfolder
 	});
 
 	it('clicking .. navigates up', async () => {
-		mockFetchIngressDirectory.mockResolvedValueOnce({
-			path: '/home/arm/ingress',
-			entries: [
-				{ name: 'Movie_Folder', type: 'directory', size: 4294967296, modified: '2025-06-15T12:00:00Z', extension: '', category: 'directory', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' }
-			]
-		} as any).mockResolvedValueOnce({
-			path: '/home/arm/ingress/Movie_Folder',
-			entries: [
-				{ name: 'Subfolder', type: 'directory', size: 1024, modified: '2025-06-15T12:00:00Z', extension: '', category: 'directory', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' }
-			]
-		} as any);
+		await navigateIntoSubfolder();
 
-		renderComponent(FolderBrowser, { onselect: vi.fn() });
-		await waitFor(() => {
-			expect(screen.getByText('Movie_Folder')).toBeInTheDocument();
-		});
-
-		await fireEvent.dblClick(screen.getByText('Movie_Folder'));
-		await waitFor(() => {
-			expect(screen.getByText('..')).toBeInTheDocument();
-		});
-
-		// Click the .. row to go back
 		await fireEvent.click(screen.getByText('..'));
 		await waitFor(() => {
 			expect(mockFetchIngressDirectory).toHaveBeenCalledWith('/home/arm/ingress');
@@ -106,20 +96,15 @@ describe('FolderBrowser', () => {
 	});
 
 	it('filter input is disabled when 5 or fewer directories', async () => {
-		renderComponent(FolderBrowser, { onselect: vi.fn() });
-		await waitFor(() => {
-			expect(screen.getByText('Movie_Folder')).toBeInTheDocument();
-		});
+		renderBrowser();
+		await waitForEntries();
 		const filterInput = screen.getByPlaceholderText('Filter folders...');
 		expect(filterInput).toBeDisabled();
 	});
 
 	it('sort buttons render in table header', async () => {
-		renderComponent(FolderBrowser, { onselect: vi.fn() });
-		await waitFor(() => {
-			expect(screen.getByText('Movie_Folder')).toBeInTheDocument();
-		});
-		// Sort buttons contain the text Name, Size, Modified (possibly with sort indicator)
+		renderBrowser();
+		await waitForEntries();
 		expect(screen.getByText(/^Name/)).toBeInTheDocument();
 		expect(screen.getByText(/^Size/)).toBeInTheDocument();
 		expect(screen.getByText(/^Modified/)).toBeInTheDocument();
@@ -131,17 +116,16 @@ describe('FolderBrowser', () => {
 			entries: []
 		} as any);
 
-		renderComponent(FolderBrowser, { onselect: vi.fn() });
+		renderBrowser();
 		await waitFor(() => {
 			expect(screen.getByText('No subdirectories found.')).toBeInTheDocument();
 		});
 	});
 
 	it('shows loading text before directory loads', async () => {
-		// Make the directory fetch hang indefinitely
 		mockFetchIngressDirectory.mockImplementationOnce(() => new Promise(() => {}));
 
-		renderComponent(FolderBrowser, { onselect: vi.fn() });
+		renderBrowser();
 
 		await waitFor(() => {
 			expect(screen.getByText('Loading...')).toBeInTheDocument();

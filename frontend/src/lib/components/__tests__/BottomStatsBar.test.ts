@@ -39,40 +39,46 @@ const gpuData = {
 const hwInfo = { cpu: 'Intel i7-12700', memory_total_gb: 16 };
 const transcoderInfo = { cpu: 'AMD Ryzen 9', memory_total_gb: 32 };
 
+/** Render BottomStatsBar with ripper defaults. Extra props merged on top. */
+function renderBar(extraProps: Record<string, unknown> = {}) {
+	return renderComponent(BottomStatsBar, {
+		props: { systemInfo: hwInfo, systemStats, ...extraProps }
+	});
+}
+
+/** Render with full transcoder props (optionally with GPU). */
+function renderWithTranscoder(gpu: typeof gpuData | null = null) {
+	return renderBar({
+		transcoderInfo,
+		transcoderStats: gpu ? { ...transcoderStats, gpu } : transcoderStats
+	});
+}
+
 describe('BottomStatsBar', () => {
 	afterEach(() => cleanup());
 
 	it('renders Ripper and Transcoder toggle buttons', () => {
-		renderComponent(BottomStatsBar, {
-			props: { systemInfo: hwInfo, systemStats }
-		});
+		renderBar();
 		expect(screen.getByText('Ripper')).toBeInTheDocument();
 		expect(screen.getByText('Transcoder')).toBeInTheDocument();
 	});
 
 	it('shows CPU percentage when systemStats provided', () => {
-		renderComponent(BottomStatsBar, {
-			props: { systemInfo: hwInfo, systemStats }
-		});
+		renderBar();
 		expect(screen.getByText('CPU')).toBeInTheDocument();
 		expect(screen.getByText('25%')).toBeInTheDocument();
 	});
 
 	it('shows memory stats when systemStats provided', () => {
-		renderComponent(BottomStatsBar, {
-			props: { systemInfo: hwInfo, systemStats }
-		});
+		renderBar();
 		expect(screen.getByText('Mem')).toBeInTheDocument();
 		expect(screen.getByText('4 / 16 GB')).toBeInTheDocument();
 	});
 
 	it('shows storage volumes with links when ripper panel active', () => {
-		renderComponent(BottomStatsBar, {
-			props: { systemInfo: hwInfo, systemStats }
-		});
+		renderBar();
 		expect(screen.getByText('Raw')).toBeInTheDocument();
 		expect(screen.getByText('Completed')).toBeInTheDocument();
-		// Storage items should be links in ripper panel
 		const rawLink = screen.getByText('Raw').closest('a');
 		expect(rawLink).toBeInTheDocument();
 		expect(rawLink).toHaveAttribute('href', '/files?path=%2Fhome%2Farm%2Fmedia%2Fraw');
@@ -82,58 +88,33 @@ describe('BottomStatsBar', () => {
 	});
 
 	it('shows free GB for storage volumes', () => {
-		renderComponent(BottomStatsBar, {
-			props: { systemInfo: hwInfo, systemStats }
-		});
+		renderBar();
 		expect(screen.getByText('900 GB')).toBeInTheDocument();
 		expect(screen.getByText('800 GB')).toBeInTheDocument();
 	});
 
 	it('shows offline message when armOnline is false', () => {
-		renderComponent(BottomStatsBar, {
-			props: { systemInfo: hwInfo, systemStats, armOnline: false }
-		});
+		renderBar({ armOnline: false });
 		expect(screen.getByText('Cannot reach the ARM ripping service')).toBeInTheDocument();
 	});
 
 	it('switches to transcoder panel and shows transcoder stats', async () => {
-		renderComponent(BottomStatsBar, {
-			props: {
-				systemInfo: hwInfo,
-				systemStats,
-				transcoderInfo,
-				transcoderStats
-			}
-		});
+		renderWithTranscoder();
 		await fireEvent.click(screen.getByText('Transcoder'));
 		expect(screen.getByText('60%')).toBeInTheDocument();
 		expect(screen.getByText('8 / 32 GB')).toBeInTheDocument();
 	});
 
 	it('shows transcoder storage as plain text (not links)', async () => {
-		renderComponent(BottomStatsBar, {
-			props: {
-				systemInfo: hwInfo,
-				systemStats,
-				transcoderInfo,
-				transcoderStats
-			}
-		});
+		renderWithTranscoder();
 		await fireEvent.click(screen.getByText('Transcoder'));
 		expect(screen.getByText('Work')).toBeInTheDocument();
-		// Storage items should NOT be links in transcoder panel
 		const workEl = screen.getByText('Work');
 		expect(workEl.closest('a')).toBeNull();
 	});
 
 	it('shows transcoder offline message when transcoderOnline is false', async () => {
-		renderComponent(BottomStatsBar, {
-			props: {
-				systemInfo: hwInfo,
-				systemStats,
-				transcoderOnline: false
-			}
-		});
+		renderBar({ transcoderOnline: false });
 		await fireEvent.click(screen.getByText('Transcoder'));
 		expect(screen.getByText('Cannot reach the transcoder service')).toBeInTheDocument();
 	});
@@ -142,47 +123,24 @@ describe('BottomStatsBar', () => {
 		renderComponent(BottomStatsBar, {
 			props: { systemInfo: null, systemStats: null }
 		});
-		// Toggle buttons should still render
 		expect(screen.getByText('Ripper')).toBeInTheDocument();
-		// But no CPU/Mem/Storage
 		expect(screen.queryByText('CPU')).not.toBeInTheDocument();
 		expect(screen.queryByText('Mem')).not.toBeInTheDocument();
 	});
 
 	describe('GPU tab', () => {
 		it('shows GPU toggle when transcoder has GPU data', () => {
-			renderComponent(BottomStatsBar, {
-				props: {
-					systemInfo: hwInfo,
-					systemStats,
-					transcoderInfo,
-					transcoderStats: { ...transcoderStats, gpu: gpuData }
-				}
-			});
+			renderWithTranscoder(gpuData);
 			expect(screen.getByText('GPU')).toBeInTheDocument();
 		});
 
 		it('does not show GPU toggle when gpu is null', () => {
-			renderComponent(BottomStatsBar, {
-				props: {
-					systemInfo: hwInfo,
-					systemStats,
-					transcoderInfo,
-					transcoderStats
-				}
-			});
+			renderWithTranscoder();
 			expect(screen.queryByRole('button', { name: 'GPU' })).not.toBeInTheDocument();
 		});
 
 		it('shows GPU metrics when GPU tab clicked', async () => {
-			renderComponent(BottomStatsBar, {
-				props: {
-					systemInfo: hwInfo,
-					systemStats,
-					transcoderInfo,
-					transcoderStats: { ...transcoderStats, gpu: gpuData }
-				}
-			});
+			renderWithTranscoder(gpuData);
 			await fireEvent.click(screen.getByText('GPU'));
 			expect(screen.getByText('nvidia')).toBeInTheDocument();
 			expect(screen.getByText('Load')).toBeInTheDocument();
@@ -194,14 +152,7 @@ describe('BottomStatsBar', () => {
 		});
 
 		it('shows power and clock on GPU tab', async () => {
-			renderComponent(BottomStatsBar, {
-				props: {
-					systemInfo: hwInfo,
-					systemStats,
-					transcoderInfo,
-					transcoderStats: { ...transcoderStats, gpu: gpuData }
-				}
-			});
+			renderWithTranscoder(gpuData);
 			await fireEvent.click(screen.getByText('GPU'));
 			expect(screen.getByText(/220W/)).toBeInTheDocument();
 			expect(screen.getByText(/300W/)).toBeInTheDocument();
@@ -209,14 +160,7 @@ describe('BottomStatsBar', () => {
 		});
 
 		it('shows GPU temperature on GPU tab', async () => {
-			renderComponent(BottomStatsBar, {
-				props: {
-					systemInfo: hwInfo,
-					systemStats,
-					transcoderInfo,
-					transcoderStats: { ...transcoderStats, gpu: gpuData }
-				}
-			});
+			renderWithTranscoder(gpuData);
 			await fireEvent.click(screen.getByText('GPU'));
 			expect(screen.getByText(/72/)).toBeInTheDocument();
 		});

@@ -1,6 +1,6 @@
-import type { Job } from '$lib/types/arm';
+import type { Job, JobDetail, Track } from '$lib/types/arm';
 
-const defaults: Job = {
+const jobDefaults: Job = {
 	job_id: 1,
 	arm_version: '2.0',
 	crc_id: null,
@@ -63,5 +63,40 @@ const defaults: Job = {
 };
 
 export function createJob(overrides: Partial<Job> = {}): Job {
-	return { ...defaults, ...overrides };
+	return { ...jobDefaults, ...overrides };
+}
+
+const trackDefaults: Track = {
+	track_id: 1,
+	job_id: 1,
+	track_number: '0',
+	length: 2750,
+	filename: 't00.mkv',
+	orig_filename: null,
+	new_filename: null,
+	status: null,
+	error: null,
+	source: null,
+	enabled: true,
+	aspect_ratio: '16:9',
+	fps: 23.976,
+	ripped: false,
+	basename: null,
+	title: null,
+	year: null,
+	imdb_id: null,
+	video_type: null,
+	poster_url: null,
+	episode_number: null,
+	episode_name: null,
+	custom_filename: null
+};
+
+export function createTrack(overrides: Partial<Track> = {}): Track {
+	return { ...trackDefaults, ...overrides };
+}
+
+export function createJobDetail(overrides: Partial<JobDetail> = {}): JobDetail {
+	const { tracks = [], config = null, ...jobOverrides } = overrides;
+	return { ...createJob(jobOverrides), tracks, config };
 }
