@@ -143,9 +143,9 @@ class TestGetMusicProgress:
             mock_settings.arm_log_path = str(tmp_path)
             result = get_music_progress("music.log", total_tracks=3)
         assert result["progress"] is not None
-        assert result["progress"] == pytest.approx(round(1 / 3 * 100, 1))
-        assert "tagged" in result["stage"]
-        assert "1/3" in result["stage"]
+        assert result["progress"] == pytest.approx(round(2 / 3 * 100, 1))
+        assert "tagging" in result["stage"]
+        assert "2/3" in result["stage"]
 
     def test_grabbing_only_phase_ripping(self, tmp_path):
         """Log with only Grabbing lines returns phase='ripping'."""
@@ -172,7 +172,7 @@ class TestGetMusicProgress:
             mock_settings.arm_log_path = str(tmp_path)
             result = get_music_progress("music.log", total_tracks=2)
         assert "encoding" in result["stage"]
-        assert result["progress"] == pytest.approx(0.0)
+        assert result["progress"] == pytest.approx(50.0)  # 1 encoded / 2 total
 
     def test_empty_log(self, tmp_path):
         """Empty log file returns None/None."""
