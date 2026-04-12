@@ -14,9 +14,15 @@
 		driveNames?: Record<string, string>;
 		progress?: number | null;
 		progressStage?: string | null;
+		tracksRipped?: number | null;
+		tracksTotal?: number | null;
 	}
 
-	let { job, driveNames = {}, progress = null, progressStage = null }: Props = $props();
+	let { job, driveNames = {}, progress = null, progressStage = null, tracksRipped = null, tracksTotal = null }: Props = $props();
+
+	// Use progress-polled counts when available (real-time), fall back to DB counts
+	let displayRipped = $derived(tracksRipped ?? job.tracks_ripped ?? 0);
+	let displayTotal = $derived(tracksTotal ?? job.tracks_total ?? 0);
 	let expanded = $state(false);
 
 	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
@@ -96,9 +102,9 @@
 		{/if}
 
 		<!-- Track counts -->
-		{#if active && job.tracks_total != null && job.tracks_total > 0 && !isFolderImport}
+		{#if active && displayTotal > 0 && !isFolderImport}
 			<span class="hidden lg:inline shrink-0 text-xs text-gray-500 dark:text-gray-400">
-				{job.tracks_ripped ?? 0}/{job.tracks_total}
+				{displayRipped}/{displayTotal}
 			</span>
 		{/if}
 
@@ -213,8 +219,8 @@
 							<tr>
 								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Tracks</td>
 								<td class="py-1 text-gray-900 dark:text-white">
-									{#if !isFolderImport && job.tracks_total != null && job.tracks_total > 0}
-										{job.tracks_ripped ?? 0} / {job.tracks_total} ripped
+									{#if !isFolderImport && displayTotal > 0}
+										{displayRipped} / {displayTotal} ripped
 									{:else if job.no_of_titles != null}
 										{job.no_of_titles} title{job.no_of_titles === 1 ? '' : 's'}
 									{:else}
