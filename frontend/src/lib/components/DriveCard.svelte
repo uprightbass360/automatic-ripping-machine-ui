@@ -56,7 +56,7 @@
 	] as const;
 
 	async function savePrescanField(field: typeof PRESCAN_FIELDS[number]) {
-		const trimmed = field.input().trim();
+		const trimmed = (field.input() ?? '').trim();
 		let newVal = trimmed === '' ? null : parseInt(trimmed, 10);
 		if (newVal !== null && (isNaN(newVal) || newVal < field.min || newVal > field.max)) return;
 		// If the value matches the global default, store null (use global)
@@ -85,7 +85,7 @@
 	});
 
 	async function saveSpeed() {
-		const trimmed = speedInput.trim();
+		const trimmed = (speedInput ?? '').trim();
 		const newSpeed = trimmed === '' ? null : parseInt(trimmed, 10);
 
 		// Skip save if value hasn't changed
