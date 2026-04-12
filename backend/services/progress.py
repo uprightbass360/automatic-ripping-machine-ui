@@ -121,6 +121,8 @@ def get_music_progress(logfile: str | None, total_tracks: int) -> dict:
         phase = "ripping"
 
     result["stage"] = f"{completed}/{total} - {phase} track {current_track}"
+    result["tracks_ripped"] = completed
+    result["tracks_total"] = total
     if total > 0:
         result["progress"] = round(completed / total * 100, 1)
 
