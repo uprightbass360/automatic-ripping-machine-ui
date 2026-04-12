@@ -204,7 +204,7 @@
 			});
 		} catch (e) {
 			if (e instanceof Error && e.message.includes('404')) {
-				goto('/jobs');
+				goto('/');
 				return;
 			}
 			error = e instanceof Error ? e.message : 'Failed to load job';
