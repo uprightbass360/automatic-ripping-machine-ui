@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, cleanup } from '$lib/test-utils';
 import EpisodeMatch from './EpisodeMatch.svelte';
-import type { JobDetail, Track } from '$lib/types/arm';
+import { createJobDetail, createTrack } from './__fixtures__/job';
 
 vi.mock('$lib/api/jobs', () => ({
 	tvdbMatch: vi.fn(() => Promise.resolve({
@@ -18,83 +18,12 @@ vi.mock('$lib/api/jobs', () => ({
 	fetchNamingPreview: vi.fn(() => Promise.resolve({ success: true, tracks: [] }))
 }));
 
-function createJobDetail(overrides: Partial<JobDetail> = {}): JobDetail {
-	return {
-		job_id: 1,
-		arm_version: '2.0',
-		crc_id: null,
-		logfile: null,
-		start_time: '2025-06-15T10:00:00Z',
-		stop_time: null,
-		job_length: null,
-		status: 'waiting',
-		stage: null,
-		no_of_titles: 3,
-		title: 'Test Show',
-		title_auto: null,
-		title_manual: null,
-		year: '2024',
-		year_auto: null,
-		year_manual: null,
-		video_type: 'series',
-		video_type_auto: null,
-		video_type_manual: null,
-		imdb_id: 'tt1234567',
-		imdb_id_auto: null,
-		imdb_id_manual: null,
-		poster_url: null,
-		poster_url_auto: null,
-		poster_url_manual: null,
-		devpath: '/dev/sr0',
-		mountpoint: null,
-		hasnicetitle: null,
-		errors: null,
-		disctype: 'bluray',
-		label: 'TEST_SHOW',
-		path: null,
-		raw_path: null,
-		transcode_path: null,
-		artist: null,
-		artist_auto: null,
-		artist_manual: null,
-		album: null,
-		album_auto: null,
-		album_manual: null,
-		season: null,
-		season_auto: null,
-		season_manual: null,
-		episode: null,
-		episode_auto: null,
-		episode_manual: null,
-		transcode_overrides: null,
-		multi_title: null,
-		title_pattern_override: null,
-		folder_pattern_override: null,
-		disc_number: null,
-		disc_total: null,
-		ejected: null,
-		pid: null,
-		manual_pause: null,
-		wait_start_time: null,
-		tracks_total: null,
-		tracks_ripped: null,
-		tvdb_id: null,
-		tracks: [],
-		config: null,
-		...overrides
-	};
-}
-
-function createTrack(overrides: Partial<Track> = {}): Track {
-	return {
-		track_id: 1, job_id: 1, track_number: '0', length: 2750,
-		filename: 't00.mkv', orig_filename: null, new_filename: null,
-		status: null, error: null, source: null, enabled: true,
-		aspect_ratio: '16:9', fps: 23.976, ripped: false, basename: null,
-		title: null, year: null, imdb_id: null, video_type: null,
-		poster_url: null, episode_number: null, episode_name: null, custom_filename: null,
-		...overrides
-	};
+/** Create a series JobDetail with common defaults for EpisodeMatch tests. */
+function seriesJob(overrides: Partial<Parameters<typeof createJobDetail>[0]> = {}) {
+	return createJobDetail({
+		title: 'Test Show', video_type: 'series', imdb_id: 'tt1234567',
+		label: 'TEST_SHOW', status: 'waiting', ...overrides
+	});
 }
 
 describe('EpisodeMatch', () => {
@@ -106,14 +35,14 @@ describe('EpisodeMatch', () => {
 	describe('empty states', () => {
 		it('renders "No IMDB or TVDB ID" message when both are null', () => {
 			renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ tvdb_id: null, imdb_id: null, tracks: [] }) }
+				props: { job: seriesJob({ tvdb_id: null, imdb_id: null, tracks: [] }) }
 			});
 			expect(screen.getByText(/No IMDB or TVDB ID set/)).toBeInTheDocument();
 		});
 
 		it('renders "No tracks found" when tvdb_id set but empty tracks', () => {
 			renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ tvdb_id: 12345, tracks: [] }) }
+				props: { job: seriesJob({ tvdb_id: 12345, tracks: [] }) }
 			});
 			expect(screen.getByText(/No tracks found/)).toBeInTheDocument();
 		});
@@ -122,7 +51,7 @@ describe('EpisodeMatch', () => {
 	describe('controls bar', () => {
 		it('renders Season, Disc, Tolerance labels', () => {
 			renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail() }
+				props: { job: seriesJob() }
 			});
 			expect(screen.getByText('Season')).toBeInTheDocument();
 			expect(screen.getByText('Disc')).toBeInTheDocument();
@@ -131,14 +60,14 @@ describe('EpisodeMatch', () => {
 
 		it('renders Match button', () => {
 			renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail() }
+				props: { job: seriesJob() }
 			});
 			expect(screen.getByText('Match')).toBeInTheDocument();
 		});
 
 		it('season input prefills from job.season', () => {
 			const { container } = renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ season: '3' }) }
+				props: { job: seriesJob({ season: '3' }) }
 			});
 			const inputs = container.querySelectorAll('input[type="number"]');
 			expect((inputs[0] as HTMLInputElement).value).toBe('3');
@@ -146,7 +75,7 @@ describe('EpisodeMatch', () => {
 
 		it('season input prefills from job.season_auto when season is null', () => {
 			const { container } = renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ season: null, season_auto: '2' }) }
+				props: { job: seriesJob({ season: null, season_auto: '2' }) }
 			});
 			const inputs = container.querySelectorAll('input[type="number"]');
 			expect((inputs[0] as HTMLInputElement).value).toBe('2');
@@ -154,7 +83,7 @@ describe('EpisodeMatch', () => {
 
 		it('disc input prefills from job.disc_number', () => {
 			const { container } = renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ disc_number: 4 }) }
+				props: { job: seriesJob({ disc_number: 4 }) }
 			});
 			const inputs = container.querySelectorAll('input[type="number"]');
 			expect((inputs[1] as HTMLInputElement).value).toBe('4');
@@ -162,7 +91,7 @@ describe('EpisodeMatch', () => {
 
 		it('disc total input prefills from job.disc_total', () => {
 			const { container } = renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ disc_total: 6 }) }
+				props: { job: seriesJob({ disc_total: 6 }) }
 			});
 			const inputs = container.querySelectorAll('input[type="number"]');
 			expect((inputs[2] as HTMLInputElement).value).toBe('6');
@@ -170,7 +99,7 @@ describe('EpisodeMatch', () => {
 
 		it('tolerance defaults to 600', () => {
 			const { container } = renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail() }
+				props: { job: seriesJob() }
 			});
 			const inputs = container.querySelectorAll('input[type="number"]');
 			expect((inputs[3] as HTMLInputElement).value).toBe('600');
@@ -202,7 +131,7 @@ describe('EpisodeMatch', () => {
 			});
 
 			const { container } = renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ imdb_id: 'tt1234567', tracks: [createTrack()] }) }
+				props: { job: seriesJob({ imdb_id: 'tt1234567', tracks: [createTrack()] }) }
 			});
 
 			// Wait for auto-match to complete
@@ -245,7 +174,7 @@ describe('EpisodeMatch', () => {
 			});
 
 			const { container } = renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ imdb_id: 'tt1234567', tracks: [createTrack()] }) }
+				props: { job: seriesJob({ imdb_id: 'tt1234567', tracks: [createTrack()] }) }
 			});
 
 			await vi.waitFor(() => {
@@ -283,7 +212,7 @@ describe('EpisodeMatch', () => {
 			];
 
 			const { container } = renderComponent(EpisodeMatch, {
-				props: { job: createJobDetail({ imdb_id: 'tt1234567', tracks }) }
+				props: { job: seriesJob({ imdb_id: 'tt1234567', tracks }) }
 			});
 
 			await vi.waitFor(() => {

@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import FilesPage from '../+page.svelte';
+import { createFileEntry, createFolderEntry } from '$lib/components/__fixtures__/files';
 
 import { fetchRoots, fetchDirectory } from '$lib/api/files';
 import { fetchOrphanFolders, cleanupTranscoder } from '$lib/api/maintenance';
+
+const defaultEntries = [
+	createFileEntry('movie.mkv', 4294967296),
+	createFolderEntry('subfolder', '2025-06-14T10:00:00Z'),
+	createFileEntry('show.mkv', 2147483648, 'mkv')
+];
 
 vi.mock('$app/stores', async () => {
 	const { readable } = await import('svelte/store');
@@ -21,9 +28,9 @@ vi.mock('$lib/api/files', () => ({
 		path: '/media/raw',
 		parent: null,
 		entries: [
-			{ name: 'movie.mkv', type: 'file', size: 4294967296, modified: '2025-06-15T12:00:00Z', extension: 'mkv', category: 'video', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' },
-			{ name: 'subfolder', type: 'directory', size: 0, modified: '2025-06-14T10:00:00Z', extension: '', category: 'directory', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' },
-			{ name: 'show.mkv', type: 'file', size: 2147483648, modified: '2025-06-13T08:00:00Z', extension: 'mkv', category: 'video', permissions: 'rwxr-xr-x', owner: 'arm', group: 'arm' }
+			createFileEntry('movie.mkv', 4294967296),
+			createFolderEntry('subfolder', '2025-06-14T10:00:00Z'),
+			createFileEntry('show.mkv', 2147483648, 'mkv')
 		]
 	})),
 	renameFile: vi.fn(() => Promise.resolve()),

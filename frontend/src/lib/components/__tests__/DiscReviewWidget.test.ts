@@ -38,6 +38,25 @@ function renderWidget(overrides = {}) {
 	});
 }
 
+/** Open the Info panel and wait for the Title field to appear. */
+async function openInfoPanel() {
+	await fireEvent.click(screen.getByText('Info'));
+	await waitFor(() => {
+		expect(screen.getByText('Title')).toBeInTheDocument();
+	});
+}
+
+/** Open Info panel and edit the title field, triggering the save bar. */
+async function editTitleField(newValue = 'Changed Title') {
+	await openInfoPanel();
+	const titleLabel = screen.getByText('Title');
+	const titleInput = titleLabel.closest('label')!.querySelector('input')!;
+	await fireEvent.input(titleInput, { target: { value: newValue } });
+	await waitFor(() => {
+		expect(screen.queryAllByText('Unsaved changes').length).toBeGreaterThanOrEqual(1);
+	});
+}
+
 describe('DiscReviewWidget', () => {
 	afterEach(() => {
 		cleanup();
@@ -47,42 +66,18 @@ describe('DiscReviewWidget', () => {
 	describe('save bar', () => {
 		it('does not show save bar on initial load', async () => {
 			renderWidget();
-			// Click "Info" to open the info panel
-			await fireEvent.click(screen.getByText('Info'));
-			await waitFor(() => {
-				expect(screen.getByText('Title')).toBeInTheDocument();
-			});
-			// Save bar should not appear since nothing is edited
+			await openInfoPanel();
 			expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument();
 		});
 
 		it('shows save bar when field is edited', async () => {
 			renderWidget();
-			await fireEvent.click(screen.getByText('Info'));
-			await waitFor(() => {
-				expect(screen.getByText('Title')).toBeInTheDocument();
-			});
-			// Find the title input and type in it
-			const titleLabel = screen.getByText('Title');
-			const titleInput = titleLabel.closest('label')!.querySelector('input')!;
-			await fireEvent.input(titleInput, { target: { value: 'Changed Title' } });
-			await waitFor(() => {
-				expect(screen.queryAllByText('Unsaved changes').length).toBeGreaterThanOrEqual(1);
-			});
+			await editTitleField();
 		});
 
 		it('save bar has Reset and Save buttons', async () => {
 			renderWidget();
-			await fireEvent.click(screen.getByText('Info'));
-			await waitFor(() => {
-				expect(screen.getByText('Title')).toBeInTheDocument();
-			});
-			const titleLabel = screen.getByText('Title');
-			const titleInput = titleLabel.closest('label')!.querySelector('input')!;
-			await fireEvent.input(titleInput, { target: { value: 'Changed Title' } });
-			await waitFor(() => {
-				expect(screen.queryAllByText('Unsaved changes').length).toBeGreaterThanOrEqual(1);
-			});
+			await editTitleField();
 			expect(screen.queryAllByText('Reset').length).toBeGreaterThanOrEqual(1);
 			expect(screen.queryAllByText('Save').length).toBeGreaterThanOrEqual(1);
 		});
