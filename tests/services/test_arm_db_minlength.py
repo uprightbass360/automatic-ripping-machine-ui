@@ -58,6 +58,17 @@ def test_rippable_tracks_filters_short_tracks():
     assert result[0].track_id == 1
 
 
+def test_rippable_tracks_skips_minlength_for_music():
+    """Music discs return ALL tracks regardless of MINLENGTH."""
+    config = make_config(MINLENGTH="600")
+    track1 = make_track(track_id=1, length=200)
+    track2 = make_track(track_id=2, length=180)
+    track3 = make_track(track_id=3, length=250)
+    job = make_job(config=config, tracks=[track1, track2, track3], disctype="music")
+    result = _rippable_tracks(job)
+    assert len(result) == 3
+
+
 def test_rippable_tracks_keeps_none_length():
     """Tracks with length=None are kept (not filtered)."""
     config = make_config(MINLENGTH="600")
