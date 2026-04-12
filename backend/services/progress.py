@@ -110,11 +110,14 @@ def get_music_progress(logfile: str | None, total_tracks: int) -> dict:
         return result
 
     total = total_tracks or len(all_seen)
-    completed = len(tagging)
+    # Use encoding count as "completed" — abcde logs "Tagging track N"
+    # at the START of tagging, so len(tagging) overcounts by 1 during rip.
+    # Encoding completes before tagging starts, making it the reliable marker.
+    completed = len(encoding)
     current_track = max(all_seen)
 
     if tagging:
-        phase = "tagged"
+        phase = "tagging"
     elif encoding:
         phase = "encoding"
     else:
