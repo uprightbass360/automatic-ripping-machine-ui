@@ -118,7 +118,7 @@
 			detail = await fetchMusicDetail(result.release_id);
 		} catch {
 			// Fall back to search result data
-			detail = { ...result, catalog_number: null, barcode: null, status: null, tracks: [] };
+			detail = { ...result, catalog_number: null, barcode: null, status: null, disc_count: null, tracks: [] };
 		} finally {
 			loadingDetail = false;
 		}
@@ -202,6 +202,7 @@
 				catalog_number: null,
 				barcode: null,
 				status: null,
+				disc_count: null,
 				tracks: [],
 			});
 		}
