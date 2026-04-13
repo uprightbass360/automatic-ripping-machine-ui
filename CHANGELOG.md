@@ -1,5 +1,26 @@
 # Changelog
 
+## [15.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.2.0...v15.3.0) (2026-04-13)
+
+
+### Features
+
+* add CD_RIP_TIMEOUT to Music &gt; CD Ripping settings panel ([ad592de](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ad592de169cc334bfc02aeef3284a4e3654fecf9))
+
+
+### Bug Fixes
+
+* add disc_count to MusicDetail fallback objects ([b30b917](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b30b917c50b155e4584f1e818fd8b432ae76321f))
+* align music progress tracks_ripped with log-parsed tagged count ([853fc59](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/853fc599d8f2d05757e8683f4bd08a98f28f34b8))
+* centralize track counts from progress poll, not stale DB query ([4a11ed3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4a11ed380ccfd6f73e6f231347ba1882d80c1ceb))
+* filter MusicSearch tracks by disc_number for multi-disc releases ([2da94e9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2da94e9c7820f3eee0a4c9efbf8a25aa9b919f80))
+* filter track comparison view by disc_number for multi-disc releases ([52b9d8a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/52b9d8abbbbd08d1a45f2ef349d70e8ea6295b27))
+* null guard .trim() on drive settings to prevent TypeError on empty values ([773ab65](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/773ab65a8c2db146fb7b48c42922b68a819d3bc3))
+* redirect to home after job delete instead of removed /jobs page ([374a9bf](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/374a9bf5941b8c09aee096658f91bfc3b95e5aa8))
+* reduce test code duplication below 3% for SonarCloud ([735b93b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/735b93baa5aeb9dabe3199f4127df9ae0a7f5282))
+* skip minlength filter for music disc track counts ([8d111da](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8d111dab7055ee2cd7f235913d5e81e74d187926))
+* use encoding count for music progress — tagging overcounts by 1 ([5d42376](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5d423768366c433f7e64b404e91e1964e991a1ae))
+
 ## [15.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.1.3...v15.2.0) (2026-04-11)
 
 
