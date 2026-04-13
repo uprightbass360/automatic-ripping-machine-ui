@@ -241,6 +241,16 @@
 
 	let hasDiscTracks = $derived(discTracks.length > 0);
 
+	// For multi-disc releases, filter detail tracks to the matching disc
+	let filteredDetailTracks = $derived.by(() => {
+		if (!detail?.tracks?.length) return [];
+		if (job.disc_number && detail.disc_count && detail.disc_count > 1) {
+			const filtered = detail.tracks.filter(t => t.disc_number === job.disc_number);
+			if (filtered.length > 0) return filtered;
+		}
+		return detail.tracks;
+	});
+
 	let activeFilterCount = $derived(
 		[filterType, filterFormat, filterCountry.trim(), filterStatus, matchTrackCount ? 'x' : ''].filter(Boolean).length
 	);
@@ -617,17 +627,17 @@
 								<span>Barcode: <span class="font-mono">{detail.barcode}</span></span>
 							{/if}
 							{#if detail.track_count}
-								<span>{detail.track_count} tracks</span>
+								<span>{filteredDetailTracks.length !== detail.track_count ? `${filteredDetailTracks.length} / ${detail.track_count}` : detail.track_count} tracks</span>
 							{/if}
 						</div>
 					</div>
 				</div>
 
 				<!-- Track listing / comparison -->
-				{#if detail.tracks && detail.tracks.length > 0}
+				{#if filteredDetailTracks.length > 0}
 					<div>
 						<h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-							{hasDiscTracks ? 'Track Comparison' : 'Track Listing'}
+							{hasDiscTracks ? 'Track Comparison' : 'Track Listing'}{detail.disc_count && detail.disc_count > 1 && job.disc_number ? ` (Disc ${job.disc_number} of ${detail.disc_count})` : ''}
 						</h4>
 						<div class="overflow-x-auto rounded-md border border-primary/15 dark:border-primary/20">
 							<table class="w-full text-left text-xs">
@@ -645,7 +655,7 @@
 									</tr>
 								</thead>
 								<tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-									{#each detail.tracks as track, i}
+									{#each filteredDetailTracks as track, i}
 										{@const discTrack = hasDiscTracks ? discTracks[i] ?? null : null}
 										{@const match = hasDiscTracks ? compareDurations(discTrack?.length ?? null, track.length_ms) : null}
 										<tr>
@@ -675,7 +685,7 @@
 								</tbody>
 								{#if hasDiscTracks}
 									{@const discTotal = discTracks.reduce((sum, t) => sum + (t.length ?? 0), 0)}
-									{@const mbTotal = detail.tracks.reduce((sum, t) => sum + (t.length_ms ?? 0), 0)}
+									{@const mbTotal = filteredDetailTracks.reduce((sum, t) => sum + (t.length_ms ?? 0), 0)}
 									{@const totalMatch = compareDurations(discTotal, mbTotal)}
 									<tfoot class="border-t border-gray-200 bg-page font-medium dark:border-gray-600 dark:bg-primary/5">
 										<tr>
