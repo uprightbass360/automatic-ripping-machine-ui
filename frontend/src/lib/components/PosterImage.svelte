@@ -10,16 +10,22 @@
 
 	let { url, alt = '', class: className = 'h-28 w-20 shrink-0 rounded-sm object-cover', style: styleStr = '' }: Props = $props();
 
-	let showFallback = $state(!url);
+	let errored = $state(false);
+	let lastUrl: string | null | undefined = url;
+
+	// Reset error state only when the url value actually changes
+	$effect(() => {
+		if (url !== lastUrl) {
+			lastUrl = url;
+			errored = false;
+		}
+	});
+
+	const showFallback = $derived(!url || errored);
 
 	function onError() {
-		showFallback = true;
+		errored = true;
 	}
-
-	// Reset fallback when url changes
-	$effect(() => {
-		showFallback = !url;
-	});
 </script>
 
 {#if showFallback}
