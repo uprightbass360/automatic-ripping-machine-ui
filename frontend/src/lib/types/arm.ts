@@ -272,7 +272,8 @@ export interface MusicDetail extends MusicSearchResult {
 	catalog_number: string | null;
 	barcode: string | null;
 	status: string | null;
-	tracks: { number: string; title: string; length_ms: number | null }[];
+	disc_count: number | null;
+	tracks: { number: string; title: string; length_ms: number | null; disc_number: number | null }[];
 }
 
 export interface TitleUpdate {

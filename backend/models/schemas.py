@@ -357,6 +357,7 @@ class MusicDetailSchema(MusicSearchResultSchema):
     catalog_number: str | None = None
     barcode: str | None = None
     status: str | None = None
+    disc_count: int | None = None
     tracks: list[dict[str, Any]] = []
 
 

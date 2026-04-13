@@ -133,9 +133,17 @@
 			let tracksWarning = '';
 			if (detail?.tracks?.length) {
 				try {
+					// For multi-disc releases, filter to the matching disc
+					let tracksToApply = detail.tracks;
+					if (job.disc_number && detail.disc_count && detail.disc_count > 1) {
+						const discTracks_ = detail.tracks.filter(t => t.disc_number === job.disc_number);
+						if (discTracks_.length > 0) {
+							tracksToApply = discTracks_;
+						}
+					}
 					await setJobTracks(
 						job.job_id,
-						detail.tracks.map((t, i) => ({
+						tracksToApply.map((t, i) => ({
 							track_number: t.number,
 							title: t.title,
 							length_ms: discTracks[i]?.length != null ? discTracks[i].length! * 1000 : t.length_ms
