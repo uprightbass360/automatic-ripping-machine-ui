@@ -37,12 +37,12 @@ async def test_proxy_cache_miss_fetches(app_client):
 
 
 async def test_proxy_rejects_bad_host(app_client):
-    """Non-allowlisted host returns 400."""
+    """Non-allowlisted host returns cacheable 404."""
     resp = await app_client.get("/api/images/proxy?url=https://evil.com/img.jpg")
-    assert resp.status_code == 400
+    assert resp.status_code == 404
 
 
 async def test_proxy_rejects_non_http(app_client):
-    """Non-HTTP scheme returns 400."""
+    """Non-HTTP scheme returns cacheable 404."""
     resp = await app_client.get("/api/images/proxy?url=ftp://example.com/img.jpg")
-    assert resp.status_code == 400
+    assert resp.status_code == 404
