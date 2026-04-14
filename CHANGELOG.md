@@ -1,5 +1,12 @@
 # Changelog
 
+## [15.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.3.0...v15.4.0) (2026-04-14)
+
+
+### Features
+
+* add Force Rescan button to drives settings ([e970e7d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e970e7d48ae7c4de8503cd88b1bece276212b598))
+
 ## [15.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.2.0...v15.3.0) (2026-04-13)
 
 
