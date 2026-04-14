@@ -209,9 +209,10 @@ async def scan_drive(drive_id: int) -> dict[str, Any] | None:
     return await _request("POST", f"/api/v1/drives/{drive_id}/scan")
 
 
-async def rescan_drives() -> dict[str, Any] | None:
+async def rescan_drives(force: bool = False) -> dict[str, Any] | None:
     """Re-detect optical drives and update the database. Returns None if ARM is unreachable."""
-    return await _request("POST", "/api/v1/drives/rescan")
+    params = {"force": "true"} if force else None
+    return await _request("POST", "/api/v1/drives/rescan", params=params)
 
 
 async def drive_diagnostic() -> dict[str, Any] | None:

@@ -70,6 +70,7 @@ export function fetchDriveDiagnostic(): Promise<DiagnosticResult> {
 	return apiFetch<DiagnosticResult>('/api/drives/diagnostic');
 }
 
-export function rescanDrives(): Promise<{ success: boolean }> {
-	return apiFetch('/api/drives/rescan', { method: 'POST' });
+export function rescanDrives(force = false): Promise<{ success: boolean }> {
+	const params = force ? '?force=true' : '';
+	return apiFetch(`/api/drives/rescan${params}`, { method: 'POST' });
 }

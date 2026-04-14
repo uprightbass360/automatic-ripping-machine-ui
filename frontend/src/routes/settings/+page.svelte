@@ -124,6 +124,7 @@
 	let diagResult = $state<DiagnosticResult | null>(null);
 	let diagError = $state<string | null>(null);
 	let diagOpen = $state(false);
+	let rescanning = $state(false);
 	let diagLastRun = $state<string | null>(null);
 
 	async function runDiagnostic() {
@@ -2459,7 +2460,22 @@
 		{/if}
 
 		{#if activeTab === 'drives'}
-			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
+			<div class="flex items-center justify-between">
+				<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
+				<div class="flex gap-2">
+					<button
+						onclick={async () => { rescanning = true; await rescanDrives(); await drives.refresh(); rescanning = false; }}
+						disabled={rescanning}
+						class="rounded-lg border border-primary/20 px-3 py-1.5 text-xs font-medium text-primary-text transition-colors hover:bg-primary/10 dark:border-primary/20 dark:text-primary-text-dark dark:hover:bg-primary/15"
+					>{rescanning ? 'Scanning...' : 'Rescan'}</button>
+					<button
+						onclick={async () => { rescanning = true; await rescanDrives(true); await drives.refresh(); rescanning = false; }}
+						disabled={rescanning}
+						class="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
+						title="Delete all stale drive records and re-detect from hardware"
+					>{rescanning ? 'Scanning...' : 'Force Rescan'}</button>
+				</div>
+			</div>
 			<section class="space-y-6">
 				{#if $driveError}
 					<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">

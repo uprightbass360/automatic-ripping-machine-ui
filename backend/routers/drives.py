@@ -12,9 +12,12 @@ def list_drives():
 
 
 @router.post("/drives/rescan", responses={502: {"description": "ARM unreachable"}})
-async def rescan_drives():
-    """Re-detect optical drives and update the database."""
-    result = await arm_client.rescan_drives()
+async def rescan_drives(force: bool = False):
+    """Re-detect optical drives and update the database.
+
+    With force=true, deletes all non-processing drive records before rescanning.
+    """
+    result = await arm_client.rescan_drives(force=force)
     if result is None:
         raise HTTPException(status_code=502, detail="ARM unreachable")
     return result
