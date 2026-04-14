@@ -1,5 +1,12 @@
 # Changelog
 
+## [15.4.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.4.0...v15.4.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* stop poster image flicker on dashboard polling ([ce88d4e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ce88d4e3585aa4b0cc5794255a5598f7c437994e))
+
 ## [15.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.3.0...v15.4.0) (2026-04-14)
 
 
