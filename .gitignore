@@ -43,3 +43,13 @@ docker-compose.override.yml
 # Logs
 *.log
 .superpowers/
+
+# Coverage / test tooling
+.coverage
+.playwright-mcp/
+
+# Local MCP config
+.mcp.json
+
+# Root-level screenshots (keep curated ones under screenshots/)
+/*.png
