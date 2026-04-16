@@ -131,16 +131,16 @@ async def test_update_transcode_config_success(app_client):
     with patch(
         "backend.routers.jobs.arm_client.update_transcode_overrides",
         new_callable=AsyncMock,
-        return_value={"success": True, "overrides": {"video_encoder": "x265", "video_quality": 20}},
+        return_value={"success": True, "overrides": {"preset_slug": "hq-1080p", "delete_source": True}},
     ):
         resp = await app_client.patch(
             "/api/jobs/1/transcode-config",
-            json={"video_encoder": "x265", "video_quality": "20"},
+            json={"preset_slug": "hq-1080p", "delete_source": "true"},
         )
     assert resp.status_code == 200
     data = resp.json()
     assert data["success"] is True
-    assert data["overrides"]["video_encoder"] == "x265"
+    assert data["overrides"]["preset_slug"] == "hq-1080p"
 
 
 async def test_update_transcode_config_invalid_keys(app_client):
@@ -162,7 +162,7 @@ async def test_update_transcode_config_not_found(app_client):
         return_value={"success": False, "error": "Job not found"},
     ):
         resp = await app_client.patch(
-            "/api/jobs/999/transcode-config", json={"video_encoder": "x265"}
+            "/api/jobs/999/transcode-config", json={"preset_slug": "hq-1080p"}
         )
     assert resp.status_code == 404
 

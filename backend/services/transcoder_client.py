@@ -258,6 +258,26 @@ async def restart_transcoder() -> dict[str, Any] | None:
         return None
 
 
+async def get_scheme() -> dict[str, Any] | None:
+    """Fetch active scheme from transcoder. Returns None if offline."""
+    try:
+        resp = await get_client().get("/api/v1/scheme")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
+async def get_presets() -> dict[str, Any] | None:
+    """Fetch all presets from transcoder. Returns None if offline."""
+    try:
+        resp = await get_client().get("/api/v1/presets")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
 async def get_config() -> dict[str, Any] | None:
     """Fetch transcoder config with valid option lists. Returns None if offline."""
     try:
