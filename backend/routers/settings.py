@@ -138,6 +138,22 @@ async def test_metadata_key(key: str | None = None, provider: str | None = None)
         return {"success": False, "message": "ARM service unreachable", "provider": "unknown"}
 
 
+@router.get("/settings/transcoder/scheme")
+async def get_transcoder_scheme():
+    result = await transcoder_client.get_scheme()
+    if result is None:
+        raise HTTPException(status_code=502, detail="Transcoder service unreachable")
+    return result
+
+
+@router.get("/settings/transcoder/presets")
+async def get_transcoder_presets():
+    result = await transcoder_client.get_presets()
+    if result is None:
+        raise HTTPException(status_code=502, detail="Transcoder service unreachable")
+    return result
+
+
 @router.patch("/settings/transcoder", responses={400: {"description": "Invalid config"}, 502: {"description": "Transcoder service unreachable"}})
 async def update_transcoder_config(body: dict):
     result = await transcoder_client.update_config(body)

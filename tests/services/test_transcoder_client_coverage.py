@@ -182,6 +182,48 @@ async def test_get_system_stats_offline():
     assert result is None
 
 
+# --- get_scheme ---
+
+
+async def test_get_scheme_success():
+    data = {"slug": "default", "name": "Default Scheme", "presets": []}
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(data)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.get_scheme()
+    assert result == data
+    mock_client.get.assert_awaited_once_with("/api/v1/scheme")
+
+
+async def test_get_scheme_offline():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.side_effect = httpx.ConnectError("refused")
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.get_scheme()
+    assert result is None
+
+
+# --- get_presets ---
+
+
+async def test_get_presets_success():
+    data = {"presets": [{"slug": "hq-1080p", "name": "HQ 1080p"}]}
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(data)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.get_presets()
+    assert result == data
+    mock_client.get.assert_awaited_once_with("/api/v1/presets")
+
+
+async def test_get_presets_offline():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.side_effect = httpx.ConnectError("refused")
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.get_presets()
+    assert result is None
+
+
 # --- get_config ---
 
 

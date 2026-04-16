@@ -287,6 +287,58 @@ async def test_test_metadata_key_connect_error(app_client):
     assert "unreachable" in data["message"].lower()
 
 
+# --- GET /api/settings/transcoder/scheme ---
+
+
+async def test_get_transcoder_scheme_success(app_client):
+    data = {"slug": "default", "name": "Default Scheme", "presets": []}
+    with patch(
+        "backend.routers.settings.transcoder_client.get_scheme",
+        new_callable=AsyncMock,
+        return_value=data,
+    ):
+        resp = await app_client.get("/api/settings/transcoder/scheme")
+    assert resp.status_code == 200
+    assert resp.json()["slug"] == "default"
+
+
+async def test_get_transcoder_scheme_unreachable(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.get_scheme",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.get("/api/settings/transcoder/scheme")
+    assert resp.status_code == 502
+    assert "unreachable" in resp.json()["detail"].lower()
+
+
+# --- GET /api/settings/transcoder/presets ---
+
+
+async def test_get_transcoder_presets_success(app_client):
+    data = {"presets": [{"slug": "hq-1080p", "name": "HQ 1080p"}]}
+    with patch(
+        "backend.routers.settings.transcoder_client.get_presets",
+        new_callable=AsyncMock,
+        return_value=data,
+    ):
+        resp = await app_client.get("/api/settings/transcoder/presets")
+    assert resp.status_code == 200
+    assert resp.json()["presets"][0]["slug"] == "hq-1080p"
+
+
+async def test_get_transcoder_presets_unreachable(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.get_presets",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.get("/api/settings/transcoder/presets")
+    assert resp.status_code == 502
+    assert "unreachable" in resp.json()["detail"].lower()
+
+
 # --- PUT /api/settings/abcde failure ---
 
 
