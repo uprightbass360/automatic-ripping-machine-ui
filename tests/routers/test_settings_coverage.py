@@ -441,6 +441,7 @@ async def test_update_preset_proxy_forwards_404(app_client):
             "/api/settings/transcoder/presets/x", json={}
         )
     assert resp.status_code == 404
+    assert resp.json()["detail"] == "Cannot update built-in"
 
 
 # --- DELETE /api/settings/transcoder/presets/{slug} ---
@@ -465,3 +466,16 @@ async def test_delete_preset_proxy_offline(app_client):
     ):
         resp = await app_client.delete("/api/settings/transcoder/presets/x")
     assert resp.status_code == 502
+
+
+async def test_delete_preset_proxy_forwards_404(app_client):
+    err_resp = httpx.Response(404, json={"detail": "Preset not found"})
+    err = httpx.HTTPStatusError("not found", request=None, response=err_resp)
+    with patch(
+        "backend.routers.settings.transcoder_client.delete_preset",
+        new_callable=AsyncMock,
+        side_effect=err,
+    ):
+        resp = await app_client.delete("/api/settings/transcoder/presets/x")
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "Preset not found"
