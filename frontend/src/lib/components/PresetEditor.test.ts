@@ -182,7 +182,7 @@ describe('PresetEditor save bar', () => {
         await fireEvent.input(qualityInput, { target: { value: '18' } });
         expect(screen.getByText(/1 change/i)).toBeInTheDocument();
         await fireEvent.click(screen.getByRole('button', { name: /Revert/i }));
-        expect(screen.queryByText(/change/i)).toBeNull();
+        expect(screen.queryByText(/^\d+ changes?$/i)).toBeNull();
     });
 
     it('hides "Save as new preset" when scope=job', () => {

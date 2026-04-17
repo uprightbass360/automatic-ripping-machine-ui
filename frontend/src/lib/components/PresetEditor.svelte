@@ -288,10 +288,9 @@
                     onclick={handleSave}
                     disabled={!canSave}
                     title={disabledSaveReason()}
-                    aria-label="Save changes"
                     class="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {saving ? 'Saving...' : 'Save'}
+                    {saving ? 'Saving...' : 'Save changes'}
                 </button>
                 {#if scope === 'global' && onSaveAsNew}
                     <button
