@@ -73,6 +73,37 @@
 
     const dirtyRing = 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50';
     const inputClass = 'rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
+
+    let saveAsModalOpen = $state(false);
+    let newPresetName = $state('');
+
+    function handleSave() {
+        if (!canSave) return;
+        onSave({ preset_slug: selectedSlug, overrides });
+    }
+
+    function handleRevert() {
+        overrides = { shared: {}, tiers: {} };
+        selectedSlug = initialSlug;
+    }
+
+    function handleSaveAsConfirm() {
+        if (!onSaveAsNew || !newPresetName.trim()) return;
+        onSaveAsNew({ name: newPresetName.trim(), parent_slug: selectedSlug, overrides });
+        saveAsModalOpen = false;
+        newPresetName = '';
+    }
+
+    function disabledSaveReason(): string {
+        if (saving) return 'Saving...';
+        if (isUnavailable) return 'Selected preset is not available in the active scheme';
+        if (!dirty && selectedSlug === initialSlug) return 'No changes to save';
+        return '';
+    }
+
+    function slugify(name: string): string {
+        return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'custom';
+    }
 </script>
 
 {#if offline || !scheme}
@@ -249,5 +280,72 @@
                 {/each}
             </div>
         </div>
+
+        <div class="flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
+            <div class="flex items-center gap-3">
+                <button
+                    type="button"
+                    onclick={handleSave}
+                    disabled={!canSave}
+                    title={disabledSaveReason()}
+                    aria-label="Save changes"
+                    class="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    {saving ? 'Saving...' : 'Save'}
+                </button>
+                {#if scope === 'global' && onSaveAsNew}
+                    <button
+                        type="button"
+                        onclick={() => { saveAsModalOpen = true; newPresetName = ''; }}
+                        disabled={!dirty}
+                        class="text-sm text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                    >
+                        Save as new preset
+                    </button>
+                {/if}
+            </div>
+            <button
+                type="button"
+                onclick={handleRevert}
+                disabled={!dirty && selectedSlug === initialSlug}
+                class="text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+                Revert
+            </button>
+        </div>
     </div>
+
+    {#if saveAsModalOpen}
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+            <div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl dark:bg-gray-800">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Save as new preset</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Saves your current customizations as a new preset based on <strong>{selectedPreset?.name}</strong>.
+                </p>
+                <label class="mt-3 block">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Name</span>
+                    <input
+                        type="text"
+                        bind:value={newPresetName}
+                        placeholder="e.g. Weekend Rips"
+                        class="{inputClass} mt-1 w-full"
+                    />
+                    {#if newPresetName.trim()}
+                        <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">Will be saved as: <code>{slugify(newPresetName)}</code></span>
+                    {/if}
+                </label>
+                <div class="mt-4 flex justify-end gap-2">
+                    <button type="button" onclick={() => { saveAsModalOpen = false; }}
+                            class="rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                        Cancel
+                    </button>
+                    <button type="button" onclick={handleSaveAsConfirm}
+                            disabled={!newPresetName.trim()}
+                            class="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-50">
+                        Create preset
+                    </button>
+                </div>
+            </div>
+        </div>
+    {/if}
 {/if}

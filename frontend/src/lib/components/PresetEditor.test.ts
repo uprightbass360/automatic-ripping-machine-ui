@@ -137,3 +137,61 @@ describe('PresetEditor customize panel', () => {
         expect(screen.getByText(/1 change/i)).toBeInTheDocument();
     });
 });
+
+describe('PresetEditor save bar', () => {
+    afterEach(() => cleanup());
+
+    const baseProps = {
+        scope: 'global' as const,
+        initialState: { preset_slug: 'software_balanced', overrides: { shared: {}, tiers: {} } },
+        scheme: mockScheme,
+        presets: mockPresets,
+        offline: false,
+        saving: false
+    };
+
+    it('Save button disabled when not dirty and slug unchanged', () => {
+        renderComponent(PresetEditor, { props: { ...baseProps, onSave: async () => {} } });
+        const btn = screen.getByRole('button', { name: /Save changes/i }) as HTMLButtonElement;
+        expect(btn.disabled).toBe(true);
+    });
+
+    it('Save button enabled when dirty', async () => {
+        const { container } = renderComponent(PresetEditor, { props: { ...baseProps, onSave: async () => {} } });
+        const qualityInput = container.querySelector('input[data-testid="tier-bluray-quality"]') as HTMLInputElement;
+        await fireEvent.input(qualityInput, { target: { value: '18' } });
+        const btn = screen.getByRole('button', { name: /Save changes/i }) as HTMLButtonElement;
+        expect(btn.disabled).toBe(false);
+    });
+
+    it('calls onSave with current state when Save clicked', async () => {
+        const onSave = vi.fn().mockResolvedValue(undefined);
+        const { container } = renderComponent(PresetEditor, { props: { ...baseProps, onSave } });
+        const qualityInput = container.querySelector('input[data-testid="tier-bluray-quality"]') as HTMLInputElement;
+        await fireEvent.input(qualityInput, { target: { value: '18' } });
+        await fireEvent.click(screen.getByRole('button', { name: /Save changes/i }));
+        expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+            preset_slug: 'software_balanced',
+            overrides: expect.objectContaining({ tiers: expect.objectContaining({ bluray: { video_quality: 18 } }) })
+        }));
+    });
+
+    it('Revert clears overrides', async () => {
+        const { container } = renderComponent(PresetEditor, { props: { ...baseProps, onSave: async () => {} } });
+        const qualityInput = container.querySelector('input[data-testid="tier-bluray-quality"]') as HTMLInputElement;
+        await fireEvent.input(qualityInput, { target: { value: '18' } });
+        expect(screen.getByText(/1 change/i)).toBeInTheDocument();
+        await fireEvent.click(screen.getByRole('button', { name: /Revert/i }));
+        expect(screen.queryByText(/change/i)).toBeNull();
+    });
+
+    it('hides "Save as new preset" when scope=job', () => {
+        renderComponent(PresetEditor, { props: { ...baseProps, scope: 'job', onSave: async () => {} } });
+        expect(screen.queryByText(/Save as new preset/i)).toBeNull();
+    });
+
+    it('shows "Save as new preset" when scope=global with onSaveAsNew handler', () => {
+        renderComponent(PresetEditor, { props: { ...baseProps, onSave: async () => {}, onSaveAsNew: async () => {} } });
+        expect(screen.getByText(/Save as new preset/i)).toBeInTheDocument();
+    });
+});
