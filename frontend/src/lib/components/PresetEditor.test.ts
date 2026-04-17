@@ -285,3 +285,148 @@ describe('PresetEditor edge cases', () => {
         vi.useRealTimers();
     });
 });
+
+describe('PresetEditor save-as-new flow', () => {
+    afterEach(() => cleanup());
+
+    const twoPresetScheme: Scheme = {
+        ...mockScheme,
+        slug: 'software',
+    };
+    const twoPresets: Preset[] = [
+        ...mockPresets,
+        {
+            slug: 'software_quality', name: 'High Quality', scheme: 'software',
+            description: 'Higher quality', builtin: true,
+            shared: { audio_encoder: 'copy', subtitle_mode: 'all' },
+            tiers: {
+                dvd: { video_encoder: 'x265', video_quality: 18 },
+                bluray: { video_encoder: 'x265', video_quality: 18 },
+                uhd: { video_encoder: 'x265', video_quality: 20 }
+            }
+        }
+    ];
+
+    function renderWithSaveAs(onSaveAsNew: ReturnType<typeof vi.fn>) {
+        return renderComponent(PresetEditor, {
+            props: {
+                scope: 'global' as const,
+                initialState: { preset_slug: 'software_balanced', overrides: { shared: {}, tiers: {} } },
+                scheme: twoPresetScheme,
+                presets: twoPresets,
+                offline: false,
+                saving: false,
+                onSave: async () => {},
+                onSaveAsNew
+            }
+        });
+    }
+
+    async function makeDirty(container: HTMLElement) {
+        const input = container.querySelector('input[data-testid="tier-bluray-quality"]') as HTMLInputElement;
+        await fireEvent.input(input, { target: { value: '18' } });
+    }
+
+    it('Save as new preset button disabled until form is dirty', () => {
+        const { getByRole } = renderWithSaveAs(vi.fn());
+        const btn = getByRole('button', { name: /Save as new preset/i }) as HTMLButtonElement;
+        expect(btn.disabled).toBe(true);
+    });
+
+    it('opens modal, creates preset, closes modal', async () => {
+        const onSaveAsNew = vi.fn().mockResolvedValue(undefined);
+        const { container, getByRole } = renderWithSaveAs(onSaveAsNew);
+        await makeDirty(container);
+
+        await fireEvent.click(getByRole('button', { name: /Save as new preset/i }));
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+        const nameInput = container.querySelector('input[placeholder*="Weekend Rips"]') as HTMLInputElement;
+        await fireEvent.input(nameInput, { target: { value: 'My Preset' } });
+        await fireEvent.click(getByRole('button', { name: /Create preset/i }));
+
+        expect(onSaveAsNew).toHaveBeenCalledWith(expect.objectContaining({
+            name: 'My Preset',
+            parent_slug: 'software_balanced',
+            overrides: expect.objectContaining({
+                tiers: expect.objectContaining({ bluray: { video_quality: 18 } })
+            })
+        }));
+    });
+
+    it('shows error when onSaveAsNew throws', async () => {
+        const onSaveAsNew = vi.fn().mockRejectedValue(new Error('Slug already exists'));
+        const { container, getByRole } = renderWithSaveAs(onSaveAsNew);
+        await makeDirty(container);
+        await fireEvent.click(getByRole('button', { name: /Save as new preset/i }));
+        const nameInput = container.querySelector('input[placeholder*="Weekend Rips"]') as HTMLInputElement;
+        await fireEvent.input(nameInput, { target: { value: 'Dup' } });
+        await fireEvent.click(getByRole('button', { name: /Create preset/i }));
+        await screen.findByText(/Slug already exists/);
+    });
+
+    it('Cancel closes modal without calling handler', async () => {
+        const onSaveAsNew = vi.fn();
+        const { container, getByRole } = renderWithSaveAs(onSaveAsNew);
+        await makeDirty(container);
+        await fireEvent.click(getByRole('button', { name: /Save as new preset/i }));
+        await fireEvent.click(getByRole('button', { name: /Cancel/i }));
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(onSaveAsNew).not.toHaveBeenCalled();
+    });
+
+    it('Create preset button disabled until name is entered', async () => {
+        const { container, getByRole } = renderWithSaveAs(vi.fn());
+        await makeDirty(container);
+        await fireEvent.click(getByRole('button', { name: /Save as new preset/i }));
+        const createBtn = getByRole('button', { name: /Create preset/i }) as HTMLButtonElement;
+        expect(createBtn.disabled).toBe(true);
+        const nameInput = container.querySelector('input[placeholder*="Weekend Rips"]') as HTMLInputElement;
+        await fireEvent.input(nameInput, { target: { value: 'Foo' } });
+        expect(createBtn.disabled).toBe(false);
+    });
+});
+
+describe('PresetEditor undo', () => {
+    afterEach(() => cleanup());
+
+    const twoPresets: Preset[] = [
+        ...mockPresets,
+        {
+            slug: 'software_quality', name: 'High Quality', scheme: 'software',
+            description: '', builtin: true,
+            shared: { audio_encoder: 'copy', subtitle_mode: 'all' },
+            tiers: {
+                dvd: { video_encoder: 'x265', video_quality: 18 },
+                bluray: { video_encoder: 'x265', video_quality: 18 },
+                uhd: { video_encoder: 'x265', video_quality: 20 }
+            }
+        }
+    ];
+
+    it('Undo restores the previous preset and overrides', async () => {
+        const { container } = renderComponent(PresetEditor, {
+            props: {
+                scope: 'global' as const,
+                initialState: { preset_slug: 'software_balanced', overrides: { shared: {}, tiers: {} } },
+                scheme: mockScheme,
+                presets: twoPresets,
+                offline: false,
+                saving: false,
+                onSave: async () => {}
+            }
+        });
+        // Make a change
+        const qInput = container.querySelector('input[data-testid="tier-bluray-quality"]') as HTMLInputElement;
+        await fireEvent.input(qInput, { target: { value: '17' } });
+        // Switch preset to trigger the undo toast
+        const select = container.querySelector('#preset-select') as HTMLSelectElement;
+        await fireEvent.change(select, { target: { value: 'software_quality' } });
+        expect(select.value).toBe('software_quality');
+        // Click Undo
+        await fireEvent.click(screen.getByRole('button', { name: /Undo/i }));
+        expect(select.value).toBe('software_balanced');
+        // Toast cleared
+        expect(screen.queryByText(/Cleared.*from/i)).toBeNull();
+    });
+});

@@ -7,7 +7,7 @@ function jsonResponse(data: unknown, ok = true) {
 	return { ok, status: ok ? 200 : 500, statusText: ok ? 'OK' : 'Error', json: () => Promise.resolve(data) };
 }
 
-import { fetchAbcdeConfig, saveAbcdeConfig, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo } from '../api/settings';
+import { fetchAbcdeConfig, saveAbcdeConfig, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo, fetchTranscoderScheme, fetchTranscoderPresets, createCustomPreset } from '../api/settings';
 
 beforeEach(() => mockFetch.mockReset());
 
@@ -56,5 +56,95 @@ describe('fetchSystemInfo', () => {
 		mockFetch.mockResolvedValue(jsonResponse({ versions: {}, endpoints: {}, paths: [], database: {}, drives: [] }));
 		const result = await fetchSystemInfo();
 		expect(result.versions).toBeDefined();
+	});
+});
+
+describe('fetchTranscoderScheme', () => {
+	it('GETs /api/settings/transcoder/scheme and returns scheme', async () => {
+		const scheme = {
+			slug: 'nvidia',
+			name: 'NVIDIA NVENC',
+			supported_encoders: [],
+			supported_audio_encoders: [],
+			supported_subtitle_modes: [],
+			advanced_fields: {}
+		};
+		mockFetch.mockResolvedValue(jsonResponse(scheme));
+		const result = await fetchTranscoderScheme();
+		expect(result).toEqual(scheme);
+		expect(mockFetch).toHaveBeenCalledWith('/api/settings/transcoder/scheme', expect.any(Object));
+	});
+
+	it('returns null when backend returns 502 unreachable', async () => {
+		mockFetch.mockResolvedValue({
+			ok: false,
+			status: 502,
+			statusText: 'Bad Gateway',
+			json: () => Promise.resolve({ detail: 'Transcoder service unreachable' })
+		});
+		const result = await fetchTranscoderScheme();
+		expect(result).toBeNull();
+	});
+
+	it('rethrows non-502 errors', async () => {
+		mockFetch.mockResolvedValue({
+			ok: false,
+			status: 500,
+			statusText: 'Internal Server Error',
+			json: () => Promise.resolve({ detail: 'boom' })
+		});
+		await expect(fetchTranscoderScheme()).rejects.toThrow(/boom/);
+	});
+});
+
+describe('fetchTranscoderPresets', () => {
+	it('GETs /api/settings/transcoder/presets', async () => {
+		mockFetch.mockResolvedValue(jsonResponse({ presets: [{ slug: 'a', name: 'A', builtin: true, shared: {}, tiers: {}, scheme: 'nvidia', description: '' }] }));
+		const result = await fetchTranscoderPresets();
+		expect(result?.presets).toHaveLength(1);
+		expect(mockFetch).toHaveBeenCalledWith('/api/settings/transcoder/presets', expect.any(Object));
+	});
+
+	it('returns null when backend returns 502 unreachable', async () => {
+		mockFetch.mockResolvedValue({
+			ok: false,
+			status: 502,
+			statusText: 'Bad Gateway',
+			json: () => Promise.resolve({ detail: 'Transcoder service unreachable' })
+		});
+		const result = await fetchTranscoderPresets();
+		expect(result).toBeNull();
+	});
+
+	it('rethrows non-502 errors', async () => {
+		mockFetch.mockResolvedValue({
+			ok: false,
+			status: 500,
+			statusText: 'Internal Server Error',
+			json: () => Promise.resolve({ detail: 'db error' })
+		});
+		await expect(fetchTranscoderPresets()).rejects.toThrow(/db error/);
+	});
+});
+
+describe('createCustomPreset', () => {
+	it('POSTs the body to /api/settings/transcoder/presets', async () => {
+		const created = {
+			slug: 'my-anime', name: 'My Anime', scheme: 'nvidia',
+			description: '', builtin: false, parent_slug: 'nvidia_balanced',
+			shared: {}, tiers: { dvd: {}, bluray: {}, uhd: {} }
+		};
+		mockFetch.mockResolvedValue(jsonResponse(created));
+		const body = {
+			name: 'My Anime',
+			parent_slug: 'nvidia_balanced',
+			overrides: { shared: { audio_encoder: 'aac' }, tiers: {} }
+		};
+		const result = await createCustomPreset(body);
+		expect(result.slug).toBe('my-anime');
+		expect(mockFetch).toHaveBeenCalledWith(
+			'/api/settings/transcoder/presets',
+			expect.objectContaining({ method: 'POST', body: JSON.stringify(body) })
+		);
 	});
 });
