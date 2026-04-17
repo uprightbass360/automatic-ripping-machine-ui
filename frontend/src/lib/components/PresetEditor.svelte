@@ -77,6 +77,36 @@
     let saveAsModalOpen = $state(false);
     let newPresetName = $state('');
 
+    let undoToast = $state<{ message: string; previous: { slug: string; overrides: Overrides } } | null>(null);
+    let undoTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function handleDropdownChange(newSlug: string) {
+        const wasDirty = dirty;
+        const previousSlug = selectedSlug;
+        const previousName = selectedPreset?.name ?? previousSlug;
+        const previousOverrides: Overrides = JSON.parse(JSON.stringify(overrides));
+        selectedSlug = newSlug;
+        overrides = { shared: {}, tiers: {} };
+        if (wasDirty) {
+            const totalCleared = Object.keys(previousOverrides.shared).length +
+                Object.values(previousOverrides.tiers).reduce((n, t) => n + Object.keys(t).length, 0);
+            undoToast = {
+                message: `Cleared ${totalCleared} ${totalCleared === 1 ? 'change' : 'changes'} from ${previousName}`,
+                previous: { slug: previousSlug, overrides: previousOverrides }
+            };
+            if (undoTimer) clearTimeout(undoTimer);
+            undoTimer = setTimeout(() => { undoToast = null; }, 5000);
+        }
+    }
+
+    function handleUndo() {
+        if (!undoToast) return;
+        selectedSlug = undoToast.previous.slug;
+        overrides = undoToast.previous.overrides;
+        undoToast = null;
+        if (undoTimer) { clearTimeout(undoTimer); undoTimer = null; }
+    }
+
     function handleSave() {
         if (!canSave) return;
         onSave({ preset_slug: selectedSlug, overrides });
@@ -118,6 +148,11 @@
     </div>
 {:else}
     <div class="space-y-4">
+        {#if isUnavailable}
+            <div class="rounded-lg border border-amber-500/40 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-200">
+                This preset was built for scheme <strong>{selectedPreset?.scheme}</strong> but the active scheme is <strong>{scheme.slug}</strong>. Pick a compatible preset to save changes.
+            </div>
+        {/if}
         <div class="flex items-baseline justify-between border-b border-gray-200 pb-2 dark:border-gray-700">
             <div>
                 <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Active scheme</p>
@@ -129,8 +164,9 @@
             <label for="preset-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preset</label>
             <select
                 id="preset-select"
-                bind:value={selectedSlug}
-                onchange={() => { overrides = { shared: {}, tiers: {} }; }}
+                value={selectedSlug}
+                onchange={(e) => handleDropdownChange((e.target as HTMLSelectElement).value)}
+                disabled={saving}
                 class="mt-1 w-full rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
             >
                 <optgroup label="Built-in">
@@ -179,6 +215,7 @@
                                 <select
                                     value={effectiveShared('audio_encoder')}
                                     onchange={(e) => setShared('audio_encoder', (e.target as HTMLSelectElement).value)}
+                                    disabled={saving || isUnavailable}
                                     class="{inputClass} w-full"
                                 >
                                     {#each scheme.supported_audio_encoders as enc}
@@ -193,6 +230,7 @@
                                 <select
                                     value={effectiveShared('subtitle_mode')}
                                     onchange={(e) => setShared('subtitle_mode', (e.target as HTMLSelectElement).value)}
+                                    disabled={saving || isUnavailable}
                                     class="{inputClass} w-full"
                                 >
                                     {#each scheme.supported_subtitle_modes as mode}
@@ -216,6 +254,7 @@
                                     <select
                                         value={effectiveTier(tier, 'video_encoder')}
                                         onchange={(e) => setTier(tier, 'video_encoder', (e.target as HTMLSelectElement).value)}
+                                        disabled={saving || isUnavailable}
                                         class="{inputClass} w-full"
                                     >
                                         {#each scheme.supported_encoders as enc}
@@ -232,6 +271,7 @@
                                         data-testid="tier-{tier}-quality"
                                         value={effectiveTier(tier, 'video_quality')}
                                         oninput={(e) => setTier(tier, 'video_quality', Number((e.target as HTMLInputElement).value))}
+                                        disabled={saving || isUnavailable}
                                         class="{inputClass} w-full"
                                     />
                                 </div>
@@ -243,6 +283,7 @@
                                         type="text"
                                         value={effectiveTier(tier, 'handbrake_preset')}
                                         oninput={(e) => setTier(tier, 'handbrake_preset', (e.target as HTMLInputElement).value)}
+                                        disabled={saving || isUnavailable}
                                         class="{inputClass} w-full"
                                     />
                                 </div>
@@ -255,6 +296,7 @@
                                             <select
                                                 value={effectiveTier(tier, key) || def.default || ''}
                                                 onchange={(e) => setTier(tier, key, (e.target as HTMLSelectElement).value)}
+                                                disabled={saving || isUnavailable}
                                                 class="{inputClass} w-full"
                                             >
                                                 {#each def.values as v}
@@ -266,6 +308,7 @@
                                                 type="text"
                                                 value={effectiveTier(tier, key)}
                                                 oninput={(e) => setTier(tier, key, (e.target as HTMLInputElement).value)}
+                                                disabled={saving || isUnavailable}
                                                 class="{inputClass} w-full"
                                             />
                                         {/if}
@@ -313,6 +356,13 @@
             </button>
         </div>
     </div>
+
+    {#if undoToast}
+        <div class="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-lg bg-gray-900 px-4 py-2 text-sm text-white shadow-xl dark:bg-gray-700">
+            {undoToast.message}
+            <button onclick={handleUndo} class="ml-3 underline">Undo</button>
+        </div>
+    {/if}
 
     {#if saveAsModalOpen}
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
