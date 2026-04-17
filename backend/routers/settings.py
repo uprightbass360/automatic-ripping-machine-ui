@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+from typing import NoReturn
 
 from fastapi import APIRouter, HTTPException
 import httpx
@@ -154,7 +155,7 @@ async def get_transcoder_presets():
     return result
 
 
-def _raise_from_http_status_error(exc: httpx.HTTPStatusError) -> None:
+def _raise_from_http_status_error(exc: httpx.HTTPStatusError) -> NoReturn:
     """Re-raise an httpx HTTPStatusError as a FastAPI HTTPException, forwarding detail."""
     detail = "Preset operation failed"
     try:
