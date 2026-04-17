@@ -278,6 +278,36 @@ async def get_presets() -> dict[str, Any] | None:
         return None
 
 
+async def create_preset(body: dict[str, Any]) -> dict[str, Any] | None:
+    """Create a custom preset. Returns None if transcoder offline. Raises HTTPStatusError on 4xx/5xx."""
+    try:
+        resp = await get_client().post("/api/v1/presets", json=body)
+    except (httpx.ConnectError, RuntimeError, OSError):
+        return None
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def update_preset(slug: str, body: dict[str, Any]) -> dict[str, Any] | None:
+    """Update a custom preset. Returns None if transcoder offline. Raises HTTPStatusError on 4xx/5xx."""
+    try:
+        resp = await get_client().patch(f"/api/v1/presets/{slug}", json=body)
+    except (httpx.ConnectError, RuntimeError, OSError):
+        return None
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def delete_preset(slug: str) -> dict[str, Any] | None:
+    """Delete a custom preset. Returns None if transcoder offline. Raises HTTPStatusError on 4xx/5xx."""
+    try:
+        resp = await get_client().delete(f"/api/v1/presets/{slug}")
+    except (httpx.ConnectError, RuntimeError, OSError):
+        return None
+    resp.raise_for_status()
+    return resp.json()
+
+
 async def get_config() -> dict[str, Any] | None:
     """Fetch transcoder config with valid option lists. Returns None if offline."""
     try:
