@@ -136,6 +136,35 @@ describe('PresetEditor customize panel', () => {
         // Visual: dirty pill should show "1 change"
         expect(screen.getByText(/1 change/i)).toBeInTheDocument();
     });
+
+    it('writes to overrides.shared[key] when shared field changes', async () => {
+        const { container } = renderComponent(PresetEditor, { props });
+        // The audio encoder select is the first select inside the Shared section
+        const allSelects = container.querySelectorAll('label > div > select');
+        const audioEncoderSelect = allSelects[0] as HTMLSelectElement;
+        await fireEvent.change(audioEncoderSelect, { target: { value: 'aac' } });
+        expect(screen.getByText(/1 change/i)).toBeInTheDocument();
+    });
+
+    it('renders advanced enum fields per scheme.advanced_fields', () => {
+        const schemeWithAdvanced: Scheme = {
+            ...mockScheme,
+            advanced_fields: {
+                x265_preset: {
+                    type: 'enum',
+                    values: ['ultrafast', 'medium', 'placebo'],
+                    default: 'medium',
+                    description: 'x265 speed/quality tradeoff'
+                }
+            }
+        };
+        renderComponent(PresetEditor, { props: { ...props, scheme: schemeWithAdvanced } });
+        // The label text from the advanced field key should appear (one per tier = 3 occurrences)
+        const labels = screen.getAllByText(/x265_preset/);
+        expect(labels.length).toBeGreaterThanOrEqual(3);
+        // The description should appear
+        expect(screen.getAllByText(/speed\/quality tradeoff/).length).toBeGreaterThanOrEqual(1);
+    });
 });
 
 describe('PresetEditor save bar', () => {
