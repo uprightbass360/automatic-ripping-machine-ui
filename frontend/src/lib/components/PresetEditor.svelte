@@ -126,7 +126,7 @@
 
     function handleSave() {
         if (!canSave) return;
-        onSave({ preset_slug: selectedSlug, overrides });
+        onSave({ preset_slug: selectedSlug, overrides: $state.snapshot(overrides) as Overrides });
     }
 
     function handleRevert() {
@@ -138,7 +138,11 @@
         if (!onSaveAsNew || !newPresetName.trim()) return;
         saveAsNewError = '';
         try {
-            await onSaveAsNew({ name: newPresetName.trim(), parent_slug: selectedSlug, overrides });
+            await onSaveAsNew({
+                name: newPresetName.trim(),
+                parent_slug: selectedSlug,
+                overrides: $state.snapshot(overrides) as Overrides,
+            });
             saveAsModalOpen = false;
             newPresetName = '';
         } catch (e: unknown) {
