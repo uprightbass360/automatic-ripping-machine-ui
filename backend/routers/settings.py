@@ -210,7 +210,10 @@ async def delete_transcoder_preset(slug: str):
 
 @router.patch("/settings/transcoder", responses={400: {"description": "Invalid config"}, **_TRANSCODER_UNREACHABLE_RESPONSE})
 async def update_transcoder_config(body: dict):
-    result = await transcoder_client.update_config(body)
+    try:
+        result = await transcoder_client.update_config(body)
+    except httpx.HTTPStatusError as exc:
+        _raise_from_http_status_error(exc)
     if result is None:
         raise HTTPException(status_code=502, detail=_TRANSCODER_UNREACHABLE)
     if not result.get("success"):

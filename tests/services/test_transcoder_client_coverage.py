@@ -266,6 +266,19 @@ async def test_update_config_offline():
     assert result is None
 
 
+async def test_update_config_raises_on_4xx():
+    """4xx/5xx responses should raise HTTPStatusError (not swallowed to None)."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.return_value = _mock_response(
+        {"detail": "global_overrides must be a string"}, status_code=422
+    )
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await transcoder_client.update_config(
+                {"global_overrides": {"shared": {}, "tiers": {}}}
+            )
+
+
 # --- get_jobs ---
 
 

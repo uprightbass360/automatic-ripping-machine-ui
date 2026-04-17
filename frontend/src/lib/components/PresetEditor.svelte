@@ -364,7 +364,7 @@
                         type="button"
                         onclick={() => { saveAsModalOpen = true; newPresetName = ''; saveAsNewError = ''; }}
                         disabled={!dirty}
-                        class="text-sm text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                        class="rounded-lg border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Save as new preset
                     </button>

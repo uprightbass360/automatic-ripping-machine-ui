@@ -244,6 +244,23 @@ async def test_update_transcoder_config_failure(app_client):
     assert "Invalid encoder" in resp.json()["detail"]
 
 
+async def test_update_transcoder_config_forwards_422(app_client):
+    """422 validation errors from transcoder should surface (not swallowed as 502)."""
+    err_resp = httpx.Response(422, json={"detail": "global_overrides must be a string"})
+    err = httpx.HTTPStatusError("unprocessable", request=None, response=err_resp)
+    with patch(
+        "backend.routers.settings.transcoder_client.update_config",
+        new_callable=AsyncMock,
+        side_effect=err,
+    ):
+        resp = await app_client.patch(
+            "/api/settings/transcoder",
+            json={"global_overrides": {"shared": {}, "tiers": {}}},
+        )
+    assert resp.status_code == 422
+    assert "global_overrides" in resp.json()["detail"]
+
+
 # --- GET /api/settings/test-metadata ---
 
 
