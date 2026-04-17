@@ -29,6 +29,50 @@
 
     const builtinCount = $derived(presets.filter(p => p.builtin && !p.unavailable).length);
     const customCount = $derived(presets.filter(p => !p.builtin && !p.unavailable).length);
+
+    function setShared(key: string, value: unknown) {
+        if (value === '' || value === null || value === undefined) {
+            delete overrides.shared[key];
+        } else {
+            overrides.shared[key] = value;
+        }
+        overrides = { ...overrides };
+    }
+
+    function setTier(tier: string, key: string, value: unknown) {
+        if (!overrides.tiers[tier]) overrides.tiers[tier] = {};
+        if (value === '' || value === null || value === undefined) {
+            delete overrides.tiers[tier][key];
+            if (Object.keys(overrides.tiers[tier]).length === 0) delete overrides.tiers[tier];
+        } else {
+            overrides.tiers[tier][key] = value;
+        }
+        overrides = { ...overrides };
+    }
+
+    function effectiveShared(key: string): unknown {
+        if (key in overrides.shared) return overrides.shared[key];
+        return selectedPreset?.shared[key] ?? '';
+    }
+
+    function effectiveTier(tier: string, key: string): unknown {
+        if (overrides.tiers[tier]?.[key] !== undefined) return overrides.tiers[tier][key];
+        return selectedPreset?.tiers[tier as 'dvd' | 'bluray' | 'uhd']?.[key] ?? '';
+    }
+
+    function isSharedDirty(key: string): boolean {
+        return key in overrides.shared;
+    }
+
+    function isTierDirty(tier: string, key: string): boolean {
+        return overrides.tiers[tier]?.[key] !== undefined;
+    }
+
+    const TIER_LABELS: Record<string, string> = { dvd: 'DVD', bluray: 'Blu-ray', uhd: 'UHD' };
+    const TIER_HINTS: Record<string, string> = { dvd: '< 720p', bluray: '720p–1080p', uhd: '> 1080p' };
+
+    const dirtyRing = 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50';
+    const inputClass = 'rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white';
 </script>
 
 {#if offline || !scheme}
@@ -81,6 +125,129 @@
             {#if selectedPreset?.description}
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{selectedPreset.description}</p>
             {/if}
+        </div>
+
+        <div>
+            <div class="flex items-center justify-between">
+                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Customize</h4>
+                {#if dirty}
+                    {@const total = Object.keys(overrides.shared).length + Object.values(overrides.tiers).reduce((n, t) => n + Object.keys(t).length, 0)}
+                    <span class="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary dark:text-primary-300">
+                        {total} {total === 1 ? 'change' : 'changes'}
+                    </span>
+                {/if}
+            </div>
+
+            <div class="mt-3 space-y-3">
+                <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                    <p class="mb-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Shared</p>
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <label class="space-y-1">
+                            <span class="text-xs text-gray-600 dark:text-gray-400">Audio encoder</span>
+                            <div class={isSharedDirty('audio_encoder') ? dirtyRing : ''}>
+                                <select
+                                    value={effectiveShared('audio_encoder')}
+                                    onchange={(e) => setShared('audio_encoder', (e.target as HTMLSelectElement).value)}
+                                    class="{inputClass} w-full"
+                                >
+                                    {#each scheme.supported_audio_encoders as enc}
+                                        <option value={enc}>{enc}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                        </label>
+                        <label class="space-y-1">
+                            <span class="text-xs text-gray-600 dark:text-gray-400">Subtitle mode</span>
+                            <div class={isSharedDirty('subtitle_mode') ? dirtyRing : ''}>
+                                <select
+                                    value={effectiveShared('subtitle_mode')}
+                                    onchange={(e) => setShared('subtitle_mode', (e.target as HTMLSelectElement).value)}
+                                    class="{inputClass} w-full"
+                                >
+                                    {#each scheme.supported_subtitle_modes as mode}
+                                        <option value={mode}>{mode}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                {#each ['dvd', 'bluray', 'uhd'] as tier}
+                    <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                        <p class="mb-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                            {TIER_LABELS[tier]} <span class="text-gray-400">· {TIER_HINTS[tier]}</span>
+                        </p>
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            <label class="space-y-1">
+                                <span class="text-xs text-gray-600 dark:text-gray-400">Encoder</span>
+                                <div class={isTierDirty(tier, 'video_encoder') ? dirtyRing : ''}>
+                                    <select
+                                        value={effectiveTier(tier, 'video_encoder')}
+                                        onchange={(e) => setTier(tier, 'video_encoder', (e.target as HTMLSelectElement).value)}
+                                        class="{inputClass} w-full"
+                                    >
+                                        {#each scheme.supported_encoders as enc}
+                                            <option value={enc.slug}>{enc.name}</option>
+                                        {/each}
+                                    </select>
+                                </div>
+                            </label>
+                            <label class="space-y-1">
+                                <span class="text-xs text-gray-600 dark:text-gray-400">Quality (CRF 0-51)</span>
+                                <div class={isTierDirty(tier, 'video_quality') ? dirtyRing : ''}>
+                                    <input
+                                        type="number" min="0" max="51" step="1"
+                                        data-testid="tier-{tier}-quality"
+                                        value={effectiveTier(tier, 'video_quality')}
+                                        oninput={(e) => setTier(tier, 'video_quality', Number((e.target as HTMLInputElement).value))}
+                                        class="{inputClass} w-full"
+                                    />
+                                </div>
+                            </label>
+                            <label class="space-y-1 lg:col-span-2">
+                                <span class="text-xs text-gray-600 dark:text-gray-400">HandBrake preset</span>
+                                <div class={isTierDirty(tier, 'handbrake_preset') ? dirtyRing : ''}>
+                                    <input
+                                        type="text"
+                                        value={effectiveTier(tier, 'handbrake_preset')}
+                                        oninput={(e) => setTier(tier, 'handbrake_preset', (e.target as HTMLInputElement).value)}
+                                        class="{inputClass} w-full"
+                                    />
+                                </div>
+                            </label>
+                            {#each Object.entries(scheme.advanced_fields) as [key, def]}
+                                <label class="space-y-1">
+                                    <span class="text-xs text-gray-600 dark:text-gray-400">{key}</span>
+                                    <div class={isTierDirty(tier, key) ? dirtyRing : ''}>
+                                        {#if def.type === 'enum' && def.values}
+                                            <select
+                                                value={effectiveTier(tier, key) || def.default || ''}
+                                                onchange={(e) => setTier(tier, key, (e.target as HTMLSelectElement).value)}
+                                                class="{inputClass} w-full"
+                                            >
+                                                {#each def.values as v}
+                                                    <option value={v}>{v}</option>
+                                                {/each}
+                                            </select>
+                                        {:else}
+                                            <input
+                                                type="text"
+                                                value={effectiveTier(tier, key)}
+                                                oninput={(e) => setTier(tier, key, (e.target as HTMLInputElement).value)}
+                                                class="{inputClass} w-full"
+                                            />
+                                        {/if}
+                                    </div>
+                                    {#if def.description}
+                                        <span class="block text-xs text-gray-400">{def.description}</span>
+                                    {/if}
+                                </label>
+                            {/each}
+                        </div>
+                    </div>
+                {/each}
+            </div>
         </div>
     </div>
 {/if}
