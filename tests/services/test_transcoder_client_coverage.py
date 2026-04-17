@@ -628,37 +628,28 @@ async def test_restart_transcoder_unreachable():
 # --- create_preset ---
 
 
-@pytest.mark.asyncio
 async def test_create_preset_returns_response_on_success():
-    mock_resp = AsyncMock()
-    mock_resp.raise_for_status = MagicMock(return_value=None)
-    mock_resp.json = lambda: {"slug": "my-preset", "name": "My Preset"}
-    mock_client = AsyncMock()
-    mock_client.post = AsyncMock(return_value=mock_resp)
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.post.return_value = _mock_response({"slug": "my-preset", "name": "My Preset"})
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.create_preset({"name": "My Preset", "parent_slug": "x"})
     assert result == {"slug": "my-preset", "name": "My Preset"}
+    mock_client.post.assert_awaited_once_with(
+        "/api/v1/presets", json={"name": "My Preset", "parent_slug": "x"}
+    )
 
 
-@pytest.mark.asyncio
 async def test_create_preset_returns_none_on_offline():
-    mock_client = AsyncMock()
-    mock_client.post = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.post.side_effect = httpx.ConnectError("connection refused")
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.create_preset({"name": "x", "parent_slug": "y"})
     assert result is None
 
 
-@pytest.mark.asyncio
 async def test_create_preset_raises_on_4xx():
-    mock_resp = AsyncMock()
-    mock_resp.status_code = 409
-    mock_resp.json = lambda: {"detail": "Slug exists"}
-    mock_resp.raise_for_status = MagicMock(
-        side_effect=httpx.HTTPStatusError("conflict", request=MagicMock(), response=MagicMock())
-    )
-    mock_client = AsyncMock()
-    mock_client.post = AsyncMock(return_value=mock_resp)
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.post.return_value = _mock_response({"detail": "Slug exists"}, status_code=409)
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         with pytest.raises(httpx.HTTPStatusError):
             await transcoder_client.create_preset({"name": "x", "parent_slug": "y"})
@@ -667,46 +658,56 @@ async def test_create_preset_raises_on_4xx():
 # --- update_preset ---
 
 
-@pytest.mark.asyncio
 async def test_update_preset_returns_response_on_success():
-    mock_resp = AsyncMock()
-    mock_resp.raise_for_status = MagicMock(return_value=None)
-    mock_resp.json = lambda: {"slug": "my-preset", "name": "Updated"}
-    mock_client = AsyncMock()
-    mock_client.patch = AsyncMock(return_value=mock_resp)
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.return_value = _mock_response({"slug": "my-preset", "name": "Updated"})
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.update_preset("my-preset", {"name": "Updated"})
     assert result == {"slug": "my-preset", "name": "Updated"}
+    mock_client.patch.assert_awaited_once_with(
+        "/api/v1/presets/my-preset", json={"name": "Updated"}
+    )
 
 
-@pytest.mark.asyncio
 async def test_update_preset_returns_none_on_offline():
-    mock_client = AsyncMock()
-    mock_client.patch = AsyncMock(side_effect=httpx.ConnectError("nope"))
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.side_effect = httpx.ConnectError("nope")
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.update_preset("x", {})
     assert result is None
 
 
+async def test_update_preset_raises_on_4xx():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.return_value = _mock_response({"detail": "Preset not found"}, status_code=404)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await transcoder_client.update_preset("missing-slug", {"name": "x"})
+
+
 # --- delete_preset ---
 
 
-@pytest.mark.asyncio
 async def test_delete_preset_returns_response_on_success():
-    mock_resp = AsyncMock()
-    mock_resp.raise_for_status = MagicMock(return_value=None)
-    mock_resp.json = lambda: {"success": True, "deleted": "my-preset"}
-    mock_client = AsyncMock()
-    mock_client.delete = AsyncMock(return_value=mock_resp)
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.delete.return_value = _mock_response({"success": True, "deleted": "my-preset"})
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.delete_preset("my-preset")
     assert result == {"success": True, "deleted": "my-preset"}
+    mock_client.delete.assert_awaited_once_with("/api/v1/presets/my-preset")
 
 
-@pytest.mark.asyncio
 async def test_delete_preset_returns_none_on_offline():
-    mock_client = AsyncMock()
-    mock_client.delete = AsyncMock(side_effect=httpx.ConnectError("nope"))
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.delete.side_effect = httpx.ConnectError("nope")
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.delete_preset("x")
     assert result is None
+
+
+async def test_delete_preset_raises_on_4xx():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.delete.return_value = _mock_response({"detail": "Preset not found"}, status_code=404)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await transcoder_client.delete_preset("missing-slug")
