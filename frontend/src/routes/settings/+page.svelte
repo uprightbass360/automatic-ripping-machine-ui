@@ -16,6 +16,9 @@
 	import { fetchImageCacheStats, clearImageCache, type ImageCacheStats } from '$lib/api/maintenance';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import SystemHealth from '$lib/components/settings/SystemHealth.svelte';
+	import PresetEditor from '$lib/components/PresetEditor.svelte';
+	import { fetchTranscoderScheme, fetchTranscoderPresets, createCustomPreset } from '$lib/api/settings';
+	import type { Scheme, Preset, Overrides, PresetEditorState } from '$lib/types/presets';
 
 	let settings = $state<SettingsData | null>(null);
 	let error = $state<string | null>(null);
@@ -33,6 +36,69 @@
 	let armFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 	let armRevealedKeys = $state<Set<string>>(new Set());
 	let armCollapsed = $state<Record<string, boolean>>({});
+
+	// --- Preset editor state ---
+	let presetScheme = $state<Scheme | null>(null);
+	let presets = $state<Preset[]>([]);
+	let presetOffline = $state(false);
+	let presetSaving = $state(false);
+
+	const presetInitialState = $derived.by<PresetEditorState>(() => {
+		// $state.snapshot converts the reactive proxy tree to plain data so
+		// child components never see Svelte $state proxies through props.
+		// Passing proxies triggers DOMException 'Proxy object could not be
+		// cloned' when the browser structured-clones the prop payload.
+		const cfg = $state.snapshot(settings?.transcoder_config?.config) as
+			| Record<string, unknown>
+			| undefined;
+		const raw = cfg?.global_overrides as Partial<Overrides> | undefined;
+		return {
+			preset_slug: (cfg?.selected_preset_slug as string) ?? '',
+			overrides: {
+				shared: raw?.shared ?? {},
+				tiers: raw?.tiers ?? {}
+			}
+		};
+	});
+
+	async function loadPresetData() {
+		presetOffline = false;
+		const [s, p] = await Promise.all([fetchTranscoderScheme(), fetchTranscoderPresets()]);
+		if (s === null || p === null) {
+			presetOffline = true;
+			return;
+		}
+		presetScheme = s;
+		presets = p.presets;
+	}
+
+	async function handlePresetSave(state: PresetEditorState) {
+		presetSaving = true;
+		try {
+			await saveTranscoderConfig({
+				selected_preset_slug: state.preset_slug,
+				global_overrides: state.overrides
+			});
+			await loadSettings();
+		} finally {
+			presetSaving = false;
+		}
+	}
+
+	async function handlePresetSaveAsNew(body: { name: string; parent_slug: string; overrides: Overrides }) {
+		presetSaving = true;
+		try {
+			const newPreset = await createCustomPreset(body);
+			await loadPresetData();
+			await saveTranscoderConfig({
+				selected_preset_slug: newPreset.slug,
+				global_overrides: { shared: {}, tiers: {} }
+			});
+			await loadSettings();
+		} finally {
+			presetSaving = false;
+		}
+	}
 
 	// --- Restart state ---
 	let armRestarting = $state(false);
@@ -413,6 +479,7 @@
 				pendingPanel = null;
 			}
 		});
+		loadPresetData();
 		// Handle initial hash tab (trigger side effects)
 		if (activeTab === 'music') loadAbcdeConfig();
 		if (activeTab === 'system') loadSystemInfo();
@@ -555,14 +622,6 @@
 
 	// --- Transcoder field labels ---
 	const TC_LABELS: Record<string, string> = {
-		video_encoder: 'Video Encoder',
-		video_quality: 'Video Quality (CRF)',
-		audio_encoder: 'Audio Encoder',
-		subtitle_mode: 'Subtitle Mode',
-		handbrake_preset: 'HandBrake Preset (Default)',
-		handbrake_preset_4k: 'HandBrake Preset (4K)',
-		handbrake_preset_dvd: 'HandBrake Preset (DVD)',
-		handbrake_preset_file: 'Custom Preset File',
 		delete_source: 'Delete Source After Transcode',
 		output_extension: 'Output Extension',
 		movies_subdir: 'Movies Subdirectory',
@@ -579,40 +638,21 @@
 	// Transcoder boolean fields rendered as toggle switches
 	const TC_BOOL_KEYS = new Set(['delete_source']);
 
-	// Preset keys rendered in their own 3-column row
-	const TC_PRESET_KEYS = ['handbrake_preset', 'handbrake_preset_4k', 'handbrake_preset_dvd'];
+	// Keys rendered in their own sub-panels (excluded from the Operational loop)
 	const TC_PRESET_SET = new Set([
-		...TC_PRESET_KEYS,
-		'handbrake_preset_file',
-		'video_encoder',
-		// Audio panel keys
-		'audio_encoder',
-		'subtitle_mode',
 		// Directory panel keys
 		'movies_subdir',
 		'tv_subdir',
 		'audio_subdir',
 		'output_extension',
 		'delete_source',
+		// Preset-managed keys (rendered in the PresetEditor section, not as raw fields)
+		'global_overrides',
+		'selected_preset_slug',
 	]);
-
-	// Video encoder options — canonical encoders only (no aliases), with labels
-	const VIDEO_ENCODER_OPTIONS: { value: string; label: string }[] = [
-		{ value: 'nvenc_h265', label: 'NVENC H.265 (Nvidia)' },
-		{ value: 'nvenc_h264', label: 'NVENC H.264 (Nvidia)' },
-		{ value: 'qsv_h265', label: 'QSV H.265 (Intel)' },
-		{ value: 'qsv_h264', label: 'QSV H.264 (Intel)' },
-		{ value: 'vaapi_h265', label: 'VAAPI H.265 (AMD/Intel)' },
-		{ value: 'vaapi_h264', label: 'VAAPI H.264 (AMD/Intel)' },
-		{ value: 'amf_h265', label: 'AMF H.265 (AMD)' },
-		{ value: 'amf_h264', label: 'AMF H.264 (AMD)' },
-		{ value: 'x265', label: 'Software H.265' },
-		{ value: 'x264', label: 'Software H.264' },
-	];
 
 	// Transcoder number fields: key → [min, max, step?]
 	const TC_NUMBER_FIELDS: Record<string, [number, number, number?]> = {
-		video_quality: [0, 51],
 		max_concurrent: [1, 10],
 		stabilize_seconds: [10, 600],
 		minimum_free_space_gb: [1, 500, 0.5],
@@ -621,75 +661,18 @@
 
 	// Help text for transcoder fields
 	const TC_HELP: Record<string, string> = {
-		video_encoder: 'Auto-detected from GPU at startup. NVENC (Nvidia), QSV (Intel), VCN/VAAPI (AMD), or x265 (software).',
-		handbrake_preset: 'Default preset for sources 720p–1080p. Auto-detected from GPU at startup.',
-		handbrake_preset_4k: 'Used for 4K UHD sources (>1080p). Auto-detected from GPU at startup.',
-		handbrake_preset_dvd: 'Used for DVD/low-res sources (<720p). Falls back to the default preset if empty.',
-		handbrake_preset_file:
-			'Imports custom presets from a JSON file. When set, those preset names become available alongside built-in presets.',
 		log_level_libraries:
 			'Log level for third-party libraries (aiosqlite, httpcore, httpx, uvicorn). Defaults to WARNING to reduce noise.',
 	};
-
-	// Preset options: custom presets from selected file first, then built-in.
-	// Always includes custom presets from valid_handbrake_presets so current values are selectable.
-	let presetOptions = $derived.by<string[]>(() => {
-		const builtin = settings?.arm_handbrake_presets ?? [];
-		const tcCustom = settings?.transcoder_config?.valid_handbrake_presets ?? [];
-		const byFile = settings?.transcoder_config?.presets_by_file ?? {};
-		const selectedFile = tcForm.handbrake_preset_file as string;
-
-		// When a file is selected, show its presets first
-		const filePresets = selectedFile ? (byFile[selectedFile] ?? []) : [];
-		const seen = new Set<string>(filePresets);
-
-		// Then custom presets from transcoder (may overlap)
-		const extraCustom = tcCustom.filter((n: string) => !seen.has(n));
-		extraCustom.forEach((n: string) => seen.add(n));
-
-		// Then built-in presets
-		const extraBuiltin = builtin.filter((n: string) => !seen.has(n));
-
-		return [...filePresets, ...extraCustom, ...extraBuiltin];
-	});
-
-	// When the preset file changes, auto-fill preset names from it
-	function handlePresetFileChange(newFile: string) {
-		tcForm.handbrake_preset_file = newFile;
-		if (!newFile) return;
-
-		const byFile = settings?.transcoder_config?.presets_by_file ?? {};
-		const filePresets = byFile[newFile] ?? [];
-		if (filePresets.length === 0) return;
-
-		// Auto-fill: pick presets by resolution hint
-		const is4k = (n: string) => /4k|2160/i.test(n);
-		const isDvd = (n: string) => /dvd|480|576|720p/i.test(n);
-		const preset4k = filePresets.find(is4k);
-		const presetDvd = filePresets.find(isDvd);
-		const presetStd = filePresets.find((n: string) => !is4k(n) && !isDvd(n)) ?? filePresets[0];
-
-		if (presetStd) tcForm.handbrake_preset = presetStd;
-		if (preset4k) tcForm.handbrake_preset_4k = preset4k;
-		if (presetDvd) tcForm.handbrake_preset_dvd = presetDvd;
-	}
 
 	// Returns the valid options array for select-type transcoder fields, or null.
 	// Always includes the current value so the select never shows blank.
 	function tcSelectOptions(key: string): string[] | null {
 		if (!settings?.transcoder_config) return null;
 		const tc = settings.transcoder_config;
-		const presetFiles = tc.valid_preset_files;
-		const presets = presetOptions;
 		const map: Record<string, string[] | undefined> = {
-			audio_encoder: tc.valid_audio_encoders,
-			subtitle_mode: tc.valid_subtitle_modes,
 			log_level: tc.valid_log_levels,
 			log_level_libraries: tc.valid_log_levels,
-			handbrake_preset: presets.length ? ['', ...presets] : undefined,
-			handbrake_preset_4k: presets.length ? ['', ...presets] : undefined,
-			handbrake_preset_dvd: presets.length ? ['', ...presets] : undefined,
-			handbrake_preset_file: presetFiles?.length ? ['', ...presetFiles] : undefined,
 		};
 		const opts = map[key] ?? null;
 		if (!opts) return null;
@@ -1471,142 +1454,24 @@
 						class="space-y-4 rounded-lg border border-primary/20 bg-surface p-4 dark:border-primary/20 dark:bg-surface-dark"
 					>
 						<!-- Encoding sub-panel -->
-						<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
-							<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Video Encoding</h3>
-
-							<!-- Video Encoder -->
-							<div class="relative {isTcFieldDirty('video_encoder') ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
-								<div class="{isTcFieldDirty('video_encoder') ? 'px-3 py-3' : ''}">
-									<div class="mb-1 flex items-center gap-1">
-										<label for="tc-video_encoder" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-											{TC_LABELS['video_encoder'] ?? 'Video Encoder'}
-										</label>
-										{#if isTcFieldDirty('video_encoder')}
-											<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
-										{/if}
-									</div>
-									<select
-										id="tc-video_encoder"
-										class={inputClass}
-										bind:value={tcForm.video_encoder}
-									>
-										{#each VIDEO_ENCODER_OPTIONS as enc}
-											<option value={enc.value}>{enc.label}</option>
-										{/each}
-									</select>
-									{#if TC_HELP['video_encoder']}
-										<p class="mt-1 text-xs text-gray-400">{TC_HELP['video_encoder']}</p>
-									{/if}
-								</div>
-							</div>
-
-							<!-- Preset dropdowns (3-column row) -->
-							<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-								{#each TC_PRESET_KEYS as key}
-									{@const selectOpts = tcSelectOptions(key)}
-									<div class="relative {isTcFieldDirty(key) ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
-										<div class="{isTcFieldDirty(key) ? 'px-3 py-3' : ''}">
-											<div class="mb-1 flex items-center gap-1">
-												<label for="tc-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-													{TC_LABELS[key] ?? key}
-												</label>
-												{#if isTcFieldDirty(key)}
-													<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
-												{/if}
-											</div>
-											{#if selectOpts}
-												<select
-													id="tc-{key}"
-													class={inputClass}
-													bind:value={tcForm[key]}
-												>
-													{#each selectOpts as opt}
-														<option value={opt}>{opt || '(None)'}</option>
-													{/each}
-												</select>
-											{:else}
-												<input
-													id="tc-{key}"
-													type="text"
-													class={inputClass}
-													bind:value={tcForm[key]}
-												/>
-											{/if}
-											{#if TC_HELP[key]}
-												<p class="mt-1 text-xs text-gray-400">{TC_HELP[key]}</p>
-											{/if}
-										</div>
-									</div>
-								{/each}
-							</div>
-
-							<!-- Custom Preset File (full width, last) -->
-							{#if tcSelectOptions('handbrake_preset_file')}
-								{@const pfOpts = tcSelectOptions('handbrake_preset_file')}
-								<div class="relative {isTcFieldDirty('handbrake_preset_file') ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
-									<div class="{isTcFieldDirty('handbrake_preset_file') ? 'px-3 py-3' : ''}">
-										<div class="mb-1 flex items-center gap-1">
-											<label for="tc-handbrake_preset_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-												{TC_LABELS['handbrake_preset_file']}
-											</label>
-											{#if isTcFieldDirty('handbrake_preset_file')}
-												<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
-											{/if}
-										</div>
-										<select
-											id="tc-handbrake_preset_file"
-											class={inputClass}
-											value={tcForm.handbrake_preset_file ?? ''}
-											onchange={(e) => handlePresetFileChange(e.currentTarget.value)}
-										>
-											{#each pfOpts as opt}
-												<option value={opt}>{opt || '(None)'}</option>
-											{/each}
-										</select>
-										{#if TC_HELP['handbrake_preset_file']}
-											<p class="mt-1 text-xs text-gray-400">{TC_HELP['handbrake_preset_file']}</p>
-										{/if}
-									</div>
-								</div>
+						<section class="space-y-3">
+							<h3 class="text-base font-semibold text-gray-700 dark:text-gray-300">Transcoder - Encoding</h3>
+							{#if presetScheme || presetOffline}
+								<PresetEditor
+									scope="global"
+									initialState={presetInitialState}
+									scheme={presetScheme}
+									{presets}
+									offline={presetOffline}
+									saving={presetSaving}
+									onSave={handlePresetSave}
+									onSaveAsNew={handlePresetSaveAsNew}
+									onRetry={loadPresetData}
+								/>
+							{:else}
+								<p class="text-sm text-gray-400">Loading presets...</p>
 							{/if}
-
-							<!-- Audio & Subtitle streams (part of video transcode) -->
-							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-								{#each ['audio_encoder', 'subtitle_mode'] as key}
-									{@const selectOpts = tcSelectOptions(key)}
-									<div class="relative {isTcFieldDirty(key) ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
-										<div class="{isTcFieldDirty(key) ? 'px-3 py-3' : ''}">
-											<div class="mb-1 flex items-center gap-1">
-												<label for="tc-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-													{TC_LABELS[key] ?? key}
-												</label>
-												{#if isTcFieldDirty(key)}
-													<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
-												{/if}
-											</div>
-											{#if selectOpts}
-												<select
-													id="tc-{key}"
-													class={inputClass}
-													bind:value={tcForm[key]}
-												>
-													{#each selectOpts as opt}
-														<option value={opt}>{opt}</option>
-													{/each}
-												</select>
-											{:else}
-												<input
-													id="tc-{key}"
-													type="text"
-													class={inputClass}
-													bind:value={tcForm[key]}
-												/>
-											{/if}
-										</div>
-									</div>
-								{/each}
-							</div>
-						</div>
+						</section>
 
 						<!-- Directories sub-panel -->
 						<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">

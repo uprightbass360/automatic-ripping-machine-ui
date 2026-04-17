@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+from typing import NoReturn
 
 from fastapi import APIRouter, HTTPException
 import httpx
@@ -13,6 +14,9 @@ from backend.services import arm_client, arm_db, transcoder_client
 
 router = APIRouter(prefix="/api", tags=["settings"])
 log = logging.getLogger(__name__)
+
+_TRANSCODER_UNREACHABLE = "Transcoder service unreachable"
+_TRANSCODER_UNREACHABLE_RESPONSE = {502: {"description": _TRANSCODER_UNREACHABLE}}
 
 
 def _read_hb_presets() -> list[str] | None:
@@ -138,11 +142,80 @@ async def test_metadata_key(key: str | None = None, provider: str | None = None)
         return {"success": False, "message": "ARM service unreachable", "provider": "unknown"}
 
 
-@router.patch("/settings/transcoder", responses={400: {"description": "Invalid config"}, 502: {"description": "Transcoder service unreachable"}})
-async def update_transcoder_config(body: dict):
-    result = await transcoder_client.update_config(body)
+@router.get("/settings/transcoder/scheme", responses=_TRANSCODER_UNREACHABLE_RESPONSE)
+async def get_transcoder_scheme():
+    result = await transcoder_client.get_scheme()
     if result is None:
-        raise HTTPException(status_code=502, detail="Transcoder service unreachable")
+        raise HTTPException(status_code=502, detail=_TRANSCODER_UNREACHABLE)
+    return result
+
+
+@router.get("/settings/transcoder/presets", responses=_TRANSCODER_UNREACHABLE_RESPONSE)
+async def get_transcoder_presets():
+    result = await transcoder_client.get_presets()
+    if result is None:
+        raise HTTPException(status_code=502, detail=_TRANSCODER_UNREACHABLE)
+    return result
+
+
+def _raise_from_http_status_error(exc: httpx.HTTPStatusError) -> NoReturn:
+    """Re-raise an httpx HTTPStatusError as a FastAPI HTTPException, forwarding detail."""
+    detail = "Preset operation failed"
+    try:
+        detail = exc.response.json().get("detail", detail)
+    except Exception:
+        pass
+    raise HTTPException(status_code=exc.response.status_code, detail=detail)
+
+
+@router.post("/settings/transcoder/presets", status_code=201,
+             responses={409: {"description": "Slug conflict"}, 502: {"description": "Transcoder unreachable"}})
+async def create_transcoder_preset(body: dict):
+    try:
+        result = await transcoder_client.create_preset(body)
+    except httpx.HTTPStatusError as exc:
+        _raise_from_http_status_error(exc)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_TRANSCODER_UNREACHABLE)
+    return result
+
+
+@router.patch("/settings/transcoder/presets/{slug}",
+              responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
+async def update_transcoder_preset(slug: str, body: dict):
+    try:
+        result = await transcoder_client.update_preset(slug, body)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except httpx.HTTPStatusError as exc:
+        _raise_from_http_status_error(exc)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_TRANSCODER_UNREACHABLE)
+    return result
+
+
+@router.delete("/settings/transcoder/presets/{slug}",
+               responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
+async def delete_transcoder_preset(slug: str):
+    try:
+        result = await transcoder_client.delete_preset(slug)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except httpx.HTTPStatusError as exc:
+        _raise_from_http_status_error(exc)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_TRANSCODER_UNREACHABLE)
+    return result
+
+
+@router.patch("/settings/transcoder", responses={400: {"description": "Invalid config"}, **_TRANSCODER_UNREACHABLE_RESPONSE})
+async def update_transcoder_config(body: dict):
+    try:
+        result = await transcoder_client.update_config(body)
+    except httpx.HTTPStatusError as exc:
+        _raise_from_http_status_error(exc)
+    if result is None:
+        raise HTTPException(status_code=502, detail=_TRANSCODER_UNREACHABLE)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("detail", "Unknown error"))
     return result

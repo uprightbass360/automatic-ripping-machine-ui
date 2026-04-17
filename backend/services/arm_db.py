@@ -584,9 +584,10 @@ def get_job_retranscode_info(job_id: int) -> dict | None:
 
 
 TRANSCODE_OVERRIDE_KEYS = {
-    "video_encoder", "video_quality", "audio_encoder", "subtitle_mode",
-    "handbrake_preset", "handbrake_preset_4k", "handbrake_preset_dvd",
-    "handbrake_preset_file", "delete_source", "output_extension",
+    "preset_slug",
+    "overrides",
+    "delete_source",
+    "output_extension",
 }
 
 
@@ -594,14 +595,16 @@ def _coerce_override(key: str, value) -> tuple[str, object] | None:
     """Coerce a single transcode override value. Returns None to skip."""
     if value is None or value == "":
         return None
-    if key == "video_quality":
-        return key, int(value)
     if key == "delete_source":
         if isinstance(value, bool):
             return key, value
         if isinstance(value, str):
             return key, value.lower() in ("true", "1", "yes")
         return key, bool(value)
+    if key == "overrides":
+        if isinstance(value, dict):
+            return key, value
+        return None
     return key, str(value)
 
 

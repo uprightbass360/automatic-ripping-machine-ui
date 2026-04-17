@@ -15,6 +15,18 @@ from backend.config import settings
 _TS_FIELDS = {"created_at", "started_at", "completed_at"}
 _ISO_NO_TZ = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
 
+# Preset slugs must match what the transcoder's _slugify() produces:
+# lowercase alphanumerics separated by single hyphens, 1-100 chars.
+# Validating here prevents path traversal / query-string smuggling when the
+# slug is interpolated into an outbound URL.
+_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def _validate_slug(slug: str) -> str:
+    if not isinstance(slug, str) or not (1 <= len(slug) <= 100) or not _SLUG_RE.fullmatch(slug):
+        raise ValueError(f"Invalid preset slug: {slug!r}")
+    return slug
+
 
 def _normalize_timestamps(data: Any) -> Any:
     """Append 'Z' to bare ISO timestamps in transcoder responses."""
@@ -258,6 +270,64 @@ async def restart_transcoder() -> dict[str, Any] | None:
         return None
 
 
+async def get_scheme() -> dict[str, Any] | None:
+    """Fetch active scheme from transcoder. Returns None if offline."""
+    try:
+        resp = await get_client().get("/api/v1/scheme")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
+async def get_presets() -> dict[str, Any] | None:
+    """Fetch all presets from transcoder. Returns None if offline."""
+    try:
+        resp = await get_client().get("/api/v1/presets")
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
+async def create_preset(body: dict[str, Any]) -> dict[str, Any] | None:
+    """Create a custom preset. Returns None if transcoder offline. Raises HTTPStatusError on 4xx/5xx."""
+    try:
+        resp = await get_client().post("/api/v1/presets", json=body)
+        resp.raise_for_status()
+        return resp.json()
+    except httpx.HTTPStatusError:
+        raise
+    except (httpx.HTTPError, RuntimeError, OSError):
+        return None
+
+
+async def update_preset(slug: str, body: dict[str, Any]) -> dict[str, Any] | None:
+    """Update a custom preset. Returns None if transcoder offline. Raises HTTPStatusError on 4xx/5xx."""
+    safe_slug = _validate_slug(slug)
+    try:
+        resp = await get_client().patch(f"/api/v1/presets/{safe_slug}", json=body)
+        resp.raise_for_status()
+        return resp.json()
+    except httpx.HTTPStatusError:
+        raise
+    except (httpx.HTTPError, RuntimeError, OSError):
+        return None
+
+
+async def delete_preset(slug: str) -> dict[str, Any] | None:
+    """Delete a custom preset. Returns None if transcoder offline. Raises HTTPStatusError on 4xx/5xx."""
+    safe_slug = _validate_slug(slug)
+    try:
+        resp = await get_client().delete(f"/api/v1/presets/{safe_slug}")
+        resp.raise_for_status()
+        return resp.json()
+    except httpx.HTTPStatusError:
+        raise
+    except (httpx.HTTPError, RuntimeError, OSError):
+        return None
+
+
 async def get_config() -> dict[str, Any] | None:
     """Fetch transcoder config with valid option lists. Returns None if offline."""
     try:
@@ -269,13 +339,18 @@ async def get_config() -> dict[str, Any] | None:
 
 
 async def update_config(config: dict[str, Any]) -> dict[str, Any] | None:
-    """Patch transcoder config. Returns response dict or None if offline."""
+    """Patch transcoder config.
+
+    Returns parsed response on 2xx, None if transcoder is unreachable.
+    Raises httpx.HTTPStatusError on 4xx/5xx so the caller can surface
+    the real error (e.g. validation 422) instead of a generic offline message.
+    """
     try:
         resp = await get_client().patch(_CONFIG_ENDPOINT, json=config)
-        resp.raise_for_status()
-        return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+    except (httpx.ConnectError, httpx.TimeoutException, RuntimeError, OSError):
         return None
+    resp.raise_for_status()
+    return resp.json()
 
 
 async def get_jobs(

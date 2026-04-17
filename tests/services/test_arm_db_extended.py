@@ -13,10 +13,6 @@ from tests.factories import make_job, make_track
 # --- _coerce_override ---
 
 
-def test_coerce_override_video_quality():
-    assert arm_db._coerce_override("video_quality", "22") == ("video_quality", 22)
-
-
 def test_coerce_override_delete_source_bool():
     assert arm_db._coerce_override("delete_source", True) == ("delete_source", True)
 
@@ -31,16 +27,29 @@ def test_coerce_override_delete_source_int():
     assert arm_db._coerce_override("delete_source", 0) == ("delete_source", False)
 
 
+def test_coerce_override_preset_slug():
+    assert arm_db._coerce_override("preset_slug", "hq-1080p") == ("preset_slug", "hq-1080p")
+
+
+def test_coerce_override_overrides_dict():
+    payload = {"video_encoder": "x265", "video_quality": 20}
+    assert arm_db._coerce_override("overrides", payload) == ("overrides", payload)
+
+
+def test_coerce_override_overrides_non_dict_skipped():
+    assert arm_db._coerce_override("overrides", "not-a-dict") is None
+
+
 def test_coerce_override_string_field():
-    assert arm_db._coerce_override("video_encoder", "x265") == ("video_encoder", "x265")
+    assert arm_db._coerce_override("output_extension", "mkv") == ("output_extension", "mkv")
 
 
 def test_coerce_override_none_skipped():
-    assert arm_db._coerce_override("video_encoder", None) is None
+    assert arm_db._coerce_override("preset_slug", None) is None
 
 
 def test_coerce_override_empty_string_skipped():
-    assert arm_db._coerce_override("video_encoder", "") is None
+    assert arm_db._coerce_override("preset_slug", "") is None
 
 
 # --- get_job_retranscode_info ---
@@ -96,7 +105,7 @@ def test_retranscode_info_music_disc_returns_none():
 def test_retranscode_info_with_overrides():
     job = make_job(
         job_id=1, disctype="bluray",
-        transcode_overrides='{"video_encoder": "x265", "video_quality": 20}',
+        transcode_overrides='{"preset_slug": "hq-1080p", "delete_source": true}',
         multi_title=False,
     )
     job.tracks = []
@@ -109,7 +118,7 @@ def test_retranscode_info_with_overrides():
         result = arm_db.get_job_retranscode_info(1)
 
     assert result is not None
-    assert result["config_overrides"]["video_encoder"] == "x265"
+    assert result["config_overrides"]["preset_slug"] == "hq-1080p"
 
 
 def test_retranscode_info_multi_title_with_tracks():
@@ -153,12 +162,28 @@ def test_update_transcode_overrides_success():
         ctx.scalars.return_value.unique.return_value.first.return_value = mock_job
         mock_session.return_value = ctx
         result = arm_db.update_job_transcode_overrides(
-            1, {"video_encoder": "x265", "video_quality": "20"}
+            1, {"preset_slug": "hq-1080p", "delete_source": "true"}
         )
 
     assert result is not None
-    assert result["video_encoder"] == "x265"
-    assert result["video_quality"] == 20
+    assert result["preset_slug"] == "hq-1080p"
+    assert result["delete_source"] is True
+
+
+def test_update_transcode_overrides_with_overrides_dict():
+    mock_job = MagicMock()
+    with patch.object(arm_db, "get_rw_session") as mock_session:
+        ctx = MagicMock()
+        ctx.__enter__ = MagicMock(return_value=ctx)
+        ctx.__exit__ = MagicMock(return_value=False)
+        ctx.scalars.return_value.unique.return_value.first.return_value = mock_job
+        mock_session.return_value = ctx
+        result = arm_db.update_job_transcode_overrides(
+            1, {"overrides": {"video_encoder": "x265", "video_quality": 20}}
+        )
+
+    assert result is not None
+    assert result["overrides"] == {"video_encoder": "x265", "video_quality": 20}
 
 
 def test_update_transcode_overrides_not_found():
@@ -169,7 +194,7 @@ def test_update_transcode_overrides_not_found():
         ctx.scalars.return_value.unique.return_value.first.return_value = None
         mock_session.return_value = ctx
         result = arm_db.update_job_transcode_overrides(
-            999, {"video_encoder": "x265"}
+            999, {"preset_slug": "hq-1080p"}
         )
 
     assert result is None

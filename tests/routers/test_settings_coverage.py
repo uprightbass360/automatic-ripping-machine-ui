@@ -244,6 +244,23 @@ async def test_update_transcoder_config_failure(app_client):
     assert "Invalid encoder" in resp.json()["detail"]
 
 
+async def test_update_transcoder_config_forwards_422(app_client):
+    """422 validation errors from transcoder should surface (not swallowed as 502)."""
+    err_resp = httpx.Response(422, json={"detail": "global_overrides must be a string"})
+    err = httpx.HTTPStatusError("unprocessable", request=None, response=err_resp)
+    with patch(
+        "backend.routers.settings.transcoder_client.update_config",
+        new_callable=AsyncMock,
+        side_effect=err,
+    ):
+        resp = await app_client.patch(
+            "/api/settings/transcoder",
+            json={"global_overrides": {"shared": {}, "tiers": {}}},
+        )
+    assert resp.status_code == 422
+    assert "global_overrides" in resp.json()["detail"]
+
+
 # --- GET /api/settings/test-metadata ---
 
 
@@ -287,6 +304,58 @@ async def test_test_metadata_key_connect_error(app_client):
     assert "unreachable" in data["message"].lower()
 
 
+# --- GET /api/settings/transcoder/scheme ---
+
+
+async def test_get_transcoder_scheme_success(app_client):
+    data = {"slug": "default", "name": "Default Scheme", "presets": []}
+    with patch(
+        "backend.routers.settings.transcoder_client.get_scheme",
+        new_callable=AsyncMock,
+        return_value=data,
+    ):
+        resp = await app_client.get("/api/settings/transcoder/scheme")
+    assert resp.status_code == 200
+    assert resp.json()["slug"] == "default"
+
+
+async def test_get_transcoder_scheme_unreachable(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.get_scheme",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.get("/api/settings/transcoder/scheme")
+    assert resp.status_code == 502
+    assert "unreachable" in resp.json()["detail"].lower()
+
+
+# --- GET /api/settings/transcoder/presets ---
+
+
+async def test_get_transcoder_presets_success(app_client):
+    data = {"presets": [{"slug": "hq-1080p", "name": "HQ 1080p"}]}
+    with patch(
+        "backend.routers.settings.transcoder_client.get_presets",
+        new_callable=AsyncMock,
+        return_value=data,
+    ):
+        resp = await app_client.get("/api/settings/transcoder/presets")
+    assert resp.status_code == 200
+    assert resp.json()["presets"][0]["slug"] == "hq-1080p"
+
+
+async def test_get_transcoder_presets_unreachable(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.get_presets",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.get("/api/settings/transcoder/presets")
+    assert resp.status_code == 502
+    assert "unreachable" in resp.json()["detail"].lower()
+
+
 # --- PUT /api/settings/abcde failure ---
 
 
@@ -301,3 +370,172 @@ async def test_put_abcde_config_failure(app_client):
         )
     assert resp.status_code == 400
     assert "Parse error" in resp.json()["detail"]
+
+
+# --- POST /api/settings/transcoder/presets ---
+
+
+async def test_create_preset_proxy_success(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.create_preset",
+        new_callable=AsyncMock,
+        return_value={"slug": "x", "name": "X"},
+    ):
+        resp = await app_client.post(
+            "/api/settings/transcoder/presets",
+            json={"name": "X", "parent_slug": "y", "overrides": {}},
+        )
+    assert resp.status_code == 201
+    assert resp.json() == {"slug": "x", "name": "X"}
+
+
+async def test_create_preset_proxy_offline(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.create_preset",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.post(
+            "/api/settings/transcoder/presets",
+            json={"name": "X", "parent_slug": "y"},
+        )
+    assert resp.status_code == 502
+
+
+async def test_create_preset_proxy_forwards_4xx_detail(app_client):
+    err_resp = httpx.Response(409, json={"detail": "Slug exists"})
+    err = httpx.HTTPStatusError("conflict", request=None, response=err_resp)
+    with patch(
+        "backend.routers.settings.transcoder_client.create_preset",
+        new_callable=AsyncMock,
+        side_effect=err,
+    ):
+        resp = await app_client.post(
+            "/api/settings/transcoder/presets",
+            json={"name": "X", "parent_slug": "y"},
+        )
+    assert resp.status_code == 409
+    assert resp.json()["detail"] == "Slug exists"
+
+
+# --- PATCH /api/settings/transcoder/presets/{slug} ---
+
+
+async def test_update_preset_proxy_success(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.update_preset",
+        new_callable=AsyncMock,
+        return_value={"slug": "x", "name": "Y"},
+    ):
+        resp = await app_client.patch(
+            "/api/settings/transcoder/presets/x", json={"name": "Y"}
+        )
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "Y"
+
+
+async def test_update_preset_proxy_offline(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.update_preset",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.patch(
+            "/api/settings/transcoder/presets/x", json={}
+        )
+    assert resp.status_code == 502
+
+
+async def test_update_preset_proxy_forwards_404(app_client):
+    err_resp = httpx.Response(404, json={"detail": "Cannot update built-in"})
+    err = httpx.HTTPStatusError("not found", request=None, response=err_resp)
+    with patch(
+        "backend.routers.settings.transcoder_client.update_preset",
+        new_callable=AsyncMock,
+        side_effect=err,
+    ):
+        resp = await app_client.patch(
+            "/api/settings/transcoder/presets/x", json={}
+        )
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "Cannot update built-in"
+
+
+async def test_update_preset_proxy_handles_non_json_error_body(app_client):
+    """When transcoder error body isn't JSON, fall back to generic detail."""
+    err_resp = httpx.Response(500, content=b"<html>Internal Error</html>")
+    err = httpx.HTTPStatusError("boom", request=None, response=err_resp)
+    with patch(
+        "backend.routers.settings.transcoder_client.update_preset",
+        new_callable=AsyncMock,
+        side_effect=err,
+    ):
+        resp = await app_client.patch(
+            "/api/settings/transcoder/presets/x", json={}
+        )
+    assert resp.status_code == 500
+    assert resp.json()["detail"] == "Preset operation failed"
+
+
+# --- DELETE /api/settings/transcoder/presets/{slug} ---
+
+
+async def test_delete_preset_proxy_success(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.delete_preset",
+        new_callable=AsyncMock,
+        return_value={"success": True, "deleted": "x"},
+    ):
+        resp = await app_client.delete("/api/settings/transcoder/presets/x")
+    assert resp.status_code == 200
+    assert resp.json()["deleted"] == "x"
+
+
+async def test_delete_preset_proxy_offline(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.delete_preset",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.delete("/api/settings/transcoder/presets/x")
+    assert resp.status_code == 502
+
+
+async def test_delete_preset_proxy_forwards_404(app_client):
+    err_resp = httpx.Response(404, json={"detail": "Preset not found"})
+    err = httpx.HTTPStatusError("not found", request=None, response=err_resp)
+    with patch(
+        "backend.routers.settings.transcoder_client.delete_preset",
+        new_callable=AsyncMock,
+        side_effect=err,
+    ):
+        resp = await app_client.delete("/api/settings/transcoder/presets/x")
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "Preset not found"
+
+
+# --- slug validation at router boundary (SSRF defense-in-depth) ---
+
+
+async def test_update_preset_proxy_returns_400_on_invalid_slug(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.update_preset",
+        new_callable=AsyncMock,
+        side_effect=ValueError("Invalid preset slug: 'bad'"),
+    ):
+        resp = await app_client.patch(
+            "/api/settings/transcoder/presets/bad", json={}
+        )
+    assert resp.status_code == 400
+    assert "Invalid preset slug" in resp.json()["detail"]
+
+
+async def test_delete_preset_proxy_returns_400_on_invalid_slug(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.delete_preset",
+        new_callable=AsyncMock,
+        side_effect=ValueError("Invalid preset slug: 'bad'"),
+    ):
+        resp = await app_client.delete("/api/settings/transcoder/presets/bad")
+    assert resp.status_code == 400
+    assert "Invalid preset slug" in resp.json()["detail"]

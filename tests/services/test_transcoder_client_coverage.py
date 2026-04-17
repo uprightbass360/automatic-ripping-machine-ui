@@ -182,6 +182,48 @@ async def test_get_system_stats_offline():
     assert result is None
 
 
+# --- get_scheme ---
+
+
+async def test_get_scheme_success():
+    data = {"slug": "default", "name": "Default Scheme", "presets": []}
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(data)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.get_scheme()
+    assert result == data
+    mock_client.get.assert_awaited_once_with("/api/v1/scheme")
+
+
+async def test_get_scheme_offline():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.side_effect = httpx.ConnectError("refused")
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.get_scheme()
+    assert result is None
+
+
+# --- get_presets ---
+
+
+async def test_get_presets_success():
+    data = {"presets": [{"slug": "hq-1080p", "name": "HQ 1080p"}]}
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = _mock_response(data)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.get_presets()
+    assert result == data
+    mock_client.get.assert_awaited_once_with("/api/v1/presets")
+
+
+async def test_get_presets_offline():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.side_effect = httpx.ConnectError("refused")
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.get_presets()
+    assert result is None
+
+
 # --- get_config ---
 
 
@@ -222,6 +264,19 @@ async def test_update_config_offline():
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.update_config({"video_encoder": "x265"})
     assert result is None
+
+
+async def test_update_config_raises_on_4xx():
+    """4xx/5xx responses should raise HTTPStatusError (not swallowed to None)."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.return_value = _mock_response(
+        {"detail": "global_overrides must be a string"}, status_code=422
+    )
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await transcoder_client.update_config(
+                {"global_overrides": {"shared": {}, "tiers": {}}}
+            )
 
 
 # --- get_jobs ---
@@ -581,3 +636,149 @@ async def test_restart_transcoder_unreachable():
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.restart_transcoder()
     assert result is None
+
+
+# --- create_preset ---
+
+
+async def test_create_preset_returns_response_on_success():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.post.return_value = _mock_response({"slug": "my-preset", "name": "My Preset"})
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.create_preset({"name": "My Preset", "parent_slug": "x"})
+    assert result == {"slug": "my-preset", "name": "My Preset"}
+    mock_client.post.assert_awaited_once_with(
+        "/api/v1/presets", json={"name": "My Preset", "parent_slug": "x"}
+    )
+
+
+async def test_create_preset_returns_none_on_offline():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.post.side_effect = httpx.ConnectError("connection refused")
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.create_preset({"name": "x", "parent_slug": "y"})
+    assert result is None
+
+
+async def test_create_preset_raises_on_4xx():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.post.return_value = _mock_response({"detail": "Slug exists"}, status_code=409)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await transcoder_client.create_preset({"name": "x", "parent_slug": "y"})
+
+
+# --- update_preset ---
+
+
+async def test_update_preset_returns_response_on_success():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.return_value = _mock_response({"slug": "my-preset", "name": "Updated"})
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.update_preset("my-preset", {"name": "Updated"})
+    assert result == {"slug": "my-preset", "name": "Updated"}
+    mock_client.patch.assert_awaited_once_with(
+        "/api/v1/presets/my-preset", json={"name": "Updated"}
+    )
+
+
+async def test_update_preset_returns_none_on_offline():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.side_effect = httpx.ConnectError("nope")
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.update_preset("x", {})
+    assert result is None
+
+
+async def test_update_preset_raises_on_4xx():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.return_value = _mock_response({"detail": "Preset not found"}, status_code=404)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await transcoder_client.update_preset("missing-slug", {"name": "x"})
+
+
+# --- delete_preset ---
+
+
+async def test_delete_preset_returns_response_on_success():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.delete.return_value = _mock_response({"success": True, "deleted": "my-preset"})
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.delete_preset("my-preset")
+    assert result == {"success": True, "deleted": "my-preset"}
+    mock_client.delete.assert_awaited_once_with("/api/v1/presets/my-preset")
+
+
+async def test_delete_preset_returns_none_on_offline():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.delete.side_effect = httpx.ConnectError("nope")
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.delete_preset("x")
+    assert result is None
+
+
+async def test_delete_preset_raises_on_4xx():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.delete.return_value = _mock_response({"detail": "Preset not found"}, status_code=404)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPStatusError):
+            await transcoder_client.delete_preset("missing-slug")
+
+
+# --- slug validation (SSRF protection) ---
+
+
+@pytest.mark.parametrize("bad_slug", [
+    "../admin",
+    "preset/../other",
+    "preset?query=1",
+    "preset with spaces",
+    "Preset-Uppercase",
+    "-leading-dash",
+    "trailing-dash-",
+    "double--dash",
+    "",
+    "a" * 101,
+    "preset#fragment",
+    "preset%2e%2e",
+])
+async def test_update_preset_rejects_malicious_slug(bad_slug):
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(ValueError, match="Invalid preset slug"):
+            await transcoder_client.update_preset(bad_slug, {"name": "x"})
+    mock_client.patch.assert_not_called()
+
+
+@pytest.mark.parametrize("bad_slug", [
+    "../admin",
+    "preset/../other",
+    "preset?query=1",
+    "Preset-Uppercase",
+    "",
+])
+async def test_delete_preset_rejects_malicious_slug(bad_slug):
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(ValueError, match="Invalid preset slug"):
+            await transcoder_client.delete_preset(bad_slug)
+    mock_client.delete.assert_not_called()
+
+
+@pytest.mark.parametrize("good_slug", [
+    "nvidia-balanced",
+    "my-anime-preset",
+    "a",
+    "preset123",
+    "slug-with-9-digits",
+])
+async def test_update_preset_accepts_valid_slug(good_slug):
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.return_value = _mock_response({"slug": good_slug})
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.update_preset(good_slug, {"name": "x"})
+    assert result == {"slug": good_slug}
+    mock_client.patch.assert_awaited_once_with(
+        f"/api/v1/presets/{good_slug}", json={"name": "x"}
+    )

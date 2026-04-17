@@ -1,4 +1,5 @@
 import type { SettingsData } from '$lib/types/arm';
+import type { Scheme, Preset, Overrides } from '$lib/types/presets';
 import { apiFetch } from './client';
 
 export function fetchSettings(): Promise<SettingsData> {
@@ -104,4 +105,29 @@ export interface SystemInfoData {
 
 export function fetchSystemInfo(): Promise<SystemInfoData> {
 	return apiFetch<SystemInfoData>('/api/settings/system-info');
+}
+
+export async function fetchTranscoderScheme(): Promise<Scheme | null> {
+	try {
+		return await apiFetch<Scheme>('/api/settings/transcoder/scheme');
+	} catch (e: unknown) {
+		if (e instanceof Error && (e.message.includes('502') || e.message.includes('Transcoder service unreachable'))) return null;
+		throw e;
+	}
+}
+
+export async function fetchTranscoderPresets(): Promise<{ presets: Preset[] } | null> {
+	try {
+		return await apiFetch<{ presets: Preset[] }>('/api/settings/transcoder/presets');
+	} catch (e: unknown) {
+		if (e instanceof Error && (e.message.includes('502') || e.message.includes('Transcoder service unreachable'))) return null;
+		throw e;
+	}
+}
+
+export function createCustomPreset(body: { name: string; parent_slug: string; overrides: Overrides }): Promise<Preset> {
+	return apiFetch<Preset>('/api/settings/transcoder/presets', {
+		method: 'POST',
+		body: JSON.stringify(body)
+	});
 }
