@@ -70,7 +70,9 @@
 
     function effectiveTier(tier: string, key: string): unknown {
         if (overrides.tiers[tier]?.[key] !== undefined) return overrides.tiers[tier][key];
-        return selectedPreset?.tiers[tier as 'dvd' | 'bluray' | 'uhd']?.[key] ?? '';
+        const tierVal = selectedPreset?.tiers[tier as 'dvd' | 'bluray' | 'uhd']?.[key];
+        if (tierVal !== undefined) return tierVal;
+        return selectedPreset?.shared?.[key] ?? '';
     }
 
     function isSharedDirty(key: string): boolean {
