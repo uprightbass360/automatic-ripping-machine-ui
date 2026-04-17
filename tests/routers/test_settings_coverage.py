@@ -444,6 +444,22 @@ async def test_update_preset_proxy_forwards_404(app_client):
     assert resp.json()["detail"] == "Cannot update built-in"
 
 
+async def test_update_preset_proxy_handles_non_json_error_body(app_client):
+    """When transcoder error body isn't JSON, fall back to generic detail."""
+    err_resp = httpx.Response(500, content=b"<html>Internal Error</html>")
+    err = httpx.HTTPStatusError("boom", request=None, response=err_resp)
+    with patch(
+        "backend.routers.settings.transcoder_client.update_preset",
+        new_callable=AsyncMock,
+        side_effect=err,
+    ):
+        resp = await app_client.patch(
+            "/api/settings/transcoder/presets/x", json={}
+        )
+    assert resp.status_code == 500
+    assert resp.json()["detail"] == "Preset operation failed"
+
+
 # --- DELETE /api/settings/transcoder/presets/{slug} ---
 
 
