@@ -89,9 +89,51 @@ describe('PresetEditor dropdown', () => {
 
     it('updates selectedSlug when dropdown changes', async () => {
         const second: Preset = { ...mockPresets[0], slug: 'software_quality', name: 'Quality' };
-        renderComponent(PresetEditor, { props: { ...baseProps, presets: [mockPresets[0], second] } });
-        const select = screen.getByRole('combobox') as HTMLSelectElement;
+        const { container } = renderComponent(PresetEditor, { props: { ...baseProps, presets: [mockPresets[0], second] } });
+        const select = container.querySelector('#preset-select') as HTMLSelectElement;
         await fireEvent.change(select, { target: { value: 'software_quality' } });
         expect(select.value).toBe('software_quality');
+    });
+});
+
+describe('PresetEditor customize panel', () => {
+    afterEach(() => cleanup());
+
+    const props = {
+        scope: 'global' as const,
+        initialState: { preset_slug: 'software_balanced', overrides: { shared: {}, tiers: {} } },
+        scheme: mockScheme,
+        presets: mockPresets,
+        offline: false,
+        saving: false,
+        onSave: async () => {}
+    };
+
+    it('renders Shared row with audio_encoder and subtitle_mode dropdowns', () => {
+        renderComponent(PresetEditor, { props });
+        expect(screen.getByText(/Audio encoder/i)).toBeInTheDocument();
+        expect(screen.getByText(/Subtitle mode/i)).toBeInTheDocument();
+    });
+
+    it('renders three tier sections', () => {
+        renderComponent(PresetEditor, { props });
+        expect(screen.getByText(/^DVD/)).toBeInTheDocument();
+        expect(screen.getByText(/Blu-ray/)).toBeInTheDocument();
+        expect(screen.getByText(/^UHD/)).toBeInTheDocument();
+    });
+
+    it('only shows scheme-supported encoders (no nvenc options)', () => {
+        renderComponent(PresetEditor, { props });
+        // mockScheme has x265 and x264 only - no nvenc options should appear
+        expect(screen.queryByRole('option', { name: /nvenc/i })).toBeNull();
+    });
+
+    it('writes to overrides.tiers[tier][key] when a tier field changes', async () => {
+        const { container } = renderComponent(PresetEditor, { props });
+        const qualityInput = container.querySelector('input[data-testid="tier-bluray-quality"]') as HTMLInputElement;
+        expect(qualityInput).toBeTruthy();
+        await fireEvent.input(qualityInput, { target: { value: '18' } });
+        // Visual: dirty pill should show "1 change"
+        expect(screen.getByText(/1 change/i)).toBeInTheDocument();
     });
 });
