@@ -339,13 +339,18 @@ async def get_config() -> dict[str, Any] | None:
 
 
 async def update_config(config: dict[str, Any]) -> dict[str, Any] | None:
-    """Patch transcoder config. Returns response dict or None if offline."""
+    """Patch transcoder config.
+
+    Returns parsed response on 2xx, None if transcoder is unreachable.
+    Raises httpx.HTTPStatusError on 4xx/5xx so the caller can surface
+    the real error (e.g. validation 422) instead of a generic offline message.
+    """
     try:
         resp = await get_client().patch(_CONFIG_ENDPOINT, json=config)
-        resp.raise_for_status()
-        return resp.json()
-    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+    except (httpx.ConnectError, httpx.TimeoutException, RuntimeError, OSError):
         return None
+    resp.raise_for_status()
+    return resp.json()
 
 
 async def get_jobs(
