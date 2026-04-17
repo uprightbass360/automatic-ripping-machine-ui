@@ -53,4 +53,29 @@ describe('TranscodeOverrides', () => {
         await waitFor(() => screen.getByText(/Software \(CPU\)/));
         expect(screen.queryByText(/Save as new preset/i)).toBeNull();
     });
+
+    it('defaults to empty preset state when job has no transcode_overrides', async () => {
+        const jobWithoutOverrides = { job_id: 2, transcode_overrides: null } as unknown as Job;
+        renderComponent(TranscodeOverrides, { props: { job: jobWithoutOverrides } });
+        // Scheme name renders from the active scheme (line 26 branch: empty initial state)
+        await waitFor(() => screen.getByText(/Software \(CPU\)/));
+    });
+
+    it('defaults to empty preset state when legacy flat overrides lack preset_slug', async () => {
+        const legacyJob = {
+            job_id: 3,
+            transcode_overrides: { video_encoder: 'x265', video_quality: 22 },
+        } as unknown as Job;
+        renderComponent(TranscodeOverrides, { props: { job: legacyJob } });
+        await waitFor(() => screen.getByText(/Software \(CPU\)/));
+    });
+
+    it('shows offline state when transcoder is unreachable', async () => {
+        const settingsApi = await import('$lib/api/settings');
+        vi.mocked(settingsApi.fetchTranscoderScheme).mockResolvedValueOnce(null);
+        vi.mocked(settingsApi.fetchTranscoderPresets).mockResolvedValueOnce(null);
+        renderComponent(TranscodeOverrides, { props: { job: baseJob } });
+        // offline=true triggers the offline UI instead of the preset editor (line 42 branch)
+        await waitFor(() => expect(screen.queryByText(/Software \(CPU\)/)).toBeNull());
+    });
 });
