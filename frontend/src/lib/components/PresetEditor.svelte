@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from 'svelte';
     import type { Scheme, Preset, Overrides, PresetEditorState } from '$lib/types/presets';
 
     interface Props {
@@ -19,10 +20,11 @@
     let selectedSlug = $state<string>(initialSlug);
     let overrides = $state<Overrides>(structuredClone(initialState.overrides));
 
-    const dirty = $derived(
+    const dirtyCount = $derived(
         Object.keys(overrides.shared).length +
-        Object.values(overrides.tiers).reduce((n, t) => n + Object.keys(t).length, 0) > 0
+        Object.values(overrides.tiers).reduce((n, t) => n + Object.keys(t).length, 0)
     );
+    const dirty = $derived(dirtyCount > 0);
     const selectedPreset = $derived(presets.find(p => p.slug === selectedSlug));
     const isUnavailable = $derived(selectedPreset?.unavailable === true);
     const canSave = $derived(!saving && !isUnavailable && (dirty || selectedSlug !== initialSlug));
@@ -76,9 +78,11 @@
 
     let saveAsModalOpen = $state(false);
     let newPresetName = $state('');
+    let saveAsNewError = $state<string>('');
 
     let undoToast = $state<{ message: string; previous: { slug: string; overrides: Overrides } } | null>(null);
     let undoTimer: ReturnType<typeof setTimeout> | null = null;
+    onDestroy(() => { if (undoTimer) clearTimeout(undoTimer); });
 
     function handleDropdownChange(newSlug: string) {
         const wasDirty = dirty;
@@ -117,11 +121,16 @@
         selectedSlug = initialSlug;
     }
 
-    function handleSaveAsConfirm() {
+    async function handleSaveAsConfirm() {
         if (!onSaveAsNew || !newPresetName.trim()) return;
-        onSaveAsNew({ name: newPresetName.trim(), parent_slug: selectedSlug, overrides });
-        saveAsModalOpen = false;
-        newPresetName = '';
+        saveAsNewError = '';
+        try {
+            await onSaveAsNew({ name: newPresetName.trim(), parent_slug: selectedSlug, overrides });
+            saveAsModalOpen = false;
+            newPresetName = '';
+        } catch (e: unknown) {
+            saveAsNewError = e instanceof Error ? e.message : 'Save failed';
+        }
     }
 
     function disabledSaveReason(): string {
@@ -198,9 +207,8 @@
             <div class="flex items-center justify-between">
                 <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Customize</h4>
                 {#if dirty}
-                    {@const total = Object.keys(overrides.shared).length + Object.values(overrides.tiers).reduce((n, t) => n + Object.keys(t).length, 0)}
                     <span class="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary dark:text-primary-300">
-                        {total} {total === 1 ? 'change' : 'changes'}
+                        {dirtyCount} {dirtyCount === 1 ? 'change' : 'changes'}
                     </span>
                 {/if}
             </div>
@@ -270,7 +278,10 @@
                                         type="number" min="0" max="51" step="1"
                                         data-testid="tier-{tier}-quality"
                                         value={effectiveTier(tier, 'video_quality')}
-                                        oninput={(e) => setTier(tier, 'video_quality', Number((e.target as HTMLInputElement).value))}
+                                        oninput={(e) => {
+                                            const raw = (e.target as HTMLInputElement).value;
+                                            setTier(tier, 'video_quality', raw === '' ? '' : Number(raw));
+                                        }}
                                         disabled={saving || isUnavailable}
                                         class="{inputClass} w-full"
                                     />
@@ -338,7 +349,7 @@
                 {#if scope === 'global' && onSaveAsNew}
                     <button
                         type="button"
-                        onclick={() => { saveAsModalOpen = true; newPresetName = ''; }}
+                        onclick={() => { saveAsModalOpen = true; newPresetName = ''; saveAsNewError = ''; }}
                         disabled={!dirty}
                         class="text-sm text-primary underline-offset-2 hover:underline disabled:opacity-50"
                     >
@@ -365,9 +376,9 @@
     {/if}
 
     {#if saveAsModalOpen}
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="save-as-heading">
             <div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl dark:bg-gray-800">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Save as new preset</h3>
+                <h3 id="save-as-heading" class="text-lg font-semibold text-gray-900 dark:text-white">Save as new preset</h3>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Saves your current customizations as a new preset based on <strong>{selectedPreset?.name}</strong>.
                 </p>
@@ -381,6 +392,9 @@
                     />
                     {#if newPresetName.trim()}
                         <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">Will be saved as: <code>{slugify(newPresetName)}</code></span>
+                    {/if}
+                    {#if saveAsNewError}
+                        <span class="mt-1 block text-xs text-red-600 dark:text-red-400">{saveAsNewError}</span>
                     {/if}
                 </label>
                 <div class="mt-4 flex justify-end gap-2">
