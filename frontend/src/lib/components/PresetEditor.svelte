@@ -18,7 +18,18 @@
 
     const initialSlug = initialState.preset_slug;
     let selectedSlug = $state<string>(initialSlug);
-    let overrides = $state<Overrides>(structuredClone(initialState.overrides));
+    let overrides = $state<Overrides>({
+        shared: structuredClone(initialState.overrides?.shared ?? {}),
+        tiers: structuredClone(initialState.overrides?.tiers ?? {})
+    });
+
+    // Once presets are loaded, default to the first built-in if no slug was preselected
+    $effect(() => {
+        if (selectedSlug === '' && presets.length > 0) {
+            const firstBuiltin = presets.find(p => p.builtin && !p.unavailable);
+            if (firstBuiltin) selectedSlug = firstBuiltin.slug;
+        }
+    });
 
     const dirtyCount = $derived(
         Object.keys(overrides.shared).length +
