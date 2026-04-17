@@ -154,6 +154,52 @@ async def get_transcoder_presets():
     return result
 
 
+def _raise_from_http_status_error(exc: httpx.HTTPStatusError) -> None:
+    """Re-raise an httpx HTTPStatusError as a FastAPI HTTPException, forwarding detail."""
+    detail = "Preset operation failed"
+    try:
+        detail = exc.response.json().get("detail", detail)
+    except Exception:
+        pass
+    raise HTTPException(status_code=exc.response.status_code, detail=detail)
+
+
+@router.post("/settings/transcoder/presets", status_code=201,
+             responses={409: {"description": "Slug conflict"}, 502: {"description": "Transcoder unreachable"}})
+async def create_transcoder_preset(body: dict):
+    try:
+        result = await transcoder_client.create_preset(body)
+    except httpx.HTTPStatusError as exc:
+        _raise_from_http_status_error(exc)
+    if result is None:
+        raise HTTPException(status_code=502, detail="Transcoder service unreachable")
+    return result
+
+
+@router.patch("/settings/transcoder/presets/{slug}",
+              responses={404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
+async def update_transcoder_preset(slug: str, body: dict):
+    try:
+        result = await transcoder_client.update_preset(slug, body)
+    except httpx.HTTPStatusError as exc:
+        _raise_from_http_status_error(exc)
+    if result is None:
+        raise HTTPException(status_code=502, detail="Transcoder service unreachable")
+    return result
+
+
+@router.delete("/settings/transcoder/presets/{slug}",
+               responses={404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
+async def delete_transcoder_preset(slug: str):
+    try:
+        result = await transcoder_client.delete_preset(slug)
+    except httpx.HTTPStatusError as exc:
+        _raise_from_http_status_error(exc)
+    if result is None:
+        raise HTTPException(status_code=502, detail="Transcoder service unreachable")
+    return result
+
+
 @router.patch("/settings/transcoder", responses={400: {"description": "Invalid config"}, 502: {"description": "Transcoder service unreachable"}})
 async def update_transcoder_config(body: dict):
     result = await transcoder_client.update_config(body)
