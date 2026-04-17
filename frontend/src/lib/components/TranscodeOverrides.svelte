@@ -20,14 +20,20 @@
     let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
     let loaded = $state(false);
 
-    const initialState = $derived<PresetEditorState>(
-        job.transcode_overrides && typeof job.transcode_overrides === 'object' && 'preset_slug' in (job.transcode_overrides as object)
-            ? {
-                preset_slug: ((job.transcode_overrides as Record<string, unknown>).preset_slug as string) ?? '',
-                overrides: (((job.transcode_overrides as Record<string, unknown>).overrides as Overrides) ?? { shared: {}, tiers: {} })
-              }
-            : { preset_slug: '', overrides: { shared: {}, tiers: {} } }
-    );
+    const initialState = $derived.by<PresetEditorState>(() => {
+        const o = job.transcode_overrides as Record<string, unknown> | null | undefined;
+        if (!o || typeof o !== 'object' || !('preset_slug' in o)) {
+            return { preset_slug: '', overrides: { shared: {}, tiers: {} } };
+        }
+        const raw = o.overrides as Partial<Overrides> | undefined;
+        return {
+            preset_slug: (o.preset_slug as string) ?? '',
+            overrides: {
+                shared: raw?.shared ?? {},
+                tiers: raw?.tiers ?? {}
+            }
+        };
+    });
 
     async function loadData() {
         offline = false;

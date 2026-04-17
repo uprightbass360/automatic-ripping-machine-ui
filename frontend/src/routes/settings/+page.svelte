@@ -43,9 +43,16 @@
 	let presetOffline = $state(false);
 	let presetSaving = $state(false);
 
-	const presetInitialState = $derived<PresetEditorState>({
-		preset_slug: ((settings?.transcoder_config?.config as Record<string, unknown> | undefined)?.selected_preset_slug as string) ?? '',
-		overrides: (((settings?.transcoder_config?.config as Record<string, unknown> | undefined)?.global_overrides as Overrides) ?? { shared: {}, tiers: {} })
+	const presetInitialState = $derived.by<PresetEditorState>(() => {
+		const cfg = settings?.transcoder_config?.config as Record<string, unknown> | undefined;
+		const raw = cfg?.global_overrides as Partial<Overrides> | undefined;
+		return {
+			preset_slug: (cfg?.selected_preset_slug as string) ?? '',
+			overrides: {
+				shared: raw?.shared ?? {},
+				tiers: raw?.tiers ?? {}
+			}
+		};
 	});
 
 	async function loadPresetData() {
@@ -633,6 +640,9 @@
 		'audio_subdir',
 		'output_extension',
 		'delete_source',
+		// Preset-managed keys (rendered in the PresetEditor section, not as raw fields)
+		'global_overrides',
+		'selected_preset_slug',
 	]);
 
 	// Transcoder number fields: key → [min, max, step?]
