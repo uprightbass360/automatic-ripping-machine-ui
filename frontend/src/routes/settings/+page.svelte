@@ -44,7 +44,13 @@
 	let presetSaving = $state(false);
 
 	const presetInitialState = $derived.by<PresetEditorState>(() => {
-		const cfg = settings?.transcoder_config?.config as Record<string, unknown> | undefined;
+		// $state.snapshot converts the reactive proxy tree to plain data so
+		// child components never see Svelte $state proxies through props.
+		// Passing proxies triggers DOMException 'Proxy object could not be
+		// cloned' when the browser structured-clones the prop payload.
+		const cfg = $state.snapshot(settings?.transcoder_config?.config) as
+			| Record<string, unknown>
+			| undefined;
 		const raw = cfg?.global_overrides as Partial<Overrides> | undefined;
 		return {
 			preset_slug: (cfg?.selected_preset_slug as string) ?? '',
