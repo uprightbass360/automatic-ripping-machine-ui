@@ -50,5 +50,37 @@
             </div>
             <p class="text-xs text-gray-500 dark:text-gray-400">{builtinCount} built-in · {customCount} custom</p>
         </div>
+        <div>
+            <label for="preset-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preset</label>
+            <select
+                id="preset-select"
+                bind:value={selectedSlug}
+                onchange={() => { overrides = { shared: {}, tiers: {} }; }}
+                class="mt-1 w-full rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+            >
+                <optgroup label="Built-in">
+                    {#each presets.filter(p => p.builtin && !p.unavailable) as p (p.slug)}
+                        <option value={p.slug}>{p.name}</option>
+                    {/each}
+                </optgroup>
+                {#if presets.some(p => !p.builtin && !p.unavailable)}
+                    <optgroup label="Custom">
+                        {#each presets.filter(p => !p.builtin && !p.unavailable) as p (p.slug)}
+                            <option value={p.slug}>{p.name}</option>
+                        {/each}
+                    </optgroup>
+                {/if}
+                {#if presets.some(p => p.unavailable)}
+                    <optgroup label="Unavailable (other scheme)">
+                        {#each presets.filter(p => p.unavailable) as p (p.slug)}
+                            <option value={p.slug} disabled title={p.reason}>{p.name} ({p.scheme})</option>
+                        {/each}
+                    </optgroup>
+                {/if}
+            </select>
+            {#if selectedPreset?.description}
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{selectedPreset.description}</p>
+            {/if}
+        </div>
     </div>
 {/if}
