@@ -48,7 +48,10 @@ vi.mock('$lib/api/settings', () => ({
 		drives: [{ name: 'Drive 1', mount: '/dev/sr0', maker: 'LG', model: 'WH16NS40', capabilities: ['CD', 'DVD', 'BD'], firmware: '1.0' }]
 	})),
 	fetchAbcdeConfig: vi.fn(() => Promise.resolve({ content: 'CDROM=/dev/sr0\nOUTPUTTYPE=flac', path: '/etc/abcde.conf', exists: true })),
-	saveAbcdeConfig: vi.fn(() => Promise.resolve({ success: true }))
+	saveAbcdeConfig: vi.fn(() => Promise.resolve({ success: true })),
+	fetchTranscoderScheme: vi.fn(() => Promise.resolve(null)),
+	fetchTranscoderPresets: vi.fn(() => Promise.resolve(null)),
+	createCustomPreset: vi.fn(() => Promise.resolve({ slug: 'custom-preset', name: 'Custom', scheme: 'handbrake', parent_slug: 'default', overrides: { shared: {}, tiers: {} }, is_custom: true }))
 }));
 
 vi.mock('$lib/api/drives', () => ({
