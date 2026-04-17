@@ -195,3 +195,64 @@ describe('PresetEditor save bar', () => {
         expect(screen.getByText(/Save as new preset/i)).toBeInTheDocument();
     });
 });
+
+describe('PresetEditor edge cases', () => {
+    afterEach(() => cleanup());
+
+    const baseProps = {
+        scope: 'global' as const,
+        initialState: { preset_slug: 'software_balanced', overrides: { shared: {}, tiers: {} } },
+        scheme: mockScheme,
+        presets: mockPresets,
+        offline: false,
+        onSave: async () => {}
+    };
+
+    it('disables form fields while saving=true', () => {
+        const { container } = renderComponent(PresetEditor, { props: { ...baseProps, saving: true } });
+        const select = container.querySelector('#preset-select') as HTMLSelectElement;
+        expect(select.disabled).toBe(true);
+    });
+
+    it('shows offline banner when scheme is null', () => {
+        const onRetry = vi.fn();
+        renderComponent(PresetEditor, { props: { ...baseProps, scheme: null, presets: [], offline: true, saving: false, onRetry } });
+        expect(screen.getByText(/Transcoder service unavailable/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
+    });
+
+    it('Retry button calls onRetry callback', async () => {
+        const onRetry = vi.fn();
+        renderComponent(PresetEditor, { props: { ...baseProps, scheme: null, presets: [], offline: true, saving: false, onRetry } });
+        await fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
+        expect(onRetry).toHaveBeenCalled();
+    });
+
+    it('disables Save and shows warning when selected preset is unavailable', () => {
+        const propsWithUnavailable = {
+            ...baseProps,
+            saving: false,
+            initialState: { preset_slug: 'nvidia-imp', overrides: { shared: {}, tiers: {} } },
+            presets: [...mockPresets, unavailablePreset]
+        };
+        renderComponent(PresetEditor, { props: propsWithUnavailable });
+        const btn = screen.getByRole('button', { name: /Save changes/i }) as HTMLButtonElement;
+        expect(btn.disabled).toBe(true);
+        expect(btn.title).toMatch(/not available/i);
+    });
+
+    it('shows undo toast for 5 seconds after dropdown switch with pending changes', async () => {
+        vi.useFakeTimers();
+        const second: Preset = { ...mockPresets[0], slug: 'software_quality', name: 'Quality' };
+        const { container } = renderComponent(PresetEditor, { props: { ...baseProps, saving: false, presets: [mockPresets[0], second] } });
+        const qualityInput = container.querySelector('input[data-testid="tier-bluray-quality"]') as HTMLInputElement;
+        await fireEvent.input(qualityInput, { target: { value: '18' } });
+        const select = container.querySelector('#preset-select') as HTMLSelectElement;
+        await fireEvent.change(select, { target: { value: 'software_quality' } });
+        expect(screen.getByText(/Cleared.*from/i)).toBeInTheDocument();
+        vi.advanceTimersByTime(5500);
+        await Promise.resolve();
+        expect(screen.queryByText(/Cleared.*from/i)).toBeNull();
+        vi.useRealTimers();
+    });
+});
