@@ -479,3 +479,30 @@ async def test_delete_preset_proxy_forwards_404(app_client):
         resp = await app_client.delete("/api/settings/transcoder/presets/x")
     assert resp.status_code == 404
     assert resp.json()["detail"] == "Preset not found"
+
+
+# --- slug validation at router boundary (SSRF defense-in-depth) ---
+
+
+async def test_update_preset_proxy_returns_400_on_invalid_slug(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.update_preset",
+        new_callable=AsyncMock,
+        side_effect=ValueError("Invalid preset slug: 'bad'"),
+    ):
+        resp = await app_client.patch(
+            "/api/settings/transcoder/presets/bad", json={}
+        )
+    assert resp.status_code == 400
+    assert "Invalid preset slug" in resp.json()["detail"]
+
+
+async def test_delete_preset_proxy_returns_400_on_invalid_slug(app_client):
+    with patch(
+        "backend.routers.settings.transcoder_client.delete_preset",
+        new_callable=AsyncMock,
+        side_effect=ValueError("Invalid preset slug: 'bad'"),
+    ):
+        resp = await app_client.delete("/api/settings/transcoder/presets/bad")
+    assert resp.status_code == 400
+    assert "Invalid preset slug" in resp.json()["detail"]

@@ -181,10 +181,12 @@ async def create_transcoder_preset(body: dict):
 
 
 @router.patch("/settings/transcoder/presets/{slug}",
-              responses={404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
+              responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
 async def update_transcoder_preset(slug: str, body: dict):
     try:
         result = await transcoder_client.update_preset(slug, body)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except httpx.HTTPStatusError as exc:
         _raise_from_http_status_error(exc)
     if result is None:
@@ -193,10 +195,12 @@ async def update_transcoder_preset(slug: str, body: dict):
 
 
 @router.delete("/settings/transcoder/presets/{slug}",
-               responses={404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
+               responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
 async def delete_transcoder_preset(slug: str):
     try:
         result = await transcoder_client.delete_preset(slug)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except httpx.HTTPStatusError as exc:
         _raise_from_http_status_error(exc)
     if result is None:

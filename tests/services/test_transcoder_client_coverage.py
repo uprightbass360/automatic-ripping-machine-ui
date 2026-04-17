@@ -711,3 +711,61 @@ async def test_delete_preset_raises_on_4xx():
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         with pytest.raises(httpx.HTTPStatusError):
             await transcoder_client.delete_preset("missing-slug")
+
+
+# --- slug validation (SSRF protection) ---
+
+
+@pytest.mark.parametrize("bad_slug", [
+    "../admin",
+    "preset/../other",
+    "preset?query=1",
+    "preset with spaces",
+    "Preset-Uppercase",
+    "-leading-dash",
+    "trailing-dash-",
+    "double--dash",
+    "",
+    "a" * 101,
+    "preset#fragment",
+    "preset%2e%2e",
+])
+async def test_update_preset_rejects_malicious_slug(bad_slug):
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(ValueError, match="Invalid preset slug"):
+            await transcoder_client.update_preset(bad_slug, {"name": "x"})
+    mock_client.patch.assert_not_called()
+
+
+@pytest.mark.parametrize("bad_slug", [
+    "../admin",
+    "preset/../other",
+    "preset?query=1",
+    "Preset-Uppercase",
+    "",
+])
+async def test_delete_preset_rejects_malicious_slug(bad_slug):
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        with pytest.raises(ValueError, match="Invalid preset slug"):
+            await transcoder_client.delete_preset(bad_slug)
+    mock_client.delete.assert_not_called()
+
+
+@pytest.mark.parametrize("good_slug", [
+    "nvidia-balanced",
+    "my-anime-preset",
+    "a",
+    "preset123",
+    "slug-with-9-digits",
+])
+async def test_update_preset_accepts_valid_slug(good_slug):
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.patch.return_value = _mock_response({"slug": good_slug})
+    with patch.object(transcoder_client, "get_client", return_value=mock_client):
+        result = await transcoder_client.update_preset(good_slug, {"name": "x"})
+    assert result == {"slug": good_slug}
+    mock_client.patch.assert_awaited_once_with(
+        f"/api/v1/presets/{good_slug}", json={"name": "x"}
+    )
