@@ -57,6 +57,13 @@ export function fixJobPermissions(id: number): Promise<unknown> {
 	return apiFetch(`/api/jobs/${id}/fix-permissions`, { method: 'POST' });
 }
 
+export function skipAndFinalize(jobId: number): Promise<{ success: boolean; message?: string; error?: string }> {
+	return apiFetch<{ success: boolean; message?: string; error?: string }>(
+		`/api/jobs/${jobId}/skip-and-finalize`,
+		{ method: 'POST' }
+	);
+}
+
 export function searchMetadata(query: string, year?: string, page = 1): Promise<SearchResult[]> {
 	const params = new URLSearchParams({ q: query });
 	if (year) params.set('year', year);
