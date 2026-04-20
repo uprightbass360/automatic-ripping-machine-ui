@@ -867,7 +867,7 @@
 														{/if}
 													</td>
 												{/if}
-												{#if job.multi_title && !isMusic}
+												{#if job.multi_title && !isMusic && !tooShort}
 													<td class="px-1 py-1.5">
 														<button
 															onclick={() => toggleTrackSearch(track.track_id)}
@@ -881,7 +881,7 @@
 													</td>
 												{/if}
 											</tr>
-											{#if job.multi_title && openSearchTrackIds.has(track.track_id)}
+											{#if job.multi_title && !tooShort && openSearchTrackIds.has(track.track_id)}
 												<tr>
 													<td colspan="99" class="px-3 py-2">
 														<TrackTitleSearch jobId={job.job_id} {track} onapply={() => handleTrackTitleApply(track.track_id)} onclear={() => { onrefresh?.(); loadDetail(); }} onclose={() => toggleTrackSearch(track.track_id)} />
