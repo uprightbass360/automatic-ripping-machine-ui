@@ -790,6 +790,7 @@
 		MUSIC_TITLE_PATTERN: { label: 'Music Title Pattern', description: 'Pattern for music display titles' },
 		MUSIC_FOLDER_PATTERN: { label: 'Music Folder Pattern', description: 'Pattern for music folder names (use / for nested directories)' },
 		// Transcoder Integration
+		SKIP_TRANSCODE: { label: 'Skip Transcoding (Global Default)', description: 'When enabled, ripped files are finalized directly without sending to the transcoder. Can be overridden per-job from the review panel.' },
 		TRANSCODER_URL: { label: 'Transcoder Webhook URL', description: 'URL of the arm-transcoder webhook endpoint (leave empty to disable)' },
 		TRANSCODER_WEBHOOK_SECRET: { label: 'Transcoder Webhook Secret', description: 'Must match WEBHOOK_SECRET in arm-transcoder .env' },
 		LOCAL_RAW_PATH: { label: 'Local Raw Path', description: 'Local scratch storage where ARM rips to (for file move before notify)' },
@@ -834,7 +835,7 @@
 				{ keys: ['MAKEMKV_PERMA_KEY', 'MAKEMKV_COMMUNITY_KEYDB', 'MAX_CONCURRENT_MAKEMKVINFO', 'PRESCAN_TIMEOUT', 'PRESCAN_CACHE_MB', 'PRESCAN_RETRIES', 'DISC_ENUM_TIMEOUT'] },
 			]},
 			{ label: 'Post-Rip', subpanels: [
-				{ keys: ['AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER'] },
+				{ keys: ['SKIP_TRANSCODE', 'AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER'] },
 			]},
 			{ label: 'Media Directories', subpanels: [
 				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'MUSIC_PATH', 'INGRESS_PATH', 'EXTRAS_SUB'] },
@@ -1456,20 +1457,27 @@
 						<!-- Encoding sub-panel -->
 						<section class="space-y-3">
 							<h3 class="text-base font-semibold text-gray-700 dark:text-gray-300">Transcoder - Encoding</h3>
-							{#if presetScheme || presetOffline}
-								<PresetEditor
-									scope="global"
-									initialState={presetInitialState}
-									scheme={presetScheme}
-									{presets}
-									offline={presetOffline}
-									saving={presetSaving}
-									onSave={handlePresetSave}
-									onSaveAsNew={handlePresetSaveAsNew}
-									onRetry={loadPresetData}
-								/>
-							{:else}
-								<p class="text-sm text-gray-400">Loading presets...</p>
+							<div class={armForm['SKIP_TRANSCODE']?.toLowerCase() === 'true' ? 'opacity-40 pointer-events-none' : ''}>
+								{#if presetScheme || presetOffline}
+									<PresetEditor
+										scope="global"
+										initialState={presetInitialState}
+										scheme={presetScheme}
+										{presets}
+										offline={presetOffline}
+										saving={presetSaving}
+										onSave={handlePresetSave}
+										onSaveAsNew={handlePresetSaveAsNew}
+										onRetry={loadPresetData}
+									/>
+								{:else}
+									<p class="text-sm text-gray-400">Loading presets...</p>
+								{/if}
+							</div>
+							{#if armForm['SKIP_TRANSCODE']?.toLowerCase() === 'true'}
+								<p class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+									Transcoding is skipped globally — these settings are inactive
+								</p>
 							{/if}
 						</section>
 
