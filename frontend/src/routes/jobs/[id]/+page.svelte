@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { fetchJob, retranscodeJob, fetchMusicDetail, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
+	import { fetchJob, retranscodeJob, skipAndFinalize, fetchMusicDetail, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
 	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
 	import PosterImage from '$lib/components/PosterImage.svelte';
@@ -96,6 +96,28 @@
 			retranscodeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to queue' };
 		} finally {
 			retranscoding = false;
+		}
+	}
+
+	let skippingTranscode = $state(false);
+	let skipTranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	async function handleSkipAndFinalize() {
+		if (!job) return;
+		skippingTranscode = true;
+		skipTranscodeFeedback = null;
+		try {
+			const result = await skipAndFinalize(job.job_id);
+			if (result.success) {
+				skipTranscodeFeedback = { type: 'success', message: result.message || 'Finalized without transcoding' };
+				await loadJob();
+			} else {
+				skipTranscodeFeedback = { type: 'error', message: result.error || 'Failed to skip transcode' };
+			}
+		} catch (e) {
+			skipTranscodeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to skip transcode' };
+		} finally {
+			skippingTranscode = false;
 		}
 	}
 
@@ -297,10 +319,24 @@
 							{retranscoding ? 'Queuing...' : 'Re-transcode'}
 						</button>
 					{/if}
+					{#if job.status === 'waiting_transcode' || job.status === 'transcoding'}
+						<button
+							onclick={handleSkipAndFinalize}
+							disabled={skippingTranscode}
+							class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+						>
+							{skippingTranscode ? 'Finalizing...' : 'Skip Transcode & Finalize'}
+						</button>
+					{/if}
 					<JobActions {job} onaction={loadJob} ondelete={() => goto('/')} />
 					{#if retranscodeFeedback}
 						<span class="text-xs {retranscodeFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
 							{retranscodeFeedback.message}
+						</span>
+					{/if}
+					{#if skipTranscodeFeedback}
+						<span class="text-xs {skipTranscodeFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+							{skipTranscodeFeedback.message}
 						</span>
 					{/if}
 				</div>

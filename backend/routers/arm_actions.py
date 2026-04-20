@@ -42,6 +42,12 @@ async def fix_permissions(job_id: int) -> dict[str, Any]:
     return _check_result(await arm_client.fix_permissions(job_id))
 
 
+@router.post("/{job_id}/skip-and-finalize", responses=_502_503_ARM)
+async def skip_and_finalize(job_id: int) -> dict[str, Any]:
+    """Skip transcoding and finalize a stuck job (proxies to ARM)."""
+    return _check_result(await arm_client.skip_and_finalize(job_id))
+
+
 @router.put("/{job_id}/title", responses=_502_503_ARM)
 async def update_title(job_id: int, body: TitleUpdateRequest) -> dict[str, Any]:
     """Update a job's title metadata (proxies to ARM)."""
