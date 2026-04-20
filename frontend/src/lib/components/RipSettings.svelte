@@ -38,8 +38,8 @@
 		if (vtype === 'series') {
 			return {
 				label: 'TV',
-				title: config.TV_TITLE_PATTERN ?? '{title} S{season}E{episode}',
-				folder: config.TV_FOLDER_PATTERN ?? '{title}/Season {season}',
+				title: config.TV_TITLE_PATTERN ?? '{show} S{season}E{episode}',
+				folder: config.TV_FOLDER_PATTERN ?? '{show}/Season {season}',
 				titleKey: 'TV_TITLE_PATTERN',
 				folderKey: 'TV_FOLDER_PATTERN',
 			};
