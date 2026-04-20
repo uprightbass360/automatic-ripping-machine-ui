@@ -116,44 +116,50 @@ import { fetchJob, skipAndFinalize } from '$lib/api/jobs';
 const mockFetchJob = vi.mocked(fetchJob);
 const mockSkipAndFinalize = vi.mocked(skipAndFinalize);
 
+// --- Helpers ---
+
+/** Render the page with the given job status pre-loaded. */
+function renderWithStatus(status: string) {
+	mockFetchJob.mockResolvedValue({ ...baseJob, status } as any);
+	renderComponent(Page);
+}
+
+/** Render, wait for the skip button to appear, then click it. */
+async function clickSkipButton(status = 'waiting_transcode') {
+	renderWithStatus(status);
+	const btn = await screen.findByText('Skip Transcode & Finalize');
+	await fireEvent.click(btn);
+}
+
+const SKIP_BTN = 'Skip Transcode & Finalize';
+
 describe('Job detail page — skip transcode', () => {
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
 	});
 
-	it('shows Skip Transcode & Finalize button for waiting_transcode status', async () => {
-		mockFetchJob.mockResolvedValue({ ...baseJob, status: 'waiting_transcode' } as any);
-		renderComponent(Page);
-		await waitFor(() => {
-			expect(screen.getByText('Skip Transcode & Finalize')).toBeInTheDocument();
-		});
-	});
-
-	it('shows Skip Transcode & Finalize button for transcoding status', async () => {
-		mockFetchJob.mockResolvedValue({ ...baseJob, status: 'transcoding' } as any);
-		renderComponent(Page);
-		await waitFor(() => {
-			expect(screen.getByText('Skip Transcode & Finalize')).toBeInTheDocument();
-		});
-	});
+	it.each(['waiting_transcode', 'transcoding'])(
+		'shows Skip Transcode & Finalize button for %s status',
+		async (status) => {
+			renderWithStatus(status);
+			await waitFor(() => {
+				expect(screen.getByText(SKIP_BTN)).toBeInTheDocument();
+			});
+		}
+	);
 
 	it('does NOT show skip button for other statuses', async () => {
-		mockFetchJob.mockResolvedValue({ ...baseJob, status: 'success' } as any);
-		renderComponent(Page);
-		// Wait for page to render by checking for the breadcrumb Dashboard link
+		renderWithStatus('success');
 		await waitFor(() => {
 			expect(screen.getByText('Dashboard')).toBeInTheDocument();
 		});
-		expect(screen.queryByText('Skip Transcode & Finalize')).not.toBeInTheDocument();
+		expect(screen.queryByText(SKIP_BTN)).not.toBeInTheDocument();
 	});
 
 	it('calls skipAndFinalize and shows success feedback', async () => {
-		mockFetchJob.mockResolvedValue({ ...baseJob, status: 'waiting_transcode' } as any);
 		mockSkipAndFinalize.mockResolvedValue({ success: true, message: 'Finalized without transcoding' });
-		renderComponent(Page);
-		await waitFor(() => expect(screen.getByText('Skip Transcode & Finalize')).toBeInTheDocument());
-		await fireEvent.click(screen.getByText('Skip Transcode & Finalize'));
+		await clickSkipButton();
 		await waitFor(() => {
 			expect(mockSkipAndFinalize).toHaveBeenCalledWith(42);
 		});
@@ -163,35 +169,24 @@ describe('Job detail page — skip transcode', () => {
 	});
 
 	it('shows error feedback when skipAndFinalize returns success=false', async () => {
-		mockFetchJob.mockResolvedValue({ ...baseJob, status: 'waiting_transcode' } as any);
 		mockSkipAndFinalize.mockResolvedValue({ success: false, error: 'Job not found' });
-		renderComponent(Page);
-		await waitFor(() => expect(screen.getByText('Skip Transcode & Finalize')).toBeInTheDocument());
-		await fireEvent.click(screen.getByText('Skip Transcode & Finalize'));
+		await clickSkipButton();
 		await waitFor(() => {
 			expect(screen.getByText('Job not found')).toBeInTheDocument();
 		});
 	});
 
 	it('shows error feedback when skipAndFinalize throws', async () => {
-		mockFetchJob.mockResolvedValue({ ...baseJob, status: 'waiting_transcode' } as any);
 		mockSkipAndFinalize.mockRejectedValue(new Error('Network error'));
-		renderComponent(Page);
-		await waitFor(() => expect(screen.getByText('Skip Transcode & Finalize')).toBeInTheDocument());
-		await fireEvent.click(screen.getByText('Skip Transcode & Finalize'));
+		await clickSkipButton();
 		await waitFor(() => {
 			expect(screen.getByText('Network error')).toBeInTheDocument();
 		});
 	});
 
 	it('disables button while skipping is in progress', async () => {
-		mockFetchJob.mockResolvedValue({ ...baseJob, status: 'waiting_transcode' } as any);
-		// Never resolve to keep button in disabled state
 		mockSkipAndFinalize.mockReturnValue(new Promise(() => {}));
-		renderComponent(Page);
-		await waitFor(() => expect(screen.getByText('Skip Transcode & Finalize')).toBeInTheDocument());
-		const button = screen.getByText('Skip Transcode & Finalize');
-		await fireEvent.click(button);
+		await clickSkipButton();
 		await waitFor(() => {
 			expect(screen.getByText('Finalizing...')).toBeInTheDocument();
 		});
