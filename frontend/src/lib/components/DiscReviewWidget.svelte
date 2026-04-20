@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Job, JobDetail } from '$lib/types/arm';
-	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
+	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle, updateJobConfig, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
 	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
@@ -48,6 +48,29 @@
 	let editingFilenameTrackId = $state<number | null>(null);
 	let editingFilenameValue = $state('');
 	let errorMessage = $state<string | null>(null);
+	let skipTranscode = $state(false);
+
+	// Sync from job config when detail loads
+	$effect(() => {
+		if (detail?.config?.SKIP_TRANSCODE != null) {
+			const val = String(detail.config.SKIP_TRANSCODE).toLowerCase();
+			skipTranscode = val === 'true' || val === '1';
+		}
+	});
+
+	async function handleSkipTranscodeToggle() {
+		skipTranscode = !skipTranscode;
+		errorMessage = null;
+		try {
+			await updateJobConfig(job.job_id, {
+				SKIP_TRANSCODE: skipTranscode,
+			});
+			loadDetail();
+		} catch (e) {
+			errorMessage = `Failed to update skip transcode: ${e instanceof Error ? e.message : 'Unknown error'}`;
+			skipTranscode = !skipTranscode;
+		}
+	}
 
 	// MakeMKV's minlength threshold - tracks shorter than this are silently
 	// skipped during ripping regardless of checkbox state.
@@ -988,8 +1011,23 @@
 	{/if}
 
 	{#if showTranscodeSettings && isVideo}
-		<div class="border-t border-primary/20 p-4 dark:border-primary/20">
-			<TranscodeOverrides {job} onsaved={handleConfigSaved} />
+		<div class="border-t border-primary/20 p-4 space-y-3 dark:border-primary/20">
+			<div class="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 dark:bg-amber-900/20">
+				<div class="flex items-center gap-2">
+					<span class="text-sm font-medium text-amber-800 dark:text-amber-200">Skip Transcoding</span>
+					<span class="text-xs text-amber-600 dark:text-amber-400">Finalize with raw MKV files</span>
+				</div>
+				<button
+					onclick={handleSkipTranscodeToggle}
+					class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors {skipTranscode ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'}"
+					title={skipTranscode ? 'Transcoding will be skipped' : 'Files will be sent to transcoder'}
+				>
+					<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform {skipTranscode ? 'translate-x-4' : 'translate-x-0.5'}"></span>
+				</button>
+			</div>
+			{#if !skipTranscode}
+				<TranscodeOverrides {job} onsaved={handleConfigSaved} />
+			{/if}
 		</div>
 	{/if}
 
