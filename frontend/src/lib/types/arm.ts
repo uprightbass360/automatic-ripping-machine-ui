@@ -306,6 +306,7 @@ export interface JobConfigUpdate {
 	MINLENGTH?: number;
 	MAXLENGTH?: number;
 	AUDIO_FORMAT?: string;
+	SKIP_TRANSCODE?: boolean;
 }
 
 export interface TranscoderConfig {
