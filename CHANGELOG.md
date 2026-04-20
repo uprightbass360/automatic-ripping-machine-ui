@@ -1037,3 +1037,4 @@
 * Resolve dashboard transcoder section flickering ([7d3add6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7d3add64c9617e9f05adab3a4584b2c832d2ddd3))
 
 ## Changelog
+# Breaking change marker
