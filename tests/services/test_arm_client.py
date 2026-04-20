@@ -46,6 +46,28 @@ async def test_abandon_job_connect_error():
     assert result is None
 
 
+# --- skip_and_finalize ---
+
+
+async def test_skip_and_finalize_success():
+    """skip_and_finalize returns JSON on success."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({"success": True, "message": "Job finalized"})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.skip_and_finalize(7)
+    assert result == {"success": True, "message": "Job finalized"}
+    mock_client.request.assert_awaited_once_with("POST", "/api/v1/jobs/7/skip-and-finalize")
+
+
+async def test_skip_and_finalize_connect_error():
+    """skip_and_finalize returns None on ConnectError."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.side_effect = httpx.ConnectError("refused")
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.skip_and_finalize(7)
+    assert result is None
+
+
 # --- get_config ---
 
 

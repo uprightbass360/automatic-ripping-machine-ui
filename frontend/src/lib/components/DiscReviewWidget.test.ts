@@ -36,12 +36,13 @@ vi.mock('$lib/api/logs', () => ({
 	fetchLogContent: vi.fn(() => Promise.resolve({ content: '' }))
 }));
 
-import { startWaitingJob, cancelWaitingJob, fetchJob, fetchNamingPreview, updateJobTitle } from '$lib/api/jobs';
+import { startWaitingJob, cancelWaitingJob, fetchJob, fetchNamingPreview, updateJobTitle, updateJobConfig } from '$lib/api/jobs';
 const mockStart = vi.mocked(startWaitingJob);
 const mockCancel = vi.mocked(cancelWaitingJob);
 const mockFetchJob = vi.mocked(fetchJob);
 const mockFetchNamingPreview = vi.mocked(fetchNamingPreview);
 const mockUpdateJobTitle = vi.mocked(updateJobTitle);
+const mockUpdateJobConfig = vi.mocked(updateJobConfig);
 
 vi.stubGlobal('confirm', vi.fn(() => true));
 
@@ -274,6 +275,29 @@ describe('DiscReviewWidget', () => {
 				expect(screen.getByText('Test Movie')).toBeInTheDocument();
 			});
 			expect(mockUpdateJobTitle).not.toHaveBeenCalledWith(1, { video_type: 'movie' });
+		});
+	});
+
+	describe('skip transcode toggle', () => {
+		it('renders skip transcode toggle after clicking Transcode button', async () => {
+			renderWidget({ video_type: 'movie', disctype: 'bluray' });
+			await waitFor(() => expect(screen.getByText('Transcode')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Transcode'));
+			await waitFor(() => {
+				expect(screen.getByText('Skip Transcoding')).toBeInTheDocument();
+			});
+		});
+
+		it('calls updateJobConfig with SKIP_TRANSCODE when toggled', async () => {
+			mockUpdateJobConfig.mockResolvedValue(undefined as any);
+			renderWidget({ video_type: 'movie', disctype: 'bluray' });
+			await waitFor(() => expect(screen.getByText('Transcode')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Transcode'));
+			await waitFor(() => expect(screen.getByTitle('Files will be sent to transcoder')).toBeInTheDocument());
+			await fireEvent.click(screen.getByTitle('Files will be sent to transcoder'));
+			await waitFor(() => {
+				expect(mockUpdateJobConfig).toHaveBeenCalledWith(1, { SKIP_TRANSCODE: true });
+			});
 		});
 	});
 

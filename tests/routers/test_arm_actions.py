@@ -158,3 +158,39 @@ async def test_pause_waiting_job_explicit_false(app_client):
     assert resp.status_code == 200
     assert resp.json()["paused"] is False
     mock_pause.assert_called_once_with(1, paused=False)
+
+
+# --- skip_and_finalize endpoint ---
+
+
+async def test_skip_and_finalize_endpoint(app_client):
+    """POST /api/jobs/{id}/skip-and-finalize proxies to arm_client."""
+    with patch(
+        "backend.routers.arm_actions.arm_client.skip_and_finalize",
+        new_callable=AsyncMock, return_value={"success": True, "message": "Job finalized"},
+    ):
+        resp = await app_client.post("/api/jobs/5/skip-and-finalize")
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+
+
+async def test_skip_and_finalize_502_on_arm_error(app_client):
+    """POST /api/jobs/{id}/skip-and-finalize returns 502 when ARM reports failure."""
+    with patch(
+        "backend.routers.arm_actions.arm_client.skip_and_finalize",
+        new_callable=AsyncMock,
+        return_value={"success": False, "error": "Job not in transcoding state"},
+    ):
+        resp = await app_client.post("/api/jobs/5/skip-and-finalize")
+    assert resp.status_code == 502
+    assert "Job not in transcoding state" in resp.json()["detail"]
+
+
+async def test_skip_and_finalize_503_when_unreachable(app_client):
+    """POST /api/jobs/{id}/skip-and-finalize returns 503 when ARM is down."""
+    with patch(
+        "backend.routers.arm_actions.arm_client.skip_and_finalize",
+        new_callable=AsyncMock, return_value=None,
+    ):
+        resp = await app_client.post("/api/jobs/5/skip-and-finalize")
+    assert resp.status_code == 503
