@@ -383,6 +383,7 @@ class JobConfigUpdateRequest(BaseModel):
     MINLENGTH: int | None = None
     MAXLENGTH: int | None = None
     AUDIO_FORMAT: str | None = None
+    SKIP_TRANSCODE: bool | None = None
 
 
 class DriveUpdateRequest(BaseModel):
