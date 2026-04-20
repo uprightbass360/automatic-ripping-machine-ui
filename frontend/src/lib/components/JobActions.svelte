@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Job } from '$lib/types/arm';
-	import { abandonJob, deleteJob, fixJobPermissions, bulkPurgeJobs } from '$lib/api/jobs';
+	import { abandonJob, deleteJob, fixJobPermissions, bulkPurgeJobs, forceComplete, skipAndFinalize } from '$lib/api/jobs';
 	import { isJobActive } from '$lib/utils/job-type';
 
 	interface Props {
@@ -21,6 +21,7 @@
 	let canDelete = $derived(statusLower === 'success' || statusLower === 'fail' || statusLower === 'waiting_transcode');
 	let canFixPerms = $derived(statusLower === 'success');
 	let canPurge = $derived(statusLower === 'fail' || statusLower === 'success');
+	let isTranscodeStatus = $derived(statusLower === 'waiting_transcode' || statusLower === 'transcoding');
 
 	function clearFeedback() {
 		setTimeout(() => (feedback = null), 3000);
@@ -94,6 +95,38 @@
 		}
 	}
 
+	async function handleForceComplete() {
+		if (!confirm(`Force complete job "${job.title || job.label || job.job_id}"? This will mark the job as successful without transcoding.`)) return;
+		loading = 'forceComplete';
+		feedback = null;
+		try {
+			await forceComplete(job.job_id);
+			feedback = { type: 'success', message: 'Job force-completed' };
+			onaction?.();
+		} catch (e) {
+			feedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to force complete' };
+		} finally {
+			loading = null;
+			clearFeedback();
+		}
+	}
+
+	async function handleSkipAndFinalize() {
+		if (!confirm(`Skip transcoding and finalize job "${job.title || job.label || job.job_id}"? Files will be moved as-is without transcoding.`)) return;
+		loading = 'skipFinalize';
+		feedback = null;
+		try {
+			await skipAndFinalize(job.job_id);
+			feedback = { type: 'success', message: 'Transcode skipped, finalizing' };
+			onaction?.();
+		} catch (e) {
+			feedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to skip & finalize' };
+		} finally {
+			loading = null;
+			clearFeedback();
+		}
+	}
+
 	let btnBase = $derived(
 		compact
 			? 'rounded px-2 py-0.5 text-xs font-medium disabled:opacity-50 transition-colors'
@@ -101,7 +134,7 @@
 	);
 </script>
 
-{#if canAbandon || canDelete || canFixPerms || canPurge}
+{#if canAbandon || canDelete || canFixPerms || canPurge || isTranscodeStatus}
 	<div class="contents">
 		{#if canAbandon}
 			<button
@@ -110,6 +143,22 @@
 				class="{btnBase} bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
 			>
 				{loading === 'abandon' ? 'Abandoning...' : 'Abandon'}
+			</button>
+		{/if}
+		{#if isTranscodeStatus}
+			<button
+				onclick={handleForceComplete}
+				disabled={loading !== null}
+				class="{btnBase} bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+			>
+				{loading === 'forceComplete' ? 'Completing...' : 'Force Complete'}
+			</button>
+			<button
+				onclick={handleSkipAndFinalize}
+				disabled={loading !== null}
+				class="{btnBase} bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+			>
+				{loading === 'skipFinalize' ? 'Skipping...' : 'Skip & Finalize'}
 			</button>
 		{/if}
 		{#if canFixPerms}
