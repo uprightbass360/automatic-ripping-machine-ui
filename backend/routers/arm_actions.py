@@ -21,31 +21,30 @@ def _check_result(result: dict[str, Any] | None) -> dict[str, Any]:
     return result
 
 
-@router.post("/{job_id}/abandon", responses=_502_503_ARM)
-async def abandon_job(job_id: int) -> dict[str, Any]:
-    return _check_result(await arm_client.abandon_job(job_id))
+def _proxy_post(path: str, method_name: str, *, http_method: str = "post") -> None:
+    """Register a simple ARM proxy endpoint that forwards only job_id."""
+
+    async def _endpoint(job_id: int) -> dict[str, Any]:
+        result = await getattr(arm_client, method_name)(job_id)
+        return _check_result(result)
+
+    _endpoint.__name__ = method_name
+    _endpoint.__qualname__ = method_name
+    route = f"/{{job_id}}/{path}" if path else "/{job_id}"
+    getattr(router, http_method)(route, responses=_502_503_ARM)(_endpoint)
 
 
-@router.post("/{job_id}/cancel", responses=_502_503_ARM)
-async def cancel_waiting_job(job_id: int) -> dict[str, Any]:
-    """Cancel a job in 'waiting' status (proxies to ARM)."""
-    return _check_result(await arm_client.cancel_waiting_job(job_id))
+# Simple proxies — just forward job_id to ARM
+_proxy_post("abandon", "abandon_job")
+_proxy_post("cancel", "cancel_waiting_job")
+_proxy_post("fix-permissions", "fix_permissions")
+_proxy_post("skip-and-finalize", "skip_and_finalize")
+_proxy_post("start", "start_waiting_job")
+_proxy_post("crc-submit", "send_to_crc_db")
+_proxy_post("", "delete_job", http_method="delete")
 
 
-@router.delete("/{job_id}", responses=_502_503_ARM)
-async def delete_job(job_id: int) -> dict[str, Any]:
-    return _check_result(await arm_client.delete_job(job_id))
-
-
-@router.post("/{job_id}/fix-permissions", responses=_502_503_ARM)
-async def fix_permissions(job_id: int) -> dict[str, Any]:
-    return _check_result(await arm_client.fix_permissions(job_id))
-
-
-@router.post("/{job_id}/skip-and-finalize", responses=_502_503_ARM)
-async def skip_and_finalize(job_id: int) -> dict[str, Any]:
-    """Skip transcoding and finalize a stuck job (proxies to ARM)."""
-    return _check_result(await arm_client.skip_and_finalize(job_id))
+# --- Endpoints with extra parameters (kept as regular functions) ---
 
 
 @router.put("/{job_id}/title", responses=_502_503_ARM)
@@ -60,12 +59,6 @@ async def update_job_config(job_id: int, body: JobConfigUpdateRequest) -> dict[s
     return _check_result(await arm_client.update_job_config(job_id, body.model_dump(exclude_none=True)))
 
 
-@router.post("/{job_id}/start", responses=_502_503_ARM)
-async def start_waiting_job(job_id: int) -> dict[str, Any]:
-    """Start a job in 'waiting' status (proxies to ARM)."""
-    return _check_result(await arm_client.start_waiting_job(job_id))
-
-
 @router.post("/{job_id}/pause", responses=_502_503_ARM)
 async def pause_waiting_job(job_id: int, body: dict[str, Any] | None = None) -> dict[str, Any]:
     """Set or toggle per-job pause for a waiting job (proxies to ARM)."""
@@ -77,12 +70,6 @@ async def pause_waiting_job(job_id: int, body: dict[str, Any] | None = None) -> 
 async def set_job_tracks(job_id: int, body: list[dict]) -> dict[str, Any]:
     """Replace a job's tracks with MusicBrainz data (proxies to ARM)."""
     return _check_result(await arm_client.set_job_tracks(job_id, body))
-
-
-@router.post("/{job_id}/crc-submit", responses=_502_503_ARM)
-async def crc_submit(job_id: int) -> dict[str, Any]:
-    """Submit a job's CRC data to the community database (proxies to ARM)."""
-    return _check_result(await arm_client.send_to_crc_db(job_id))
 
 
 # --- Naming preview (separate prefix) ---
