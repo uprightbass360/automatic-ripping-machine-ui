@@ -115,6 +115,11 @@ async def skip_and_finalize(job_id: int) -> dict[str, Any] | None:
     return await _request("POST", f"/api/v1/jobs/{job_id}/skip-and-finalize")
 
 
+async def force_complete(job_id: int) -> dict[str, Any] | None:
+    """Mark a stuck job as SUCCESS without moving files. Returns None if ARM is unreachable."""
+    return await _request("POST", f"/api/v1/jobs/{job_id}/force-complete")
+
+
 async def scan_folder(path: str) -> dict[str, Any] | None:
     """Scan a folder for disc structure. Returns None if ARM is unreachable."""
     return await _request("POST", "/api/v1/jobs/folder/scan", json={"path": path})

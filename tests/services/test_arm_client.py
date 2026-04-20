@@ -86,6 +86,23 @@ async def test_skip_and_finalize_connect_error(mock_client):
     assert await arm_client.skip_and_finalize(7) is None
 
 
+# --- force_complete ---
+
+
+async def test_force_complete_success(mock_client):
+    """force_complete returns JSON on success."""
+    _set_request_response(mock_client, {"success": True, "message": "Job marked as complete"})
+    result = await arm_client.force_complete(7)
+    assert result == {"success": True, "message": "Job marked as complete"}
+    mock_client.request.assert_awaited_once_with("POST", "/api/v1/jobs/7/force-complete")
+
+
+async def test_force_complete_connect_error(mock_client):
+    """force_complete returns None on ConnectError."""
+    _set_request_connect_error(mock_client)
+    assert await arm_client.force_complete(7) is None
+
+
 # --- get_config ---
 
 

@@ -86,6 +86,7 @@ vi.mock('$lib/api/jobs', () => ({
 	fetchJob: vi.fn(() => Promise.resolve({ ...baseJob })),
 	retranscodeJob: vi.fn(),
 	skipAndFinalize: vi.fn(() => Promise.resolve({ success: true, message: 'Done' })),
+	forceComplete: vi.fn(() => Promise.resolve({ success: true, message: 'Done' })),
 	fetchMusicDetail: vi.fn(),
 	toggleMultiTitle: vi.fn(),
 	updateTrack: vi.fn(),
@@ -112,9 +113,10 @@ vi.mock('$lib/api/settings', () => ({
 	fetchSettings: vi.fn(() => Promise.resolve({ transcoder_config: { config: {} } }))
 }));
 
-import { fetchJob, skipAndFinalize } from '$lib/api/jobs';
+import { fetchJob, skipAndFinalize, forceComplete } from '$lib/api/jobs';
 const mockFetchJob = vi.mocked(fetchJob);
 const mockSkipAndFinalize = vi.mocked(skipAndFinalize);
+const mockForceComplete = vi.mocked(forceComplete);
 
 // --- Helpers ---
 
@@ -191,5 +193,66 @@ describe('Job detail page — skip transcode', () => {
 			expect(screen.getByText('Finalizing...')).toBeInTheDocument();
 		});
 		expect(screen.getByText('Finalizing...').closest('button')).toBeDisabled();
+	});
+});
+
+const FORCE_BTN = 'Force Complete';
+
+describe('Job detail page — force complete', () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
+	it.each(['waiting_transcode', 'transcoding'])(
+		'shows Force Complete button for %s status',
+		async (status) => {
+			renderWithStatus(status);
+			await waitFor(() => {
+				expect(screen.getByText(FORCE_BTN)).toBeInTheDocument();
+			});
+		}
+	);
+
+	it('does NOT show Force Complete button for other statuses', async () => {
+		renderWithStatus('success');
+		await waitFor(() => {
+			expect(screen.getByText('Dashboard')).toBeInTheDocument();
+		});
+		expect(screen.queryByText(FORCE_BTN)).not.toBeInTheDocument();
+	});
+
+	it('calls forceComplete and shows success feedback', async () => {
+		mockForceComplete.mockResolvedValue({ success: true, message: 'Marked as complete' });
+		renderWithStatus('waiting_transcode');
+		const btn = await screen.findByText(FORCE_BTN);
+		await fireEvent.click(btn);
+		await waitFor(() => {
+			expect(mockForceComplete).toHaveBeenCalledWith(42);
+		});
+		await waitFor(() => {
+			expect(screen.getByText('Marked as complete')).toBeInTheDocument();
+		});
+	});
+
+	it('shows error feedback when forceComplete returns success=false', async () => {
+		mockForceComplete.mockResolvedValue({ success: false, error: 'Job not found' });
+		renderWithStatus('waiting_transcode');
+		const btn = await screen.findByText(FORCE_BTN);
+		await fireEvent.click(btn);
+		await waitFor(() => {
+			expect(screen.getByText('Job not found')).toBeInTheDocument();
+		});
+	});
+
+	it('disables button while force completing is in progress', async () => {
+		mockForceComplete.mockReturnValue(new Promise(() => {}));
+		renderWithStatus('waiting_transcode');
+		const btn = await screen.findByText(FORCE_BTN);
+		await fireEvent.click(btn);
+		await waitFor(() => {
+			expect(screen.getByText('Completing...')).toBeInTheDocument();
+		});
+		expect(screen.getByText('Completing...').closest('button')).toBeDisabled();
 	});
 });
