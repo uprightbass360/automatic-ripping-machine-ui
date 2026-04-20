@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { fetchJob, retranscodeJob, skipAndFinalize, fetchMusicDetail, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
+	import { fetchJob, retranscodeJob, skipAndFinalize, forceComplete, fetchMusicDetail, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
 	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
 	import PosterImage from '$lib/components/PosterImage.svelte';
@@ -101,6 +101,8 @@
 
 	let skippingTranscode = $state(false);
 	let skipTranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let forcingComplete = $state(false);
+	let forceCompleteFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
 	async function handleSkipAndFinalize() {
 		if (!job) return;
@@ -118,6 +120,25 @@
 			skipTranscodeFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to skip transcode' };
 		} finally {
 			skippingTranscode = false;
+		}
+	}
+
+	async function handleForceComplete() {
+		if (!job) return;
+		forcingComplete = true;
+		forceCompleteFeedback = null;
+		try {
+			const result = await forceComplete(job.job_id);
+			if (result.success) {
+				forceCompleteFeedback = { type: 'success', message: result.message || 'Marked as complete' };
+				await loadJob();
+			} else {
+				forceCompleteFeedback = { type: 'error', message: result.error || 'Failed to force complete' };
+			}
+		} catch (e) {
+			forceCompleteFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to force complete' };
+		} finally {
+			forcingComplete = false;
 		}
 	}
 
@@ -327,6 +348,13 @@
 						>
 							{skippingTranscode ? 'Finalizing...' : 'Skip Transcode & Finalize'}
 						</button>
+						<button
+							onclick={handleForceComplete}
+							disabled={forcingComplete}
+							class="rounded-md border border-amber-600 px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-50 disabled:opacity-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+						>
+							{forcingComplete ? 'Completing...' : 'Force Complete'}
+						</button>
 					{/if}
 					<JobActions {job} onaction={loadJob} ondelete={() => goto('/')} />
 					{#if retranscodeFeedback}
@@ -337,6 +365,11 @@
 					{#if skipTranscodeFeedback}
 						<span class="text-xs {skipTranscodeFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
 							{skipTranscodeFeedback.message}
+						</span>
+					{/if}
+					{#if forceCompleteFeedback}
+						<span class="text-xs {forceCompleteFeedback.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+							{forceCompleteFeedback.message}
 						</span>
 					{/if}
 				</div>

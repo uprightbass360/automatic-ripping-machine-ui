@@ -64,6 +64,13 @@ export function skipAndFinalize(jobId: number): Promise<{ success: boolean; mess
 	);
 }
 
+export function forceComplete(jobId: number): Promise<{ success: boolean; message?: string; error?: string }> {
+	return apiFetch<{ success: boolean; message?: string; error?: string }>(
+		`/api/jobs/${jobId}/force-complete`,
+		{ method: 'POST' }
+	);
+}
+
 export function searchMetadata(query: string, year?: string, page = 1): Promise<SearchResult[]> {
 	const params = new URLSearchParams({ q: query });
 	if (year) params.set('year', year);

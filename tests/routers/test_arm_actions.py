@@ -156,3 +156,29 @@ async def test_skip_and_finalize_503_when_unreachable(app_client):
     with _patch_arm_client("skip_and_finalize", None):
         resp = await app_client.post("/api/jobs/5/skip-and-finalize")
     assert resp.status_code == 503
+
+
+# --- force_complete endpoint ---
+
+
+async def test_force_complete_endpoint(app_client):
+    """POST /api/jobs/{id}/force-complete proxies to arm_client."""
+    with _patch_arm_client("force_complete", {"success": True, "message": "Job marked as complete"}):
+        resp = await app_client.post("/api/jobs/5/force-complete")
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+
+
+async def test_force_complete_502_on_arm_error(app_client):
+    """POST /api/jobs/{id}/force-complete returns 502 when ARM reports failure."""
+    with _patch_arm_client("force_complete", {"success": False, "error": "Job not in valid state"}):
+        resp = await app_client.post("/api/jobs/5/force-complete")
+    assert resp.status_code == 502
+    assert "Job not in valid state" in resp.json()["detail"]
+
+
+async def test_force_complete_503_when_unreachable(app_client):
+    """POST /api/jobs/{id}/force-complete returns 503 when ARM is down."""
+    with _patch_arm_client("force_complete", None):
+        resp = await app_client.post("/api/jobs/5/force-complete")
+    assert resp.status_code == 503
