@@ -28,7 +28,10 @@ vi.mock('$lib/api/jobs', () => ({
 }));
 
 vi.mock('$lib/api/settings', () => ({
-	fetchSettings: vi.fn(() => Promise.resolve({ transcoder_config: { config: {} } }))
+	fetchSettings: vi.fn(() => Promise.resolve({ transcoder_config: { config: {} } })),
+	fetchTranscoderScheme: vi.fn(() => Promise.resolve(null)),
+	fetchTranscoderPresets: vi.fn(() => Promise.resolve([])),
+	createCustomPreset: vi.fn(() => Promise.resolve(null))
 }));
 
 vi.mock('$lib/api/logs', () => ({
@@ -297,6 +300,24 @@ describe('DiscReviewWidget', () => {
 			await fireEvent.click(screen.getByTitle('Files will be sent to transcoder'));
 			await waitFor(() => {
 				expect(mockUpdateJobConfig).toHaveBeenCalledWith(1, { SKIP_TRANSCODE: true });
+			});
+		});
+
+		it('reverts skipTranscode and shows error when updateJobConfig rejects', async () => {
+			mockUpdateJobConfig.mockRejectedValue(new Error('Network failure'));
+			renderWidget({ video_type: 'movie', disctype: 'bluray' });
+			await waitFor(() => expect(screen.getByText('Transcode')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Transcode'));
+			// Toggle starts as off ("Files will be sent to transcoder")
+			await waitFor(() => expect(screen.getByTitle('Files will be sent to transcoder')).toBeInTheDocument());
+			await fireEvent.click(screen.getByTitle('Files will be sent to transcoder'));
+			// After rejection, toggle should revert back to off state
+			await waitFor(() => {
+				expect(screen.getByTitle('Files will be sent to transcoder')).toBeInTheDocument();
+			});
+			// Error message should be displayed
+			await waitFor(() => {
+				expect(screen.getByText(/Failed to update skip transcode.*Network failure/)).toBeInTheDocument();
 			});
 		});
 	});
