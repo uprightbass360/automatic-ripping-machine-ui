@@ -24,6 +24,17 @@
 			? 'confirm-btn-danger'
 			: 'confirm-btn-primary'
 	);
+
+	$effect(() => {
+		if (!open) return;
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') {
+				oncancel();
+			}
+		};
+		window.addEventListener('keydown', onKeyDown);
+		return () => window.removeEventListener('keydown', onKeyDown);
+	});
 </script>
 
 {#if open}
@@ -37,8 +48,8 @@
 		></button>
 
 		<!-- Dialog -->
-		<div class="relative z-10 w-full max-w-md rounded-lg bg-surface p-6 shadow-xl dark:bg-surface-dark" data-dialog>
-			<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+		<div class="relative z-10 w-full max-w-md rounded-lg bg-surface p-6 shadow-xl dark:bg-surface-dark" data-dialog role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+			<h3 id="dialog-title" class="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
 			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{message}</p>
 			<div class="mt-4 flex justify-end gap-3">
 				<button
