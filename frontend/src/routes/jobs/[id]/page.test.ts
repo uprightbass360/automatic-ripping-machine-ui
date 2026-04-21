@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
+import { renderComponent, screen, fireEvent, cleanup, waitFor, within } from '$lib/test-utils';
 import Page from './+page.svelte';
 import type { JobDetail } from '$lib/types/arm';
 
@@ -126,11 +126,15 @@ function renderWithStatus(status: string) {
 	renderComponent(Page);
 }
 
-/** Render, wait for the skip button to appear, then click it. */
+/** Render, wait for the skip button to appear, click it, then confirm the dialog. */
 async function clickSkipButton(status = 'waiting_transcode') {
 	renderWithStatus(status);
 	const btn = await screen.findByText('Skip Transcode & Finalize');
 	await fireEvent.click(btn);
+	// The skip button now opens a confirmation dialog. Click the dialog's confirm
+	// button to actually invoke the API.
+	const confirmBtn = await screen.findByText('Yes, Skip Transcode');
+	await fireEvent.click(confirmBtn);
 }
 
 const SKIP_BTN = 'Skip Transcode & Finalize';
@@ -193,6 +197,58 @@ describe('Job detail page — skip transcode', () => {
 			expect(screen.getByText('Finalizing...')).toBeInTheDocument();
 		});
 		expect(screen.getByText('Finalizing...').closest('button')).toBeDisabled();
+	});
+});
+
+describe('Job detail page — skip transcode confirmation dialog', () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
+	it('does not call the API until the user confirms', async () => {
+		renderWithStatus('waiting_transcode');
+		const skipBtn = await screen.findByText(SKIP_BTN);
+		await fireEvent.click(skipBtn);
+
+		// API must not be called yet - dialog must appear first.
+		expect(mockSkipAndFinalize).not.toHaveBeenCalled();
+
+		// Dialog is rendered with an explanatory title.
+		expect(screen.getByText(/skip transcoding and finalize\?/i)).toBeInTheDocument();
+
+		// Click the dialog's confirm button (distinct label so it does not collide
+		// with the page's Skip Transcode & Finalize button).
+		const confirmBtn = screen.getByText('Yes, Skip Transcode');
+		await fireEvent.click(confirmBtn);
+
+		await waitFor(() => {
+			expect(mockSkipAndFinalize).toHaveBeenCalledOnce();
+		});
+		expect(mockSkipAndFinalize).toHaveBeenCalledWith(42);
+	});
+
+	it('cancels without calling the API', async () => {
+		renderWithStatus('waiting_transcode');
+		const skipBtn = await screen.findByText(SKIP_BTN);
+		await fireEvent.click(skipBtn);
+
+		// Dialog appears.
+		const dialogTitle = await screen.findByText(/skip transcoding and finalize\?/i);
+		expect(dialogTitle).toBeInTheDocument();
+
+		// Cancel the dialog. Use within() to scope to the dialog, in case any
+		// other cancel buttons exist elsewhere on the page.
+		const dialog = dialogTitle.closest('[data-dialog]') as HTMLElement;
+		expect(dialog).not.toBeNull();
+		const cancelBtn = within(dialog).getByText('Cancel');
+		await fireEvent.click(cancelBtn);
+
+		expect(mockSkipAndFinalize).not.toHaveBeenCalled();
+		// Dialog is dismissed.
+		await waitFor(() => {
+			expect(screen.queryByText(/skip transcoding and finalize\?/i)).not.toBeInTheDocument();
+		});
 	});
 });
 
