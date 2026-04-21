@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, field_validator
+
+from backend.services.arm_db import TRANSCODE_OVERRIDES_ALLOWLIST
+
+log = logging.getLogger(__name__)
 
 
 # --- ARM Job Schemas ---
@@ -99,14 +104,28 @@ class JobSchema(BaseModel):
     def _parse_transcode_overrides(cls, v: Any) -> dict | None:
         if v is None:
             return None
-        if isinstance(v, dict):
-            return v
         if isinstance(v, str):
             try:
-                return json.loads(v)
+                parsed = json.loads(v)
             except (json.JSONDecodeError, TypeError):
                 return None
-        return None
+        elif isinstance(v, dict):
+            parsed = v
+        else:
+            return None
+
+        if not isinstance(parsed, dict):
+            return None
+
+        offending = set(parsed.keys()) - TRANSCODE_OVERRIDES_ALLOWLIST
+        if offending:
+            log.warning(
+                "Stripping legacy transcode_overrides keys: %s",
+                sorted(offending),
+            )
+            return {k: v for k, v in parsed.items() if k in TRANSCODE_OVERRIDES_ALLOWLIST}
+
+        return parsed
 
     artist: str | None = None
     artist_auto: str | None = None
