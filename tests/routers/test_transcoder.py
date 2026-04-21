@@ -304,7 +304,7 @@ async def test_retranscode_webhook_failure(app_client):
 
 async def test_get_job_for_arm_found(app_client):
     """GET job-for-arm returns found=True with job details."""
-    data = {"jobs": [{"id": 10, "logfile": "job_10.log", "status": "completed"}]}
+    data = {"jobs": [{"id": 10, "logfile": "job_10.log", "status": "completed", "progress": 100.0}]}
     with patch(
         "backend.routers.transcoder.transcoder_client.get_jobs",
         new_callable=AsyncMock,
@@ -316,6 +316,22 @@ async def test_get_job_for_arm_found(app_client):
     assert result["found"] is True
     assert result["transcoder_job_id"] == 10
     assert result["logfile"] == "job_10.log"
+    assert result["progress"] == 100.0
+
+
+async def test_get_job_for_arm_passes_progress_field(app_client):
+    """progress field is surfaced so the detail page can render a progress bar."""
+    data = {"jobs": [{"id": 10, "logfile": "job_10.log", "status": "processing", "progress": 42.5}]}
+    with patch(
+        "backend.routers.transcoder.transcoder_client.get_jobs",
+        new_callable=AsyncMock,
+        return_value=data,
+    ):
+        resp = await app_client.get("/api/transcoder/job-for-arm/42")
+    assert resp.status_code == 200
+    result = resp.json()
+    assert result["progress"] == 42.5
+    assert result["status"] == "processing"
 
 
 async def test_get_job_for_arm_not_found(app_client):

@@ -49,7 +49,13 @@
 	);
 	let nonWaitingActiveJobs = $derived(dash.active_jobs.filter(j => {
 		const s = j.status?.toLowerCase();
-		return s !== 'waiting' && s !== 'transcoding' && s !== 'waiting_transcode' && s !== 'identifying' && s !== 'ready';
+		return s !== 'waiting' && s !== 'transcoding' && s !== 'waiting_transcode'
+			&& s !== 'identifying' && s !== 'ready'
+			&& s !== 'copying' && s !== 'ejecting';
+	}));
+	let finishingJobs = $derived(dash.active_jobs.filter(j => {
+		const s = j.status?.toLowerCase();
+		return s === 'copying' || s === 'ejecting' || s === 'waiting_transcode';
 	}));
 
 	let progressMap = $state<Record<number, RipProgress>>({});
@@ -383,6 +389,19 @@
 		</section>
 	{/if}
 
+	<!-- Finishing (copying / ejecting / waiting_transcode) -->
+	{#if finishingJobs.length > 0}
+		<section>
+			<SectionFrame variant="full" accent="var(--color-amber-500, #f59e0b)" label="FINISHING — {finishingJobs.length} {finishingJobs.length === 1 ? 'JOB' : 'JOBS'}">
+				<div class="space-y-2">
+					{#each finishingJobs as job (job.job_id)}
+						<ActiveJobRow {job} driveNames={dash.drive_names} />
+					{/each}
+				</div>
+			</SectionFrame>
+		</section>
+	{/if}
+
 	<!-- Active transcodes -->
 	{#if dash.active_transcodes.length > 0}
 		<section>
@@ -403,7 +422,7 @@
 	{/if}
 
 	<!-- Idle state -->
-	{#if pageReady && scanningJobs.length === 0 && waitingJobs.length === 0 && nonWaitingActiveJobs.length === 0 && dash.active_transcodes.length === 0}
+	{#if pageReady && scanningJobs.length === 0 && waitingJobs.length === 0 && nonWaitingActiveJobs.length === 0 && finishingJobs.length === 0 && dash.active_transcodes.length === 0}
 		<section>
 			<div class="rounded-lg border border-primary/20 bg-surface p-6 text-center shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<svg class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
