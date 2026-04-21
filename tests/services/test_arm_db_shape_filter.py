@@ -158,3 +158,43 @@ def test_allowlist_matches_migration_shape():
     """Constant must match the arm-neu migration's 4-key allowlist."""
     expected = frozenset({"preset_slug", "overrides", "delete_source", "output_extension"})
     assert frozenset(arm_db.TRANSCODE_OVERRIDES_ALLOWLIST) == expected
+
+
+def test_job_schema_validator_strips_legacy_transcode_overrides(caplog):
+    """JobSchema._parse_transcode_overrides filters legacy flat keys on read.
+
+    This is a parallel read site to arm_db.get_job_retranscode_info: any
+    endpoint that serializes a Job through JobSchema (e.g. job list, job
+    detail) must not leak old-shape keys like video_encoder or
+    handbrake_preset* to the frontend.
+    """
+    import json as _json
+
+    from backend.models.schemas import JobSchema
+
+    old_shape = {
+        "video_encoder": "nvenc_h265",
+        "handbrake_preset": "Foo",
+        "handbrake_preset_dvd": "Bar",
+        "preset_slug": "nvidia_balanced",  # keep this one
+        "delete_source": True,  # keep
+    }
+
+    with caplog.at_level(logging.WARNING, logger="backend.models.schemas"):
+        schema = JobSchema.model_validate(
+            {"job_id": 42, "transcode_overrides": _json.dumps(old_shape)}
+        )
+
+    assert schema.transcode_overrides == {
+        "preset_slug": "nvidia_balanced",
+        "delete_source": True,
+    }
+    assert "video_encoder" not in schema.transcode_overrides
+    assert "handbrake_preset" not in schema.transcode_overrides
+    assert "handbrake_preset_dvd" not in schema.transcode_overrides
+
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert warnings, "expected a WARN log naming stripped keys"
+    messages = "\n".join(r.getMessage() for r in warnings)
+    assert "video_encoder" in messages
+    assert "handbrake_preset" in messages
