@@ -1,5 +1,59 @@
 # Changelog
 
+## [16.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.4.1...v16.0.0) (2026-04-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* Encoding settings section replaced by scheme-aware preset picker. TranscodeOverrides uses preset_slug + overrides shape. Old flat field controls removed.
+
+### Features
+
+* add force-complete UI for marking stuck jobs as success ([88bafd4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/88bafd457196cd8cc3aa07b9a493ae73be567b6e))
+* add Skip & Finalize button for stuck transcode jobs ([fb57f24](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fb57f24a5b5c8681b9c9f1b0f8a1f2c50e7b73d2))
+* add SKIP_TRANSCODE global toggle to settings page ([01ae948](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/01ae948acfe27f1820f23b91ef0aa51ad95d7c06))
+* add SKIP_TRANSCODE toggle to review panel ([0f84337](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0f843379ba58922a4fde3a31086abb86dfe82416))
+* **backend:** add preset CRUD client methods ([739f74a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/739f74a3f03947d02580dafd9d32c8d24613d92d))
+* **backend:** add preset CRUD proxy routes ([fe1484f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fe1484f3a11fb925af9052e287322d83d0b5454d))
+* confirm dialog before skip-and-finalize ([fef8cd1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fef8cd167c0117558a2fe1ca3f0bdb50f0b3dca7))
+* **frontend:** add preset API client functions ([d204f75](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d204f75cc6a5afb962a3c217df49be6504a2dee7))
+* **frontend:** add preset/scheme TypeScript types ([3df5820](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3df5820c339fa0325d3d2c6cf1ba534aebb2dd8e))
+* **frontend:** add save bar with Save/Save-as-new/Revert ([9b160c2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9b160c263811e8bdb116ea3642c96338d2e5ea3a))
+* **frontend:** customize panel with shared + tier rows + dirty highlighting ([ea5f9b1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ea5f9b1148f839e9a1f24f0b9f32dd0a64dfc936))
+* **frontend:** edge cases - saving lock, unavailable warning, undo toast ([229adc3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/229adc3898088bf17175c031264052675709f377))
+* **frontend:** preset dropdown with built-in/custom/unavailable groups ([a20607b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a20607b12fec0a1c70a72034ecda029e80550228))
+* **frontend:** replace encoding section with PresetEditor in settings page ([515198a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/515198ab5e3c736935e103728f86a4d720fdd401))
+* **frontend:** rewrite TranscodeOverrides as PresetEditor wrapper ([2c3cefb](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2c3cefbf5b3c3bb7e530326a57eb22aa07f661e6))
+* **frontend:** scaffold PresetEditor component with scheme header ([5b48e4d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5b48e4de8e097d291278b86c6a7bbe8ae6b8cffb))
+* job progress widgets for rip/copy/transcode phases ([30335ff](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/30335fff224fa4fb18e5d51921f8167f9f116be7))
+* log filter UI in InlineLogFeed ([0742be8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0742be8f214a1e898010c8c445bf07a5fe67d24e))
+* preset picker and SKIP_TRANSCODE UI (breaking: replaces hardcoded encoding settings) ([6699162](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/669916215d3104e9ead84a8bfcce293d921579a1))
+* support {show} and {episode_name} naming variables in UI ([73aaa93](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/73aaa93c5161f2c005bc22b960ec1b87b191cba5))
+* surface SKIP_TRANSCODE in UI settings schema ([f8ca59e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f8ca59e8665fe426385e9d524b6f421fa146dd06))
+* update UI backend for new preset system ([9801377](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/98013771e2cbbb82372b93676d7c006e0a3c134b))
+
+
+### Bug Fixes
+
+* **backend:** broaden offline catch + improve preset CRUD tests ([ed6dfb5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ed6dfb50d4d348acd74d18bfa0747084a70680b2))
+* **backend:** NoReturn annotation + complete preset proxy 4xx test coverage ([47e39e2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/47e39e25c4b9ee1f3d142f2fd80e9108404cc832))
+* extract transcoder-unreachable constant and document 502 responses ([fb5ec54](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fb5ec54b12e7125f49f494ad62b8e7725979d58b))
+* filter legacy transcode_overrides keys on read ([ede6973](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ede6973c0c97980725c2720f091a458e23b41aca))
+* **frontend:** default to first preset; hide preset-managed fields from operational section ([2063b10](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2063b1055967bfd511ee4678a54a4c5c61c0a427))
+* **frontend:** PresetEditor cleanup - timer leak, save-as-new error contract, Number('') bug, missing tests ([c01f233](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c01f2335910f52fec8ad1f0bb62b145915b82152))
+* **frontend:** tier field falls back to preset.shared when not set per-tier ([b0ba40a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b0ba40abd34fe3e5550b0a7a4a5dfa502217abc0))
+* **frontend:** use 'Save changes' visible text on save button ([ec677bd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ec677bd74fb65e76e18f8af002c06a66d080f089))
+* hide title override search for tracks below MINLENGTH ([2a1172f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2a1172f191a1ca9f24b7974fa845f4f1f873880d))
+* **security:** validate preset slug before building outbound URL ([54a1ce9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/54a1ce92ec56f4c9b64f77d5c40358a585c17f87))
+* skip-and-finalize UX polish from code review ([afa513f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/afa513f513f242e3223eff9bc7451faa688655e6))
+* snapshot $state proxy before passing to fetch to avoid DOMException ([a817ae6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a817ae6af6c6012bf6b774d10c9a1fd36cf1ccd2))
+* snapshot settings.transcoder_config before derived preset state ([fa846e3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fa846e30db786177fde035ba754f6cd210a50250))
+* strip legacy transcode_overrides in JobSchema serialization ([5e2b6a9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5e2b6a9517edca80d7d3d1a8e4dcd4234e12b44a))
+* surface 4xx/5xx from transcoder update_config (previously swallowed as 502 'unreachable'); style Save-as-new-preset as button ([6559f03](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6559f0383db7b75fb856af37c4f45a195a700497))
+* tracks_total excludes disabled tracks ([92bf9e8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/92bf9e8c0f163482851071cf7a4c67574a61cb02))
+* transcoder log panel correlates to correct job ([23796bd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/23796bdb717cda435b0bcaae60b7574787532d49))
+* use pytest.approx for progress field float equality ([ca03d12](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ca03d12cb74e1c6664502e027f75a5c55d95f19a))
+
 ## [15.4.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.4.0...v15.4.1) (2026-04-14)
 
 
