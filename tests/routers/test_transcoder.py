@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 
 # --- GET /api/transcoder/stats ---
 
@@ -316,7 +318,7 @@ async def test_get_job_for_arm_found(app_client):
     assert result["found"] is True
     assert result["transcoder_job_id"] == 10
     assert result["logfile"] == "job_10.log"
-    assert result["progress"] == 100.0
+    assert result["progress"] == pytest.approx(100.0)
 
 
 async def test_get_job_for_arm_passes_progress_field(app_client):
@@ -330,7 +332,7 @@ async def test_get_job_for_arm_passes_progress_field(app_client):
         resp = await app_client.get("/api/transcoder/job-for-arm/42")
     assert resp.status_code == 200
     result = resp.json()
-    assert result["progress"] == 42.5
+    assert result["progress"] == pytest.approx(42.5)
     assert result["status"] == "processing"
 
 
