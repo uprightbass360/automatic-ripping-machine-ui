@@ -227,6 +227,52 @@ def test_get_job_track_counts_no_tracks():
     assert result == {"tracks_total": 0, "tracks_ripped": 0}
 
 
+def test_get_job_track_counts_excludes_disabled_tracks():
+    """tracks_total must reflect only enabled tracks - see bug_track_count_includes_disabled."""
+    enabled_ripped = make_track(track_id=1, enabled=True, ripped=True)
+    enabled_pending = make_track(track_id=2, enabled=True, ripped=False)
+    disabled = make_track(track_id=3, enabled=False, ripped=False)
+
+    job = make_job(job_id=1)
+    job.tracks = [enabled_ripped, enabled_pending, disabled]
+
+    with patch.object(arm_db, "get_session") as mock_session:
+        ctx = MagicMock()
+        ctx.__enter__ = MagicMock(return_value=ctx)
+        ctx.__exit__ = MagicMock(return_value=False)
+        ctx.scalars.return_value.unique.return_value.first.return_value = job
+        mock_session.return_value = ctx
+        result = arm_db.get_job_track_counts(1)
+
+    assert result["tracks_total"] == 2, "Disabled track must not count toward total"
+    assert result["tracks_ripped"] == 1
+
+
+def test_get_active_jobs_excludes_disabled_tracks():
+    """get_active_jobs must also filter disabled tracks from tracks_total."""
+    enabled = make_track(track_id=1, enabled=True, ripped=False)
+    disabled = make_track(track_id=2, enabled=False, ripped=False)
+
+    job = MagicMock(spec=Job)
+    job.__table__ = Job.__table__
+    for col in Job.__table__.columns:
+        setattr(job, col.name, None)
+    job.job_id = 1
+    job.status = "active"
+    job.tracks = [enabled, disabled]
+
+    with patch.object(arm_db, "get_session") as mock_session:
+        ctx = MagicMock()
+        ctx.__enter__ = MagicMock(return_value=ctx)
+        ctx.__exit__ = MagicMock(return_value=False)
+        ctx.scalars.return_value.unique.return_value.all.return_value = [job]
+        mock_session.return_value = ctx
+        result = arm_db.get_active_jobs()
+
+    assert result[0]["tracks_total"] == 1
+    assert result[0]["tracks_ripped"] == 0
+
+
 # --- get_drives_with_jobs ---
 
 

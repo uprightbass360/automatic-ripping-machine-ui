@@ -99,18 +99,25 @@ def _minlength(job) -> int:
 
 
 def _rippable_tracks(job) -> list:
-    """Return tracks above minlength (the ones ARM will actually rip).
+    """Return tracks the ripper will actually rip - enabled and above minlength.
 
-    Music discs skip the minlength filter — all CD tracks are ripped
+    Filters out tracks the user (or auto-flag logic) has marked enabled=False,
+    then applies the MINLENGTH filter for video discs.
+
+    Music discs skip the minlength filter - all CD tracks are ripped
     regardless of length (MINLENGTH is a video-only setting).
+
+    Uses `is not False` so NULL/unset enabled (as in older DB rows or test
+    fixtures) still counts as enabled - existing behavior for pre-flag data.
     """
     tracks = list(job.tracks) if job.tracks else []
+    enabled = [t for t in tracks if getattr(t, "enabled", True) is not False]
     if getattr(job, "disctype", None) == "music":
-        return tracks
+        return enabled
     ml = _minlength(job)
     if ml <= 0:
-        return tracks
-    return [t for t in tracks if t.length is None or t.length >= ml]
+        return enabled
+    return [t for t in enabled if t.length is None or t.length >= ml]
 
 
 def get_active_jobs() -> list[dict]:
