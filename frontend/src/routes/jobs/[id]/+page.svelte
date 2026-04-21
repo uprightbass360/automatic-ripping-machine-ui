@@ -2,8 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { fetchJob, retranscodeJob, skipAndFinalize, forceComplete, fetchMusicDetail, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
-	import type { NamingPreviewTrack } from '$lib/api/jobs';
+	import { fetchJob, fetchJobProgress, retranscodeJob, skipAndFinalize, forceComplete, fetchMusicDetail, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
+	import type { NamingPreviewTrack, RipProgress } from '$lib/api/jobs';
+	import ProgressBar from '$lib/components/ProgressBar.svelte';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
 	import PosterImage from '$lib/components/PosterImage.svelte';
 	import { fetchStructuredTranscoderLogContent, fetchTranscoderLogForArmJob } from '$lib/api/logs';
@@ -30,6 +31,9 @@
 	let retranscoding = $state(false);
 	let retranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 	let transcoderLogfile = $state<string | null>(null);
+	let transcoderProgress = $state<number | null>(null);
+	let transcoderJobStatus = $state<string | null>(null);
+	let ripProgress = $state<RipProgress | null>(null);
 
 	let isFolderImport = $derived(job?.source_type === 'folder');
 
@@ -246,11 +250,21 @@
 			}).catch(() => {
 				namingPreviews = {};
 			});
-			// Look up transcoder log for this ARM job
+			// Look up transcoder job info for this ARM job (logfile + progress)
 			fetchTranscoderLogForArmJob(id).then((info) => {
-				transcoderLogfile = info.found ? (info.logfile ?? null) : null;
+				if (info.found) {
+					transcoderLogfile = info.logfile ?? null;
+					transcoderProgress = info.progress ?? null;
+					transcoderJobStatus = info.status ?? null;
+				} else {
+					transcoderLogfile = null;
+					transcoderProgress = null;
+					transcoderJobStatus = null;
+				}
 			}).catch(() => {
 				transcoderLogfile = null;
+				transcoderProgress = null;
+				transcoderJobStatus = null;
 			});
 		} catch (e) {
 			if (e instanceof Error && e.message.includes('404')) {
@@ -279,6 +293,36 @@
 		loadJob();
 	}
 
+	async function refreshProgress() {
+		if (!job) return;
+		const s = job.status?.toLowerCase();
+		if (s === 'ripping') {
+			try {
+				ripProgress = await fetchJobProgress(job.job_id);
+			} catch {
+				ripProgress = null;
+			}
+		} else if (ripProgress && s !== 'ripping') {
+			// Clear stale rip progress once the phase changes so 100% doesn't linger
+			ripProgress = null;
+		}
+		if (s === 'waiting_transcode' || s === 'transcoding' || s === 'copying') {
+			try {
+				const info = await fetchTranscoderLogForArmJob(job.job_id);
+				if (info.found) {
+					transcoderLogfile = info.logfile ?? null;
+					transcoderProgress = info.progress ?? null;
+					transcoderJobStatus = info.status ?? null;
+				} else {
+					transcoderProgress = null;
+					transcoderJobStatus = null;
+				}
+			} catch {
+				transcoderProgress = null;
+			}
+		}
+	}
+
 	onMount(() => {
 		let stopped = false;
 		async function poll() {
@@ -286,12 +330,13 @@
 				await new Promise((r) => setTimeout(r, 5000));
 				if (job && isJobActive(job.status)) {
 					await loadJob();
+					await refreshProgress();
 				} else {
 					break;
 				}
 			}
 		}
-		loadJob().then(() => { loadMusicTracks(); return poll(); });
+		loadJob().then(() => { loadMusicTracks(); refreshProgress(); return poll(); });
 		return () => {
 			stopped = true;
 		};
@@ -476,6 +521,61 @@
 			{/if}
 		</div>
 
+		<!-- Progress widget: ripping, copying, waiting_transcode, transcoding -->
+		{#if job.status === 'ripping'}
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+				<div class="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+					<span>Ripping</span>
+					{#if ripProgress?.stage}
+						<span class="text-xs text-gray-500 dark:text-gray-400">{ripProgress.stage}</span>
+					{/if}
+				</div>
+				{#if ripProgress?.progress != null}
+					<ProgressBar value={ripProgress.progress} color="bg-primary" />
+				{:else}
+					<div class="h-2.5 overflow-hidden rounded-full bg-primary/15">
+						<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
+					</div>
+				{/if}
+			</div>
+		{:else if job.status === 'copying'}
+			<div class="rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-xs dark:border-amber-800 dark:bg-amber-900/20">
+				<div class="mb-2 flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
+					<span>Copying to shared storage</span>
+					<span class="text-xs text-amber-700/80 dark:text-amber-400/80">ARM is moving raw files to the transcoder's working directory.</span>
+				</div>
+				<div class="h-2.5 overflow-hidden rounded-full bg-amber-200/60 dark:bg-amber-900/40">
+					<div class="h-full w-1/3 animate-indeterminate rounded-full bg-amber-500/70"></div>
+				</div>
+			</div>
+		{:else if job.status === 'waiting_transcode'}
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+				<div class="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+					<span>Waiting to transcode</span>
+					<span class="text-xs text-gray-500 dark:text-gray-400">Queued on the transcoder.</span>
+				</div>
+				<div class="h-2.5 overflow-hidden rounded-full bg-primary/15">
+					<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
+				</div>
+			</div>
+		{:else if job.status === 'transcoding'}
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+				<div class="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+					<span>Transcoding</span>
+					{#if transcoderJobStatus}
+						<span class="text-xs text-gray-500 dark:text-gray-400">({transcoderJobStatus})</span>
+					{/if}
+				</div>
+				{#if transcoderProgress != null}
+					<ProgressBar value={transcoderProgress} color="bg-primary" />
+				{:else}
+					<div class="h-2.5 overflow-hidden rounded-full bg-primary/15">
+						<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
+					</div>
+				{/if}
+			</div>
+		{/if}
+
 		<!-- Auto vs Manual title info (outside container) -->
 		{#if hasAutoManualDiff}
 			<div class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm dark:border-amber-800 dark:bg-amber-900/20">
@@ -499,7 +599,7 @@
 		{#if job.logfile}
 			<InlineLogFeed logfile={job.logfile} maxEntries={15} title="ARM Ripper Log" />
 		{/if}
-		{#if transcoderLogfile && !isMusicDisc && job?.disctype !== 'data' && job?.status !== 'ripping' && job?.status !== 'ready' && job?.status !== 'identifying' && job?.status !== 'waiting'}
+		{#if transcoderLogfile && transcoderJobStatus && !isMusicDisc && job?.disctype !== 'data'}
 			<InlineLogFeed
 				logfile={transcoderLogfile}
 				maxEntries={15}

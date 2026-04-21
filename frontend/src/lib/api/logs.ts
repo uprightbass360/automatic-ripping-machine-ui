@@ -67,6 +67,12 @@ export function logDownloadUrl(filename: string): string {
 
 export async function fetchTranscoderLogForArmJob(
 	armJobId: number
-): Promise<{ found: boolean; logfile?: string; transcoder_job_id?: number; status?: string }> {
+): Promise<{
+	found: boolean;
+	logfile?: string;
+	transcoder_job_id?: number;
+	status?: string;
+	progress?: number | null;
+}> {
 	return apiFetch(`/api/transcoder/job-for-arm/${armJobId}`);
 }

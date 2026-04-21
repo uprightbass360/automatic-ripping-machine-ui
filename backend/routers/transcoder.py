@@ -128,9 +128,18 @@ async def get_transcoder_job_for_arm(arm_job_id: int) -> dict[str, Any]:
     so filtering on job_id returns at most one record and never correlates with
     an unrelated earlier job when the current ARM job has not yet reached the
     transcoder.
+
+    Returns `progress` so the job detail page can render a transcoder progress
+    bar without an extra round-trip.
     """
     data = await transcoder_client.get_jobs(job_id=arm_job_id, limit=1)
     if not data or not data.get("jobs"):
         return {"found": False}
     job = data["jobs"][0]
-    return {"found": True, "logfile": job.get("logfile"), "transcoder_job_id": job.get("id"), "status": job.get("status")}
+    return {
+        "found": True,
+        "logfile": job.get("logfile"),
+        "transcoder_job_id": job.get("id"),
+        "status": job.get("status"),
+        "progress": job.get("progress"),
+    }
