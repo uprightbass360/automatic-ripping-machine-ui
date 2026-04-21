@@ -9,6 +9,7 @@
 	import { fetchStructuredTranscoderLogContent, fetchTranscoderLogForArmJob } from '$lib/api/logs';
 	import type { JobDetail, MusicDetail } from '$lib/types/arm';
 	import JobActions from '$lib/components/JobActions.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import TitleSearch from '$lib/components/TitleSearch.svelte';
 	import MusicSearch from '$lib/components/MusicSearch.svelte';
@@ -101,8 +102,14 @@
 
 	let skippingTranscode = $state(false);
 	let skipTranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+	let showSkipConfirm = $state(false);
 	let forcingComplete = $state(false);
 	let forceCompleteFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
+
+	async function confirmSkipAndFinalize() {
+		showSkipConfirm = false;
+		await handleSkipAndFinalize();
+	}
 
 	async function handleSkipAndFinalize() {
 		if (!job) return;
@@ -342,7 +349,7 @@
 					{/if}
 					{#if job.status === 'waiting_transcode' || job.status === 'transcoding'}
 						<button
-							onclick={handleSkipAndFinalize}
+							onclick={() => (showSkipConfirm = true)}
 							disabled={skippingTranscode}
 							class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
 						>
@@ -743,3 +750,13 @@
 		{/if}
 	</div>
 {/if}
+
+<ConfirmDialog
+	open={showSkipConfirm}
+	title="Skip transcoding and finalize?"
+	message="The raw ripped files will be moved from the raw directory to the completed directory as-is. No transcoding will be applied. This cannot be undone."
+	confirmLabel="Yes, Skip Transcode"
+	variant="danger"
+	onconfirm={confirmSkipAndFinalize}
+	oncancel={() => (showSkipConfirm = false)}
+/>
