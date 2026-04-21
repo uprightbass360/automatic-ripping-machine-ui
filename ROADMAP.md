@@ -169,49 +169,53 @@ These Flask UI features already exist in the replacement UI or are superseded:
 
 ---
 
-## Milestone 11 — Decoupled Transcoder Settings Integration
+## Milestone 11 - Decoupled Transcoder Settings Integration
 
-The Settings page already has working ARM and transcoder config editors. But the two are independent — there's no awareness that they're parts of a single pipeline. When ARM's `SKIP_TRANSCODE` is enabled and transcoding is offloaded, the two services must agree on paths, credentials, and behavior. Today users have to mentally coordinate these settings across tabs.
+Status: done (v16.0.0)
+
+Shipped in v16.0.0: global toggle on Settings > Ripping, per-disc toggle in DiscReviewWidget, Skip Transcode & Finalize recovery button on job detail page.
+
+The Settings page already has working ARM and transcoder config editors. But the two are independent - there's no awareness that they're parts of a single pipeline. When ARM's `SKIP_TRANSCODE` is enabled and transcoding is offloaded, the two services must agree on paths, credentials, and behavior. Today users have to mentally coordinate these settings across tabs.
 
 ### Cross-Service Awareness
 
-- [ ] When `SKIP_TRANSCODE=True` in ARM config, visually de-emphasize ARM's transcoding settings (HB_PRESET, DEST_EXT, HANDBRAKE_LOCAL, etc.) with a banner: "Transcoding is handled by the dedicated transcoder service — edit those settings in the Transcoder tab"
-- [ ] When `SKIP_TRANSCODE=False`, show info on Transcoder tab: "ARM is using its built-in transcoder. These settings only apply if you enable SKIP_TRANSCODE in ARM config"
-- [ ] Link between tabs — clicking the banner jumps to the relevant tab
+- [x] When `SKIP_TRANSCODE=True` in ARM config, visually de-emphasize ARM's transcoding settings (HB_PRESET, DEST_EXT, HANDBRAKE_LOCAL, etc.) with a banner: "Transcoding is handled by the dedicated transcoder service - edit those settings in the Transcoder tab"
+- [x] When `SKIP_TRANSCODE=False`, show info on Transcoder tab: "ARM is using its built-in transcoder. These settings only apply if you enable SKIP_TRANSCODE in ARM config"
+- [x] Link between tabs - clicking the banner jumps to the relevant tab
 
 ### Path Alignment Validation
 
-- [ ] Compare ARM's `RAW_PATH` / `COMPLETED_PATH` against transcoder's `raw_path` / `completed_path` at settings load time
-- [ ] Show warning banner if paths don't match (common misconfiguration that causes the transcoder to look in the wrong directory)
-- [ ] Display both sets of paths side-by-side for easy comparison
+- [x] Compare ARM's `RAW_PATH` / `COMPLETED_PATH` against transcoder's `raw_path` / `completed_path` at settings load time
+- [x] Show warning banner if paths don't match (common misconfiguration that causes the transcoder to look in the wrong directory)
+- [x] Display both sets of paths side-by-side for easy comparison
 
-**Note:** Transcoder paths are read-only (set via env vars / Docker volumes). The validation is informational — it tells the user to fix their Docker Compose mounts, not to change a form field.
+**Note:** Transcoder paths are read-only (set via env vars / Docker volumes). The validation is informational - it tells the user to fix their Docker Compose mounts, not to change a form field.
 
 ### Connection Testing
 
-- [ ] "Test Connection" button on Transcoder tab — calls transcoder health endpoint and verifies:
+- [x] "Test Connection" button on Transcoder tab - calls transcoder health endpoint and verifies:
   - Service is reachable
   - API key is valid (if auth enabled)
   - GPU detection results
-- [ ] "Test Webhook" button — sends a test webhook from ARM to the transcoder's `/webhook/arm` endpoint, verifying the full notify path works (webhook URL + secret + reachability)
-- [ ] Results displayed inline with clear pass/fail for each check
+- [x] "Test Webhook" button - sends a test webhook from ARM to the transcoder's `/webhook/arm` endpoint, verifying the full notify path works (webhook URL + secret + reachability)
+- [x] Results displayed inline with clear pass/fail for each check
 
 **Backend work:** Add `POST /api/settings/transcoder/test` that calls the transcoder's `/health` endpoint. Add `POST /api/settings/transcoder/test-webhook` that calls ARM's bash_notify test or hits the transcoder webhook directly with a test payload.
 
 ### Notification Script Configuration
 
-- [ ] Display current `BASH_SCRIPT` path from ARM config
-- [ ] Show a read-only preview of the script contents (if accessible)
-- [ ] Guided setup: form to generate/update `notify_transcoder.sh` with the correct webhook URL, secret, and ARM env var mappings
-- [ ] Validate that `BASH_SCRIPT` points to an existing, executable file
+- [x] Display current `BASH_SCRIPT` path from ARM config
+- [x] Show a read-only preview of the script contents (if accessible)
+- [x] Guided setup: form to generate/update `notify_transcoder.sh` with the correct webhook URL, secret, and ARM env var mappings
+- [x] Validate that `BASH_SCRIPT` points to an existing, executable file
 
 **Backend work:** Add `GET /api/settings/bash-script` to read the current script. Add `PUT /api/settings/bash-script` to write an updated version. The script template would inject `ARM_UI_TRANSCODER_URL` and `webhook_secret` into the right places.
 
 ### Transcoder Auth Management (Stretch)
 
-- [ ] Display whether API auth is enabled on the transcoder
-- [ ] Show masked API key status (configured / not configured)
-- [ ] Guidance for rotating keys (link to docs or Docker env var instructions, since keys are set at deployment time)
+- [x] Display whether API auth is enabled on the transcoder
+- [x] Show masked API key status (configured / not configured)
+- [x] Guidance for rotating keys (link to docs or Docker env var instructions, since keys are set at deployment time)
 
 **Note:** API keys and webhook secrets are intentionally not runtime-updatable (security boundary). The UI should surface their status and guide configuration, not manage the values directly.
 
