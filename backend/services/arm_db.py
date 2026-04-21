@@ -522,6 +522,58 @@ def get_ripping_paused() -> bool:
         return False
 
 
+# Allowlisted top-level keys in transcode_overrides JSON after the preset
+# rollout. Anything outside this set is legacy flat-key shape and is
+# stripped on read with a WARN log. Must match the arm-neu Alembic
+# migration o0p1q2r3s4t5_transcode_overrides_drop_legacy and the
+# transcoder's expected webhook shape.
+TRANSCODE_OVERRIDES_ALLOWLIST: frozenset[str] = frozenset({
+    "preset_slug",
+    "overrides",
+    "delete_source",
+    "output_extension",
+})
+
+
+def _filter_transcode_overrides(raw: str | None, job_id: int) -> dict | None:
+    """Parse and filter transcode_overrides JSON, stripping legacy keys.
+
+    Returns the filtered dict, or None if the input is null, malformed,
+    or not a JSON object. Logs a WARN naming the stripped keys when any
+    are removed, and on malformed or non-dict JSON.
+    """
+    import json as _json
+
+    if raw is None:
+        return None
+
+    try:
+        parsed = _json.loads(raw)
+    except (ValueError, TypeError) as exc:
+        log.warning(
+            "Malformed transcode_overrides JSON on job_id=%s: %s",
+            job_id, exc,
+        )
+        return None
+
+    if not isinstance(parsed, dict):
+        log.warning(
+            "transcode_overrides on job_id=%s is not a JSON object (got %s); dropping",
+            job_id, type(parsed).__name__,
+        )
+        return None
+
+    offending = set(parsed.keys()) - TRANSCODE_OVERRIDES_ALLOWLIST
+    if offending:
+        log.warning(
+            "Stripping legacy transcode_overrides keys on job_id=%s: %s",
+            job_id, sorted(offending),
+        )
+        return {k: v for k, v in parsed.items() if k in TRANSCODE_OVERRIDES_ALLOWLIST}
+
+    return parsed
+
+
 def get_job_retranscode_info(job_id: int) -> dict | None:
     """Build a webhook-shaped payload for re-transcoding an ARM job.
 
@@ -539,14 +591,13 @@ def get_job_retranscode_info(job_id: int) -> dict | None:
             title = job.title or job.title_auto or job.label or "Unknown"
             year = job.year or job.year_auto or ""
 
-            # Parse transcode overrides if present
-            config_overrides = None
-            if getattr(job, 'transcode_overrides', None):
-                import json as _json
-                try:
-                    config_overrides = _json.loads(job.transcode_overrides)
-                except (ValueError, TypeError):
-                    pass
+            # Parse and filter transcode_overrides. Legacy flat-key shapes
+            # (pre-preset-rollout) are stripped with a WARN log so the UI
+            # and downstream transcoder never see keys outside the
+            # allowlist. See TRANSCODE_OVERRIDES_ALLOWLIST above.
+            config_overrides = _filter_transcode_overrides(
+                getattr(job, 'transcode_overrides', None), job.job_id
+            )
 
             payload = {
                 "title": title,
@@ -583,14 +634,6 @@ def get_job_retranscode_info(job_id: int) -> dict | None:
         return None
 
 
-TRANSCODE_OVERRIDE_KEYS = {
-    "preset_slug",
-    "overrides",
-    "delete_source",
-    "output_extension",
-}
-
-
 def _coerce_override(key: str, value) -> tuple[str, object] | None:
     """Coerce a single transcode override value. Returns None to skip."""
     if value is None or value == "":
@@ -616,7 +659,7 @@ def update_job_transcode_overrides(job_id: int, overrides: dict) -> dict | None:
     import json as _json
 
     # Validate keys
-    invalid = set(overrides.keys()) - TRANSCODE_OVERRIDE_KEYS
+    invalid = set(overrides.keys()) - TRANSCODE_OVERRIDES_ALLOWLIST
     if invalid:
         raise ValueError(f"Unknown keys: {', '.join(sorted(invalid))}")
 
