@@ -357,14 +357,19 @@ async def get_jobs(
     status: str | None = None,
     limit: int = 50,
     offset: int = 0,
-    arm_job_id: int | None = None,
+    job_id: int | None = None,
 ) -> dict[str, Any] | None:
+    """List transcoder jobs.
+
+    The transcoder uses the ARM job_id as its own primary key, so filtering
+    on job_id returns the transcoder-side record for that ARM job (if any).
+    """
     try:
         params: dict[str, Any] = {"limit": limit, "offset": offset}
         if status:
             params["status"] = status
-        if arm_job_id is not None:
-            params["arm_job_id"] = arm_job_id
+        if job_id is not None:
+            params["job_id"] = job_id
         resp = await get_client().get("/jobs", params=params)
         resp.raise_for_status()
         return _normalize_timestamps(resp.json())

@@ -122,8 +122,14 @@ async def retranscode_transcoder_job(job_id: int):
 
 @router.get("/job-for-arm/{arm_job_id}")
 async def get_transcoder_job_for_arm(arm_job_id: int) -> dict[str, Any]:
-    """Look up the most recent transcoder job for a given ARM job ID."""
-    data = await transcoder_client.get_jobs(arm_job_id=arm_job_id, limit=1)
+    """Look up the transcoder job for a given ARM job ID.
+
+    IDs are unified: the transcoder stores ARM's job_id as its own primary key,
+    so filtering on job_id returns at most one record and never correlates with
+    an unrelated earlier job when the current ARM job has not yet reached the
+    transcoder.
+    """
+    data = await transcoder_client.get_jobs(job_id=arm_job_id, limit=1)
     if not data or not data.get("jobs"):
         return {"found": False}
     job = data["jobs"][0]

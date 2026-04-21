@@ -297,7 +297,7 @@ async def test_get_jobs_with_filters():
     mock_client.get.return_value = _mock_response(data)
     with patch.object(transcoder_client, "get_client", return_value=mock_client):
         result = await transcoder_client.get_jobs(
-            status="completed", limit=10, offset=5, arm_job_id=42
+            status="completed", limit=10, offset=5, job_id=42
         )
     assert result == data
     call_kwargs = mock_client.get.call_args
@@ -305,11 +305,11 @@ async def test_get_jobs_with_filters():
     assert params["status"] == "completed"
     assert params["limit"] == 10
     assert params["offset"] == 5
-    assert params["arm_job_id"] == 42
+    assert params["job_id"] == 42
 
 
-async def test_get_jobs_no_status_or_arm_job_id():
-    """get_jobs excludes status and arm_job_id when not provided."""
+async def test_get_jobs_no_status_or_job_id():
+    """get_jobs excludes status and job_id when not provided."""
     data = {"jobs": [], "total": 0}
     mock_client = AsyncMock(spec=httpx.AsyncClient)
     mock_client.get.return_value = _mock_response(data)
@@ -318,7 +318,7 @@ async def test_get_jobs_no_status_or_arm_job_id():
     call_kwargs = mock_client.get.call_args
     params = call_kwargs[1]["params"]
     assert "status" not in params
-    assert "arm_job_id" not in params
+    assert "job_id" not in params
 
 
 async def test_get_jobs_offline():
