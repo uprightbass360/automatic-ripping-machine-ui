@@ -133,7 +133,7 @@ async function clickSkipButton(status = 'waiting_transcode') {
 	await fireEvent.click(btn);
 	// The skip button now opens a confirmation dialog. Click the dialog's confirm
 	// button to actually invoke the API.
-	const confirmBtn = await screen.findByText('Yes, Skip Transcode');
+	const confirmBtn = await screen.findByText(/yes.*skip.*finalize/i);
 	await fireEvent.click(confirmBtn);
 }
 
@@ -145,15 +145,20 @@ describe('Job detail page — skip transcode', () => {
 		vi.clearAllMocks();
 	});
 
-	it.each(['waiting_transcode', 'transcoding'])(
-		'shows Skip Transcode & Finalize button for %s status',
-		async (status) => {
-			renderWithStatus(status);
-			await waitFor(() => {
-				expect(screen.getByText(SKIP_BTN)).toBeInTheDocument();
-			});
-		}
-	);
+	it('shows Skip Transcode & Finalize button for waiting_transcode status', async () => {
+		renderWithStatus('waiting_transcode');
+		await waitFor(() => {
+			expect(screen.getByText(SKIP_BTN)).toBeInTheDocument();
+		});
+	});
+
+	it('does NOT show skip button for transcoding status (backend would 409)', async () => {
+		renderWithStatus('transcoding');
+		await waitFor(() => {
+			expect(screen.getByText('Dashboard')).toBeInTheDocument();
+		});
+		expect(screen.queryByText(SKIP_BTN)).not.toBeInTheDocument();
+	});
 
 	it('does NOT show skip button for other statuses', async () => {
 		renderWithStatus('success');
@@ -219,7 +224,7 @@ describe('Job detail page — skip transcode confirmation dialog', () => {
 
 		// Click the dialog's confirm button (distinct label so it does not collide
 		// with the page's Skip Transcode & Finalize button).
-		const confirmBtn = screen.getByText('Yes, Skip Transcode');
+		const confirmBtn = screen.getByText(/yes.*skip.*finalize/i);
 		await fireEvent.click(confirmBtn);
 
 		await waitFor(() => {

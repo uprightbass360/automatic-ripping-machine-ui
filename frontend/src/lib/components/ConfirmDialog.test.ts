@@ -77,5 +77,12 @@ describe('ConfirmDialog', () => {
 			await fireEvent.click(screen.getByLabelText('Close dialog'));
 			expect(oncancel).toHaveBeenCalledOnce();
 		});
+
+		it('calls oncancel when Escape is pressed', async () => {
+			const oncancel = vi.fn();
+			renderDialog({ oncancel });
+			await fireEvent.keyDown(window, { key: 'Escape' });
+			expect(oncancel).toHaveBeenCalledOnce();
+		});
 	});
 });

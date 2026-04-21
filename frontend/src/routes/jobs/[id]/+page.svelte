@@ -347,7 +347,7 @@
 							{retranscoding ? 'Queuing...' : 'Re-transcode'}
 						</button>
 					{/if}
-					{#if job.status === 'waiting_transcode' || job.status === 'transcoding'}
+					{#if job.status === 'waiting_transcode'}
 						<button
 							onclick={() => (showSkipConfirm = true)}
 							disabled={skippingTranscode}
@@ -355,6 +355,8 @@
 						>
 							{skippingTranscode ? 'Finalizing...' : 'Skip Transcode & Finalize'}
 						</button>
+					{/if}
+					{#if job.status === 'waiting_transcode' || job.status === 'transcoding'}
 						<button
 							onclick={handleForceComplete}
 							disabled={forcingComplete}
@@ -755,7 +757,7 @@
 	open={showSkipConfirm}
 	title="Skip transcoding and finalize?"
 	message="The raw ripped files will be moved from the raw directory to the completed directory as-is. No transcoding will be applied. This cannot be undone."
-	confirmLabel="Yes, Skip Transcode"
+	confirmLabel="Yes, Skip & Finalize"
 	variant="danger"
 	onconfirm={confirmSkipAndFinalize}
 	oncancel={() => (showSkipConfirm = false)}
