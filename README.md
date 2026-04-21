@@ -71,13 +71,18 @@ The backend reads ARM's SQLite database directly (read-only) for job data, calls
 
 - Real-time dashboard with card and table views, filtering by status/type, and search
 - Active rip progress tracking with title counts and elapsed time
+- Dashboard FINISHING section: jobs in the copying / waiting-transcode / ejecting phases get their own section between Active Rips and Transcoding instead of showing stale 100% rip progress
+- Live job progress: phase-aware progress widget on the job detail page that shows MakeMKV progress during rip, indeterminate bars during copying / waiting-for-transcoder, and transcoder progress during transcode
 - Job detail with poster art, metadata, IMDb links, and per-track status
 - Job management: abandon, delete, fix permissions, toggle multi-title mode
+- Recovery actions: Skip Transcode & Finalize button (moves raw files to completed without transcoding, for when the transcoder is unavailable) and Force Complete (marks stuck jobs as successful) on the job detail page, both with confirmation dialogs
 - Metadata search: OMDb/TMDb (video), MusicBrainz (audio) with card flip tracklist preview
 - TVDB episode matching for TV series discs with runtime-based track-to-episode mapping
 - Structured metadata editing (artist, album, season, episode)
-- Transcoder integration: GPU hardware detection, encoder/preset config, job monitoring
-- Structured log viewer with level filtering, search, and tail/full modes
+- Preset picker: scheme-aware encoding presets (NVIDIA / Intel / AMD / software). Built-in balanced/quality/fast presets per scheme plus user-created custom presets, with per-tier customization for DVD / Blu-ray / UHD
+- SKIP_TRANSCODE toggle: global setting on the Ripping tab plus per-disc override in the review panel, for rip-only workflows that don't need a transcoder
+- Transcoder integration: job monitoring with webhook-driven status updates
+- Structured log viewer with level filtering, search, and tail/full modes; structured log filtering with level dropdown plus search box on the inline log panels, for narrowing to warnings/errors or grepping by phrase
 - File browser with Raw/Completed/Transcode/Music tabs, permissions display, rename, and delete
 - Drive status monitoring with CRC database lookup
 - System stats sidebar: CPU, memory, and storage usage for ripper and transcoder
