@@ -340,3 +340,26 @@ async def test_get_job_for_arm_offline(app_client):
         resp = await app_client.get("/api/transcoder/job-for-arm/42")
     assert resp.status_code == 200
     assert resp.json()["found"] is False
+
+
+async def test_get_job_for_arm_filters_by_job_id_not_most_recent(app_client):
+    """GET job-for-arm must filter by job_id so it never returns an unrelated older job.
+
+    Regression: the previous implementation passed arm_job_id as an unknown
+    param, which FastAPI silently dropped, causing the transcoder to return
+    its most recent job regardless of ARM id.
+    """
+    mock_get = AsyncMock(return_value={"jobs": [{"id": 42, "logfile": "JOB_42_Transcode.log"}]})
+    with patch(
+        "backend.routers.transcoder.transcoder_client.get_jobs",
+        new=mock_get,
+    ):
+        await app_client.get("/api/transcoder/job-for-arm/42")
+
+    mock_get.assert_called_once()
+    _, kwargs = mock_get.call_args
+    assert kwargs.get("job_id") == 42, (
+        f"Expected get_jobs to be called with job_id=42 (unified ID) "
+        f"to avoid stale-correlation; got kwargs={kwargs!r}"
+    )
+    assert "arm_job_id" not in kwargs

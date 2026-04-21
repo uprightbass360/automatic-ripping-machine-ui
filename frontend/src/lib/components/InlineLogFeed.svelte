@@ -84,7 +84,14 @@
 	}
 
 	$effect(() => {
+		// Reset stale state whenever the target log file changes. Without this,
+		// navigating from one job's detail page to another would flash the
+		// previous job's entries while the new fetch 404s, or permanently
+		// freeze after MAX_FAILURES with no way to recover.
 		logfile; maxEntries; levelFilter;
+		entries = [];
+		error = null;
+		failCount = 0;
 		loading = true;
 		load();
 	});
