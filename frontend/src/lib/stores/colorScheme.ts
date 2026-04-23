@@ -864,6 +864,13 @@ export async function loadThemeCss(id: string): Promise<void> {
 			const full = await fetchTheme(id);
 			if (full?.css) {
 				cssCache.set(id, full.css);
+				try {
+					if (typeof window !== 'undefined' && window.localStorage) {
+						window.localStorage.setItem(`theme-cache-v1-${id}`, full.css);
+					}
+				} catch {
+					// localStorage unavailable or quota exceeded - non-fatal
+				}
 				// Update the scheme in the store
 				allSchemes.update((schemes) =>
 					schemes.map((s) => (s.id === id ? { ...s, css: full.css } : s))
