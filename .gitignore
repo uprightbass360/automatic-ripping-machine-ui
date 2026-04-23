@@ -53,3 +53,4 @@ docker-compose.override.yml
 
 # Root-level screenshots (keep curated ones under screenshots/)
 /*.png
+.worktrees/
