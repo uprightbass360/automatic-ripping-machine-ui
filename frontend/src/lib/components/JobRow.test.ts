@@ -90,4 +90,12 @@ describe('JobRow', () => {
 			expect(errLink.closest('a')).toHaveAttribute('href', '/logs/job_1.log');
 		});
 	});
+
+	describe('skeleton', () => {
+		it('renders skeleton cells when job prop is omitted', () => {
+			const { container } = renderComponent(JobRow, { props: {} });
+			const skeletonCells = container.querySelectorAll('[data-variant="line"]');
+			expect(skeletonCells.length).toBeGreaterThan(0);
+		});
+	});
 });

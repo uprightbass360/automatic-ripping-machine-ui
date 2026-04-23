@@ -3,13 +3,14 @@
 	import JobActions from './JobActions.svelte';
 	import StatusBadge from './StatusBadge.svelte';
 	import TimeAgo from './TimeAgo.svelte';
+	import Skeleton from './Skeleton.svelte';
 	import { elapsedTime } from '$lib/utils/format';
 	import { getVideoTypeConfig, isJobActive, discTypeLabel } from '$lib/utils/job-type';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import VideoTypeIcon from './VideoTypeIcon.svelte';
 
 	interface Props {
-		job: Job;
+		job?: Job;
 		driveNames?: Record<string, string>;
 		onaction?: () => void;
 		selected?: boolean;
@@ -17,16 +18,23 @@
 	}
 
 	let { job, driveNames = {}, onaction, selected = false, onselect }: Props = $props();
-	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
+	let driveName = $derived(job?.devpath ? driveNames[job.devpath] : null);
 
-	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
-	let active = $derived(isJobActive(job.status));
-	let hasErrors = $derived(!!job.errors && job.errors.trim().length > 0);
+	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null));
+	let active = $derived(isJobActive(job?.status ?? null));
+	let hasErrors = $derived(!!job?.errors && job.errors.trim().length > 0);
 	let discLabelDiffers = $derived(
-		!!job.label && !!job.title && job.label.toLowerCase() !== job.title.toLowerCase()
+		!!job?.label && !!job?.title && job.label.toLowerCase() !== job.title.toLowerCase()
 	);
 </script>
 
+{#if !job}
+	<tr aria-busy="true">
+		{#each { length: 9 } as _}
+			<td class="p-2"><Skeleton variant="line" width="80%" height="1rem" /></td>
+		{/each}
+	</tr>
+{:else}
 <tr class="border-b border-primary/20 hover:bg-page dark:border-primary/20 dark:hover:bg-primary/5 {selected ? 'bg-primary/[0.03] dark:bg-primary/[0.06]' : ''}">
 	<!-- Checkbox -->
 	<td class="px-4 py-3 w-8">
@@ -149,3 +157,4 @@
 		<JobActions {job} compact {onaction} />
 	</td>
 </tr>
+{/if}
