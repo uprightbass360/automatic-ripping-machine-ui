@@ -7,10 +7,11 @@
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import TimeAgo from './TimeAgo.svelte';
 	import PosterImage from './PosterImage.svelte';
+	import SkeletonCard from './SkeletonCard.svelte';
 	import { slide } from 'svelte/transition';
 
 	interface Props {
-		job: Job;
+		job?: Job;
 		driveNames?: Record<string, string>;
 		progress?: number | null;
 		progressStage?: string | null;
@@ -21,17 +22,17 @@
 	let { job, driveNames = {}, progress = null, progressStage = null, tracksRipped = null, tracksTotal = null }: Props = $props();
 
 	// Use progress-polled counts when available (real-time), fall back to DB counts
-	let displayRipped = $derived(tracksRipped ?? job.tracks_ripped ?? 0);
-	let displayTotal = $derived(tracksTotal ?? job.tracks_total ?? 0);
+	let displayRipped = $derived(tracksRipped ?? job?.tracks_ripped ?? 0);
+	let displayTotal = $derived(tracksTotal ?? job?.tracks_total ?? 0);
 	let expanded = $state(false);
 
-	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
-	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
-	let active = $derived(isJobActive(job.status));
-	let hasErrors = $derived(!!job.errors && job.errors.trim().length > 0);
-	let isFolderImport = $derived(job.source_type === 'folder');
+	let driveName = $derived(job?.devpath ? driveNames[job.devpath] : null);
+	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null));
+	let active = $derived(isJobActive(job?.status ?? null));
+	let hasErrors = $derived(!!job?.errors && job.errors.trim().length > 0);
+	let isFolderImport = $derived(job?.source_type === 'folder');
 	let discLabelDiffers = $derived(
-		!!job.label && !!job.title && job.label.toLowerCase() !== job.title.toLowerCase()
+		!!job?.label && !!job?.title && job.label.toLowerCase() !== job.title.toLowerCase()
 	);
 
 	function toggle(e: MouseEvent) {
@@ -41,6 +42,9 @@
 	}
 </script>
 
+{#if !job}
+	<SkeletonCard lines={3} />
+{:else}
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div
 	class="rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface shadow-xs transition dark:border-primary/20 dark:bg-surface-dark"
@@ -292,3 +296,4 @@
 		</div>
 	{/if}
 </div>
+{/if}
