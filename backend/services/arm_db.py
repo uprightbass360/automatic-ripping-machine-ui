@@ -529,11 +529,10 @@ def get_ripping_paused() -> bool:
         return False
 
 
-# Allowlisted top-level keys in transcode_overrides JSON after the preset
-# rollout. Anything outside this set is legacy flat-key shape and is
-# stripped on read with a WARN log. Must match the arm-neu Alembic
-# migration o0p1q2r3s4t5_transcode_overrides_drop_legacy and the
-# transcoder's expected webhook shape.
+# Retained for legacy callers (schemas.py pre-Phase-2, arm_db.send_transcode_webhook
+# still uses this set for quick key validation). After Phase 2 the authoritative
+# source of truth is arm_contracts.TranscodeJobConfig; this set just mirrors
+# its top-level field names.
 TRANSCODE_OVERRIDES_ALLOWLIST: frozenset[str] = frozenset({
     "preset_slug",
     "overrides",
@@ -543,13 +542,21 @@ TRANSCODE_OVERRIDES_ALLOWLIST: frozenset[str] = frozenset({
 
 
 def _filter_transcode_overrides(raw: str | None, job_id: int) -> dict | None:
-    """Parse and filter transcode_overrides JSON, stripping legacy keys.
+    """Parse and validate transcode_overrides JSON via TranscodeJobConfig.
 
-    Returns the filtered dict, or None if the input is null, malformed,
-    or not a JSON object. Logs a WARN naming the stripped keys when any
-    are removed, and on malformed or non-dict JSON.
+    Returns the validated dict (restricted to keys the caller actually
+    persisted so downstream equality checks don't see default-padded noise),
+    or None on null/malformed/non-dict input or contract-validation failure.
+    Logs a WARN naming the offending keys/fields when validation fails.
+
+    Replaces the pre-Phase-2 TRANSCODE_OVERRIDES_ALLOWLIST frozen-set strip
+    with the shared contract from arm_contracts. Same observable behavior
+    for legitimate rows; stricter rejection of malformed shapes (extra keys
+    at the envelope, unknown tier names, video_quality out of 0-51 range).
     """
     import json as _json
+    from arm_contracts import TranscodeJobConfig
+    from pydantic import ValidationError
 
     if raw is None:
         return None
@@ -570,14 +577,33 @@ def _filter_transcode_overrides(raw: str | None, job_id: int) -> dict | None:
         )
         return None
 
+    # Strip legacy top-level keys first so a mixed legacy + new-shape row
+    # still yields its valid subset rather than failing validation outright.
+    # This is load-bearing for deployed data: arm-neu rows persisted before
+    # Phase 1 may still have video_encoder/handbrake_preset/etc alongside
+    # the new preset_slug + overrides.
     offending = set(parsed.keys()) - TRANSCODE_OVERRIDES_ALLOWLIST
     if offending:
         log.warning(
             "Stripping legacy transcode_overrides keys on job_id=%s: %s",
             job_id, sorted(offending),
         )
-        return {k: v for k, v in parsed.items() if k in TRANSCODE_OVERRIDES_ALLOWLIST}
+        parsed = {k: v for k, v in parsed.items() if k in TRANSCODE_OVERRIDES_ALLOWLIST}
 
+    # Validate-only: confirm the shape matches the contract, then return the
+    # ORIGINAL (post-strip) dict to preserve the "only what the caller sent"
+    # semantic. We don't model_dump() because that would add default-expanded
+    # tier keys (dvd/bluray/uhd) + None defaults on every optional field,
+    # changing the wire shape consumers downstream rely on.
+    try:
+        TranscodeJobConfig.model_validate(parsed)
+    except ValidationError as exc:
+        log.warning(
+            "transcode_overrides on job_id=%s failed contract validation: %s",
+            job_id,
+            [{"loc": e["loc"], "msg": e["msg"]} for e in exc.errors()],
+        )
+        return None
     return parsed
 
 

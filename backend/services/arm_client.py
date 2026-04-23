@@ -457,7 +457,15 @@ async def get_naming_variables() -> dict[str, Any] | None:
 
 
 async def update_transcode_overrides(job_id: int, overrides: dict) -> dict[str, Any] | None:
-    """Update per-job transcode overrides via ARM (existing endpoint)."""
+    """Update per-job transcode overrides via ARM (existing endpoint).
+
+    Pre-validates the body against the shared contract so a frontend glitch
+    surfaces locally with a proper ValidationError instead of as a
+    round-trip 400 from arm-neu. Callers can catch ValidationError and
+    render the loc/msg details in the UI.
+    """
+    from arm_contracts import TranscodeJobConfig
+    TranscodeJobConfig.model_validate(overrides)  # raises on invalid
     return await _request("PATCH", f"/api/v1/jobs/{job_id}/transcode-config", json=overrides)
 
 
