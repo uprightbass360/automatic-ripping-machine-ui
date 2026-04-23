@@ -38,6 +38,11 @@ describe('TranscodeCard', () => {
 		vi.useRealTimers();
 	});
 
+	it('renders a skeleton card when primary data prop is omitted', () => {
+		const { container } = renderComponent(TranscodeCard, { props: {} });
+		expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+	});
+
 	describe('collapsed state', () => {
 		it('renders job title', () => {
 			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
