@@ -10,12 +10,14 @@
 	import BreadcrumbNav from '$lib/components/BreadcrumbNav.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import FileRow from '$lib/components/FileRow.svelte';
+	import LoadState from '$lib/components/LoadState.svelte';
 
 	let roots = $state<FileRoot[]>([]);
 	let currentPath = $state<string>('');
 	let listing = $state<DirectoryListing | null>(null);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
+	let filesError = $derived<Error | null>(error ? new Error(error) : null);
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
 	// Sort state
@@ -587,115 +589,137 @@
 	{/if}
 
 	<!-- File listing -->
-	{#if loading && !listing}
-		<div class="flex items-center justify-center rounded-lg border border-primary/20 bg-surface p-12 dark:border-primary/20 dark:bg-surface-dark">
-			<svg class="mr-2 h-5 w-5 animate-spin text-gray-500" viewBox="0 0 24 24">
-				<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
-				<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-			</svg>
-			<span class="text-gray-500 dark:text-gray-400">Loading...</span>
-		</div>
-	{:else if listing}
-		<div class="overflow-hidden rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
-			{#if listing.parent}
-				<button
-					type="button"
-					onclick={() => listing?.parent && navigate(listing.parent)}
-					class="flex w-full items-center gap-2 border-b border-gray-100 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700/50 dark:text-gray-400 dark:hover:bg-gray-800/50"
-				>
-					<span class="w-10"></span>
-					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-					</svg>
-					..
-				</button>
-			{/if}
-
-			<!-- Inline new folder row -->
-			{#if creatingFolder}
-				<div class="flex items-center gap-2 border-b border-gray-100 bg-primary/5 px-3 py-2 dark:border-gray-700/50 dark:bg-primary/10">
-					<span class="w-10"></span>
-					<svg class="h-5 w-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-					</svg>
-					<input
-						type="text"
-						bind:value={newFolderName}
-						onkeydown={handleNewFolderKeydown}
-						placeholder="Folder name"
-						class="flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-					/>
-					<button type="button" onclick={confirmNewFolder} class="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20" title="Create">
-						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-						</svg>
-					</button>
-					<button type="button" onclick={cancelNewFolder} class="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title="Cancel">
-						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-						</svg>
-					</button>
-				</div>
-			{/if}
-
-			{#if sortedEntries.length === 0 && !creatingFolder}
-				<div class="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
-					This directory is empty
-				</div>
-			{:else if sortedEntries.length > 0}
+	<LoadState
+		data={listing}
+		loading={loading && !listing}
+		error={filesError}
+		isEmpty={() => false}
+		transitionKey={`files-${currentPath}`}
+	>
+		{#snippet loadingSlot()}
+			<div class="overflow-hidden rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
 				<table class="w-full">
 					<thead>
 						<tr class="border-b border-gray-200 text-left text-xs font-medium uppercase text-gray-500 dark:border-gray-700 dark:text-gray-400">
-							<th class="w-10 px-3 py-2">
-								<input
-									type="checkbox"
-									checked={allSelected}
-									onchange={toggleSelectAll}
-									class="h-4 w-4 rounded border-gray-300 text-primary accent-primary dark:border-gray-600"
-								/>
-							</th>
-							<th class="px-3 py-2">
-								<button type="button" onclick={() => toggleSort('name')} class="hover:text-gray-700 dark:hover:text-gray-300">
-									Name{sortIcon('name')}
-								</button>
-							</th>
+							<th class="w-10 px-3 py-2"></th>
+							<th class="px-3 py-2">Name</th>
 							<th class="hidden px-3 py-2 lg:table-cell">Permissions</th>
-							<th class="px-3 py-2 text-right">
-								<button type="button" onclick={() => toggleSort('size')} class="hover:text-gray-700 dark:hover:text-gray-300">
-									Size{sortIcon('size')}
-								</button>
-							</th>
-							<th class="hidden px-3 py-2 md:table-cell">
-								<button type="button" onclick={() => toggleSort('modified')} class="hover:text-gray-700 dark:hover:text-gray-300">
-									Modified{sortIcon('modified')}
-								</button>
-							</th>
+							<th class="px-3 py-2 text-right">Size</th>
+							<th class="hidden px-3 py-2 md:table-cell">Modified</th>
 							<th class="px-3 py-2 text-right">Actions</th>
 						</tr>
 					</thead>
 					<tbody>
-						{#each sortedEntries as entry (entry.name)}
-							<FileRow
-								{entry}
-								currentPath={listing.path}
-								selected={selectedPaths.has(listing.path + '/' + entry.name)}
-								readonly={isReadonly}
-								onnavigate={navigate}
-								onrename={handleRename}
-								ondelete={handleDeleteRequest}
-								ontoggle={toggleSelect}
-								onfixpermissions={handleFixPermissions}
-							/>
+						{#each Array(8) as _}
+							<FileRow />
 						{/each}
 					</tbody>
 				</table>
-			{/if}
-		</div>
-	{:else if !error}
-		<div class="rounded-lg border border-primary/20 bg-surface p-8 text-center dark:border-primary/20 dark:bg-surface-dark">
-			<p class="text-gray-500 dark:text-gray-400">No media directories configured</p>
-		</div>
-	{/if}
+			</div>
+		{/snippet}
+		{#snippet ready(lst)}
+			<div class="overflow-hidden rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
+				{#if lst.parent}
+					<button
+						type="button"
+						onclick={() => lst.parent && navigate(lst.parent)}
+						class="flex w-full items-center gap-2 border-b border-gray-100 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700/50 dark:text-gray-400 dark:hover:bg-gray-800/50"
+					>
+						<span class="w-10"></span>
+						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+						</svg>
+						..
+					</button>
+				{/if}
+
+				<!-- Inline new folder row -->
+				{#if creatingFolder}
+					<div class="flex items-center gap-2 border-b border-gray-100 bg-primary/5 px-3 py-2 dark:border-gray-700/50 dark:bg-primary/10">
+						<span class="w-10"></span>
+						<svg class="h-5 w-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+						</svg>
+						<input
+							type="text"
+							bind:value={newFolderName}
+							onkeydown={handleNewFolderKeydown}
+							placeholder="Folder name"
+							class="flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+						/>
+						<button type="button" onclick={confirmNewFolder} class="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20" title="Create">
+							<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+							</svg>
+						</button>
+						<button type="button" onclick={cancelNewFolder} class="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title="Cancel">
+							<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+				{/if}
+
+				{#if sortedEntries.length === 0 && !creatingFolder}
+					<div class="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+						This directory is empty
+					</div>
+				{:else if sortedEntries.length > 0}
+					<table class="w-full">
+						<thead>
+							<tr class="border-b border-gray-200 text-left text-xs font-medium uppercase text-gray-500 dark:border-gray-700 dark:text-gray-400">
+								<th class="w-10 px-3 py-2">
+									<input
+										type="checkbox"
+										checked={allSelected}
+										onchange={toggleSelectAll}
+										class="h-4 w-4 rounded border-gray-300 text-primary accent-primary dark:border-gray-600"
+									/>
+								</th>
+								<th class="px-3 py-2">
+									<button type="button" onclick={() => toggleSort('name')} class="hover:text-gray-700 dark:hover:text-gray-300">
+										Name{sortIcon('name')}
+									</button>
+								</th>
+								<th class="hidden px-3 py-2 lg:table-cell">Permissions</th>
+								<th class="px-3 py-2 text-right">
+									<button type="button" onclick={() => toggleSort('size')} class="hover:text-gray-700 dark:hover:text-gray-300">
+										Size{sortIcon('size')}
+									</button>
+								</th>
+								<th class="hidden px-3 py-2 md:table-cell">
+									<button type="button" onclick={() => toggleSort('modified')} class="hover:text-gray-700 dark:hover:text-gray-300">
+										Modified{sortIcon('modified')}
+									</button>
+								</th>
+								<th class="px-3 py-2 text-right">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each sortedEntries as entry (entry.name)}
+								<FileRow
+									{entry}
+									currentPath={lst.path}
+									selected={selectedPaths.has(lst.path + '/' + entry.name)}
+									readonly={isReadonly}
+									onnavigate={navigate}
+									onrename={handleRename}
+									ondelete={handleDeleteRequest}
+									ontoggle={toggleSelect}
+									onfixpermissions={handleFixPermissions}
+								/>
+							{/each}
+						</tbody>
+					</table>
+				{/if}
+			</div>
+		{/snippet}
+		{#snippet empty()}
+			<div class="rounded-lg border border-primary/20 bg-surface p-8 text-center dark:border-primary/20 dark:bg-surface-dark">
+				<p class="text-gray-500 dark:text-gray-400">No media directories configured</p>
+			</div>
+		{/snippet}
+	</LoadState>
 </div>
 
 <!-- Delete confirmation -->
