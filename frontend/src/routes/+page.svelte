@@ -14,6 +14,10 @@
 	import JobFilterBar from '$lib/components/JobFilterBar.svelte';
 	import BulkActionsMenu from '$lib/components/BulkActionsMenu.svelte';
 	import JobPagination from '$lib/components/JobPagination.svelte';
+	import LoadState from '$lib/components/LoadState.svelte';
+	import EmptyDashboardPanel from '$lib/components/EmptyDashboardPanel.svelte';
+	import { fadeIn, fadeOut } from '$lib/transitions';
+	import { fade } from 'svelte/transition';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -34,8 +38,8 @@
 		system_stats: null,
 		transcoder_info: null
 	});
-	let dashReady = $state(false);
-	let dashError = $state<string | null>(null);
+	let dashLoading = $state(true);
+	let dashError = $state<Error | null>(null);
 
 	let dismissedJobIds = $state(new Set<number>());
 	let scanningJobs = $derived(
@@ -67,10 +71,11 @@
 	async function refreshDashboard() {
 		try {
 			dash = await fetchDashboard();
-			dashReady = true;
 			dashError = null;
 		} catch (e) {
-			dashError = e instanceof Error ? e.message : 'Unknown error';
+			dashError = e instanceof Error ? e : new Error('Unknown error');
+		} finally {
+			dashLoading = false;
 		}
 	}
 
@@ -110,10 +115,10 @@
 
 	// --- Jobs section state ---
 	let jobsData = $state<JobListResponse | null>(null);
-	let pageReady = $derived(dashReady && jobsData !== null);
 	let jobsStats = $state<JobStats | null>(null);
-	let jobsError = $state<string | null>(null);
+	let jobsError = $state<Error | null>(null);
 	let jobsLoading = $state(true);
+	let pageReady = $derived(!dashLoading && !jobsLoading);
 
 	let page = $state(1);
 	let perPage = $state(25);
@@ -172,7 +177,7 @@
 			jobsData = jobsResult;
 			jobsStats = statsResult;
 		} catch (e) {
-			jobsError = e instanceof Error ? e.message : 'Failed to load jobs';
+			jobsError = e instanceof Error ? e : new Error('Failed to load jobs');
 		} finally {
 			jobsLoading = false;
 		}
@@ -333,7 +338,7 @@
 	</div>
 
 	<!-- Global pause banner -->
-	{#if dashReady && !dash.ripping_enabled}
+	{#if !dashLoading && !dash.ripping_enabled}
 		<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
 			<div class="h-3 w-3 shrink-0 rounded-full bg-amber-500"></div>
 			<div>
@@ -346,17 +351,19 @@
 	<!-- API error (backend unreachable) -->
 	{#if dashError}
 		<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-			Failed to reach backend: {dashError}
+			Failed to reach backend: {dashError.message}
 		</div>
 	{/if}
 
 	<!-- Disc review (waiting jobs) -->
 	{#if waitingJobs.length > 0}
-		<section>
+		<section in:fade={fadeIn} out:fade={fadeOut}>
 			<SectionFrame variant="full" accent="var(--color-primary)" label="WAITING FOR REVIEW — {waitingJobs.length} DISC{waitingJobs.length > 1 ? 'S' : ''}">
 				<div class="grid gap-4">
 					{#each waitingJobs as job (job.job_id)}
-						<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
+						<div in:fade|local={fadeIn} out:fade|local={fadeOut}>
+							<DiscReviewWidget {job} driveNames={dash.drive_names} paused={!dash.ripping_enabled} onrefresh={refreshDashboard} ondismiss={() => dismissJob(job.job_id)} />
+						</div>
 					{/each}
 				</div>
 			</SectionFrame>
@@ -365,11 +372,13 @@
 
 	<!-- Scanning -->
 	{#if scanningJobs.length > 0}
-		<section>
+		<section in:fade={fadeIn} out:fade={fadeOut}>
 			<SectionFrame variant="full" accent="var(--color-cyan-500, #06b6d4)" label="SCANNING — {scanningJobs.length} {scanningJobs.length === 1 ? 'DISC' : 'DISCS'}">
 				<div class="space-y-2">
 					{#each scanningJobs as job (job.job_id)}
-						<ActiveJobRow {job} driveNames={dash.drive_names} />
+						<div in:fade|local={fadeIn} out:fade|local={fadeOut}>
+							<ActiveJobRow {job} driveNames={dash.drive_names} />
+						</div>
 					{/each}
 				</div>
 			</SectionFrame>
@@ -378,11 +387,13 @@
 
 	<!-- Active rips -->
 	{#if nonWaitingActiveJobs.length > 0}
-		<section>
+		<section in:fade={fadeIn} out:fade={fadeOut}>
 			<SectionFrame variant="full" accent="var(--color-primary)" label="ACTIVE RIPS — {nonWaitingActiveJobs.length} IN PROGRESS">
 				<div class="space-y-2">
 					{#each nonWaitingActiveJobs as job (job.job_id)}
-						<ActiveJobRow {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} tracksRipped={progressMap[job.job_id]?.tracks_ripped} tracksTotal={progressMap[job.job_id]?.tracks_total} />
+						<div in:fade|local={fadeIn} out:fade|local={fadeOut}>
+							<ActiveJobRow {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} tracksRipped={progressMap[job.job_id]?.tracks_ripped} tracksTotal={progressMap[job.job_id]?.tracks_total} />
+						</div>
 					{/each}
 				</div>
 			</SectionFrame>
@@ -391,11 +402,13 @@
 
 	<!-- Finishing (copying / ejecting / waiting_transcode) -->
 	{#if finishingJobs.length > 0}
-		<section>
+		<section in:fade={fadeIn} out:fade={fadeOut}>
 			<SectionFrame variant="full" accent="var(--color-amber-500, #f59e0b)" label="FINISHING — {finishingJobs.length} {finishingJobs.length === 1 ? 'JOB' : 'JOBS'}">
 				<div class="space-y-2">
 					{#each finishingJobs as job (job.job_id)}
-						<ActiveJobRow {job} driveNames={dash.drive_names} />
+						<div in:fade|local={fadeIn} out:fade|local={fadeOut}>
+							<ActiveJobRow {job} driveNames={dash.drive_names} />
+						</div>
 					{/each}
 				</div>
 			</SectionFrame>
@@ -404,17 +417,19 @@
 
 	<!-- Active transcodes -->
 	{#if dash.active_transcodes.length > 0}
-		<section>
+		<section in:fade={fadeIn} out:fade={fadeOut}>
 			<SectionFrame variant="full" accent="var(--color-primary)" label="TRANSCODING — {dash.active_transcodes.length} ACTIVE">
 				<div class="space-y-2">
 					{#each dash.active_transcodes as tc (tc.id)}
-						{#if tc.arm_job_id}
-							<a href="/jobs/{tc.arm_job_id}" class="block transition-opacity hover:opacity-80">
+						<div in:fade|local={fadeIn} out:fade|local={fadeOut}>
+							{#if tc.arm_job_id}
+								<a href="/jobs/{tc.arm_job_id}" class="block transition-opacity hover:opacity-80">
+									<TranscodeCard job={tc} />
+								</a>
+							{:else}
 								<TranscodeCard job={tc} />
-							</a>
-						{:else}
-							<TranscodeCard job={tc} />
-						{/if}
+							{/if}
+						</div>
 					{/each}
 				</div>
 			</SectionFrame>
@@ -423,17 +438,13 @@
 
 	<!-- Idle state -->
 	{#if pageReady && scanningJobs.length === 0 && waitingJobs.length === 0 && nonWaitingActiveJobs.length === 0 && finishingJobs.length === 0 && dash.active_transcodes.length === 0}
-		<section>
-			<div class="rounded-lg border border-primary/20 bg-surface p-6 text-center shadow-xs dark:border-primary/20 dark:bg-surface-dark">
-				<svg class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="12" r="10" />
-					<circle cx="12" cy="12" r="3" />
-					<circle cx="12" cy="12" r="6.5" stroke-width="0.75" opacity="0.4" />
-				</svg>
-				<p class="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">No active rips or transcodes</p>
-				<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Insert a disc to get started — {dash.drives_online} drive{dash.drives_online !== 1 ? 's' : ''} online{#if !dash.arm_online}, ARM offline{/if}{#if !dash.transcoder_online}, transcoder offline{/if}</p>
-			</div>
-		</section>
+		<div in:fade={fadeIn}>
+			<EmptyDashboardPanel
+				drivesOnline={dash.drives_online}
+				armOnline={dash.arm_online}
+				transcoderOnline={dash.transcoder_online}
+			/>
+		</div>
 	{/if}
 
 	<!-- All Jobs -->
@@ -491,81 +502,103 @@
 			</div>
 
 			<div style="min-height: 60vh;">
-			{#if jobsError}
-				<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-					{jobsError}
-				</div>
-			{:else if jobsLoading}
-				<div class="flex items-center justify-center py-8">
-					<svg class="h-6 w-6 animate-spin text-gray-300 dark:text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-					</svg>
-				</div>
-			{:else if jobsData}
-				{#if viewMode === 'table'}
-					<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-						<table class="w-full text-left text-sm">
-							<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
-								<tr>
-									<th class="px-4 py-3 w-8">
-										<input
-											type="checkbox"
-											checked={allVisibleSelected}
-											onchange={toggleSelectAll}
-											class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
-										/>
-									</th>
-									{#each columns as col}
-										<th class="px-4 py-3 font-medium">
-											{#if col.sortable}
-												<button
-													onclick={() => toggleSort(col.key)}
-													class="inline-flex items-center gap-1 hover:text-primary-text dark:hover:text-primary-text-dark"
-												>
-													{col.label}
-													<span class="text-xs opacity-60">{sortIcon(col.key)}</span>
-												</button>
-											{:else}
-												{col.label}
-											{/if}
-										</th>
+			<LoadState
+				data={jobsData?.jobs}
+				loading={jobsLoading}
+				error={jobsError}
+				transitionKey="dashboard-recent-jobs"
+			>
+				{#snippet loadingSlot()}
+					{#if viewMode === 'table'}
+						<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
+							<table class="w-full text-left text-sm">
+								<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
+									<tr>
+										<th class="px-4 py-3 w-8"></th>
+										{#each columns as col}
+											<th class="px-4 py-3 font-medium">{col.label}</th>
+										{/each}
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+									{#each { length: 25 } as _}
+										<JobRow />
 									{/each}
-								</tr>
-							</thead>
-							<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-								{#each jobsData.jobs as job (job.job_id)}
-									<JobRow
-										{job}
-										onaction={loadJobs}
-										selected={selectedJobs.has(job.job_id)}
-										onselect={toggleSelect}
-									/>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{:else}
-					<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-						{#each jobsData.jobs as job (job.job_id)}
-							<JobCard {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} />
-						{/each}
-					</div>
-				{/if}
+								</tbody>
+							</table>
+						</div>
+					{:else}
+						<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+							{#each { length: 6 } as _}
+								<JobCard />
+							{/each}
+						</div>
+					{/if}
+				{/snippet}
+				{#snippet ready(jobs)}
+					{#if viewMode === 'table'}
+						<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
+							<table class="w-full text-left text-sm">
+								<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
+									<tr>
+										<th class="px-4 py-3 w-8">
+											<input
+												type="checkbox"
+												checked={allVisibleSelected}
+												onchange={toggleSelectAll}
+												class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+											/>
+										</th>
+										{#each columns as col}
+											<th class="px-4 py-3 font-medium">
+												{#if col.sortable}
+													<button
+														onclick={() => toggleSort(col.key)}
+														class="inline-flex items-center gap-1 hover:text-primary-text dark:hover:text-primary-text-dark"
+													>
+														{col.label}
+														<span class="text-xs opacity-60">{sortIcon(col.key)}</span>
+													</button>
+												{:else}
+													{col.label}
+												{/if}
+											</th>
+										{/each}
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+									{#each jobs as job (job.job_id)}
+										<JobRow
+											{job}
+											onaction={loadJobs}
+											selected={selectedJobs.has(job.job_id)}
+											onselect={toggleSelect}
+										/>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{:else}
+						<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+							{#each jobs as job (job.job_id)}
+								<JobCard {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} />
+							{/each}
+						</div>
+					{/if}
 
-				<!-- Pagination -->
-				<JobPagination
-					page={jobsData.page}
-					pages={jobsData.pages}
-					perPage={jobsData.per_page}
-					total={jobsData.total}
-					onpage={goPage}
-				/>
-
-				{#if jobsData.jobs.length === 0}
+					<!-- Pagination -->
+					<JobPagination
+						page={jobsData!.page}
+						pages={jobsData!.pages}
+						perPage={jobsData!.per_page}
+						total={jobsData!.total}
+						onpage={goPage}
+					/>
+				{/snippet}
+				{#snippet empty()}
 					<p class="py-8 text-center text-gray-400">No jobs found.</p>
-				{/if}
-			{/if}
+				{/snippet}
+			</LoadState>
 			</div>
 	</section>
 </div>
