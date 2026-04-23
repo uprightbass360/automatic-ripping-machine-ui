@@ -9,9 +9,12 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@sveltejs/adapter-static": "^3",
     "@sveltejs/kit": "^2",
     "@sveltejs/vite-plugin-svelte": "^7",
