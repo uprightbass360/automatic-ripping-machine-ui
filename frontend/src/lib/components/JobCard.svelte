@@ -7,26 +7,30 @@
 	import { elapsedTime } from '$lib/utils/format';
 	import { getVideoTypeConfig, isJobActive, discTypeLabel } from '$lib/utils/job-type';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
+	import SkeletonCard from './SkeletonCard.svelte';
 
 	interface Props {
-		job: Job;
+		job?: Job;
 		driveNames?: Record<string, string>;
 		progress?: number | null;
 		progressStage?: string | null;
 	}
 
 	let { job, driveNames = {}, progress = null, progressStage = null }: Props = $props();
-	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
+	let driveName = $derived(job?.devpath ? driveNames[job.devpath] : null);
 
-	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
-	let active = $derived(isJobActive(job.status));
-	let hasErrors = $derived(!!job.errors && job.errors.trim().length > 0);
-	let isFolderImport = $derived(job.source_type === 'folder');
+	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null));
+	let active = $derived(isJobActive(job?.status ?? null));
+	let hasErrors = $derived(!!job?.errors && job.errors.trim().length > 0);
+	let isFolderImport = $derived(job?.source_type === 'folder');
 	let discLabelDiffers = $derived(
-		!!job.label && !!job.title && job.label.toLowerCase() !== job.title.toLowerCase()
+		!!job?.label && !!job?.title && job.label.toLowerCase() !== job.title.toLowerCase()
 	);
 </script>
 
+{#if !job}
+	<SkeletonCard />
+{:else}
 <a
 	href="/jobs/{job.job_id}"
 	class="block rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs transition hover:shadow-md dark:border-primary/20 dark:bg-surface-dark"
@@ -149,3 +153,4 @@
 		</div>
 	{/if}
 </a>
+{/if}
