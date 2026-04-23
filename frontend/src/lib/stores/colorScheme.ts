@@ -856,7 +856,7 @@ export async function loadThemeCss(id: string): Promise<void> {
 	}
 
 	if (inFlight.has(id)) {
-		return inFlight.get(id)!;
+		return inFlight.get(id);
 	}
 
 	const promise = (async () => {
@@ -865,8 +865,8 @@ export async function loadThemeCss(id: string): Promise<void> {
 			if (full?.css) {
 				cssCache.set(id, full.css);
 				try {
-					if (typeof window !== 'undefined' && window.localStorage) {
-						window.localStorage.setItem(`theme-cache-v1-${id}`, full.css);
+					if (typeof globalThis.window !== 'undefined' && globalThis.window.localStorage) {
+						globalThis.window.localStorage.setItem(`theme-cache-v1-${id}`, full.css);
 					}
 				} catch {
 					// localStorage unavailable or quota exceeded - non-fatal

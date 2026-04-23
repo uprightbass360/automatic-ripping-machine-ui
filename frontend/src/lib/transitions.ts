@@ -2,9 +2,9 @@ import { crossfade } from 'svelte/transition';
 import { cubicOut } from 'svelte/easing';
 
 const reducedMotion =
-	typeof window !== 'undefined' &&
-	typeof window.matchMedia === 'function' &&
-	window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	typeof globalThis.window !== 'undefined' &&
+	typeof globalThis.window.matchMedia === 'function' &&
+	globalThis.window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export const [send, receive] = crossfade({
 	duration: reducedMotion ? 0 : 200,

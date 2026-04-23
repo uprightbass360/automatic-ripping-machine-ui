@@ -9,7 +9,7 @@ describe('Skeleton', () => {
         const { container } = renderComponent(Skeleton, { props: {} });
         const div = container.querySelector('div');
         expect(div).not.toBeNull();
-        expect(div!.getAttribute('data-variant')).toBe('rect');
+        expect(div!.dataset.variant).toBe('rect');
     });
 
     it('applies width and height as inline styles', () => {
@@ -29,12 +29,12 @@ describe('Skeleton', () => {
     it('records the variant attribute for line', () => {
         const { container } = renderComponent(Skeleton, { props: { variant: 'line' } });
         const div = container.querySelector('div') as HTMLElement;
-        expect(div.getAttribute('data-variant')).toBe('line');
+        expect(div.dataset.variant).toBe('line');
     });
 
     it('records the variant attribute for circle', () => {
         const { container } = renderComponent(Skeleton, { props: { variant: 'circle' } });
         const div = container.querySelector('div') as HTMLElement;
-        expect(div.getAttribute('data-variant')).toBe('circle');
+        expect(div.dataset.variant).toBe('circle');
     });
 });
