@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
+	import LoadState from '$lib/components/LoadState.svelte';
+	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
 	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo, fetchAbcdeConfig, saveAbcdeConfig } from '$lib/api/settings';
 	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
 	import type { SettingsData, Drive } from '$lib/types/arm';
@@ -21,7 +23,8 @@
 	import type { Scheme, Preset, Overrides, PresetEditorState } from '$lib/types/presets';
 
 	let settings = $state<SettingsData | null>(null);
-	let error = $state<string | null>(null);
+	let settingsLoading = $state(true);
+	let settingsError = $state<Error | null>(null);
 
 	// --- Transcoder form state ---
 	let tcForm = $state<Record<string, unknown>>({});
@@ -504,6 +507,8 @@
 	});
 
 	async function loadSettings() {
+		settingsLoading = true;
+		settingsError = null;
 		try {
 			settings = await fetchSettings();
 			if (settings?.transcoder_config?.config) {
@@ -517,7 +522,9 @@
 			// Collapse Emby Integration by default
 			armCollapsed['Emby Integration'] = true;
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load settings';
+			settingsError = e instanceof Error ? e : new Error('Failed to load settings');
+		} finally {
+			settingsLoading = false;
 		}
 	}
 
@@ -1310,15 +1317,20 @@
 <div class="space-y-6 pb-20">
 	<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
 
-	{#if error}
-		<div
-			class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
-		>
-			{error}
-		</div>
-	{:else if !settings}
-		<div class="py-8 text-center text-gray-400">Loading...</div>
-	{:else}
+	<LoadState
+		data={settings}
+		loading={settingsLoading}
+		error={settingsError}
+		transitionKey={`settings-${activeTab}`}
+	>
+		{#snippet loadingSlot()}
+			<div class="space-y-4">
+				<SkeletonCard lines={5} />
+				<SkeletonCard lines={4} />
+			</div>
+		{/snippet}
+		{#snippet ready(_)}
+		{@const settings = _}
 		<!-- Tab Bar -->
 		{@const tabClass = (tab: string) => `whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors ${activeTab === tab ? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark' : 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}`}
 		<div class="border-b border-primary/20 dark:border-primary/20">
@@ -2464,7 +2476,8 @@
 				</div>
 			</section>
 		{/if}
-	{/if}
+		{/snippet}
+	</LoadState>
 </div>
 
 <!-- Sticky save bar -->
