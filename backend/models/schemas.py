@@ -102,6 +102,17 @@ class JobSchema(BaseModel):
     @field_validator("transcode_overrides", mode="before")
     @classmethod
     def _parse_transcode_overrides(cls, v: Any) -> dict | None:
+        """Validate transcode_overrides via TranscodeJobConfig.
+
+        Accepts a JSON string (from the arm-neu DB) or a dict (from the API
+        body). Strips legacy top-level keys (video_encoder, handbrake_preset*,
+        etc.) with a WARN log before validating so mixed legacy + new-shape
+        rows still yield their valid subset. See arm_contracts.TranscodeJobConfig
+        for the canonical shape.
+        """
+        from arm_contracts import TranscodeJobConfig
+        from pydantic import ValidationError
+
         if v is None:
             return None
         if isinstance(v, str):
@@ -123,8 +134,19 @@ class JobSchema(BaseModel):
                 "Stripping legacy transcode_overrides keys: %s",
                 sorted(offending),
             )
-            return {k: v for k, v in parsed.items() if k in TRANSCODE_OVERRIDES_ALLOWLIST}
+            parsed = {k: v for k, v in parsed.items() if k in TRANSCODE_OVERRIDES_ALLOWLIST}
 
+        # Validate-only: gate on contract shape but return the post-strip
+        # dict so consumers see the exact keys the caller persisted, not
+        # Pydantic's default-expanded envelope.
+        try:
+            TranscodeJobConfig.model_validate(parsed)
+        except ValidationError as exc:
+            log.warning(
+                "transcode_overrides failed contract validation: %s",
+                [{"loc": e["loc"], "msg": e["msg"]} for e in exc.errors()],
+            )
+            return None
         return parsed
 
     artist: str | None = None
