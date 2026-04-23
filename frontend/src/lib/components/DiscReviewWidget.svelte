@@ -428,6 +428,7 @@
 	<!-- Status bar -->
 	<div class="flex items-center justify-between bg-primary px-4 py-1.5">
 		<div class="flex items-center gap-2">
+			<div class="h-2 w-2 animate-pulse rounded-full bg-white/80"></div>
 			<span class="text-sm font-semibold text-on-primary">Waiting for Review</span>
 		</div>
 		{#if job.source_type !== 'folder' && (job.wait_start_time || job.start_time)}
