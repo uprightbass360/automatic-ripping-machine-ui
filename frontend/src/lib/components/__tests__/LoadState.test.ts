@@ -9,7 +9,7 @@ function textSnippet(text: string) {
 
 function valueSnippet() {
     return createRawSnippet((get: () => unknown) => ({
-        render: () => `<span>ready:${String(get())}</span>`
+        render: () => `<span>ready:${JSON.stringify(get())}</span>`
     }));
 }
 

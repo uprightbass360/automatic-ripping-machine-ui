@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { get } from 'svelte/store';
-import * as api from '$lib/api/themes';
 
 vi.mock('$app/environment', () => ({ browser: false }));
 
@@ -37,7 +36,7 @@ describe('colorScheme - theme fetch dedup', () => {
 		// both call loadThemeCss(id) at nearly the same time. Without an in-flight guard
 		// both see cssCache.has(id) === false and issue separate network requests.
 		const mockFetch = vi.fn((url: string) => {
-			if (typeof url === 'string' && url.match(/\/api\/themes\/\w/)) {
+			if (typeof url === 'string' && /\/api\/themes\/\w/.exec(url)) {
 				return Promise.resolve({
 					ok: true,
 					json: () =>
@@ -76,7 +75,7 @@ describe('colorScheme - theme fetch dedup', () => {
 	it('writes fetched theme CSS to localStorage for later reuse', async () => {
 		vi.resetModules();
 		const mockFetch = vi.fn((url: string) => {
-			if (typeof url === 'string' && url.match(/\/api\/themes\/\w/)) {
+			if (typeof url === 'string' && /\/api\/themes\/\w/.exec(url)) {
 				return Promise.resolve({
 					ok: true,
 					json: () =>

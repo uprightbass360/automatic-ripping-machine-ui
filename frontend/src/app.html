@@ -34,7 +34,7 @@
 						style.textContent = cached;
 						document.head.appendChild(style);
 					}
-				} catch (e) {
+				} catch {
 					// localStorage unavailable - fall through to network-loaded theme
 				}
 			})();

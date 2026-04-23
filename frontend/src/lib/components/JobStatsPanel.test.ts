@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { renderComponent, cleanup } from '$lib/test-utils';
 import JobStatsPanel from './JobStatsPanel.svelte';
 import type { JobStats } from '$lib/api/jobs';
