@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
+import * as api from '$lib/api/themes';
 
 vi.mock('$app/environment', () => ({ browser: false }));
 
@@ -67,6 +68,40 @@ describe('colorScheme - theme fetch dedup', () => {
 				([url]) => typeof url === 'string' && /\/api\/themes\/\w/.test(url)
 			);
 			expect(themeFetchCalls.length).toBe(1);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it('writes fetched theme CSS to localStorage for later reuse', async () => {
+		vi.resetModules();
+		const mockFetch = vi.fn((url: string) => {
+			if (typeof url === 'string' && url.match(/\/api\/themes\/\w/)) {
+				return Promise.resolve({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							id: 'blue',
+							label: 'Blue',
+							swatch: '#3b82f6',
+							tokens: {},
+							css: 'body { background: blue; }'
+						})
+				});
+			}
+			return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+		});
+		vi.stubGlobal('fetch', mockFetch);
+		const setItem = vi.spyOn(Storage.prototype, 'setItem');
+
+		try {
+			const mod = await import('$lib/stores/colorScheme');
+			await mod.loadThemeCss('blue');
+
+			expect(setItem).toHaveBeenCalledWith(
+				'theme-cache-v1-blue',
+				'body { background: blue; }'
+			);
 		} finally {
 			vi.unstubAllGlobals();
 		}
