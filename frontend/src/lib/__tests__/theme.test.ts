@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 
 vi.mock('$app/environment', () => ({ browser: false }));
@@ -27,5 +27,48 @@ describe('theme store', () => {
 		toggleTheme();
 		toggleTheme();
 		expect(get(theme)).toBe('dark');
+	});
+});
+
+describe('colorScheme - theme fetch dedup', () => {
+	it('concurrent loadThemeCss calls for the same id only fetch once', async () => {
+		// Simulate the real-world race: loadThemesFromApi() and the subscribe handler
+		// both call loadThemeCss(id) at nearly the same time. Without an in-flight guard
+		// both see cssCache.has(id) === false and issue separate network requests.
+		const mockFetch = vi.fn((url: string) => {
+			if (typeof url === 'string' && url.match(/\/api\/themes\/\w/)) {
+				return Promise.resolve({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							id: 'blue',
+							label: 'Blue',
+							swatch: '#3b82f6',
+							tokens: {},
+							css: 'body{}'
+						})
+				});
+			}
+			return Promise.resolve({
+				ok: true,
+				json: () =>
+					Promise.resolve([{ id: 'blue', label: 'Blue', swatch: '#3b82f6', tokens: {} }])
+			});
+		});
+		vi.stubGlobal('fetch', mockFetch);
+
+		try {
+			const { loadThemeCss } = await import('$lib/stores/colorScheme');
+
+			// Fire two concurrent calls for the same id - mirroring the subscribe race
+			await Promise.all([loadThemeCss('blue'), loadThemeCss('blue')]);
+
+			const themeFetchCalls = mockFetch.mock.calls.filter(
+				([url]) => typeof url === 'string' && /\/api\/themes\/\w/.test(url)
+			);
+			expect(themeFetchCalls.length).toBe(1);
+		} finally {
+			vi.unstubAllGlobals();
+		}
 	});
 });
