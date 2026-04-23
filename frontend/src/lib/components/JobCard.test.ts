@@ -106,4 +106,12 @@ describe('JobCard', () => {
 			expect(screen.getByText('errors')).toBeInTheDocument();
 		});
 	});
+
+	describe('skeleton', () => {
+		it('renders a SkeletonCard when job prop is omitted', () => {
+			const { container } = renderComponent(JobCard, { props: {} });
+			const skeletonShell = container.querySelector('[aria-busy="true"]');
+			expect(skeletonShell).not.toBeNull();
+		});
+	});
 });
