@@ -7,21 +7,22 @@
 	import PosterImage from './PosterImage.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import TimeAgo from './TimeAgo.svelte';
+	import SkeletonCard from './SkeletonCard.svelte';
 	import { slide } from 'svelte/transition';
 
 	interface Props {
-		job: TranscoderJob;
+		job?: TranscoderJob;
 	}
 
 	let { job }: Props = $props();
 	let expanded = $state(false);
 
 	let displayTitle = $derived(
-		job.title || job.source_path?.split('/').pop() || `Transcode #${job.id}`
+		job?.title || job?.source_path?.split('/').pop() || `Transcode #${job?.id}`
 	);
-	let sourceFile = $derived(job.source_path?.split('/').pop() ?? null);
-	let hasError = $derived(!!job.error);
-	let isActive = $derived(job.status === 'processing' || job.status === 'transcoding');
+	let sourceFile = $derived(job?.source_path?.split('/').pop() ?? null);
+	let hasError = $derived(!!job?.error);
+	let isActive = $derived(job?.status === 'processing' || job?.status === 'transcoding');
 
 	function toggle(e: MouseEvent) {
 		if ((e.target as HTMLElement).closest('a, button:not(.row-toggle)')) return;
@@ -29,6 +30,9 @@
 	}
 </script>
 
+{#if !job}
+	<SkeletonCard />
+{:else}
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div
 	class="rounded-lg border border-primary/20 border-l-4 border-l-primary bg-surface shadow-xs transition dark:border-primary/20 dark:bg-surface-dark"
@@ -198,3 +202,4 @@
 		</div>
 	{/if}
 </div>
+{/if}
