@@ -865,9 +865,7 @@ export async function loadThemeCss(id: string): Promise<void> {
 			if (full?.css) {
 				cssCache.set(id, full.css);
 				try {
-					if (typeof globalThis.window !== 'undefined' && globalThis.window.localStorage) {
-						globalThis.window.localStorage.setItem(`theme-cache-v1-${id}`, full.css);
-					}
+					globalThis.window?.localStorage?.setItem(`theme-cache-v1-${id}`, full.css);
 				} catch {
 					// localStorage unavailable or quota exceeded - non-fatal
 				}
