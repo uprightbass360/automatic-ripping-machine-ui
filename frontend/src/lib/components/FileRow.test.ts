@@ -119,4 +119,11 @@ describe('FileRow', () => {
 			expect(screen.getByDisplayValue('movie.mkv')).toBeInTheDocument();
 		});
 	});
+
+	describe('skeleton', () => {
+		it('renders skeleton cells when entry prop is omitted', () => {
+			const { container } = renderComponent(FileRow, { props: {} });
+			expect(container.querySelectorAll('[data-variant="line"]').length).toBeGreaterThan(0);
+		});
+	});
 });

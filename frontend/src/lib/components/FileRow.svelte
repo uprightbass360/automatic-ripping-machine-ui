@@ -2,34 +2,35 @@
 	import type { FileEntry } from '$lib/types/files';
 	import { formatBytes, formatDateTime } from '$lib/utils/format';
 	import FileIcon from './FileIcon.svelte';
+	import Skeleton from './Skeleton.svelte';
 
 	interface Props {
-		entry: FileEntry;
-		currentPath: string;
-		selected: boolean;
+		entry?: FileEntry;
+		currentPath?: string;
+		selected?: boolean;
 		readonly?: boolean;
-		onnavigate: (path: string) => void;
-		onrename: (path: string, name: string) => void;
-		ondelete: (path: string, name: string) => void;
-		ontoggle: (path: string) => void;
-		onfixpermissions: (path: string, name: string) => void;
+		onnavigate?: (path: string) => void;
+		onrename?: (path: string, name: string) => void;
+		ondelete?: (path: string, name: string) => void;
+		ontoggle?: (path: string) => void;
+		onfixpermissions?: (path: string, name: string) => void;
 	}
 
-	let { entry, currentPath, selected, readonly: ro = false, onnavigate, onrename, ondelete, ontoggle, onfixpermissions }: Props = $props();
+	let { entry, currentPath = '', selected = false, readonly: ro = false, onnavigate, onrename, ondelete, ontoggle, onfixpermissions }: Props = $props();
 
 	let editing = $state(false);
 	let editName = $state('');
 
-	let fullPath = $derived(currentPath + '/' + entry.name);
+	let fullPath = $derived(currentPath + '/' + (entry?.name ?? ''));
 
 	function startRename() {
-		editName = entry.name;
+		editName = entry?.name ?? '';
 		editing = true;
 	}
 
 	function confirmRename() {
-		if (editName && editName !== entry.name) {
-			onrename(fullPath, editName);
+		if (editName && editName !== entry?.name) {
+			onrename?.(fullPath, editName);
 		}
 		editing = false;
 	}
@@ -44,19 +45,26 @@
 	}
 
 	function handleClick() {
-		if (entry.type === 'directory') {
-			onnavigate(fullPath);
+		if (entry?.type === 'directory') {
+			onnavigate?.(fullPath);
 		}
 	}
 </script>
 
+{#if !entry}
+	<tr aria-busy="true">
+		{#each { length: 6 } as _}
+			<td class="p-2"><Skeleton variant="line" width="80%" height="1rem" /></td>
+		{/each}
+	</tr>
+{:else}
 <tr class="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-700/50 dark:hover:bg-gray-800/50 {selected ? 'bg-primary/5 dark:bg-primary/10' : ''}">
 	<!-- Checkbox -->
 	<td class="w-10 px-3 py-2">
 		<input
 			type="checkbox"
 			checked={selected}
-			onchange={() => ontoggle(fullPath)}
+			onchange={() => ontoggle?.(fullPath)}
 			class="h-4 w-4 rounded border-gray-300 text-primary accent-primary dark:border-gray-600"
 		/>
 	</td>
@@ -128,7 +136,7 @@
 			<!-- Fix permissions -->
 			<button
 				type="button"
-				onclick={() => onfixpermissions(fullPath, entry.name)}
+				onclick={() => onfixpermissions?.(fullPath, entry.name)}
 				disabled={ro}
 				class="rounded p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 disabled:opacity-30 disabled:pointer-events-none"
 				title={ro ? 'Read-only mount' : 'Fix permissions'}
@@ -152,7 +160,7 @@
 			<!-- Delete -->
 			<button
 				type="button"
-				onclick={() => ondelete(fullPath, entry.name)}
+				onclick={() => ondelete?.(fullPath, entry.name)}
 				disabled={ro}
 				class="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 disabled:opacity-30 disabled:pointer-events-none"
 				title={ro ? 'Read-only mount' : 'Delete'}
@@ -164,3 +172,4 @@
 		</div>
 	</td>
 </tr>
+{/if}
