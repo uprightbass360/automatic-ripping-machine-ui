@@ -23,8 +23,12 @@
 	import { formatDateTime, timeAgo, statusLabel } from '$lib/utils/format';
 	import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
 	import { buildMetadataFields } from '$lib/utils/job-fields';
+	import LoadState from '$lib/components/LoadState.svelte';
+	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
 
 	let job = $state<JobDetail | null>(null);
+	let jobLoading = $state(true);
+	let jobError = $state<Error | null>(null);
 	let error = $state<string | null>(null);
 	let activePanel = $state<string | null>(null);
 	let showDebug = $state(false);
@@ -238,6 +242,8 @@
 
 	async function loadJob() {
 		const id = Number($page.params.id);
+		jobLoading = true;
+		jobError = null;
 		try {
 			job = await fetchJob(id);
 			// Fetch naming previews for rendered filenames
@@ -272,6 +278,9 @@
 				return;
 			}
 			error = e instanceof Error ? e.message : 'Failed to load job';
+			jobError = e instanceof Error ? e : new Error('Failed to load job');
+		} finally {
+			jobLoading = false;
 		}
 	}
 
@@ -347,13 +356,17 @@
 	<title>ARM - {job?.title || 'Job Detail'}</title>
 </svelte:head>
 
-{#if error}
-	<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-		{error}
-	</div>
-{:else if !job}
-	<div class="py-8 text-center text-gray-400">Loading...</div>
-{:else}
+<LoadState
+	data={job}
+	loading={jobLoading}
+	error={jobError}
+	transitionKey="job-detail-main"
+>
+	{#snippet loadingSlot()}
+		<SkeletonCard lines={6} />
+	{/snippet}
+	{#snippet ready(j)}
+	{@const job = j}
 	<div class="space-y-6">
 		<!-- Breadcrumb -->
 		<nav class="text-sm">
@@ -851,7 +864,8 @@
 			</section>
 		{/if}
 	</div>
-{/if}
+	{/snippet}
+</LoadState>
 
 <ConfirmDialog
 	open={showSkipConfirm}
