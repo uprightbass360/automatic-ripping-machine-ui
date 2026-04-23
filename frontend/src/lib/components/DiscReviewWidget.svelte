@@ -16,9 +16,10 @@
 	import InlineLogFeed from './InlineLogFeed.svelte';
 	import TrackTitleSearch from './TrackTitleSearch.svelte';
 	import EpisodeMatch from './EpisodeMatch.svelte';
+	import SkeletonCard from './SkeletonCard.svelte';
 
 	interface Props {
-		job: Job;
+		job?: Job;
 		driveNames?: Record<string, string>;
 		paused?: boolean;
 		onrefresh?: () => void;
@@ -26,8 +27,8 @@
 	}
 
 	let { job, driveNames = {}, paused = false, onrefresh, ondismiss }: Props = $props();
-	let effectivePaused = $derived(paused || !!job.manual_pause);
-	let driveName = $derived(job.devpath ? driveNames[job.devpath] : null);
+	let effectivePaused = $derived(paused || !!job?.manual_pause);
+	let driveName = $derived(job?.devpath ? driveNames[job.devpath] : null);
 
 	let detail = $state<JobDetail | null>(null);
 	let initialLoading = $state(true);
@@ -59,6 +60,7 @@
 	});
 
 	async function handleSkipTranscodeToggle() {
+		if (!job) return;
 		skipTranscode = !skipTranscode;
 		errorMessage = null;
 		try {
@@ -89,7 +91,7 @@
 	);
 
 	async function handleToggleAllEnabled() {
-		if (!rippableTracks.length) return;
+		if (!job || !rippableTracks.length) return;
 		togglingAllEnabled = true;
 		errorMessage = null;
 		const newVal = !allEnabled;
@@ -106,6 +108,7 @@
 	}
 
 	async function handleTrackFieldUpdate(trackId: number, field: string, value: boolean | string) {
+		if (!job) return;
 		savingTrackField = `${trackId}-${field}`;
 		errorMessage = null;
 		try {
@@ -119,18 +122,18 @@
 	}
 
 	// Editable metadata in Disc Info panel
-	let infoTitle = $state(job.title || '');
-	let infoYear = $state(job.year || '');
-	let infoType = $state(job.video_type || '');
-	let infoImdbId = $state(job.imdb_id || '');
-	let infoPosterUrl = $state(job.poster_url || '');
-	let infoPath = $state(job.path || '');
-	let infoDisctype = $state(job.disctype || '');
-	let infoLabel = $state(job.label || '');
-	let infoArtist = $state(job.artist || '');
-	let infoAlbum = $state(job.album || '');
-	let infoSeason = $state(job.season || '');
-	let infoEpisode = $state(job.episode || '');
+	let infoTitle = $state(job?.title || '');
+	let infoYear = $state(job?.year || '');
+	let infoType = $state(job?.video_type || '');
+	let infoImdbId = $state(job?.imdb_id || '');
+	let infoPosterUrl = $state(job?.poster_url || '');
+	let infoPath = $state(job?.path || '');
+	let infoDisctype = $state(job?.disctype || '');
+	let infoLabel = $state(job?.label || '');
+	let infoArtist = $state(job?.artist || '');
+	let infoAlbum = $state(job?.album || '');
+	let infoSeason = $state(job?.season || '');
+	let infoEpisode = $state(job?.episode || '');
 	let infoPlot = $state<string | null>(null);
 	let infoSaving = $state(false);
 	let infoFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -145,21 +148,22 @@
 	// detects metadata (title, year, poster, etc.) during disc identification.
 	// Only sync fields the user hasn't manually edited.
 	$effect.pre(() => {
-		if (!touched.title) infoTitle = job.title || '';
-		if (!touched.year) infoYear = job.year || '';
-		if (!touched.type) infoType = job.video_type || '';
-		if (!touched.imdbId) infoImdbId = job.imdb_id || '';
-		if (!touched.posterUrl) infoPosterUrl = job.poster_url || '';
-		if (!touched.path && job.path) infoPath = job.path;
-		if (!touched.disctype) infoDisctype = job.disctype || '';
-		if (!touched.label) infoLabel = job.label || '';
-		if (!touched.artist) infoArtist = job.artist || '';
-		if (!touched.album) infoAlbum = job.album || '';
-		if (!touched.season) infoSeason = job.season || '';
-		if (!touched.episode) infoEpisode = job.episode || '';
+		if (!touched.title) infoTitle = job?.title || '';
+		if (!touched.year) infoYear = job?.year || '';
+		if (!touched.type) infoType = job?.video_type || '';
+		if (!touched.imdbId) infoImdbId = job?.imdb_id || '';
+		if (!touched.posterUrl) infoPosterUrl = job?.poster_url || '';
+		if (!touched.path && job?.path) infoPath = job.path;
+		if (!touched.disctype) infoDisctype = job?.disctype || '';
+		if (!touched.label) infoLabel = job?.label || '';
+		if (!touched.artist) infoArtist = job?.artist || '';
+		if (!touched.album) infoAlbum = job?.album || '';
+		if (!touched.season) infoSeason = job?.season || '';
+		if (!touched.episode) infoEpisode = job?.episode || '';
 	});
 
 	async function saveInfo() {
+		if (!job) return;
 		infoSaving = true;
 		infoFeedback = null;
 		try {
@@ -188,24 +192,25 @@
 	}
 
 	function resetInfo() {
-		infoTitle = job.title || '';
-		infoYear = job.year || '';
-		infoType = job.video_type || '';
-		infoImdbId = job.imdb_id || '';
-		infoPosterUrl = job.poster_url || '';
-		infoPath = job.path || '';
-		infoDisctype = job.disctype || '';
-		infoLabel = job.label || '';
-		infoArtist = job.artist || '';
-		infoAlbum = job.album || '';
-		infoSeason = job.season || '';
-		infoEpisode = job.episode || '';
+		infoTitle = job?.title || '';
+		infoYear = job?.year || '';
+		infoType = job?.video_type || '';
+		infoImdbId = job?.imdb_id || '';
+		infoPosterUrl = job?.poster_url || '';
+		infoPath = job?.path || '';
+		infoDisctype = job?.disctype || '';
+		infoLabel = job?.label || '';
+		infoArtist = job?.artist || '';
+		infoAlbum = job?.album || '';
+		infoSeason = job?.season || '';
+		infoEpisode = job?.episode || '';
 		touched = {};
 		infoFeedback = null;
 		loadNamingPreviews();
 	}
 
 	async function handleTypeToggle(newType: string) {
+		if (!job) return;
 		infoType = newType;
 		touched.type = true;
 		try {
@@ -217,29 +222,29 @@
 	}
 
 	let waitTime = $derived(Number(detail?.config?.MANUAL_WAIT_TIME) || 60);
-	let typeConfig = $derived(getVideoTypeConfig(job.video_type));
+	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null));
 	let isVideo = $derived(
-		job.disctype === 'dvd' || job.disctype === 'bluray' || job.disctype === 'bluray4k' || job.video_type === 'movie' || job.video_type === 'series'
+		job?.disctype === 'dvd' || job?.disctype === 'bluray' || job?.disctype === 'bluray4k' || job?.video_type === 'movie' || job?.video_type === 'series'
 	);
 	let isMusic = $derived(
-		job.disctype === 'music' || job.video_type === 'music'
+		job?.disctype === 'music' || job?.video_type === 'music'
 	);
 	let hasCrcData = $derived(
-		job.disctype === 'dvd' || !!job.crc_id
+		job?.disctype === 'dvd' || !!job?.crc_id
 	);
 	let discLabelDiffers = $derived(
-		!!job.label && !!job.title && job.label.toLowerCase() !== job.title.toLowerCase()
+		!!job?.label && !!job?.title && job.label.toLowerCase() !== job.title.toLowerCase()
 	);
 
 	let isMultiTitleMovie = $derived(
-		job.multi_title && (job.video_type === 'movie' || infoType === 'movie')
+		job?.multi_title && (job?.video_type === 'movie' || infoType === 'movie')
 	);
 
 	let defaultApplied = false;
 	$effect(() => {
-		if (!defaultApplied && job.multi_title &&
-			(!job.video_type || job.video_type === 'unknown') &&
-			(job.disctype === 'dvd' || job.disctype === 'bluray' || job.disctype === 'bluray4k')) {
+		if (!defaultApplied && job?.multi_title &&
+			(!job?.video_type || job.video_type === 'unknown') &&
+			(job?.disctype === 'dvd' || job.disctype === 'bluray' || job.disctype === 'bluray4k')) {
 			defaultApplied = true;
 			infoType = 'movie';
 			updateJobTitle(job.job_id, { video_type: 'movie' }).then(() => onrefresh?.());
@@ -247,6 +252,7 @@
 	});
 
 	async function loadDetail() {
+		if (!job) return;
 		try {
 			detail = await fetchJob(job.job_id);
 			loadNamingPreviews();
@@ -259,6 +265,7 @@
 	}
 
 	async function loadNamingPreviews() {
+		if (!job) return;
 		try {
 			const result = await fetchNamingPreview(job.job_id);
 			if (result.success) {
@@ -289,6 +296,7 @@
 	}
 
 	async function handleStart() {
+		if (!job) return;
 		errorMessage = null;
 		// Prevent starting with zero rippable tracks enabled (video discs only)
 		if (rippableTracks.length && rippableTracks.every((t) => !t.enabled)) {
@@ -310,6 +318,7 @@
 	}
 
 	async function handleCancel() {
+		if (!job) return;
 		cancelling = true;
 		try {
 			await cancelWaitingJob(job.job_id);
@@ -323,6 +332,7 @@
 	}
 
 	async function handleToggleMultiTitle() {
+		if (!job) return;
 		togglingMultiTitle = true;
 		try {
 			await toggleMultiTitle(job.job_id, !job.multi_title);
@@ -353,7 +363,7 @@
 	}
 
 	function autoOpenUnmatchedTracks() {
-		if (!job.multi_title || !detail?.tracks?.length) return;
+		if (!job?.multi_title || !detail?.tracks?.length) return;
 		const unmatched = detail.tracks
 			.filter(t => t.enabled && !t.title)
 			.map(t => t.track_id);
@@ -411,11 +421,13 @@
 		'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors';
 </script>
 
+{#if !job}
+	<SkeletonCard lines={4} />
+{:else}
 <div class="overflow-hidden rounded-lg ring-2 ring-primary bg-surface shadow-md dark:bg-surface-dark">
 	<!-- Status bar -->
 	<div class="flex items-center justify-between bg-primary px-4 py-1.5">
 		<div class="flex items-center gap-2">
-			<div class="h-2 w-2 animate-pulse rounded-full bg-white/80"></div>
 			<span class="text-sm font-semibold text-on-primary">Waiting for Review</span>
 		</div>
 		{#if job.source_type !== 'folder' && (job.wait_start_time || job.start_time)}
@@ -1041,3 +1053,4 @@
 		<InlineLogFeed logfile={job.logfile} maxEntries={5} levelFilter="error" containerClass="border-t border-primary/20 px-4 py-3 dark:border-primary/20" />
 	{/if}
 </div>
+{/if}

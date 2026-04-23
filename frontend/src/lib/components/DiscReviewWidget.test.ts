@@ -341,4 +341,9 @@ describe('DiscReviewWidget', () => {
 			});
 		});
 	});
+
+	it('renders skeleton when primary data prop is omitted', () => {
+		const { container } = renderComponent(DiscReviewWidget, { props: {} });
+		expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+	});
 });
