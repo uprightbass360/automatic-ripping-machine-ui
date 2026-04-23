@@ -1,5 +1,13 @@
 # Changelog
 
+## [16.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.0.0...v16.1.0) (2026-04-23)
+
+
+### Features
+
+* add arm-contracts as components/contracts submodule ([09c2fd0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/09c2fd035605f3c9241421702b3ab6e65000b07b))
+* validate transcode_overrides via TranscodeJobConfig ([9adc530](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9adc5306a00a184857533f50c2de754c59e60901))
+
 ## [16.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v15.4.1...v16.0.0) (2026-04-21)
 
 
