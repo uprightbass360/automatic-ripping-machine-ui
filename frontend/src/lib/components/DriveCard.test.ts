@@ -141,4 +141,11 @@ describe('DriveCard', () => {
 			expect(screen.getByText('Rename')).toBeInTheDocument();
 		});
 	});
+
+	describe('skeleton', () => {
+		it('renders a SkeletonCard when drive prop is omitted', () => {
+			const { container } = renderComponent(DriveCard, { props: {} });
+			expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+		});
+	});
 });
