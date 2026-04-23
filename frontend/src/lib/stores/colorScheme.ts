@@ -730,6 +730,9 @@ export const allSchemes = writable<ColorScheme[]>([...COLOR_SCHEMES]);
 /** Cache of full theme data (with CSS) fetched from the API */
 const cssCache = new Map<string, string>();
 
+/** In-flight fetch promises keyed by theme id - prevents duplicate concurrent fetches */
+const inFlight = new Map<string, Promise<void>>();
+
 function getInitialScheme(): string {
 	if (!browser) return DEFAULT_SCHEME.id;
 	return localStorage.getItem('colorScheme') ?? DEFAULT_SCHEME.id;
@@ -836,6 +839,9 @@ export async function loadThemesFromApi(): Promise<void> {
 
 /**
  * Fetch and cache full theme CSS from the API, then re-apply the scheme.
+ * Concurrent calls for the same id share one in-flight promise so the network
+ * request is issued only once even when loadThemesFromApi() and the subscribe
+ * handler both call this on page load.
  */
 export async function loadThemeCss(id: string): Promise<void> {
 	if (cssCache.has(id)) {
@@ -849,20 +855,31 @@ export async function loadThemeCss(id: string): Promise<void> {
 		return;
 	}
 
-	try {
-		const full = await fetchTheme(id);
-		if (full?.css) {
-			cssCache.set(id, full.css);
-			// Update the scheme in the store
-			allSchemes.update((schemes) =>
-				schemes.map((s) => (s.id === id ? { ...s, css: full.css } : s))
-			);
-		}
-		applyScheme(id);
-	} catch {
-		// Fetch failed — apply without CSS
-		applyScheme(id);
+	if (inFlight.has(id)) {
+		return inFlight.get(id)!;
 	}
+
+	const promise = (async () => {
+		try {
+			const full = await fetchTheme(id);
+			if (full?.css) {
+				cssCache.set(id, full.css);
+				// Update the scheme in the store
+				allSchemes.update((schemes) =>
+					schemes.map((s) => (s.id === id ? { ...s, css: full.css } : s))
+				);
+			}
+			applyScheme(id);
+		} catch {
+			// Fetch failed — apply without CSS
+			applyScheme(id);
+		} finally {
+			inFlight.delete(id);
+		}
+	})();
+
+	inFlight.set(id, promise);
+	return promise;
 }
 
 if (browser) {
