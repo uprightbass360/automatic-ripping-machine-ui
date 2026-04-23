@@ -1,0 +1,3 @@
+[submodule "components/contracts"]
+	path = components/contracts
+	url = https://github.com/uprightbass360/automatic-ripping-machine-contracts.git

@@ -16,6 +16,7 @@ LABEL org.opencontainers.image.description="Replacement dashboard for ARM (Svelt
 WORKDIR /app
 
 COPY requirements.txt .
+COPY components/contracts components/contracts
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY VERSION .
