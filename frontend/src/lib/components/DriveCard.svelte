@@ -3,9 +3,10 @@
 	import { updateDrive, scanDrive, deleteDrive, ejectDrive } from '$lib/api/drives';
 	import StatusBadge from './StatusBadge.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
+	import SkeletonCard from './SkeletonCard.svelte';
 
 	interface Props {
-		drive: Drive;
+		drive?: Drive;
 		onupdate?: () => void;
 		globalDefaults?: {
 			prescan_cache_mb?: number;
@@ -41,18 +42,18 @@
 	// Sync server values to inputs when settings panel closes
 	$effect.pre(() => {
 		if (!showSettings) {
-			prescanCacheInput = drive.prescan_cache_mb != null ? String(drive.prescan_cache_mb) : '';
-			prescanTimeoutInput = drive.prescan_timeout != null ? String(drive.prescan_timeout) : '';
-			prescanRetriesInput = drive.prescan_retries != null ? String(drive.prescan_retries) : '';
-			discEnumTimeoutInput = drive.disc_enum_timeout != null ? String(drive.disc_enum_timeout) : '';
+			prescanCacheInput = drive?.prescan_cache_mb != null ? String(drive.prescan_cache_mb) : '';
+			prescanTimeoutInput = drive?.prescan_timeout != null ? String(drive.prescan_timeout) : '';
+			prescanRetriesInput = drive?.prescan_retries != null ? String(drive.prescan_retries) : '';
+			discEnumTimeoutInput = drive?.disc_enum_timeout != null ? String(drive.disc_enum_timeout) : '';
 		}
 	});
 
 	const PRESCAN_FIELDS = [
-		{ key: 'prescan_cache_mb' as const, label: 'Pre-scan Cache', unit: 'MB', min: 1, max: 1024, input: () => prescanCacheInput, setInput: (v: string) => { prescanCacheInput = v; }, current: () => drive.prescan_cache_mb, globalDefault: () => globalDefaults.prescan_cache_mb, tooltip: 'Community recommends 64-128 for scratched or damaged discs' },
-		{ key: 'prescan_timeout' as const, label: 'Pre-scan Timeout', unit: 's', min: 30, max: 3600, input: () => prescanTimeoutInput, setInput: (v: string) => { prescanTimeoutInput = v; }, current: () => drive.prescan_timeout, globalDefault: () => globalDefaults.prescan_timeout, tooltip: 'Community recommends 600 for slow or damaged DVD/BD media' },
-		{ key: 'prescan_retries' as const, label: 'Pre-scan Retries', unit: '', min: 1, max: 10, input: () => prescanRetriesInput, setInput: (v: string) => { prescanRetriesInput = v; }, current: () => drive.prescan_retries, globalDefault: () => globalDefaults.prescan_retries, tooltip: 'Community recommends 3-5 retries for problematic drives' },
-		{ key: 'disc_enum_timeout' as const, label: 'Enum Timeout', unit: 's', min: 10, max: 600, input: () => discEnumTimeoutInput, setInput: (v: string) => { discEnumTimeoutInput = v; }, current: () => drive.disc_enum_timeout, globalDefault: () => globalDefaults.disc_enum_timeout, tooltip: 'Community recommends 120 for drives that are slow to spin up' },
+		{ key: 'prescan_cache_mb' as const, label: 'Pre-scan Cache', unit: 'MB', min: 1, max: 1024, input: () => prescanCacheInput, setInput: (v: string) => { prescanCacheInput = v; }, current: () => drive?.prescan_cache_mb, globalDefault: () => globalDefaults.prescan_cache_mb, tooltip: 'Community recommends 64-128 for scratched or damaged discs' },
+		{ key: 'prescan_timeout' as const, label: 'Pre-scan Timeout', unit: 's', min: 30, max: 3600, input: () => prescanTimeoutInput, setInput: (v: string) => { prescanTimeoutInput = v; }, current: () => drive?.prescan_timeout, globalDefault: () => globalDefaults.prescan_timeout, tooltip: 'Community recommends 600 for slow or damaged DVD/BD media' },
+		{ key: 'prescan_retries' as const, label: 'Pre-scan Retries', unit: '', min: 1, max: 10, input: () => prescanRetriesInput, setInput: (v: string) => { prescanRetriesInput = v; }, current: () => drive?.prescan_retries, globalDefault: () => globalDefaults.prescan_retries, tooltip: 'Community recommends 3-5 retries for problematic drives' },
+		{ key: 'disc_enum_timeout' as const, label: 'Enum Timeout', unit: 's', min: 10, max: 600, input: () => discEnumTimeoutInput, setInput: (v: string) => { discEnumTimeoutInput = v; }, current: () => drive?.disc_enum_timeout, globalDefault: () => globalDefaults.disc_enum_timeout, tooltip: 'Community recommends 120 for drives that are slow to spin up' },
 	] as const;
 
 	async function savePrescanField(field: typeof PRESCAN_FIELDS[number]) {
@@ -66,6 +67,7 @@
 		}
 		if (newVal === (field.current() ?? null)) return;
 
+		if (!drive) return;
 		savingPrescan = true;
 		try {
 			await updateDrive(drive.drive_id, { [field.key]: newVal });
@@ -78,13 +80,14 @@
 	}
 
 	$effect.pre(() => {
-		const serverValue = drive.rip_speed != null ? String(drive.rip_speed) : '';
+		const serverValue = drive?.rip_speed != null ? String(drive.rip_speed) : '';
 		if (!showSettings) {
 			speedInput = serverValue;
 		}
 	});
 
 	async function saveSpeed() {
+		if (!drive) return;
 		const trimmed = (speedInput ?? '').trim();
 		const newSpeed = trimmed === '' ? null : parseInt(trimmed, 10);
 
@@ -111,15 +114,15 @@
 			(e.target as HTMLInputElement).blur();
 		}
 		if (e.key === 'Escape') {
-			speedInput = drive.rip_speed != null ? String(drive.rip_speed) : '';
+			speedInput = drive?.rip_speed != null ? String(drive.rip_speed) : '';
 			showSettings = false;
 		}
 	}
 
-	let isStale = $derived(!drive.mount || drive.stale === true);
+	let isStale = $derived(!drive?.mount || drive?.stale === true);
 
 	async function handleScan() {
-		if (scanning || scanCooldown) return;
+		if (!drive || scanning || scanCooldown) return;
 		scanning = true;
 		try {
 			await scanDrive(drive.drive_id);
@@ -133,6 +136,7 @@
 	}
 
 	async function handleRemove() {
+		if (!drive) return;
 		if (!confirm(`Remove "${drive.name || drive.mount || `Drive ${drive.drive_id}`}" from the database? This drive will reappear on the next rescan if it's still connected.`)) return;
 		removing = true;
 		try {
@@ -144,7 +148,7 @@
 	}
 
 	function startEdit() {
-		editName = drive.name || '';
+		editName = drive?.name || '';
 		editing = true;
 	}
 
@@ -153,6 +157,7 @@
 	}
 
 	async function saveEdit() {
+		if (!drive) return;
 		saving = true;
 		try {
 			await updateDrive(drive.drive_id, { name: editName });
@@ -166,6 +171,7 @@
 	}
 
 	async function toggleUhd() {
+		if (!drive) return;
 		togglingUhd = true;
 		try {
 			await updateDrive(drive.drive_id, { uhd_capable: !drive.uhd_capable });
@@ -183,6 +189,7 @@
 	}
 
 	async function handleEject(method: 'eject' | 'close') {
+		if (!drive) return;
 		ejecting = true;
 		try {
 			await ejectDrive(drive.drive_id, method);
@@ -194,6 +201,7 @@
 	}
 
 	async function toggleMode() {
+		if (!drive) return;
 		togglingMode = true;
 		const newMode = drive.drive_mode === 'manual' ? 'auto' : 'manual';
 		try {
@@ -220,6 +228,9 @@
 	});
 </script>
 
+{#if !drive}
+	<SkeletonCard />
+{:else}
 <div class="rounded-lg border border-primary/20 bg-surface p-2.5 shadow-xs dark:border-primary/20 dark:bg-surface-dark {isStale ? 'opacity-60' : ''}">
 	<!-- Header: name + rename + status -->
 	<div class="mb-1 flex items-center justify-between">
@@ -485,3 +496,4 @@
 		</div>
 	{/if}
 </div>
+{/if}
