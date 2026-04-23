@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { createPollingStore } from '$lib/stores/polling';
 	import { fetchTranscoderStats, fetchTranscoderJobs, fetchTranscoderWorkers, retryTranscoderJob, deleteTranscoderJob, retranscodeTranscoderJob } from '$lib/api/transcoder';
 	import { fetchStructuredTranscoderLogContent } from '$lib/api/logs';
@@ -11,6 +12,9 @@
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
 	import TimeAgo from '$lib/components/TimeAgo.svelte';
 	import InlineLogFeed from '$lib/components/InlineLogFeed.svelte';
+	import LoadState from '$lib/components/LoadState.svelte';
+	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
+	import { fadeIn, fadeOut } from '$lib/transitions';
 	import { dashboard } from '$lib/stores/dashboard';
 
 	const emptyStats: TranscoderStats = { online: false, stats: null };
@@ -22,8 +26,8 @@
 	const workers = createPollingStore(fetchTranscoderWorkers, emptyWorkers, 5000);
 	let activeTab = $state('all');
 	let jobs = $state<TranscoderJobListResponse>(emptyJobs);
-	let loadingJobs = $state(false);
-	let jobsError = $state<string | null>(null);
+	let loadingJobs = $state(true);
+	let jobsError = $state<Error | null>(null);
 
 	function formatDuration(startISO: string | null, endISO?: string | null): string | null {
 		if (!startISO) return null;
@@ -53,7 +57,7 @@
 			const statusParam = activeTab === 'all' ? undefined : activeTab;
 			jobs = await fetchTranscoderJobs({ status: statusParam });
 		} catch (e) {
-			jobsError = e instanceof Error ? e.message : 'Failed to load jobs';
+			jobsError = e instanceof Error ? e : new Error('Failed to load jobs');
 			jobs = emptyJobs;
 		} finally {
 			loadingJobs = false;
@@ -139,14 +143,14 @@
 
 	<!-- API error -->
 	{#if $statsError}
-		<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+		<div in:fade={fadeIn} out:fade={fadeOut} class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
 			Failed to reach transcoder: {$statsError}
 		</div>
 	{/if}
 
 	<!-- Offline banner -->
 	{#if !$stats.online}
-		<div class="flex items-center gap-3 rounded-lg border border-primary/25 bg-page p-4 dark:border-primary/25 dark:bg-page-dark">
+		<div in:fade={fadeIn} out:fade={fadeOut} class="flex items-center gap-3 rounded-lg border border-primary/25 bg-page p-4 dark:border-primary/25 dark:bg-page-dark">
 			<div class="h-3 w-3 shrink-0 rounded-full bg-gray-400"></div>
 			<div>
 				<p class="font-medium text-gray-700 dark:text-gray-300">Transcoder Offline</p>
@@ -159,6 +163,7 @@
 	{#if $stats.online && $stats.stats}
 		{@const s = $stats.stats}
 		{@const w = $workers}
+		<div in:fade={fadeIn} out:fade={fadeOut} class="space-y-4">
 		<!-- Worker pool status -->
 		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 			<div class="mb-3 flex items-center justify-between">
@@ -221,12 +226,13 @@
 				<p class="mt-1 text-3xl font-bold text-gray-500 dark:text-gray-400">{s.cancelled}</p>
 			</div>
 		</div>
+		</div>
 	{/if}
 
 	<!-- GPU stats -->
 	{#if $dashboard.transcoder_online && $dashboard.transcoder_system_stats?.gpu}
 		{@const gpu = $dashboard.transcoder_system_stats.gpu}
-		<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+		<div in:fade={fadeIn} out:fade={fadeOut} class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 			<div class="mb-3 flex items-center gap-2">
 				<p class="text-sm font-semibold text-gray-700 dark:text-gray-300">GPU</p>
 				<span class="rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize {vendorPillClasses(gpu.vendor)}">{gpu.vendor}</span>
@@ -305,19 +311,29 @@
 		</div>
 
 		<!-- Jobs list -->
-		{#if jobsError}
-			<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-				{jobsError}
-			</div>
-		{:else if loadingJobs && jobs.jobs.length === 0}
-			<div class="py-8 text-center text-gray-400">Loading...</div>
-		{:else if jobs.jobs.length === 0}
-			<p class="py-8 text-center text-gray-400">No transcode jobs found.</p>
-		{:else}
+		<LoadState
+			data={jobs}
+			loading={loadingJobs}
+			error={jobsError}
+			isEmpty={(d) => d.jobs.length === 0}
+			transitionKey="transcoder-jobs"
+		>
+			{#snippet loadingSlot()}
+				<div class="space-y-3">
+					<SkeletonCard lines={4} />
+					<SkeletonCard lines={4} />
+					<SkeletonCard lines={4} />
+				</div>
+			{/snippet}
+			{#snippet empty()}
+				<p class="py-8 text-center text-gray-400">No transcode jobs found.</p>
+			{/snippet}
+			{#snippet ready(jobsData)}
+				{@const jobList = jobsData.jobs}
 			<div class="space-y-3">
-				{#each jobs.jobs as job (job.id)}
+				{#each jobList as job (job.id)}
 					{@const typeConfig = getVideoTypeConfig(job.video_type)}
-					<div class="rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+					<div in:fade|global={fadeIn} out:fade|global={fadeOut} class="rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 						<div class="flex gap-4">
 							<!-- Poster -->
 							{#if job.poster_url}
@@ -458,6 +474,7 @@
 					</div>
 				{/each}
 			</div>
-		{/if}
+			{/snippet}
+		</LoadState>
 	</section>
 </div>
