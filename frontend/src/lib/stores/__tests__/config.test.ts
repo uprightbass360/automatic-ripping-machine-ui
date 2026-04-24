@@ -21,7 +21,7 @@ describe('config store', () => {
 	});
 
 	it('hydrateConfig calls /api/config and updates store', async () => {
-		global.fetch = vi.fn().mockResolvedValueOnce({
+		globalThis.fetch = vi.fn().mockResolvedValueOnce({
 			ok: true,
 			json: async () => ({ transcoder_enabled: false })
 		}) as unknown as typeof fetch;
@@ -32,7 +32,7 @@ describe('config store', () => {
 	});
 
 	it('hydrateConfig falls back to true on fetch failure', async () => {
-		global.fetch = vi.fn().mockRejectedValueOnce(new Error('network')) as unknown as typeof fetch;
+		globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error('network')) as unknown as typeof fetch;
 
 		const { transcoderEnabled, hydrateConfig, setTranscoderEnabled } = await import('../config');
 		setTranscoderEnabled(false);
