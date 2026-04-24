@@ -207,7 +207,7 @@
 			{/snippet}
 			{#snippet ready(items)}
 				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-					<table class="w-full text-left text-sm">
+					<table class="responsive-table w-full text-left text-sm">
 						<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 							<tr>
 								<th class="cursor-pointer select-none px-4 py-3 font-medium" onclick={() => toggleFileSort('filename')}>
@@ -228,14 +228,14 @@
 						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each sortedArmLogs as log}
 								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
-									<td class="px-4 py-3">
+									<td class="px-4 py-3 break-all" data-label="Filename">
 										<a href="/logs/{log.filename}" class="text-primary-text hover:underline dark:text-primary-text-dark">
 											{log.filename}
 										</a>
 									</td>
-									<td class="px-4 py-3 text-gray-500 dark:text-gray-400">{formatBytes(log.size)}</td>
-									<td class="px-4 py-3 text-gray-500 dark:text-gray-400">{formatDateTime(log.modified)}</td>
-									<td class="px-4 py-3">
+									<td class="px-4 py-3 text-gray-500 dark:text-gray-400" data-label="Size">{formatBytes(log.size)}</td>
+									<td class="px-4 py-3 text-gray-500 dark:text-gray-400" data-label="Last Modified">{formatDateTime(log.modified)}</td>
+									<td class="px-4 py-3" data-label="Actions">
 										<div class="flex items-center gap-1.5">
 											<a
 												href={logDownloadUrl(log.filename)}
@@ -282,7 +282,7 @@
 			{/snippet}
 			{#snippet ready(items)}
 				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-					<table class="w-full text-left text-sm">
+					<table class="responsive-table w-full text-left text-sm">
 						<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 							<tr>
 								<th class="cursor-pointer select-none px-4 py-3 font-medium" onclick={() => toggleFileSort('filename')}>
@@ -302,13 +302,13 @@
 						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each sortedTranscoderLogs as log}
 								<tr class="hover:bg-page dark:hover:bg-gray-800/50">
-									<td class="px-4 py-3">
+									<td class="px-4 py-3 break-all" data-label="Filename">
 										<a href="/logs/transcoder/{log.filename}" class="text-primary-text hover:underline dark:text-primary-text-dark">
 											{log.filename}
 										</a>
 									</td>
-									<td class="px-4 py-3 text-gray-500 dark:text-gray-400">{formatBytes(log.size)}</td>
-									<td class="px-4 py-3 text-gray-500 dark:text-gray-400">{formatDateTime(log.modified)}</td>
+									<td class="px-4 py-3 text-gray-500 dark:text-gray-400" data-label="Size">{formatBytes(log.size)}</td>
+									<td class="px-4 py-3 text-gray-500 dark:text-gray-400" data-label="Last Modified">{formatDateTime(log.modified)}</td>
 								</tr>
 							{/each}
 						</tbody>

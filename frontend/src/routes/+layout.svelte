@@ -15,6 +15,7 @@
 	let { children } = $props();
 
 	let sidebarOpen = $state(false);
+	let mobileDrawerView = $state<'menu' | 'stats'>('menu');
 	let togglingPause = $state(false);
 	let quickMenuOpen = $state(false);
 	const rippingCount = $derived($dashboard.active_jobs.filter(j => {
@@ -291,34 +292,57 @@
 			<div class="fixed inset-0 z-40 lg:hidden">
 				<button class="absolute inset-0 bg-black/50" aria-label="Close sidebar" onclick={() => sidebarOpen = false}></button>
 				<aside class="relative z-50 flex h-full w-64 flex-col bg-surface shadow-xl dark:bg-surface-dark">
-					<div data-logo class="flex items-center justify-center py-6">
-						<img src="/img/arm-logo-black.png" alt="ARM" class="h-24 w-24 dark:hidden" />
-						<img src="/img/arm-logo-white.png" alt="ARM" class="hidden h-24 w-24 dark:block" />
+					<div data-logo class="flex items-center justify-center py-4">
+						<img src="/img/arm-logo-black.png" alt="ARM" class="h-20 w-20 dark:hidden" />
+						<img src="/img/arm-logo-white.png" alt="ARM" class="hidden h-20 w-20 dark:block" />
 					</div>
 					<hr class="border-primary/20 dark:border-primary/20" />
-					<nav class="flex-1 space-y-1 px-3 py-4">
-						{#each navItems as item}
-							<a
-								href={item.href}
-								onclick={() => sidebarOpen = false}
-								data-active={isActive(item.href, $page.url.pathname) || undefined}
-								class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-									{isActive(item.href, $page.url.pathname)
-										? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark'
-										: 'text-gray-700 hover:bg-primary/10 dark:text-gray-300 dark:hover:bg-primary/15'}"
-							>
-								<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
-								</svg>
-								{item.label}
-								{#if item.href === '/notifications' && $dashboard.notification_count > 0}
-									<span class="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">{$dashboard.notification_count}</span>
+					<!-- Drawer view toggle (mobile) -->
+					<div class="px-3 pt-3">
+						<div class="flex rounded-sm bg-primary/10 p-0.5 dark:bg-primary/10">
+							<button
+								onclick={() => mobileDrawerView = 'menu'}
+								class="flex-1 rounded-sm px-2 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors
+									{mobileDrawerView === 'menu'
+										? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
+										: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
+							>Menu</button>
+							<button
+								onclick={() => mobileDrawerView = 'stats'}
+								class="flex-1 rounded-sm px-2 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors
+									{mobileDrawerView === 'stats'
+										? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
+										: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
+							>Stats</button>
+						</div>
+					</div>
+					{#if mobileDrawerView === 'menu'}
+						<nav class="flex-1 overflow-y-auto space-y-1 px-3 py-4">
+							{#each navItems as item}
+								<a
+									href={item.href}
+									onclick={() => sidebarOpen = false}
+									data-active={isActive(item.href, $page.url.pathname) || undefined}
+									class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+										{isActive(item.href, $page.url.pathname)
+											? 'bg-primary-light-bg text-primary-text dark:bg-primary-light-bg-dark/30 dark:text-primary-text-dark'
+											: 'text-gray-700 hover:bg-primary/10 dark:text-gray-300 dark:hover:bg-primary/15'}"
+								>
+									<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
+									</svg>
+									{item.label}
+									{#if item.href === '/notifications' && $dashboard.notification_count > 0}
+										<span class="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">{$dashboard.notification_count}</span>
 								{/if}
-							</a>
-						{/each}
-					</nav>
-					<hr class="border-primary/20 dark:border-primary/20" />
-					<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
+								</a>
+							{/each}
+						</nav>
+					{:else}
+						<div class="flex-1 overflow-y-auto">
+							<SidebarStats systemInfo={$dashboard.system_info} systemStats={$dashboard.system_stats} transcoderInfo={$dashboard.transcoder_info} transcoderStats={$dashboard.transcoder_system_stats} armOnline={$dashboard.arm_online} transcoderOnline={$dashboard.transcoder_online} />
+						</div>
+					{/if}
 				</aside>
 			</div>
 		{/if}

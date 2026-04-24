@@ -447,9 +447,9 @@
 			</div>
 
 			<!-- Poster + Metadata grid -->
-			<div class="flex items-start">
+			<div class="flex flex-col sm:flex-row items-start">
 				<!-- Poster -->
-				<div class="shrink-0 border-r border-primary/15 p-4 dark:border-primary/15">
+				<div class="shrink-0 border-b sm:border-b-0 sm:border-r border-primary/15 p-4 dark:border-primary/15">
 					<PosterImage
 						url={job.poster_url}
 						alt={job.title ?? 'Poster'}
@@ -459,10 +459,9 @@
 				</div>
 
 				<!-- Metadata grid -->
-				<div class="flex-1 grid grid-cols-4">
+				<div class="metadata-grid w-full sm:w-auto flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
 					{#each metadataFields as field, i}
-						{@const isRightEdge = (i + 1) % 4 === 0}
-						<div class="px-4 py-3 border-b border-primary/15 dark:border-primary/15 {!isRightEdge ? 'border-r' : ''}">
+						<div class="metadata-cell px-4 py-3 border-b border-r border-primary/15 dark:border-primary/15">
 							{#if !field.empty}
 								<div class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">{field.label}</div>
 								{#if field.isSelect}
@@ -638,7 +637,7 @@
 					</h2>
 				</div>
 				<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-					<table class="w-full text-left text-sm">
+					<table class="responsive-table w-full text-left text-sm">
 						<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 							<tr>
 								<th class="px-4 py-3 font-medium">#</th>
@@ -674,11 +673,11 @@
 							{#each job.tracks as track}
 								{@const tooShort = !isMusicDisc && isBelowMinlength(track)}
 								<tr class="{tooShort ? 'opacity-40' : ''} hover:bg-page dark:hover:bg-gray-800/50">
-									<td class="px-4 py-3">{track.track_number ?? ''}</td>
+									<td class="px-4 py-3" data-label="#">{track.track_number ?? ''}</td>
 									{#if isMusicDisc}
-										<td class="max-w-[300px] truncate px-4 py-3">{track.title || track.filename || '--'}</td>
+										<td class="max-w-[300px] truncate px-4 py-3" data-label="Name">{track.title || track.filename || '--'}</td>
 									{:else}
-										<td class="max-w-[250px] px-4 py-3">
+										<td class="max-w-[250px] px-4 py-3" data-label="Filename">
 											{#if !track.enabled}
 												<span class="text-xs text-gray-400"></span>
 											{:else if editingFilenameTrackId === track.track_id}
@@ -723,6 +722,7 @@
 									{#if !isMusicDisc}
 										<td
 											class="px-4 py-3 cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10"
+											data-label="Title"
 											onclick={() => { editingTrackId = editingTrackId === track.track_id ? null : track.track_id; }}
 										>
 											{#if track.title}
@@ -743,7 +743,7 @@
 										</td>
 									{/if}
 									{#if !isMusicDisc && job.video_type === 'series'}
-									<td class="px-4 py-3">
+									<td class="px-4 py-3" data-label="Episode">
 										<div class="flex items-center gap-1.5">
 											<input
 												type="text"
@@ -763,11 +763,11 @@
 										</div>
 									</td>
 								{/if}
-								<td class="px-4 py-3">{track.length != null ? `${Math.floor(track.length / 60)}:${String(track.length % 60).padStart(2, '0')}` : ''}</td>
+								<td class="px-4 py-3" data-label={isMusicDisc ? 'Duration' : 'Length'}>{track.length != null ? `${Math.floor(track.length / 60)}:${String(track.length % 60).padStart(2, '0')}` : ''}</td>
 									{#if !isMusicDisc}
-										<td class="px-4 py-3">{track.aspect_ratio ?? ''}</td>
-										<td class="px-4 py-3">{track.fps ?? ''}</td>
-										<td class="pl-1 pr-4 py-3">
+										<td class="px-4 py-3" data-label="Aspect">{track.aspect_ratio ?? ''}</td>
+										<td class="px-4 py-3" data-label="FPS">{track.fps ?? ''}</td>
+										<td class="pl-1 pr-4 py-3" data-label="Rip">
 											{#if tooShort}
 												<span class="ml-4 text-[10px] text-gray-400 dark:text-gray-500" title="Too short to rip (below {minlength}s minimum)">skip</span>
 											{:else}
@@ -781,7 +781,7 @@
 											{/if}
 										</td>
 									{/if}
-									<td class="px-4 py-3">
+									<td class="px-4 py-3" data-label="Ripped">
 										{#if track.enabled && !tooShort}
 											<span class="rounded-sm px-1.5 py-0.5 text-[10px] font-semibold {track.ripped
 												? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
@@ -791,11 +791,11 @@
 											</span>
 										{/if}
 									</td>
-									<td class="px-4 py-3"><StatusBadge status={!track.enabled || tooShort ? 'skipped' : track.status} /></td>
+									<td class="px-4 py-3" data-label="Status"><StatusBadge status={!track.enabled || tooShort ? 'skipped' : track.status} /></td>
 									</tr>
 								{#if editingTrackId === track.track_id}
 									<tr>
-										<td colspan="99" class="px-4 py-3">
+										<td colspan="99" class="px-4 py-3" data-label="">
 											<TrackTitleSearch jobId={job.job_id} {track} onapply={handleTrackTitleApply} onclose={() => { editingTrackId = null; }} />
 										</td>
 									</tr>

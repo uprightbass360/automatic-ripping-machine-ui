@@ -1346,7 +1346,7 @@
 		{@const settings = _}
 		<!-- Tab Bar -->
 		{@const tabClass = (tab: string) => `whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors ${activeTab === tab ? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark' : 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}`}
-		<div class="border-b border-primary/20 dark:border-primary/20">
+		<div class="overflow-x-auto border-b border-primary/20 dark:border-primary/20">
 			<nav class="-mb-px flex gap-4" aria-label="Settings tabs">
 				<button type="button" onclick={() => setTab('ripping')} class={tabClass('ripping')}>Ripping</button>
 				<button type="button" onclick={() => setTab('music')} class={tabClass('music')}>Music</button>
@@ -1977,7 +1977,7 @@
 						<section>
 							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Paths</h2>
 							<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-								<table class="w-full text-left text-sm">
+								<table class="responsive-table w-full text-left text-sm">
 									<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 										<tr>
 											<th class="px-4 py-3 font-medium">Setting</th>
@@ -1988,9 +1988,9 @@
 									<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 										{#each systemInfo.paths as p}
 											<tr class="hover:bg-page dark:hover:bg-gray-800/50">
-												<td class="px-4 py-2 font-mono text-xs font-medium text-gray-500 dark:text-gray-400">{p.setting}</td>
-												<td class="px-4 py-2 font-mono text-xs text-gray-900 dark:text-white">{p.path}</td>
-												<td class="px-4 py-2">
+												<td class="px-4 py-2 font-mono text-xs font-medium text-gray-500 dark:text-gray-400" data-label="Setting">{p.setting}</td>
+												<td class="px-4 py-2 font-mono text-xs text-gray-900 dark:text-white break-all" data-label="Path">{p.path}</td>
+												<td class="px-4 py-2" data-label="Status">
 													{#if !p.exists}
 														<span class="inline-flex items-center gap-1 text-xs text-red-500">
 															<svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
