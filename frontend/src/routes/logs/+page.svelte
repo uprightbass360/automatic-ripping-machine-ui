@@ -7,6 +7,7 @@
 	import { formatBytes, formatDateTime } from '$lib/utils/format';
 	import LoadState from '$lib/components/LoadState.svelte';
 	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
+	import { transcoderEnabled } from '$lib/stores/config';
 
 	let deleting = $state<string | null>(null);
 	let deleteFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -36,6 +37,10 @@
 	}
 
 	let activeTab = $state<'arm' | 'transcoder'>('arm');
+
+	$effect(() => {
+		if (!$transcoderEnabled && activeTab === 'transcoder') activeTab = 'arm';
+	});
 	let armLogs = $state<LogFile[]>([]);
 	let transcoderLogs = $state<LogFile[]>([]);
 	let armLoading = $state(true);
@@ -171,6 +176,7 @@
 			>
 				ARM Ripper
 			</button>
+			{#if $transcoderEnabled}
 			<button
 				type="button"
 				onclick={() => switchTab('transcoder')}
@@ -181,6 +187,7 @@
 			>
 				Transcoder
 			</button>
+			{/if}
 		</nav>
 	</div>
 
