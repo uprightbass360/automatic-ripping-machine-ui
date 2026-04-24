@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { HardwareInfo, SystemStats } from '$lib/types/arm';
+	import { transcoderEnabled } from '$lib/stores/config';
 
 	interface Props {
 		systemInfo: HardwareInfo | null;
@@ -15,7 +16,13 @@
 	type Panel = 'ripper' | 'transcoder' | 'gpu';
 	let activePanel = $state<Panel>('ripper');
 
-	const hasGpu = $derived(transcoderOnline && transcoderStats?.gpu != null);
+	$effect(() => {
+		if (!$transcoderEnabled && (activePanel === 'transcoder' || activePanel === 'gpu')) {
+			activePanel = 'ripper';
+		}
+	});
+
+	const hasGpu = $derived($transcoderEnabled && transcoderOnline && transcoderStats?.gpu != null);
 
 	const activeStats = $derived(activePanel === 'ripper' ? (armOnline ? systemStats : null) : (transcoderOnline ? transcoderStats : null));
 	const isOffline = $derived(
@@ -82,6 +89,7 @@
 					? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
 					: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
 		>Ripper</button>
+		{#if $transcoderEnabled}
 		<button
 			onclick={() => activePanel = 'transcoder'}
 			class="rounded-sm px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider transition-colors
@@ -89,6 +97,7 @@
 					? 'bg-primary/20 text-primary-text shadow-xs dark:bg-primary/25 dark:text-primary-text-dark'
 					: 'text-primary-text/50 hover:text-primary-text dark:text-primary-text-dark/50 dark:hover:text-primary-text-dark'}"
 		>Transcoder</button>
+		{/if}
 		{#if hasGpu}
 			<button
 				onclick={() => activePanel = 'gpu'}
