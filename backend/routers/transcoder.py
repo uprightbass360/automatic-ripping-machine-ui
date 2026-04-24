@@ -1,11 +1,16 @@
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from backend.dependencies import require_transcoder_enabled
 from backend.models.schemas import LogContentResponse, LogFileSchema, StructuredLogResponse, TranscoderJobListResponse, TranscoderStatsResponse
 from backend.services import transcoder_client
 
-router = APIRouter(prefix="/api/transcoder", tags=["transcoder"])
+router = APIRouter(
+    prefix="/api/transcoder",
+    tags=["transcoder"],
+    dependencies=[Depends(require_transcoder_enabled)],
+)
 
 
 @router.get("/workers")
