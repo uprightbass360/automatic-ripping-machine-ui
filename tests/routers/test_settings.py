@@ -314,3 +314,31 @@ async def test_transcoder_settings_gated_when_disabled(ripper_only_app_client, m
     resp = await ripper_only_app_client.request(method, path, json={})
     assert resp.status_code == 503
     assert resp.json()["detail"] == "Transcoder disabled on this deployment"
+
+
+async def test_settings_aggregate_skips_transcoder_when_disabled(ripper_only_app_client, monkeypatch):
+    """When flag is off, aggregate GET /api/settings must not call transcoder_client."""
+    from unittest.mock import AsyncMock, patch
+
+    from backend.services import transcoder_client
+
+    called = {"flag": False}
+
+    async def _should_not_be_called(*args, **kwargs):
+        called["flag"] = True
+        return None
+
+    monkeypatch.setattr(transcoder_client, "get_config", _should_not_be_called)
+    monkeypatch.setattr(transcoder_client, "health", _should_not_be_called)
+
+    with patch("backend.routers.settings.arm_client.get_config", new=AsyncMock(return_value=None)):
+        with patch("backend.routers.settings.arm_db.get_all_config_safe", return_value={}):
+            resp = await ripper_only_app_client.get("/api/settings")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["transcoder_config"] is None
+    assert data["transcoder_gpu_support"] is None
+    assert data["transcoder_auth_status"] is None
+    assert data["gpu_support"] is None
+    assert called["flag"] is False, "transcoder_client was called despite flag being off"
