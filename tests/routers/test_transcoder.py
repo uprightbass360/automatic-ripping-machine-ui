@@ -381,3 +381,26 @@ async def test_get_job_for_arm_filters_by_job_id_not_most_recent(app_client):
         f"to avoid stale-correlation; got kwargs={kwargs!r}"
     )
     assert "arm_job_id" not in kwargs
+
+
+# --- Ripper-only gating ---
+
+TRANSCODER_GATED_ENDPOINTS = [
+    ("GET", "/api/transcoder/workers"),
+    ("GET", "/api/transcoder/stats"),
+    ("GET", "/api/transcoder/jobs"),
+    ("POST", "/api/transcoder/jobs/1/retry"),
+    ("DELETE", "/api/transcoder/jobs/1"),
+    ("GET", "/api/transcoder/logs"),
+    ("GET", "/api/transcoder/logs/foo.log"),
+    ("GET", "/api/transcoder/logs/foo.log/structured"),
+    ("POST", "/api/transcoder/jobs/1/retranscode"),
+    ("GET", "/api/transcoder/job-for-arm/1"),
+]
+
+
+@pytest.mark.parametrize("method,path", TRANSCODER_GATED_ENDPOINTS)
+async def test_endpoint_returns_503_when_disabled(ripper_only_app_client, method, path):
+    resp = await ripper_only_app_client.request(method, path)
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "Transcoder disabled on this deployment"
