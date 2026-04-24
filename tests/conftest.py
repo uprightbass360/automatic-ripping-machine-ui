@@ -44,3 +44,17 @@ async def app_client():
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
             yield client
+
+
+@pytest.fixture
+async def ripper_only_app_client(monkeypatch):
+    """Async httpx client with transcoder_enabled=False. Use for rip-only assertions."""
+    from backend.config import settings as app_settings
+
+    monkeypatch.setattr(app_settings, "transcoder_enabled", False)
+    with patch.object(system_cache, "refresh", new_callable=AsyncMock):
+        from backend.main import app
+
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
