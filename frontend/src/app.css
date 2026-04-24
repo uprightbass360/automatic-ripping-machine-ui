@@ -135,6 +135,67 @@
 	/* Confirm dialog button variants */
 	.confirm-btn-danger  { @apply bg-red-600 text-white hover:bg-red-700; }
 	.confirm-btn-primary { @apply bg-primary text-on-primary hover:bg-primary/90; }
+
+	/* ------------------------------------------------------------------ */
+	/* Responsive table — stacks to cards below lg (1024px)               */
+	/*                                                                     */
+	/* Usage: add .responsive-table to the <table>. Each <td> that should  */
+	/* show a label when stacked must set data-label="Column Name".        */
+	/* The <thead> is hidden below lg; rows become cards with label cells. */
+	/* ------------------------------------------------------------------ */
+	@media (max-width: 1023.98px) {
+		.responsive-table,
+		.responsive-table thead,
+		.responsive-table tbody,
+		.responsive-table tr,
+		.responsive-table th,
+		.responsive-table td {
+			display: block;
+		}
+		.responsive-table thead {
+			position: absolute;
+			left: -9999px;
+		}
+		.responsive-table tr {
+			padding: 0.5rem 0.75rem;
+			border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 15%, transparent);
+		}
+		.responsive-table tr:last-child { border-bottom: 0; }
+		.responsive-table td {
+			padding: 0.25rem 0;
+			border: 0;
+			max-width: 100%;
+		}
+		.responsive-table td[data-label]:not([data-label=""])::before {
+			content: attr(data-label);
+			display: block;
+			color: color-mix(in srgb, currentColor 55%, transparent);
+			font-size: 0.6875rem;
+			font-weight: 500;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			margin-bottom: 0.125rem;
+		}
+	}
+}
+
+/* Safe-area insets for mobile browsers */
+@layer utilities {
+	.safe-bottom { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+	.safe-top    { padding-top:    max(0.5rem, env(safe-area-inset-top));    }
+}
+
+/* Metadata grid edge-border strip — column count changes at sm/lg */
+@layer components {
+	.metadata-grid .metadata-cell:nth-child(2n) { border-right-width: 0; }
+	@media (min-width: 640px) {
+		.metadata-grid .metadata-cell:nth-child(2n) { border-right-width: 1px; }
+		.metadata-grid .metadata-cell:nth-child(3n) { border-right-width: 0; }
+	}
+	@media (min-width: 1024px) {
+		.metadata-grid .metadata-cell:nth-child(3n) { border-right-width: 1px; }
+		.metadata-grid .metadata-cell:nth-child(4n) { border-right-width: 0; }
+	}
 }
 
 /* FOUC prevention: overrides the inline visibility:hidden in app.html.

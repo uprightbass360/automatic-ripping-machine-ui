@@ -31,13 +31,13 @@
 {#if !job}
 	<tr aria-busy="true">
 		{#each { length: 9 } as _}
-			<td class="p-2"><Skeleton variant="line" width="80%" height="1rem" /></td>
+			<td class="p-2" data-label=""><Skeleton variant="line" width="80%" height="1rem" /></td>
 		{/each}
 	</tr>
 {:else}
 <tr class="border-b border-primary/20 hover:bg-page dark:border-primary/20 dark:hover:bg-primary/5 {selected ? 'bg-primary/[0.03] dark:bg-primary/[0.06]' : ''}">
 	<!-- Checkbox -->
-	<td class="px-4 py-3 w-8">
+	<td class="px-4 py-3 w-8" data-label="">
 		<input
 			type="checkbox"
 			checked={selected}
@@ -47,7 +47,7 @@
 	</td>
 
 	<!-- Title -->
-	<td class="px-4 py-3">
+	<td class="px-4 py-3" data-label="Title">
 		<div class="flex items-center gap-2">
 			<VideoTypeIcon icon={typeConfig.icon} class="h-4 w-4 shrink-0 {typeConfig.iconColor}" />
 			<div class="min-w-0">
@@ -62,7 +62,7 @@
 	</td>
 
 	<!-- Year + IMDB -->
-	<td class="px-4 py-3 text-sm">
+	<td class="px-4 py-3 text-sm" data-label="Year">
 		<div class="flex items-center gap-1.5">
 			{#if job.year}
 				<span>{job.year}</span>
@@ -79,7 +79,7 @@
 	</td>
 
 	<!-- Status + stage/error -->
-	<td class="px-4 py-3">
+	<td class="px-4 py-3" data-label="Status">
 		<div>
 			<StatusBadge status={job.status} />
 			{#if active && job.stage}
@@ -107,12 +107,12 @@
 	</td>
 
 	<!-- Type (colored badge) -->
-	<td class="px-4 py-3 text-sm">
+	<td class="px-4 py-3 text-sm" data-label="Type">
 		<span class="rounded-sm px-1.5 py-0.5 text-xs font-medium {typeConfig.badgeClasses}">{typeConfig.label}</span>
 	</td>
 
 	<!-- Disc -->
-	<td class="px-4 py-3 text-sm">
+	<td class="px-4 py-3 text-sm" data-label="Disc">
 		{#if job.disctype}
 			<span class="inline-flex items-center gap-1">
 				<DiscTypeIcon disctype={job.disctype} size="h-4 w-4" />
@@ -125,7 +125,7 @@
 	</td>
 
 	<!-- Device / Source -->
-	<td class="px-4 py-3 text-sm">
+	<td class="px-4 py-3 text-sm" data-label="Source">
 		{#if job.source_type === 'folder'}
 			<span class="inline-flex items-center gap-1 text-violet-600 dark:text-violet-400" title={job.source_path ?? ''}>
 				<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +139,7 @@
 	</td>
 
 	<!-- Started + elapsed/duration sub-text -->
-	<td class="px-4 py-3 text-sm">
+	<td class="px-4 py-3 text-sm" data-label="Started">
 		{#if job.start_time}
 			<TimeAgo date={job.start_time} />
 			{#if active}
@@ -153,7 +153,7 @@
 	</td>
 
 	<!-- Actions -->
-	<td class="px-4 py-3">
+	<td class="px-4 py-3" data-label="">
 		<JobActions {job} compact {onaction} />
 	</td>
 </tr>

@@ -513,7 +513,7 @@
 				{#snippet loadingSlot()}
 					{#if viewMode === 'table'}
 						<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-							<table class="w-full text-left text-sm">
+							<table class="responsive-table w-full text-left text-sm">
 								<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 									<tr>
 										<th class="px-4 py-3 w-8"></th>
@@ -540,7 +540,7 @@
 				{#snippet ready(jobs)}
 					{#if viewMode === 'table'}
 						<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
-							<table class="w-full text-left text-sm">
+							<table class="responsive-table w-full text-left text-sm">
 								<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
 									<tr>
 										<th class="px-4 py-3 w-8">

@@ -102,7 +102,7 @@
 </script>
 
 {#if canAbandon || canDelete || canFixPerms || canPurge}
-	<div class="contents">
+	<div class="flex flex-wrap items-center gap-1.5">
 		{#if canAbandon}
 			<button
 				onclick={handleAbandon}
