@@ -1,5 +1,35 @@
 # Changelog
 
+## [16.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.2.0...v16.3.0) (2026-04-24)
+
+
+### Features
+
+* **config:** add /api/config feature-flag discovery endpoint ([b554ed6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b554ed66177d87a3cc65cc17aa86fabe1115b342))
+* **config:** add transcoder_enabled flag (default true) ([d1d1c51](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d1d1c511337d980ab1bf73afd708cf2ada4a526a))
+* **dashboard:** short-circuit transcoder fetch when flag disabled ([f8faeb4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f8faeb47e2f2ca27a2a71ba6d9a0b5a298d662cd))
+* **deps:** add require_transcoder_enabled guard ([6c7bd9d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6c7bd9dcc81d850223008e97b3cc58d5685f23e0))
+* **jobs:** gate transcode-config and retranscode behind feature flag ([ac624d0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ac624d06c9ca4ad260c2016485b4f7901bfe7cfa))
+* **settings:** gate transcoder-scoped endpoints behind feature flag ([f0db30a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f0db30a923a0e25fcc06cd5519d882844ca2f9f3))
+* **settings:** skip transcoder config load when disabled ([736417f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/736417ff95001176ec1bc49235c8b5cd9da573ff))
+* **setup:** hide transcoder surfaces in new-user walkthrough ([1207334](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1207334644a755d8ba0ede8a9ebdd7af5ce8dd36))
+* **transcoder:** gate all /api/transcoder/* behind feature flag ([81a47b0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/81a47b010fee57fc69bcea7670df48e03c6c3ef9))
+* **ui:** add transcoderEnabled store hydrated from /api/config ([fc29554](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fc2955488560c2da96e8aa9e08451d55e50b31f6))
+* **ui:** filter transcoder from nav + quick actions when disabled ([fe9c94b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fe9c94bbdec5643613cad52aaa801bca96935db5))
+* **ui:** hide dashboard transcoding section when disabled ([bc3f2f8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bc3f2f83e480876f012d3f7e51d944661603393f))
+* **ui:** hide transcoder settings tab + subpanels + SKIP_TRANSCODE when disabled ([78fa040](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/78fa040d582f65110f4a6fca112120603affb42a))
+* **ui:** hide transcoder status in empty dashboard panel when disabled ([a3e198b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a3e198bed5b50bf66b05077ec9c13ec23893baed))
+* **ui:** hide transcoder surfaces on job detail when disabled ([abdbb8a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/abdbb8af2f6ff05eebd2e4a949fd6094e3cf21cc))
+* **ui:** hide transcoder tab on logs page when disabled ([c8c38c2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c8c38c251b1ec514b39e43aabc735b24111d0784))
+* **ui:** hide transcoder+gpu panels in stats bars when disabled ([5894ba4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5894ba40458f8c1675291cef6b0b5ea9d74b66f3))
+* **ui:** hydrate transcoder-enabled flag from root layout load ([43c8ba6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/43c8ba627d84529b8aa8426093f37d75c3c5348d))
+* **ui:** redirect /transcoder and /logs/transcoder when disabled ([3c89188](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3c89188b77c3284632a6258c91102969e2deae7d))
+
+
+### Bug Fixes
+
+* **arm_client:** bump preflight timeout to 30s ([6504e2f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6504e2ff70a1e209c3d75e7b11eddd0a49851a64))
+
 ## [16.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.1.0...v16.2.0) (2026-04-24)
 
 
