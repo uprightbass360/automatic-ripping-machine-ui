@@ -29,40 +29,44 @@ async def _fetch_transcoder() -> tuple[bool, dict | None, list]:
     return True, stats, active
 
 
+def _load_db_state() -> tuple[list, int, dict[str, str], int, bool]:
+    """Read all dashboard state derived from the ARM database."""
+    active_jobs = arm_db.get_active_jobs()
+    drives = arm_db.get_drives()
+    drives_online = sum(1 for d in drives if not getattr(d, 'stale', False))
+    # Normalize mount paths — drives store /mnt/dev/sr0, jobs store /dev/sr0
+    drive_names: dict[str, str] = {}
+    for d in drives:
+        if d.mount and d.name:
+            drive_names[d.mount] = d.name
+            basename = d.mount.rsplit("/", 1)[-1]
+            drive_names[f"/dev/{basename}"] = d.name
+    notification_count = arm_db.get_notification_count()
+    ripping_paused = arm_db.get_ripping_paused()
+    return active_jobs, drives_online, drive_names, notification_count, ripping_paused
+
+
+async def _fetch_transcoder_system_stats() -> SystemStatsSchema | None:
+    """Wrap transcoder_client.get_system_stats() with the feature-flag gate."""
+    if not app_settings.transcoder_enabled:
+        return None
+    data = await transcoder_client.get_system_stats()
+    return SystemStatsSchema(**data) if data else None
+
+
 @router.get("/dashboard", response_model=DashboardResponse)
 async def get_dashboard():
     db_available = arm_db.is_available()
 
-    # Skip DB queries entirely when database is unavailable
-    active_jobs: list = []
-    drives_online = 0
-    drive_names: dict[str, str] = {}
-    notification_count = 0
-
-    ripping_paused = False
-
     if db_available:
-        active_jobs = arm_db.get_active_jobs()
-        drives = arm_db.get_drives()
-        drives_online = sum(1 for d in drives if not getattr(d, 'stale', False))
-        # Normalize mount paths — drives store /mnt/dev/sr0, jobs store /dev/sr0
-        drive_names = {}
-        for d in drives:
-            if d.mount and d.name:
-                drive_names[d.mount] = d.name
-                # Also map the bare /dev/srX form
-                basename = d.mount.rsplit("/", 1)[-1]
-                drive_names[f"/dev/{basename}"] = d.name
-        notification_count = arm_db.get_notification_count()
-        ripping_paused = arm_db.get_ripping_paused()
+        active_jobs, drives_online, drive_names, notification_count, ripping_paused = _load_db_state()
+    else:
+        active_jobs, drives_online, drive_names, notification_count, ripping_paused = [], 0, {}, 0, False
 
     # Transcoder + ARM system stats in parallel
     transcoder_task = asyncio.create_task(_fetch_transcoder())
     stats_task = asyncio.create_task(arm_client.get_system_stats())
-    if app_settings.transcoder_enabled:
-        transcoder_stats_task = asyncio.create_task(transcoder_client.get_system_stats())
-    else:
-        transcoder_stats_task = None
+    transcoder_stats_task = asyncio.create_task(_fetch_transcoder_system_stats())
     ripping_task = asyncio.create_task(system_cache.get_ripping_data())
 
     transcoder_online, transcoder_stats, active_transcodes = await transcoder_task
@@ -72,11 +76,7 @@ async def get_dashboard():
     if stats_data:
         system_stats = SystemStatsSchema(**stats_data)
 
-    transcoder_system_stats: SystemStatsSchema | None = None
-    if transcoder_stats_task is not None:
-        transcoder_stats_data = await transcoder_stats_task
-        if transcoder_stats_data:
-            transcoder_system_stats = SystemStatsSchema(**transcoder_stats_data)
+    transcoder_system_stats = await transcoder_stats_task
 
     ripping_data = await ripping_task
     makemkv_key_valid = None
