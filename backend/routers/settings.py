@@ -55,25 +55,26 @@ async def get_settings():
     # Transcoder config + GPU support
     transcoder_config = None
     transcoder_gpu_support = None
-
-    tc_config_resp = await transcoder_client.get_config()
-    if tc_config_resp:
-        transcoder_config = tc_config_resp
-
-    health = await transcoder_client.health()
     transcoder_auth_status = None
-    if health:
-        transcoder_gpu_support = health.get("gpu_support")
-        transcoder_auth_status = {
-            "require_api_auth": health.get("require_api_auth", False),
-            "webhook_secret_configured": health.get("webhook_secret_configured", False),
-        }
-        # If the dedicated /config endpoint was offline, use health fallback
-        if not transcoder_config:
-            transcoder_config = {
-                "config": health.get("config"),
-                "updatable_keys": list(health.get("config", {}).keys()),
+
+    if app_settings.transcoder_enabled:
+        tc_config_resp = await transcoder_client.get_config()
+        if tc_config_resp:
+            transcoder_config = tc_config_resp
+
+        health = await transcoder_client.health()
+        if health:
+            transcoder_gpu_support = health.get("gpu_support")
+            transcoder_auth_status = {
+                "require_api_auth": health.get("require_api_auth", False),
+                "webhook_secret_configured": health.get("webhook_secret_configured", False),
             }
+            # If the dedicated /config endpoint was offline, use health fallback
+            if not transcoder_config:
+                transcoder_config = {
+                    "config": health.get("config"),
+                    "updatable_keys": list(health.get("config", {}).keys()),
+                }
 
     return SettingsResponse(
         arm_config=arm_config,
