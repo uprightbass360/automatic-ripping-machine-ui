@@ -42,7 +42,8 @@ async def app_client():
         from backend.main import app
 
         transport = httpx.ASGITransport(app=app)
-        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        # NOSONAR: httpx ASGI transport requires a base_url; no network call is made
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:  # NOSONAR
             yield client
 
 
@@ -56,5 +57,5 @@ async def ripper_only_app_client(monkeypatch):
         from backend.main import app
 
         transport = httpx.ASGITransport(app=app)
-        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:  # NOSONAR
             yield client
