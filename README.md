@@ -145,6 +145,7 @@ The UI is available at `http://localhost:8888`.
 | `ARM_UI_ARM_URL` | `http://localhost:8080` | ARM web UI base URL (for job actions) |
 | `ARM_UI_TRANSCODER_URL` | `http://localhost:5000` | Transcoder API base URL |
 | `ARM_UI_TRANSCODER_API_KEY` | *(empty)* | Optional transcoder API key |
+| `ARM_UI_TRANSCODER_ENABLED` | `true` | Set `false` for ripper-only deployments (no transcoder). Hides all transcoder UI surfaces and short-circuits transcoder HTTP calls. See [ripper-only deployment](https://github.com/uprightbass360/automatic-ripping-machine-neu#ripper-only) in the ARM-neu README. |
 | `ARM_UI_ARM_THEMES_PATH` | `/data/config/themes` | Directory for custom color scheme JSON files |
 | `ARM_UI_IMAGE_CACHE_PATH` | `/data/cache/images` | Directory for cached poster/cover images |
 | `ARM_UI_PORT` | `8888` | Server port |
