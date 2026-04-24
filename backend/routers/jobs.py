@@ -1,7 +1,9 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+
+from backend.dependencies import require_transcoder_enabled
 from pydantic import BaseModel
 
 from backend.models.schemas import (
@@ -400,7 +402,8 @@ async def get_naming_variables():
     return result
 
 
-@router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}, 502: {}, 503: {}})
+@router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}, 502: {}, 503: {}},
+              dependencies=[Depends(require_transcoder_enabled)])
 async def update_transcode_config(job_id: int, request: Request):
     """Set per-job transcode override settings (proxied to ARM)."""
     body = await request.json()
@@ -432,7 +435,8 @@ async def update_track_fields(job_id: int, track_id: int, request: Request):
     return result
 
 
-@router.post("/jobs/{job_id}/retranscode", responses={404: {"description": "Job not found or not a video disc"}, 503: {"description": "Transcoder unavailable"}})
+@router.post("/jobs/{job_id}/retranscode", responses={404: {"description": "Job not found or not a video disc"}, 503: {"description": "Transcoder unavailable"}},
+             dependencies=[Depends(require_transcoder_enabled)])
 async def retranscode_job(job_id: int):
     """Re-send a completed ARM job to the transcoder."""
     payload = arm_db.get_job_retranscode_info(job_id)

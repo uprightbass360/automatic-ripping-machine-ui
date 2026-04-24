@@ -236,3 +236,18 @@ async def test_get_naming_variables_arm_unreachable(app_client):
     with patch("backend.routers.jobs.arm_client.get_naming_variables", new_callable=AsyncMock, return_value=None):
         resp = await app_client.get("/api/naming/variables")
     assert resp.status_code == 503
+
+
+# --- Ripper-only gating ---
+
+async def test_transcode_config_gated_when_disabled(ripper_only_app_client):
+    resp = await ripper_only_app_client.patch("/api/jobs/1/transcode-config", json={})
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "Transcoder disabled on this deployment"
+
+
+async def test_retranscode_gated_when_disabled(ripper_only_app_client):
+    resp = await ripper_only_app_client.post("/api/jobs/1/retranscode")
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "Transcoder disabled on this deployment"
+
