@@ -21,6 +21,8 @@
 	import PresetEditor from '$lib/components/PresetEditor.svelte';
 	import { fetchTranscoderScheme, fetchTranscoderPresets, createCustomPreset } from '$lib/api/settings';
 	import type { Scheme, Preset, Overrides, PresetEditorState } from '$lib/types/presets';
+	import { transcoderEnabled } from '$lib/stores/config';
+	import { get } from 'svelte/store';
 
 	let settings = $state<SettingsData | null>(null);
 	let settingsLoading = $state(true);
@@ -169,14 +171,21 @@
 	}
 
 	// --- Tab state ---
-	const validTabs = ['ripping', 'music', 'transcoding', 'notifications', 'appearance', 'drives', 'system'] as const;
-	type Tab = typeof validTabs[number];
+	const allTabs = ['ripping', 'music', 'transcoding', 'notifications', 'appearance', 'drives', 'system'] as const;
+	type Tab = typeof allTabs[number];
+	const validTabs = $derived(
+		$transcoderEnabled ? allTabs : (allTabs.filter(t => t !== 'transcoding') as readonly Tab[])
+	);
 
 	function parseHash(): { tab: Tab; panel: string | null } {
 		if (typeof window === 'undefined') return { tab: 'ripping', panel: null };
 		const hash = window.location.hash.replace('#', '');
 		const [tabPart, ...panelParts] = hash.split('/');
-		const tab = validTabs.includes(tabPart as Tab) ? (tabPart as Tab) : 'ripping';
+		const tcEnabled = get(transcoderEnabled);
+		const allowedTabs: readonly Tab[] = tcEnabled
+			? allTabs
+			: (allTabs.filter(t => t !== 'transcoding') as readonly Tab[]);
+		const tab = allowedTabs.includes(tabPart as Tab) ? (tabPart as Tab) : 'ripping';
 		const panel = panelParts.length > 0 ? decodeURIComponent(panelParts.join('/')) : null;
 		return { tab, panel };
 	}
@@ -842,7 +851,9 @@
 				{ keys: ['MAKEMKV_PERMA_KEY', 'MAKEMKV_COMMUNITY_KEYDB', 'MAX_CONCURRENT_MAKEMKVINFO', 'PRESCAN_TIMEOUT', 'PRESCAN_CACHE_MB', 'PRESCAN_RETRIES', 'DISC_ENUM_TIMEOUT'] },
 			]},
 			{ label: 'Post-Rip', subpanels: [
-				{ keys: ['SKIP_TRANSCODE', 'AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER'] },
+				{ keys: $transcoderEnabled
+					? ['SKIP_TRANSCODE', 'AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER']
+					: ['AUTO_EJECT', 'DELRAWFILES', 'RIP_POSTER'] },
 			]},
 			{ label: 'Media Directories', subpanels: [
 				{ keys: ['RAW_PATH', 'TRANSCODE_PATH', 'COMPLETED_PATH', 'MUSIC_PATH', 'INGRESS_PATH', 'EXTRAS_SUB'] },
@@ -874,11 +885,13 @@
 		],
 		notifications: [
 			{ label: 'Triggers', subpanels: [
-				{ keys: ['NOTIFY_RIP', 'NOTIFY_TRANSCODE', 'NOTIFY_JOBID'] },
+				{ keys: $transcoderEnabled
+					? ['NOTIFY_RIP', 'NOTIFY_TRANSCODE', 'NOTIFY_JOBID']
+					: ['NOTIFY_RIP', 'NOTIFY_JOBID'] },
 			]},
-			{ label: 'Transcoder', subpanels: [
+			...($transcoderEnabled ? [{ label: 'Transcoder', subpanels: [
 				{ keys: ['TRANSCODER_URL', 'TRANSCODER_WEBHOOK_SECRET', 'LOCAL_RAW_PATH', 'SHARED_RAW_PATH'] },
-			]},
+			]}] : []),
 			{ label: 'Apprise', subpanels: [
 				{ keys: ['JSON_URL', 'APPRISE'] },
 			]},
@@ -1337,7 +1350,9 @@
 			<nav class="-mb-px flex gap-4" aria-label="Settings tabs">
 				<button type="button" onclick={() => setTab('ripping')} class={tabClass('ripping')}>Ripping</button>
 				<button type="button" onclick={() => setTab('music')} class={tabClass('music')}>Music</button>
+				{#if $transcoderEnabled}
 				<button type="button" onclick={() => setTab('transcoding')} class={tabClass('transcoding')}>Transcoding</button>
+				{/if}
 				<button type="button" onclick={() => setTab('notifications')} class={tabClass('notifications')}>Notifications</button>
 				<button type="button" onclick={() => setTab('drives')} class={tabClass('drives')}>Drives</button>
 				<button type="button" onclick={() => setTab('appearance')} class={tabClass('appearance')}>Appearance</button>
@@ -1348,7 +1363,7 @@
 		<SystemHealth />
 
 		<!-- Transcoding Tab -->
-		{#if activeTab === 'transcoding'}
+		{#if activeTab === 'transcoding' && $transcoderEnabled}
 			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcoding</h2>
 			<div class="rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
 				These settings configure the <strong>dedicated transcoder service</strong>, a separate GPU-accelerated container that handles all transcoding. ARM rips discs and notifies this service to transcode.
@@ -2102,6 +2117,7 @@
 						</div>
 					</div>
 					<!-- Transcoder Restart -->
+					{#if $transcoderEnabled}
 					<div class="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-800 dark:bg-red-900/10">
 						<div class="flex items-center justify-between">
 							<div>
@@ -2121,6 +2137,7 @@
 							</button>
 						</div>
 					</div>
+					{/if}
 				</div>
 			</section>
 		{/if}
