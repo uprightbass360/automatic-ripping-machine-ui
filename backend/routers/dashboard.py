@@ -2,6 +2,7 @@ import asyncio
 
 from fastapi import APIRouter
 
+from backend.config import settings as app_settings
 from backend.models.schemas import DashboardResponse, HardwareInfoSchema, JobSchema, SystemStatsSchema
 from backend.services import arm_client, arm_db, transcoder_client, system_cache
 
@@ -9,7 +10,13 @@ router = APIRouter(prefix="/api", tags=["dashboard"])
 
 
 async def _fetch_transcoder() -> tuple[bool, dict | None, list]:
-    """Fetch transcoder health, stats, and active jobs concurrently."""
+    """Fetch transcoder health, stats, and active jobs concurrently.
+
+    Returns a disabled payload without any HTTP call when the feature flag is off.
+    """
+    if not app_settings.transcoder_enabled:
+        return False, None, []
+
     health = await transcoder_client.health()
     if not health:
         return False, None, []
@@ -52,7 +59,10 @@ async def get_dashboard():
     # Transcoder + ARM system stats in parallel
     transcoder_task = asyncio.create_task(_fetch_transcoder())
     stats_task = asyncio.create_task(arm_client.get_system_stats())
-    transcoder_stats_task = asyncio.create_task(transcoder_client.get_system_stats())
+    if app_settings.transcoder_enabled:
+        transcoder_stats_task = asyncio.create_task(transcoder_client.get_system_stats())
+    else:
+        transcoder_stats_task = None
     ripping_task = asyncio.create_task(system_cache.get_ripping_data())
 
     transcoder_online, transcoder_stats, active_transcodes = await transcoder_task
@@ -63,9 +73,10 @@ async def get_dashboard():
         system_stats = SystemStatsSchema(**stats_data)
 
     transcoder_system_stats: SystemStatsSchema | None = None
-    transcoder_stats_data = await transcoder_stats_task
-    if transcoder_stats_data:
-        transcoder_system_stats = SystemStatsSchema(**transcoder_stats_data)
+    if transcoder_stats_task is not None:
+        transcoder_stats_data = await transcoder_stats_task
+        if transcoder_stats_data:
+            transcoder_system_stats = SystemStatsSchema(**transcoder_stats_data)
 
     ripping_data = await ripping_task
     makemkv_key_valid = None
@@ -75,7 +86,7 @@ async def get_dashboard():
         makemkv_key_checked_at = ripping_data.get("makemkv_key_checked_at")
 
     arm_hw = system_cache.get_arm_info()
-    transcoder_hw = system_cache.get_transcoder_info()
+    transcoder_hw = system_cache.get_transcoder_info() if app_settings.transcoder_enabled else None
 
     arm_online = stats_data is not None
 
