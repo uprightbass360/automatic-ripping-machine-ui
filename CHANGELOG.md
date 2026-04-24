@@ -1,5 +1,12 @@
 # Changelog
 
+## [16.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.3.0...v16.4.0) (2026-04-24)
+
+
+### Features
+
+* **mobile:** responsive enhancements across tables, layouts, drawer ([25a8756](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/25a87566bd1cc3ec0cb575b14ac489c504f03267))
+
 ## [16.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.2.0...v16.3.0) (2026-04-24)
 
 
