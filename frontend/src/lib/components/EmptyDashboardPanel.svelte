@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { transcoderEnabled } from '$lib/stores/config';
+
     interface Props {
         drivesOnline: number;
         armOnline: boolean;
@@ -14,7 +16,9 @@
             <circle cx="12" cy="12" r="3" />
             <circle cx="12" cy="12" r="6.5" stroke-width="0.75" opacity="0.4" />
         </svg>
-        <p class="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">No active rips or transcodes</p>
-        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Insert a disc to get started - {drivesOnline} drive{drivesOnline !== 1 ? 's' : ''} online{#if !armOnline}, ARM offline{/if}{#if !transcoderOnline}, transcoder offline{/if}</p>
+        <p class="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+            {$transcoderEnabled ? 'No active rips or transcodes' : 'No active rips'}
+        </p>
+        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Insert a disc to get started - {drivesOnline} drive{drivesOnline !== 1 ? 's' : ''} online{#if !armOnline}, ARM offline{/if}{#if $transcoderEnabled && !transcoderOnline}, transcoder offline{/if}</p>
     </div>
 </section>
