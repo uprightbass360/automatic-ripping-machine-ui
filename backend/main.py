@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.routers import (
     arm_actions,
+    config,
     dashboard,
     drives,
     files,
@@ -50,6 +51,7 @@ app.add_middleware(
 
 # API routes
 app.include_router(dashboard.router)
+app.include_router(config.router)
 app.include_router(jobs.router)
 app.include_router(arm_actions.router)
 app.include_router(arm_actions.naming_router)
