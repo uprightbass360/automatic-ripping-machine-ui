@@ -18,6 +18,7 @@
 	import EmptyDashboardPanel from '$lib/components/EmptyDashboardPanel.svelte';
 	import { fadeIn, fadeOut } from '$lib/transitions';
 	import { fade } from 'svelte/transition';
+	import { transcoderEnabled } from '$lib/stores/config';
 
 	// --- Dashboard state (simple $state, no store) ---
 	let dash = $state<DashboardData>({
@@ -59,6 +60,7 @@
 	}));
 	let finishingJobs = $derived(dash.active_jobs.filter(j => {
 		const s = j.status?.toLowerCase();
+		if (!$transcoderEnabled && s === 'waiting_transcode') return false;
 		return s === 'copying' || s === 'ejecting' || s === 'waiting_transcode';
 	}));
 
@@ -416,7 +418,7 @@
 	{/if}
 
 	<!-- Active transcodes -->
-	{#if dash.active_transcodes.length > 0}
+	{#if $transcoderEnabled && dash.active_transcodes.length > 0}
 		<section in:fade={fadeIn} out:fade={fadeOut}>
 			<SectionFrame variant="full" accent="var(--color-primary)" label="TRANSCODING — {dash.active_transcodes.length} ACTIVE">
 				<div class="space-y-2">
