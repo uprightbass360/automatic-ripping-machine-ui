@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     arm_url: str = "http://localhost:8080"
     transcoder_url: str = "http://localhost:5000"
     transcoder_api_key: str = ""
+    transcoder_enabled: bool = True
     port: int = 8888
 
     model_config = {"env_prefix": "ARM_UI_"}
