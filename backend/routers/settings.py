@@ -4,11 +4,12 @@ import logging
 import os
 from typing import NoReturn
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 import httpx
 from pydantic import BaseModel
 
 from backend.config import settings as app_settings
+from backend.dependencies import require_transcoder_enabled
 from backend.models.schemas import SettingsResponse
 from backend.services import arm_client, arm_db, transcoder_client
 
@@ -142,7 +143,8 @@ async def test_metadata_key(key: str | None = None, provider: str | None = None)
         return {"success": False, "message": "ARM service unreachable", "provider": "unknown"}
 
 
-@router.get("/settings/transcoder/scheme", responses=_TRANSCODER_UNREACHABLE_RESPONSE)
+@router.get("/settings/transcoder/scheme", responses=_TRANSCODER_UNREACHABLE_RESPONSE,
+            dependencies=[Depends(require_transcoder_enabled)])
 async def get_transcoder_scheme():
     result = await transcoder_client.get_scheme()
     if result is None:
@@ -150,7 +152,8 @@ async def get_transcoder_scheme():
     return result
 
 
-@router.get("/settings/transcoder/presets", responses=_TRANSCODER_UNREACHABLE_RESPONSE)
+@router.get("/settings/transcoder/presets", responses=_TRANSCODER_UNREACHABLE_RESPONSE,
+            dependencies=[Depends(require_transcoder_enabled)])
 async def get_transcoder_presets():
     result = await transcoder_client.get_presets()
     if result is None:
@@ -169,7 +172,8 @@ def _raise_from_http_status_error(exc: httpx.HTTPStatusError) -> NoReturn:
 
 
 @router.post("/settings/transcoder/presets", status_code=201,
-             responses={409: {"description": "Slug conflict"}, 502: {"description": "Transcoder unreachable"}})
+             responses={409: {"description": "Slug conflict"}, 502: {"description": "Transcoder unreachable"}},
+             dependencies=[Depends(require_transcoder_enabled)])
 async def create_transcoder_preset(body: dict):
     try:
         result = await transcoder_client.create_preset(body)
@@ -181,7 +185,8 @@ async def create_transcoder_preset(body: dict):
 
 
 @router.patch("/settings/transcoder/presets/{slug}",
-              responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
+              responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}},
+              dependencies=[Depends(require_transcoder_enabled)])
 async def update_transcoder_preset(slug: str, body: dict):
     try:
         result = await transcoder_client.update_preset(slug, body)
@@ -195,7 +200,8 @@ async def update_transcoder_preset(slug: str, body: dict):
 
 
 @router.delete("/settings/transcoder/presets/{slug}",
-               responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}})
+               responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}},
+               dependencies=[Depends(require_transcoder_enabled)])
 async def delete_transcoder_preset(slug: str):
     try:
         result = await transcoder_client.delete_preset(slug)
@@ -208,7 +214,8 @@ async def delete_transcoder_preset(slug: str):
     return result
 
 
-@router.patch("/settings/transcoder", responses={400: {"description": "Invalid config"}, **_TRANSCODER_UNREACHABLE_RESPONSE})
+@router.patch("/settings/transcoder", responses={400: {"description": "Invalid config"}, **_TRANSCODER_UNREACHABLE_RESPONSE},
+              dependencies=[Depends(require_transcoder_enabled)])
 async def update_transcoder_config(body: dict):
     try:
         result = await transcoder_client.update_config(body)
@@ -221,7 +228,8 @@ async def update_transcoder_config(body: dict):
     return result
 
 
-@router.post("/settings/transcoder/test-connection")
+@router.post("/settings/transcoder/test-connection",
+             dependencies=[Depends(require_transcoder_enabled)])
 async def test_transcoder_connection():
     return await transcoder_client.test_connection()
 
@@ -230,7 +238,8 @@ class WebhookTestRequest(BaseModel):
     webhook_secret: str = ""
 
 
-@router.post("/settings/transcoder/test-webhook")
+@router.post("/settings/transcoder/test-webhook",
+             dependencies=[Depends(require_transcoder_enabled)])
 async def test_transcoder_webhook(body: WebhookTestRequest):
     return await transcoder_client.test_webhook(body.webhook_secret)
 
