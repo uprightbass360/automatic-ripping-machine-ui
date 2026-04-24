@@ -27,6 +27,6 @@ def test_raises_503_when_disabled(monkeypatch):
 
 def test_noop_when_enabled(monkeypatch):
     monkeypatch.setattr(settings, "transcoder_enabled", True)
-    # Should not raise
-    result = require_transcoder_enabled()
-    assert result is None
+    # Should not raise. require_transcoder_enabled returns None implicitly;
+    # the contract is "does not raise", so we don't assert on the return.
+    require_transcoder_enabled()
