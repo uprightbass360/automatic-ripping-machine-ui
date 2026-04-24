@@ -38,6 +38,7 @@
 	let retranscodeFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 	let transcoderLogfile = $state<string | null>(null);
 	let transcoderProgress = $state<number | null>(null);
+	let transcoderFps = $state<number | null>(null);
 	let transcoderJobStatus = $state<string | null>(null);
 	let ripProgress = $state<RipProgress | null>(null);
 
@@ -264,15 +265,18 @@
 					if (info.found) {
 						transcoderLogfile = info.logfile ?? null;
 						transcoderProgress = info.progress ?? null;
+						transcoderFps = info.current_fps ?? null;
 						transcoderJobStatus = info.status ?? null;
 					} else {
 						transcoderLogfile = null;
 						transcoderProgress = null;
+						transcoderFps = null;
 						transcoderJobStatus = null;
 					}
 				}).catch(() => {
 					transcoderLogfile = null;
 					transcoderProgress = null;
+					transcoderFps = null;
 					transcoderJobStatus = null;
 				});
 			}
@@ -325,13 +329,16 @@
 				if (info.found) {
 					transcoderLogfile = info.logfile ?? null;
 					transcoderProgress = info.progress ?? null;
+					transcoderFps = info.current_fps ?? null;
 					transcoderJobStatus = info.status ?? null;
 				} else {
 					transcoderProgress = null;
+					transcoderFps = null;
 					transcoderJobStatus = null;
 				}
 			} catch {
 				transcoderProgress = null;
+				transcoderFps = null;
 			}
 		}
 	}
@@ -580,6 +587,9 @@
 					<span>Transcoding</span>
 					{#if transcoderJobStatus}
 						<span class="text-xs text-gray-500 dark:text-gray-400">({transcoderJobStatus})</span>
+					{/if}
+					{#if typeof transcoderFps === 'number' && transcoderFps > 0}
+						<span class="ml-auto font-mono text-xs text-gray-500 dark:text-gray-400" title="Encoder frames per second">{transcoderFps.toFixed(1)} fps</span>
 					{/if}
 				</div>
 				{#if transcoderProgress != null}
