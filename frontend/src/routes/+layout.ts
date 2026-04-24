@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
+import { hydrateConfig } from '$lib/stores/config';
 
 export const prerender = false;
 export const ssr = false;
@@ -9,7 +10,15 @@ export const ssr = false;
 // since completing setup or clearing the DB are deliberate actions.
 let setupConfirmedComplete = false;
 
+// Hydrate feature flags once per page load.
+let configHydrated = false;
+
 export const load: LayoutLoad = async ({ url, fetch }) => {
+	if (!configHydrated) {
+		await hydrateConfig();
+		configHydrated = true;
+	}
+
 	// Skip setup check if already on /setup
 	if (url.pathname.startsWith('/setup')) return {};
 
