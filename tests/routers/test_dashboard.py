@@ -131,3 +131,33 @@ async def test_makemkv_key_check_arm_error(app_client):
     ):
         resp = await app_client.post("/api/dashboard/makemkv-key-check")
     assert resp.status_code == 502
+
+
+# --- Ripper-only short-circuit ---
+
+async def test_dashboard_skips_transcoder_when_disabled(ripper_only_app_client, monkeypatch):
+    """Dashboard must return disabled transcoder payload without calling transcoder_client."""
+    from backend.services import transcoder_client
+
+    called = {"flag": False}
+
+    async def _should_not_be_called(*args, **kwargs):
+        called["flag"] = True
+        return None
+
+    monkeypatch.setattr(transcoder_client, "health", _should_not_be_called)
+    monkeypatch.setattr(transcoder_client, "get_stats", _should_not_be_called)
+    monkeypatch.setattr(transcoder_client, "get_jobs", _should_not_be_called)
+    monkeypatch.setattr(transcoder_client, "get_system_stats", _should_not_be_called)
+
+    with patch("backend.routers.dashboard.arm_client.get_system_stats", new_callable=AsyncMock, return_value=None):
+        resp = await ripper_only_app_client.get("/api/dashboard")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["transcoder_online"] is False
+    assert data["transcoder_stats"] is None
+    assert data["transcoder_system_stats"] is None
+    assert data["active_transcodes"] == []
+    assert data["transcoder_info"] is None
+    assert called["flag"] is False, "transcoder_client was called despite flag being off"
