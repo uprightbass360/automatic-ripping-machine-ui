@@ -1,5 +1,39 @@
 # Changelog
 
+## [16.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.1.0...v16.2.0) (2026-04-24)
+
+
+### Features
+
+* **frontend:** add EmptyDashboardPanel extracted from dashboard inline markup ([3d6b051](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3d6b051fdb681d819f043e723badffe9ede36940))
+* **frontend:** add LoadState wrapper with minDelay and error handling ([a625b99](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a625b99fb249a4fdcf26f922729828adc0737985))
+* **frontend:** add Playwright visual regression harness ([e2d4f2b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e2d4f2ba956f3bda41a7c93ff59f30a2528a655f))
+* **frontend:** add Skeleton primitive with theme-aware colors and reduced-motion ([856d282](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/856d2822535b27059d7d0e5d3a6cc15c6381b548))
+* **frontend:** add SkeletonCard composing Skeleton primitives ([7bc7ea7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7bc7ea75f93364cb59e4d4ee744fb0f8938a6720))
+* **frontend:** add transitions module with reduced-motion support ([6d4a6da](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6d4a6dac24571cb3902b739c3b0e96df2ac72e79))
+* **frontend:** cache theme CSS in localStorage for instant second-visit paint ([dcf6dea](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/dcf6deafef3e5410732c49aef868bb4d190333fd))
+* **frontend:** make ActiveJobRow self-skeletal ([b369f53](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b369f5350c6275bce9aafa17ee3fd75aa88f4db7))
+* **frontend:** make DiscReviewWidget self-skeletal, replace ad-hoc skeleton ([4b8dcbd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4b8dcbd5b4bce76515c9c7113a12f8661b92b991))
+* **frontend:** make DriveCard self-skeletal ([ccb73c9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ccb73c9c39b880156f2e55faca6258b9bfcda292))
+* **frontend:** make FileRow self-skeletal ([0d6c145](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0d6c145be600c6f12581cf627d865d797a0dde33))
+* **frontend:** make JobCard self-skeletal ([c92851c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c92851c3f21d057a993bd1bd2bd00791a65c7bd6))
+* **frontend:** make JobRow self-skeletal ([69fd91f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/69fd91fbeca5c3064b586d05dc97c7ca082c1c08))
+* **frontend:** make TranscodeCard self-skeletal ([f634623](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f634623af278f14bd86def149d00bfba6cc778e7))
+* **frontend:** migrate dashboard to LoadState + fade transitions + EmptyDashboardPanel ([80f4547](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/80f4547ed7389d36015ec1b8dc88f2c5f90d78d4))
+* **frontend:** migrate files route to LoadState ([814c558](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/814c55872e6b957621677212ab13c6f3915a85ab))
+* **frontend:** migrate job detail route to LoadState ([da27282](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/da272820c4688945d25f195245face715564adb8))
+* **frontend:** migrate logs list route to LoadState ([3a781c8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3a781c85b908eda47f9ff5ab348b69f4331edb0a))
+* **frontend:** migrate notifications route to LoadState ([163a3a2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/163a3a260189ff476cf08891fb30b74586d66d05))
+* **frontend:** migrate settings route to LoadState ([512b858](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/512b858b0c0b7e4d48e90841ba5d64a528840027))
+* **frontend:** migrate transcoder route to LoadState ([d09ce2d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d09ce2d1baab4412a33ea6a2f29e834111e98358))
+* **frontend:** show em-dash placeholder when stats are missing ([1e2d2ce](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1e2d2ce5bfdcbce708613039da0d071d764d2fb7))
+
+
+### Bug Fixes
+
+* **frontend:** dedup theme CSS fetch with in-flight promise guard ([2c95bf8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2c95bf8b24090f5c6e0e3ebbc5add76fea5286eb))
+* **frontend:** restore visual status indicator on DiscReviewWidget header ([4dcef8b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4dcef8be0513911eaf414ab7a867c532d666c5f3))
+
 ## [16.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.0.0...v16.1.0) (2026-04-23)
 
 
