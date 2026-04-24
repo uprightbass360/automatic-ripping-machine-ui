@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from unittest.mock import AsyncMock, patch
 
 
@@ -292,3 +293,24 @@ async def test_system_info_transcoder_version(app_client):
         resp = await app_client.get("/api/settings/system-info")
     assert resp.status_code == 200
     assert resp.json()["versions"]["transcoder"] == "10.9.1"
+
+
+# --- Ripper-only gating for transcoder-scoped settings ---
+
+TRANSCODER_SETTINGS_GATED_ENDPOINTS = [
+    ("GET", "/api/settings/transcoder/scheme"),
+    ("GET", "/api/settings/transcoder/presets"),
+    ("POST", "/api/settings/transcoder/presets"),
+    ("PATCH", "/api/settings/transcoder/presets/foo"),
+    ("DELETE", "/api/settings/transcoder/presets/foo"),
+    ("PATCH", "/api/settings/transcoder"),
+    ("POST", "/api/settings/transcoder/test-connection"),
+    ("POST", "/api/settings/transcoder/test-webhook"),
+]
+
+
+@pytest.mark.parametrize("method,path", TRANSCODER_SETTINGS_GATED_ENDPOINTS)
+async def test_transcoder_settings_gated_when_disabled(ripper_only_app_client, method, path):
+    resp = await ripper_only_app_client.request(method, path, json={})
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "Transcoder disabled on this deployment"
