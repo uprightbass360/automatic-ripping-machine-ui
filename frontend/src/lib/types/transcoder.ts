@@ -4,6 +4,7 @@ export interface TranscoderJob {
 	source_path: string;
 	status: string;
 	progress: number;
+	current_fps: number | null;
 	error: string | null;
 	logfile: string | null;
 	video_type: string | null;

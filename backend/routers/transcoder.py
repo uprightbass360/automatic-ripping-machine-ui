@@ -147,4 +147,5 @@ async def get_transcoder_job_for_arm(arm_job_id: int) -> dict[str, Any]:
         "transcoder_job_id": job.get("id"),
         "status": job.get("status"),
         "progress": job.get("progress"),
+        "current_fps": job.get("current_fps"),
     }

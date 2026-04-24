@@ -86,6 +86,13 @@
 			</div>
 		{/if}
 
+		<!-- FPS (when actively encoding) -->
+		{#if isActive && typeof job.current_fps === 'number' && job.current_fps > 0}
+			<span class="shrink-0 font-mono text-xs text-gray-500 dark:text-gray-400" title="Encoder frames per second">
+				{job.current_fps.toFixed(1)} fps
+			</span>
+		{/if}
+
 		<!-- Elapsed -->
 		{#if job.started_at}
 			<span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{elapsedTime(job.started_at)}</span>
@@ -176,7 +183,12 @@
 							</tr>
 							<tr>
 								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Progress</td>
-								<td class="py-1 text-gray-900 dark:text-white">{typeof job.progress === 'number' ? `${job.progress}%` : '—'}</td>
+								<td class="py-1 text-gray-900 dark:text-white">
+									{typeof job.progress === 'number' ? `${job.progress}%` : '—'}
+									{#if isActive && typeof job.current_fps === 'number' && job.current_fps > 0}
+										<span class="ml-2 font-mono text-xs text-gray-500 dark:text-gray-400">{job.current_fps.toFixed(1)} fps</span>
+									{/if}
+								</td>
 								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">Created</td>
 								<td class="py-1 text-gray-900 dark:text-white">{#if job.created_at}<TimeAgo date={job.created_at} />{:else}—{/if}</td>
 							</tr>

@@ -73,6 +73,7 @@ export async function fetchTranscoderLogForArmJob(
 	transcoder_job_id?: number;
 	status?: string;
 	progress?: number | null;
+	current_fps?: number | null;
 }> {
 	return apiFetch(`/api/transcoder/job-for-arm/${armJobId}`);
 }

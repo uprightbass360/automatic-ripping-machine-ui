@@ -10,6 +10,7 @@ function createTranscodeJob(overrides: Partial<TranscoderJob> = {}): TranscoderJ
 		source_path: '/media/raw/my_movie.mkv',
 		status: 'processing',
 		progress: 45,
+		current_fps: null,
 		error: null,
 		logfile: null,
 		video_type: 'movie',
