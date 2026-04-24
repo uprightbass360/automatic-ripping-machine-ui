@@ -23,6 +23,8 @@
 	import { formatDateTime, timeAgo, statusLabel } from '$lib/utils/format';
 	import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
 	import { buildMetadataFields } from '$lib/utils/job-fields';
+	import { transcoderEnabled } from '$lib/stores/config';
+	import { get } from 'svelte/store';
 	import LoadState from '$lib/components/LoadState.svelte';
 	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
 
@@ -257,21 +259,23 @@
 				namingPreviews = {};
 			});
 			// Look up transcoder job info for this ARM job (logfile + progress)
-			fetchTranscoderLogForArmJob(id).then((info) => {
-				if (info.found) {
-					transcoderLogfile = info.logfile ?? null;
-					transcoderProgress = info.progress ?? null;
-					transcoderJobStatus = info.status ?? null;
-				} else {
+			if (get(transcoderEnabled)) {
+				fetchTranscoderLogForArmJob(id).then((info) => {
+					if (info.found) {
+						transcoderLogfile = info.logfile ?? null;
+						transcoderProgress = info.progress ?? null;
+						transcoderJobStatus = info.status ?? null;
+					} else {
+						transcoderLogfile = null;
+						transcoderProgress = null;
+						transcoderJobStatus = null;
+					}
+				}).catch(() => {
 					transcoderLogfile = null;
 					transcoderProgress = null;
 					transcoderJobStatus = null;
-				}
-			}).catch(() => {
-				transcoderLogfile = null;
-				transcoderProgress = null;
-				transcoderJobStatus = null;
-			});
+				});
+			}
 		} catch (e) {
 			if (e instanceof Error && e.message.includes('404')) {
 				goto('/');
@@ -315,7 +319,7 @@
 			// Clear stale rip progress once the phase changes so 100% doesn't linger
 			ripProgress = null;
 		}
-		if (s === 'waiting_transcode' || s === 'transcoding' || s === 'copying') {
+		if ((s === 'waiting_transcode' || s === 'transcoding' || s === 'copying') && get(transcoderEnabled)) {
 			try {
 				const info = await fetchTranscoderLogForArmJob(job.job_id);
 				if (info.found) {
@@ -396,7 +400,7 @@
 
 				<!-- Action buttons pushed right -->
 				<div class="flex flex-wrap items-center gap-2 ml-auto">
-					{#if isVideoDisc && (job.status === 'success' || job.status === 'fail')}
+					{#if $transcoderEnabled && isVideoDisc && (job.status === 'success' || job.status === 'fail')}
 						<button
 							onclick={handleRetranscode}
 							disabled={retranscoding}
@@ -405,7 +409,7 @@
 							{retranscoding ? 'Queuing...' : 'Re-transcode'}
 						</button>
 					{/if}
-					{#if job.status === 'waiting_transcode'}
+					{#if $transcoderEnabled && job.status === 'waiting_transcode'}
 						<button
 							onclick={() => (showSkipConfirm = true)}
 							disabled={skippingTranscode}
@@ -498,7 +502,7 @@
 				{#if isVideoDisc && (job.video_type === 'series' || job.imdb_id)}
 					<button onclick={() => (activePanel = activePanel === 'tvdb' ? null : 'tvdb')} class={panelTabClass('tvdb')}>Episodes</button>
 				{/if}
-				{#if isVideoDisc}
+				{#if $transcoderEnabled && isVideoDisc}
 					<button onclick={() => (activePanel = activePanel === 'transcode' ? null : 'transcode')} class={panelTabClass('transcode')}>Transcode Settings</button>
 				{/if}
 				{#if hasCrcData}
@@ -527,7 +531,7 @@
 				<div class="border-t border-primary/15 p-5 dark:border-primary/15">
 					<EpisodeMatch {job} onapply={loadJob} />
 				</div>
-			{:else if activePanel === 'transcode'}
+			{:else if $transcoderEnabled && activePanel === 'transcode'}
 				<div class="border-t border-primary/15 p-5 dark:border-primary/15">
 					<TranscodeOverrides {job} onsaved={loadJob} />
 				</div>
@@ -612,7 +616,7 @@
 		{#if job.logfile}
 			<InlineLogFeed logfile={job.logfile} maxEntries={15} title="ARM Ripper Log" />
 		{/if}
-		{#if transcoderLogfile && transcoderJobStatus && !isMusicDisc && job?.disctype !== 'data'}
+		{#if $transcoderEnabled && transcoderLogfile && transcoderJobStatus && !isMusicDisc && job?.disctype !== 'data'}
 			<InlineLogFeed
 				logfile={transcoderLogfile}
 				maxEntries={15}
