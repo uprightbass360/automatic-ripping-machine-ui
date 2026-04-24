@@ -1,16 +1,20 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { transcoderEnabled } from '$lib/stores/config';
 
 	let settings = $state<Record<string, string | null> | null>(null);
 	let loading = $state(true);
 
-	const keyPaths = [
+	const allKeyPaths = [
 		{ key: 'RAW_PATH', label: 'Raw Path', desc: 'Where ripped files are stored temporarily' },
 		{ key: 'COMPLETED_PATH', label: 'Completed Path', desc: 'Where finished media files are moved' },
 		{ key: 'TRANSCODE_PATH', label: 'Transcode Path', desc: 'Working directory for transcoding' },
 		{ key: 'RIPMETHOD', label: 'Rip Method', desc: 'How discs are ripped (mkv or backup)' },
 		{ key: 'METADATA_PROVIDER', label: 'Metadata Provider', desc: 'Service for looking up movie/show info' },
 	];
+	const keyPaths = $derived(
+		$transcoderEnabled ? allKeyPaths : allKeyPaths.filter(k => k.key !== 'TRANSCODE_PATH')
+	);
 
 	onMount(async () => {
 		try {

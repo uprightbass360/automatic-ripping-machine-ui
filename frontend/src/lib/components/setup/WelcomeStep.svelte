@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import InfoCard from './InfoCard.svelte';
 	import StatusIcon from './StatusIcon.svelte';
+	import { transcoderEnabled } from '$lib/stores/config';
 
 	interface Props {
 		status: SetupStatus;
@@ -20,6 +21,7 @@
 			if (resp.ok) systemInfo = await resp.json();
 		} catch { /* non-critical */ }
 
+		if (!$transcoderEnabled) return;
 		try {
 			const resp = await fetch('/api/dashboard');
 			if (resp.ok) {
@@ -68,35 +70,37 @@
 		{/if}
 	</div>
 
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+	<div class="grid grid-cols-1 gap-4 {$transcoderEnabled ? 'sm:grid-cols-3' : 'sm:grid-cols-1'}">
 		<InfoCard label="Drives">
 			<span class="text-sm font-medium text-gray-900 dark:text-white">{status.setup_steps.drives}</span>
 		</InfoCard>
 
-		<InfoCard label="Transcoder">
-			{#if transcoderOnline === null}
-				<span class="text-sm setup-status-wait">Checking...</span>
-			{:else}
-				<span class="flex items-center gap-2">
-					<StatusIcon ok={transcoderOnline} />
-					<span class="text-sm font-medium {transcoderOnline ? 'setup-status-ok' : 'setup-status-off'}">
-						{transcoderOnline ? 'Online' : 'Offline'}
+		{#if $transcoderEnabled}
+			<InfoCard label="Transcoder">
+				{#if transcoderOnline === null}
+					<span class="text-sm setup-status-wait">Checking...</span>
+				{:else}
+					<span class="flex items-center gap-2">
+						<StatusIcon ok={transcoderOnline} />
+						<span class="text-sm font-medium {transcoderOnline ? 'setup-status-ok' : 'setup-status-off'}">
+							{transcoderOnline ? 'Online' : 'Offline'}
+						</span>
 					</span>
-				</span>
-			{/if}
-		</InfoCard>
+				{/if}
+			</InfoCard>
 
-		<InfoCard label="Transcoder DB">
-			{#if transcoderOnline === null}
-				<span class="text-sm setup-status-wait">Checking...</span>
-			{:else}
-				<span class="flex items-center gap-2">
-					<StatusIcon ok={!!(transcoderOnline && transcoderStats)} />
-					<span class="text-sm font-medium {transcoderOnline && transcoderStats ? 'setup-status-ok' : 'setup-status-off'}">
-						{transcoderOnline && transcoderStats ? 'Ready' : 'Unavailable'}
+			<InfoCard label="Transcoder DB">
+				{#if transcoderOnline === null}
+					<span class="text-sm setup-status-wait">Checking...</span>
+				{:else}
+					<span class="flex items-center gap-2">
+						<StatusIcon ok={!!(transcoderOnline && transcoderStats)} />
+						<span class="text-sm font-medium {transcoderOnline && transcoderStats ? 'setup-status-ok' : 'setup-status-off'}">
+							{transcoderOnline && transcoderStats ? 'Ready' : 'Unavailable'}
+						</span>
 					</span>
-				</span>
-			{/if}
-		</InfoCard>
+				{/if}
+			</InfoCard>
+		{/if}
 	</div>
 </div>
