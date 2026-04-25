@@ -1288,7 +1288,7 @@
 <!-- Reusable snippet for GPU support cards -->
 {#snippet gpuCards(gpu: Record<string, boolean>)}
 	<section>
-		<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+		<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
 			Hardware Encoding
 		</h2>
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -1347,8 +1347,10 @@
 		<!-- Tab Bar -->
 		{@const tabClass = (tab: string) => `whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors ${activeTab === tab ? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark' : 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}`}
 		<!-- overflow-y-hidden prevents the 1px vertical scroll that
-			 -mb-px + border-b-2 would otherwise trigger inside overflow-x-auto -->
-		<div class="overflow-x-auto overflow-y-hidden border-b border-primary/20 dark:border-primary/20">
+			 -mb-px + border-b-2 would otherwise trigger inside overflow-x-auto.
+			 mb-2 adds breathing room below the tab strip on top of the
+			 outer space-y-6 - tabs feel cramped against headings otherwise. -->
+		<div class="mb-2 overflow-x-auto overflow-y-hidden border-b border-primary/20 dark:border-primary/20">
 			<nav class="-mb-px flex gap-4" aria-label="Settings tabs">
 				<button type="button" onclick={() => setTab('ripping')} class={tabClass('ripping')}>Ripping</button>
 				<button type="button" onclick={() => setTab('music')} class={tabClass('music')}>Music</button>
@@ -1364,14 +1366,14 @@
 
 		<!-- Transcoding Tab -->
 		{#if activeTab === 'transcoding' && $transcoderEnabled}
-			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcoding</h2>
+			<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Transcoding</h2>
 			<div class="rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
 				These settings configure the <strong>dedicated transcoder service</strong>, a separate GPU-accelerated container that handles all transcoding. ARM rips discs and notifies this service to transcode.
 			</div>
 
 			<!-- Service Status -->
 			<section>
-				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Status</h2>
+				<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Service Status</h2>
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<!-- Connection card -->
 					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
@@ -1474,7 +1476,7 @@
 
 			{#if settings.transcoder_config?.config}
 				<section>
-					<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+					<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
 						Configuration
 					</h2>
 
@@ -1759,7 +1761,7 @@
 		<!-- Ripping Tab -->
 		{#if activeTab === 'ripping'}
 			<section>
-				<div class="mb-3 flex items-center justify-between gap-3">
+				<div class="mb-4 flex items-center justify-between gap-3">
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Ripping</h2>
 					{@render armSearchBar()}
 				</div>
@@ -1770,7 +1772,7 @@
 		<!-- Music Tab -->
 		{#if activeTab === 'music'}
 			<section>
-				<div class="mb-3 flex items-center justify-between gap-3">
+				<div class="mb-4 flex items-center justify-between gap-3">
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Music</h2>
 					{@render armSearchBar()}
 				</div>
@@ -1904,7 +1906,7 @@
 		<!-- Notifications Tab -->
 		{#if activeTab === 'notifications'}
 			<section>
-				<div class="mb-3 flex items-center justify-between gap-3">
+				<div class="mb-4 flex items-center justify-between gap-3">
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
 					{@render armSearchBar()}
 				</div>
@@ -1925,7 +1927,7 @@
 
 					<!-- Versions -->
 					<section>
-						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
+						<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
 						<div class="grid grid-cols-2 gap-4 md:grid-cols-5">
 							{#each Object.entries(systemInfo.versions) as [name, version]}
 								<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
@@ -1942,7 +1944,7 @@
 					<!-- Service Endpoints -->
 					{#if systemInfo.endpoints}
 						<section>
-							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Endpoints</h2>
+							<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Service Endpoints</h2>
 							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 								{#each Object.entries(systemInfo.endpoints) as [name, ep]}
 									{@const envVar = name === 'arm' ? 'ARM_UI_ARM_URL' : name === 'transcoder' ? 'ARM_UI_TRANSCODER_URL' : name.toUpperCase() + '_URL'}
@@ -1979,7 +1981,7 @@
 					<!-- Paths -->
 					{#if systemInfo.paths.length > 0}
 						<section>
-							<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Paths</h2>
+							<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Paths</h2>
 							<div class="overflow-x-auto rounded-lg border border-primary/20 dark:border-primary/20">
 								<table class="responsive-table w-full text-left text-sm">
 									<thead class="bg-page text-gray-600 dark:bg-primary/5 dark:text-gray-400">
@@ -2022,7 +2024,7 @@
 
 					<!-- Database -->
 					<section>
-						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Database</h2>
+						<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Database</h2>
 						<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 							<dl class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
 								<div>
@@ -2089,7 +2091,7 @@
 
 			<!-- Editable ARM system settings below diagnostics -->
 			<section>
-				<div class="mb-3 flex items-center justify-between gap-3">
+				<div class="mb-4 flex items-center justify-between gap-3">
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Configuration</h2>
 					{@render armSearchBar()}
 				</div>
@@ -2098,7 +2100,7 @@
 
 			<!-- Service Control -->
 			<section class="mt-6">
-				<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Service Control</h2>
+				<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Service Control</h2>
 				<div class="space-y-3">
 					<!-- ARM Restart -->
 					<div class="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-800 dark:bg-red-900/10">
@@ -2148,7 +2150,7 @@
 
 		<!-- Appearance Tab -->
 		{#if activeTab === 'appearance'}
-			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Appearance</h2>
+			<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Appearance</h2>
 			<section class="space-y-6">
 				<!-- Feedback toast -->
 				{#if themeFeedback}
@@ -2366,7 +2368,7 @@
 		{/if}
 
 		{#if activeTab === 'drives'}
-			<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
+			<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
 			<section class="space-y-6">
 				{#if $driveError}
 					<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
