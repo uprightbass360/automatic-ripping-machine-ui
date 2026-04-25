@@ -17,8 +17,10 @@ services:
       - ARM_UI_ARM_CONFIG_PATH=/data/config/arm.yaml
       - ARM_UI_ARM_URL=http://localhost:8080
       - ARM_UI_TRANSCODER_URL=${ARM_UI_TRANSCODER_URL:-http://localhost:5000}
+      - ARM_UI_TRANSCODER_ENABLED=${ARM_UI_TRANSCODER_ENABLED:-true}
       - ARM_UI_ARM_HB_PRESETS_PATH=/data/hb-presets/presets.json
       - ARM_UI_TRANSCODER_API_KEY=${ARM_UI_TRANSCODER_API_KEY:-}
+      - ARM_UI_ARM_THEMES_PATH=/data/config/themes
       - ARM_UI_IMAGE_CACHE_PATH=/data/cache/images
     volumes:
       - arm-db:/data/db:rw
