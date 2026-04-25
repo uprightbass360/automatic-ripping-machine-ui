@@ -1367,11 +1367,9 @@
 		<!-- Transcoding Tab -->
 		{#if activeTab === 'transcoding' && $transcoderEnabled}
 		<div class="space-y-6">
-			<div>
-				<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Transcoding</h2>
-				<div class="rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
-					These settings configure the <strong>dedicated transcoder service</strong>, a separate GPU-accelerated container that handles all transcoding. ARM rips discs and notifies this service to transcode.
-				</div>
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transcoding</h2>
+			<div class="rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
+				These settings configure the <strong>dedicated transcoder service</strong>, a separate GPU-accelerated container that handles all transcoding. ARM rips discs and notifies this service to transcode.
 			</div>
 
 			<!-- Service Status -->
