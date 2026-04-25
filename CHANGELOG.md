@@ -1,5 +1,17 @@
 # Changelog
 
+## [16.5.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.4.0...v16.5.0) (2026-04-25)
+
+
+### Features
+
+* **transcoder:** surface current encoder FPS during transcode ([9864b3f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9864b3fc63641fbbe4f0405f21ac332fe8398aa8))
+
+
+### Bug Fixes
+
+* **jobs:** skip loading flicker on poll-driven refresh of /jobs/[id] ([f2d2e3b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f2d2e3b3fb7a0e6ff4dfdb8bb2e9865316f2a0c3))
+
 ## [16.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.3.0...v16.4.0) (2026-04-24)
 
 
