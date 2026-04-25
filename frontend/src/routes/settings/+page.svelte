@@ -1346,7 +1346,9 @@
 		{@const settings = _}
 		<!-- Tab Bar -->
 		{@const tabClass = (tab: string) => `whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium transition-colors ${activeTab === tab ? 'border-primary text-primary-text dark:border-primary-text-dark dark:text-primary-text-dark' : 'border-transparent text-gray-500 hover:border-primary/30 hover:text-gray-700 dark:text-gray-400 dark:hover:border-primary/30 dark:hover:text-gray-300'}`}
-		<div class="overflow-x-auto border-b border-primary/20 dark:border-primary/20">
+		<!-- overflow-y-hidden prevents the 1px vertical scroll that
+			 -mb-px + border-b-2 would otherwise trigger inside overflow-x-auto -->
+		<div class="overflow-x-auto overflow-y-hidden border-b border-primary/20 dark:border-primary/20">
 			<nav class="-mb-px flex gap-4" aria-label="Settings tabs">
 				<button type="button" onclick={() => setTab('ripping')} class={tabClass('ripping')}>Ripping</button>
 				<button type="button" onclick={() => setTab('music')} class={tabClass('music')}>Music</button>
@@ -1359,8 +1361,6 @@
 				<button type="button" onclick={() => setTab('system')} class={tabClass('system')}>System</button>
 			</nav>
 		</div>
-
-		<SystemHealth />
 
 		<!-- Transcoding Tab -->
 		{#if activeTab === 'transcoding' && $transcoderEnabled}
@@ -1919,6 +1919,10 @@
 			{:else if systemInfo}
 				<div class="space-y-6">
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">System</h2>
+
+					<!-- Health check (API keys + path permissions) -->
+					<SystemHealth />
+
 					<!-- Versions -->
 					<section>
 						<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
@@ -2362,22 +2366,7 @@
 		{/if}
 
 		{#if activeTab === 'drives'}
-			<div class="flex items-center justify-between">
-				<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
-				<div class="flex gap-2">
-					<button
-						onclick={async () => { rescanning = true; await rescanDrives(); await drives.refresh(); rescanning = false; }}
-						disabled={rescanning}
-						class="rounded-lg border border-primary/20 px-3 py-1.5 text-xs font-medium text-primary-text transition-colors hover:bg-primary/10 dark:border-primary/20 dark:text-primary-text-dark dark:hover:bg-primary/15"
-					>{rescanning ? 'Scanning...' : 'Rescan'}</button>
-					<button
-						onclick={async () => { rescanning = true; await rescanDrives(true); await drives.refresh(); rescanning = false; }}
-						disabled={rescanning}
-						class="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
-						title="Delete all stale drive records and re-detect from hardware"
-					>{rescanning ? 'Scanning...' : 'Force Rescan'}</button>
-				</div>
-			</div>
+			<h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Drives</h2>
 			<section class="space-y-6">
 				{#if $driveError}
 					<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
@@ -2398,8 +2387,23 @@
 					</div>
 				{/if}
 
-				<!-- Diagnostics — collapsible panel -->
+				<!-- Maintenance & Diagnostics -->
 				<hr class="my-2 opacity-20" />
+				<div class="flex flex-wrap items-center gap-2">
+					<span class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Maintenance</span>
+					<button
+						onclick={async () => { rescanning = true; await rescanDrives(); await drives.refresh(); rescanning = false; }}
+						disabled={rescanning}
+						class="ml-auto rounded-lg border border-primary/20 px-3 py-1.5 text-xs font-medium text-primary-text transition-colors hover:bg-primary/10 disabled:opacity-50 dark:border-primary/20 dark:text-primary-text-dark dark:hover:bg-primary/15"
+						title="Re-detect optical drives and refresh database records"
+					>{rescanning ? 'Scanning...' : 'Rescan'}</button>
+					<button
+						onclick={async () => { rescanning = true; await rescanDrives(true); await drives.refresh(); rescanning = false; }}
+						disabled={rescanning}
+						class="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-50 disabled:opacity-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
+						title="Delete all stale drive records and re-detect from hardware"
+					>{rescanning ? 'Scanning...' : 'Force Rescan'}</button>
+				</div>
 				<div data-diag>
 					<button
 						onclick={() => { diagOpen = !diagOpen; }}
