@@ -1,5 +1,15 @@
 # Changelog
 
+## [16.5.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.5.0...v16.5.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **settings:** add breathing room below tabs + normalise heading spacing ([bd9b6cd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bd9b6cdaf4f3de5218465cd5e3d11ad641b3d73d))
+* **settings:** even spacing between Transcoding tab heading + description + first section ([ad0386e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ad0386e38374ad53033e1272dc1af107e1b19967))
+* **settings:** polish settings page layout ([2747dfc](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2747dfc69c0da8910cdb20c0f5de4de87834e88c))
+* **settings:** wrap Transcoding tab body in space-y-6 ([0b57e4d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/0b57e4d6e977573480ae59ad5330abbcef588bfd))
+
 ## [16.5.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.4.0...v16.5.0) (2026-04-25)
 
 
