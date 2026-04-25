@@ -8,7 +8,7 @@
 
 Part of the [Automatic Ripping Machine (neu) ecosystem](#related-projects). A modern replacement dashboard for the original ARM Flask/Jinja2 web interface.
 
-Built with SvelteKit 2 and FastAPI, providing a unified view of ARM ripping jobs and GPU transcoding status in a responsive, dark-mode interface.
+Built with SvelteKit 2 and FastAPI, providing a unified view of ARM ripping jobs and GPU transcoding status in a mobile-first, dark-mode interface that scales from phone to desktop.
 
 ## Related Projects
 
@@ -41,7 +41,7 @@ The original upstream project: [automatic-ripping-machine/automatic-ripping-mach
 
 ### Themes
 
-16 color schemes available under Settings > Appearance.
+30 built-in color schemes available under Settings > Appearance, with custom themes loadable from a config directory and runtime CSS injection (no rebuild needed to add a theme).
 
 | | |
 |---|---|
@@ -89,11 +89,12 @@ The backend reads ARM's SQLite database directly (read-only) for job data, calls
 - Service health indicators (ARM, DB, Transcoder) in the status bar
 - Notification history with read/unread and bulk actions
 - Full ARM and transcoder settings management from the UI
-- 16 color schemes (Default, Ocean, Forest, Terminal, LCARS, and more) with responsive layout
+- 30 built-in color schemes (Default, Ocean, Forest, Terminal, LCARS, Dracula Pro, Hollywood Video, and more) with runtime CSS injection - drop a theme JSON/CSS pair into the config directory and it loads without a rebuild
+- Mobile-first responsive layout: dashboard, jobs list, job detail, settings, and logs all collapse cleanly to phone width. Hamburger drawer with a Menu/Stats segmented toggle on small screens, sticky app bar, iOS safe-area insets, and a `.responsive-table` pattern that stacks tables into labeled cards below the `lg` breakpoint
 
 ## Tech Stack
 
-**Frontend:** SvelteKit 2, Svelte 5, TypeScript, Tailwind CSS 4, Vite 7
+**Frontend:** SvelteKit 2, Svelte 5, TypeScript 6, Tailwind CSS 4, Vite 8
 
 **Backend:** FastAPI, SQLAlchemy 2 (read-only), httpx, Pydantic Settings, Uvicorn
 
