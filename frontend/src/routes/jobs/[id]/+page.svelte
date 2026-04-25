@@ -244,7 +244,17 @@
 
 	async function loadJob() {
 		const id = Number($page.params.id);
-		jobLoading = true;
+		// Only flip into the loading state on the FIRST load. The 5s poll
+		// re-calls loadJob() and on a slow network that would unmount the
+		// rendered detail in favour of a skeleton, then remount when the
+		// fetch settles - the height change scrolls the page (and the user
+		// loses their scroll position). On refreshes we already have a
+		// previous `job` to render; just swap it in place when the new
+		// payload arrives.
+		const isInitialLoad = job == null;
+		if (isInitialLoad) {
+			jobLoading = true;
+		}
 		jobError = null;
 		try {
 			job = await fetchJob(id);
