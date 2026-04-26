@@ -18,7 +18,7 @@ from backend.models.schemas import (
 )
 import httpx
 
-from backend.services import arm_client, arm_db, progress, transcoder_client
+from backend.services import arm_client, progress, transcoder_client
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ router = APIRouter(prefix="/api", tags=["jobs"])
 
 
 @router.get("/jobs", response_model=JobListResponse)
-def list_jobs(
+async def list_jobs(
     page: int = Query(1, ge=1),
     per_page: int = Query(25, ge=1, le=100),
     status: str | None = None,
@@ -44,27 +44,35 @@ def list_jobs(
     sort_by: str | None = None,
     sort_dir: str | None = Query(None, pattern="^(asc|desc)$"),
 ):
-    data = arm_db.get_jobs_paginated_response(
-        page, per_page, status, search, video_type,
-        disctype, days, sort_by, sort_dir,
+    data = await arm_client.get_jobs_paginated(
+        page=page, per_page=per_page, status=status, search=search,
+        video_type=video_type, disctype=disctype, days=days,
+        sort_by=sort_by, sort_dir=sort_dir,
     )
+    if data is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
     return JobListResponse(
-        jobs=[JobSchema.model_validate(j) for j in data["jobs"]],
-        total=data["total"],
-        page=data["page"],
-        per_page=data["per_page"],
-        pages=data["pages"],
+        jobs=[JobSchema.model_validate(j) for j in data.get("jobs") or []],
+        total=data.get("total", 0),
+        page=data.get("page", page),
+        per_page=data.get("per_page", per_page),
+        pages=data.get("pages", 1),
     )
 
 
 @router.get("/jobs/stats")
-def get_job_stats(
+async def get_job_stats(
     search: str | None = None,
     video_type: str | None = None,
     disctype: str | None = None,
     days: int | None = Query(None, ge=1),
 ):
-    return arm_db.get_job_stats(search, video_type, disctype, days)
+    data = await arm_client.get_jobs_stats(
+        search=search, video_type=video_type, disctype=disctype, days=days,
+    )
+    if data is None:
+        return {"total": 0, "active": 0, "success": 0, "fail": 0, "waiting": 0}
+    return data
 
 
 class BulkJobRequest(BaseModel):
@@ -75,7 +83,7 @@ class BulkJobRequest(BaseModel):
 @router.post("/jobs/bulk-delete")
 async def bulk_delete_jobs(req: BulkJobRequest):
     """Delete multiple jobs by ID list or by status."""
-    job_ids = _resolve_job_ids(req)
+    job_ids = await _resolve_job_ids(req)
     deleted = 0
     errors: list[str] = []
 
@@ -93,22 +101,23 @@ async def bulk_delete_jobs(req: BulkJobRequest):
 
 @router.post("/jobs/bulk-purge")
 async def bulk_purge_jobs(req: BulkJobRequest):
-    """Purge multiple jobs — delete record + all associated files.
+    """Purge multiple jobs - delete record + all associated files.
 
     Cleans up: log file, raw MKV output, transcoded intermediates,
     and final completed media folder.
     """
-    job_ids = _resolve_job_ids(req)
+    job_ids = await _resolve_job_ids(req)
     purged = 0
     errors: list[str] = []
 
     for job_id in job_ids:
-        # Read job to get all file paths before deleting the record
-        job = arm_db.get_job(job_id)
-        logfile = getattr(job, "logfile", None) if job else None
-        raw_path = getattr(job, "raw_path", None) if job else None
-        transcode_path = getattr(job, "transcode_path", None) if job else None
-        completed_path = getattr(job, "path", None) if job else None
+        # Read job (via the detail endpoint) to get all file paths before deleting the record.
+        detail = await arm_client.get_job_detail(job_id)
+        job = (detail or {}).get("job") or {}
+        logfile = job.get("logfile")
+        raw_path = job.get("raw_path")
+        transcode_path = job.get("transcode_path")
+        completed_path = job.get("path")
 
         # Delete job record via ARM
         result = await arm_client.delete_job(job_id)
@@ -131,43 +140,55 @@ async def bulk_purge_jobs(req: BulkJobRequest):
     return {"purged": purged, "errors": errors}
 
 
-def _resolve_job_ids(req: BulkJobRequest) -> list[int]:
-    """Resolve request to a list of job IDs."""
+async def _resolve_job_ids(req: BulkJobRequest) -> list[int]:
+    """Resolve a bulk request to a list of job IDs (explicit IDs or by-status query)."""
     if req.job_ids:
         return req.job_ids
     if req.status:
-        jobs, _ = arm_db.get_jobs_paginated(
+        data = await arm_client.get_jobs_paginated(
             page=1, per_page=10000, status=req.status,
         )
-        return [j.job_id for j in jobs]
+        if not data:
+            return []
+        return [j["job_id"] for j in (data.get("jobs") or []) if "job_id" in j]
     return []
 
 
 @router.get("/jobs/{job_id}", response_model=JobDetailSchema, responses=_404_JOB)
-def get_job(job_id: int):
-    job, config = arm_db.get_job_with_config(job_id)
+async def get_job(job_id: int):
+    detail = await arm_client.get_job_detail(job_id)
+    if detail is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if detail.get("success") is False:
+        raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
+
+    job = detail.get("job") or {}
     if not job:
         raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
 
-    tracks = [TrackSchema.from_orm_compat(t) for t in (job.tracks or [])]
-
+    tracks = [TrackSchema.model_validate(t) for t in (detail.get("tracks") or [])]
     job_data = JobSchema.model_validate(job).model_dump()
-    return JobDetailSchema(**job_data, tracks=tracks, config=config)
+    return JobDetailSchema(**job_data, tracks=tracks, config=detail.get("config"))
 
 
 @router.get("/jobs/{job_id}/progress", responses=_404_JOB)
-def get_job_progress(job_id: int):
-    job = arm_db.get_job(job_id)
-    if not job:
+async def get_job_progress(job_id: int):
+    state = await arm_client.get_job_progress_state(job_id)
+    if state is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if state.get("success") is False:
         raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
-    counts = arm_db.get_job_track_counts(job_id)
-    if getattr(job, "disctype", None) == "music":
-        result = progress.get_music_progress(
-            getattr(job, "logfile", None),
-            counts.get("tracks_total", 0),
-        )
+
+    counts_raw = state.get("track_counts") or {}
+    # Ripper returns {total, ripped}; UI's progress shape uses tracks_total/tracks_ripped.
+    counts = {
+        "tracks_total": counts_raw.get("total", 0),
+        "tracks_ripped": counts_raw.get("ripped", 0),
+    }
+    if state.get("disctype") == "music":
+        result = progress.get_music_progress(state.get("logfile"), counts["tracks_total"])
     else:
-        result = progress.get_rip_progress(job.job_id)
+        result = progress.get_rip_progress(job_id)
     # Merge DB counts, but keep the higher tracks_ripped value.
     # The progress file provides a real-time count from PRGC messages
     # (titles currently being saved), while the DB count comes from
@@ -175,25 +196,29 @@ def get_job_progress(job_id: int):
     # progress-file count leads; after completion the DB count is
     # authoritative.
     progress_ripped = result.get("tracks_ripped", 0) or 0
-    db_ripped = counts.get("tracks_ripped", 0) or 0
+    db_ripped = counts["tracks_ripped"] or 0
     result.update(counts)
     result["tracks_ripped"] = max(progress_ripped, db_ripped)
     # Include no_of_titles so the frontend can show title count even before
     # Track rows are created in the DB (early scan/decrypt phase).
-    result["no_of_titles"] = getattr(job, "no_of_titles", None)
+    result["no_of_titles"] = state.get("no_of_titles")
     return result
 
 
 @router.get("/jobs/{job_id}/crc-lookup", responses=_404_502_ARM)
 async def crc_lookup_endpoint(job_id: int):
     """Look up a job's CRC64 hash in the community database."""
-    job = arm_db.get_job(job_id)
-    if not job:
+    detail = await arm_client.get_job_detail(job_id)
+    if detail is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if detail.get("success") is False:
         raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
-    if not job.crc_id:
+    job = detail.get("job") or {}
+    crc_id = job.get("crc_id")
+    if not crc_id:
         return {"no_crc": True, "found": False, "results": [], "has_api_key": False}
     try:
-        return await arm_client.lookup_crc(job.crc_id)
+        return await arm_client.lookup_crc(crc_id)
     except httpx.HTTPStatusError as exc:
         log.warning("CRC lookup for job %d failed: %d", job_id, exc.response.status_code)
         raise HTTPException(status_code=exc.response.status_code, detail="CRC lookup failed")
@@ -439,8 +464,13 @@ async def update_track_fields(job_id: int, track_id: int, request: Request):
              dependencies=[Depends(require_transcoder_enabled)])
 async def retranscode_job(job_id: int):
     """Re-send a completed ARM job to the transcoder."""
-    payload = arm_db.get_job_retranscode_info(job_id)
-    if not payload:
+    payload = await arm_client.get_job_retranscode_info(job_id)
+    if payload is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if isinstance(payload, dict) and payload.get("success") is False:
+        # Ripper returns 404 ({"success": False, "error": "Job not found"})
+        # or 400 ("Only video disc jobs can be re-transcoded"); either way
+        # the UI just needs "can't retranscode this job".
         raise HTTPException(status_code=404, detail="Job not found or not a video disc")
     result = await transcoder_client.send_webhook(payload)
     if not result.get("success"):

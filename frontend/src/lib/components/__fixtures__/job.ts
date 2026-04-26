@@ -57,8 +57,7 @@ const jobDefaults: Job = {
 	pid: null,
 	manual_pause: null,
 	wait_start_time: null,
-	tracks_total: null,
-	tracks_ripped: null,
+	track_counts: null,
 	tvdb_id: null
 };
 

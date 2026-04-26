@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, patch
 async def test_summary_success(app_client):
     """GET /api/maintenance/summary returns aggregate counts from all sources."""
     arm_counts = {"orphan_logs": 3, "orphan_folders": 2}
+    notif_counts = {"total": 14, "unseen": 4, "seen": 0, "cleared": 10}
     completed_page = {"jobs": [], "total": 5}
     failed_page = {"jobs": [], "total": 2}
 
@@ -26,12 +27,15 @@ async def test_summary_success(app_client):
             return_value=arm_counts,
         ),
         patch(
+            "backend.routers.maintenance.arm_client.get_notification_count",
+            new_callable=AsyncMock,
+            return_value=notif_counts,
+        ),
+        patch(
             "backend.routers.maintenance.transcoder_client.get_jobs",
             new_callable=AsyncMock,
             side_effect=_tc_jobs,
         ),
-        patch("backend.routers.maintenance.arm_db.get_notification_count", return_value=4),
-        patch("backend.routers.maintenance.arm_db.get_cleared_notification_count", return_value=10),
     ):
         resp = await app_client.get("/api/maintenance/summary")
     assert resp.status_code == 200
@@ -52,18 +56,23 @@ async def test_summary_arm_unavailable(app_client):
             return_value=None,
         ),
         patch(
+            "backend.routers.maintenance.arm_client.get_notification_count",
+            new_callable=AsyncMock,
+            return_value=None,
+        ),
+        patch(
             "backend.routers.maintenance.transcoder_client.get_jobs",
             new_callable=AsyncMock,
             return_value=None,
         ),
-        patch("backend.routers.maintenance.arm_db.get_notification_count", return_value=0),
-        patch("backend.routers.maintenance.arm_db.get_cleared_notification_count", return_value=0),
     ):
         resp = await app_client.get("/api/maintenance/summary")
     assert resp.status_code == 200
     data = resp.json()
     assert data["orphan_logs"] is None
     assert data["orphan_folders"] is None
+    assert data["unseen_notifications"] is None
+    assert data["cleared_notifications"] is None
     assert data["stale_transcoder_jobs"] is None
 
 
@@ -239,8 +248,12 @@ async def test_bulk_delete_folders_success(app_client):
 
 
 async def test_dismiss_all_notifications_success(app_client):
-    """POST /api/maintenance/dismiss-all-notifications calls arm_db and returns count."""
-    with patch("backend.routers.maintenance.arm_db.dismiss_all_notifications", return_value=7):
+    """POST /api/maintenance/dismiss-all-notifications proxies to ARM."""
+    with patch(
+        "backend.routers.maintenance.arm_client.dismiss_all_notifications",
+        new_callable=AsyncMock,
+        return_value={"success": True, "count": 7},
+    ):
         resp = await app_client.post("/api/maintenance/dismiss-all-notifications")
     assert resp.status_code == 200
     data = resp.json()
@@ -248,17 +261,43 @@ async def test_dismiss_all_notifications_success(app_client):
     assert data["count"] == 7
 
 
+async def test_dismiss_all_notifications_arm_unreachable(app_client):
+    """POST /api/maintenance/dismiss-all-notifications returns 503 when ARM is down."""
+    with patch(
+        "backend.routers.maintenance.arm_client.dismiss_all_notifications",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.post("/api/maintenance/dismiss-all-notifications")
+    assert resp.status_code == 503
+
+
 # --- POST /api/maintenance/purge-notifications ---
 
 
 async def test_purge_notifications_success(app_client):
-    """POST /api/maintenance/purge-notifications deletes cleared notifications."""
-    with patch("backend.routers.maintenance.arm_db.purge_cleared_notifications", return_value=15):
+    """POST /api/maintenance/purge-notifications proxies to ARM."""
+    with patch(
+        "backend.routers.maintenance.arm_client.purge_cleared_notifications",
+        new_callable=AsyncMock,
+        return_value={"success": True, "count": 15},
+    ):
         resp = await app_client.post("/api/maintenance/purge-notifications")
     assert resp.status_code == 200
     data = resp.json()
     assert data["success"] is True
     assert data["count"] == 15
+
+
+async def test_purge_notifications_arm_unreachable(app_client):
+    """POST /api/maintenance/purge-notifications returns 503 when ARM is down."""
+    with patch(
+        "backend.routers.maintenance.arm_client.purge_cleared_notifications",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.post("/api/maintenance/purge-notifications")
+    assert resp.status_code == 503
 
 
 # --- POST /api/maintenance/cleanup-transcoder ---

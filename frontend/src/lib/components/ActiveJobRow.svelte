@@ -22,8 +22,8 @@
 	let { job, driveNames = {}, progress = null, progressStage = null, tracksRipped = null, tracksTotal = null }: Props = $props();
 
 	// Use progress-polled counts when available (real-time), fall back to DB counts
-	let displayRipped = $derived(tracksRipped ?? job?.tracks_ripped ?? 0);
-	let displayTotal = $derived(tracksTotal ?? job?.tracks_total ?? 0);
+	let displayRipped = $derived(tracksRipped ?? job?.track_counts?.ripped ?? 0);
+	let displayTotal = $derived(tracksTotal ?? job?.track_counts?.total ?? 0);
 	let expanded = $state(false);
 
 	let driveName = $derived(job?.devpath ? driveNames[job.devpath] : null);

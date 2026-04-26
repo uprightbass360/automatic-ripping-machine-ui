@@ -88,9 +88,13 @@ export interface Job {
 	source_type?: string;
 	source_path?: string;
 	wait_start_time: string | null;
-	tracks_total: number | null;
-	tracks_ripped: number | null;
+	track_counts: TrackCounts | null;
 	tvdb_id: number | null;
+}
+
+export interface TrackCounts {
+	total: number;
+	ripped: number;
 }
 
 export interface JobDetail extends Job {
@@ -119,6 +123,19 @@ export interface HardwareInfo {
 	memory_total_gb: number | null;
 }
 
+export interface DriveCurrentJob {
+	job_id: number;
+	title: string | null;
+	year: string | null;
+	video_type: string | null;
+	status: string | null;
+	stage: string | null;
+	disctype: string | null;
+	label: string | null;
+	poster_url: string | null;
+	no_of_titles: number | null;
+}
+
 export interface Drive {
 	drive_id: number;
 	name: string | null;
@@ -131,21 +148,16 @@ export interface Drive {
 	model: string | null;
 	serial: string | null;
 	connection: string | null;
-	read_cd: boolean | null;
-	read_dvd: boolean | null;
-	read_bd: boolean | null;
+	capabilities: string[];
 	firmware: string | null;
-	location: string | null;
 	stale: boolean | null;
-	mdisc: number | null;
-	serial_id: string | null;
 	uhd_capable: boolean | null;
 	rip_speed: number | null;
 	prescan_cache_mb: number | null;
 	prescan_timeout: number | null;
 	prescan_retries: number | null;
 	disc_enum_timeout: number | null;
-	current_job: Job | null;
+	current_job: DriveCurrentJob | null;
 }
 
 export interface Notification {

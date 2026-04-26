@@ -1,8 +1,8 @@
-"""Tests for backend.routers.notifications — list and dismiss notifications."""
+"""Tests for backend.routers.notifications - list and dismiss notifications."""
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 
 # --- GET /api/notifications ---
@@ -10,17 +10,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 async def test_list_notifications(app_client):
     """GET /api/notifications returns validated notification list."""
-    raw = [
-        MagicMock(
-            id=1,
-            seen=False,
-            cleared=False,
-            title="Rip Complete",
-            message="Movie ripped",
-            trigger_time=None,
-        ),
-    ]
-    with patch("backend.routers.notifications.arm_db.get_notifications", return_value=raw):
+    payload = {"notifications": [
+        {
+            "id": 1, "seen": False, "cleared": False,
+            "title": "Rip Complete", "message": "Movie ripped",
+            "trigger_time": None, "dismiss_time": None,
+        },
+    ]}
+    with patch(
+        "backend.routers.notifications.arm_client.get_notifications",
+        new_callable=AsyncMock,
+        return_value=payload,
+    ):
         resp = await app_client.get("/api/notifications")
     assert resp.status_code == 200
     data = resp.json()
@@ -30,10 +31,26 @@ async def test_list_notifications(app_client):
 
 async def test_list_notifications_empty(app_client):
     """GET /api/notifications returns empty list when no notifications."""
-    with patch("backend.routers.notifications.arm_db.get_notifications", return_value=[]):
+    with patch(
+        "backend.routers.notifications.arm_client.get_notifications",
+        new_callable=AsyncMock,
+        return_value={"notifications": []},
+    ):
         resp = await app_client.get("/api/notifications")
     assert resp.status_code == 200
     assert resp.json() == []
+
+
+async def test_list_notifications_arm_unreachable(app_client):
+    """GET /api/notifications returns 503 when ARM is unreachable."""
+    with patch(
+        "backend.routers.notifications.arm_client.get_notifications",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.get("/api/notifications")
+    assert resp.status_code == 503
+    assert "unreachable" in resp.json()["detail"].lower()
 
 
 # --- PATCH /api/notifications/{notify_id} ---

@@ -212,22 +212,36 @@ async def test_update_track_fields_not_found(app_client):
 
 async def test_retranscode_job_success(app_client):
     payload = {"title": "Movie", "path": "/raw/Movie", "status": "success"}
-    with patch("backend.routers.jobs.arm_db.get_job_retranscode_info", return_value=payload), \
-         patch("backend.routers.jobs.transcoder_client.send_webhook", new_callable=AsyncMock, return_value={"success": True}):
+    with patch("backend.routers.jobs.arm_client.get_job_retranscode_info",
+               new_callable=AsyncMock, return_value=payload), \
+         patch("backend.routers.jobs.transcoder_client.send_webhook",
+               new_callable=AsyncMock, return_value={"success": True}):
         resp = await app_client.post("/api/jobs/1/retranscode")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
 
 
 async def test_retranscode_job_not_found(app_client):
-    with patch("backend.routers.jobs.arm_db.get_job_retranscode_info", return_value=None):
+    """Ripper returns success=False when job missing or not a video disc -> 404."""
+    with patch("backend.routers.jobs.arm_client.get_job_retranscode_info",
+               new_callable=AsyncMock,
+               return_value={"success": False, "error": "Job not found"}):
         resp = await app_client.post("/api/jobs/999/retranscode")
     assert resp.status_code == 404
 
 
+async def test_retranscode_job_arm_unreachable(app_client):
+    with patch("backend.routers.jobs.arm_client.get_job_retranscode_info",
+               new_callable=AsyncMock, return_value=None):
+        resp = await app_client.post("/api/jobs/1/retranscode")
+    assert resp.status_code == 502
+
+
 async def test_retranscode_job_transcoder_unavailable(app_client):
     payload = {"title": "Movie", "path": "/raw/Movie", "status": "success"}
-    with patch("backend.routers.jobs.arm_db.get_job_retranscode_info", return_value=payload), \
-         patch("backend.routers.jobs.transcoder_client.send_webhook", new_callable=AsyncMock, return_value={"success": False, "error": "offline"}):
+    with patch("backend.routers.jobs.arm_client.get_job_retranscode_info",
+               new_callable=AsyncMock, return_value=payload), \
+         patch("backend.routers.jobs.transcoder_client.send_webhook",
+               new_callable=AsyncMock, return_value={"success": False, "error": "offline"}):
         resp = await app_client.post("/api/jobs/1/retranscode")
     assert resp.status_code == 503

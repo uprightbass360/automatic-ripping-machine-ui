@@ -3,14 +3,17 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from backend.models.schemas import NotificationSchema
-from backend.services import arm_client, arm_db
+from backend.services import arm_client
 
 router = APIRouter(prefix="/api", tags=["notifications"])
 
 
 @router.get("/notifications", response_model=list[NotificationSchema])
-def list_notifications():
-    notifications = arm_db.get_notifications()
+async def list_notifications():
+    resp = await arm_client.get_notifications()
+    if resp is None:
+        raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
+    notifications = resp.get("notifications") or []
     return [NotificationSchema.model_validate(n) for n in notifications]
 
 

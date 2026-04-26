@@ -1,4 +1,4 @@
-"""Tests for backend.routers.drives — delegation to arm_db + arm_client."""
+"""Tests for backend.routers.drives - delegation to the ripper API."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, patch
 
 
 async def test_list_drives(app_client):
-    """GET /api/drives returns drives with current_job."""
-    drives = [
+    """GET /api/drives returns drives with current_job (proxied from ripper)."""
+    drives_payload = {"drives": [
         {
             "drive_id": 1,
             "name": "BD Drive",
@@ -33,13 +33,27 @@ async def test_list_drives(app_client):
             "serial_id": "lg-abc",
             "current_job": None,
         }
-    ]
-    with patch("backend.routers.drives.arm_db.get_drives_with_jobs", return_value=drives):
+    ]}
+    with patch(
+        "backend.routers.drives.arm_client.get_drives_with_jobs",
+        new_callable=AsyncMock, return_value=drives_payload,
+    ):
         resp = await app_client.get("/api/drives")
     assert resp.status_code == 200
     data = resp.json()
     assert len(data) == 1
     assert data[0]["name"] == "BD Drive"
+
+
+async def test_list_drives_arm_unreachable(app_client):
+    """GET /api/drives returns [] when ARM is unreachable (dashboard tolerates this)."""
+    with patch(
+        "backend.routers.drives.arm_client.get_drives_with_jobs",
+        new_callable=AsyncMock, return_value=None,
+    ):
+        resp = await app_client.get("/api/drives")
+    assert resp.status_code == 200
+    assert resp.json() == []
 
 
 # --- PATCH /api/drives/{drive_id} ---

@@ -7,7 +7,7 @@ const ACTIVE_JOB = {
 	job_id: 1, title: 'Ripping Movie', status: 'ripping', video_type: 'movie', year: '2024',
 	disctype: 'bluray', label: 'TEST', start_time: '2025-06-15T10:00:00Z', stop_time: null,
 	job_length: null, devpath: '/dev/sr0', imdb_id: null, poster_url: null, errors: null,
-	stage: 'Ripping', no_of_titles: 3, logfile: null, tracks_total: null, tracks_ripped: null,
+	stage: 'Ripping', no_of_titles: 3, logfile: null, track_counts: null,
 	wait_start_time: null
 };
 
@@ -16,7 +16,7 @@ const COMPLETED_JOB = {
 	disctype: 'dvd', label: 'OLD', start_time: '2025-06-14T10:00:00Z',
 	stop_time: '2025-06-14T11:00:00Z', job_length: '1h', devpath: '/dev/sr0', imdb_id: null,
 	poster_url: null, errors: null, stage: null, no_of_titles: 1, logfile: null,
-	tracks_total: null, tracks_ripped: null
+	track_counts: null
 };
 
 const DEFAULT_JOBS_RESPONSE = {

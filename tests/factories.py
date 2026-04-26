@@ -1,11 +1,15 @@
-"""Test data factories for ARM models."""
+"""Test data factories for ripper-API-shaped dicts.
+
+The UI no longer touches the ripper DB directly, so the ORM-spec mocks that
+used to live here have been retired alongside `backend/services/arm_db.py`.
+What remains is the shared `make_job_dict()` helper that produces a Job
+columns dict matching what `/api/v1/jobs/active` and `/jobs/paginated`
+return.
+"""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
-
-from backend.models.arm import Config, Job, SystemDrives, Track
 
 
 _JOB_DEFAULTS: dict = {
@@ -60,150 +64,16 @@ _JOB_DEFAULTS: dict = {
 }
 
 
-def make_job(**overrides) -> MagicMock:
-    """Return a MagicMock(spec=Job) with realistic defaults."""
-    defaults = {
-        **_JOB_DEFAULTS,
-        "imdb_id_auto": None,
-        "imdb_id_manual": None,
-        "poster_url_auto": None,
-        "poster_url_manual": None,
-        "updated": False,
-        "pid_hash": 67890,
-        "tracks": [],
-        "config": None,
-    }
-    defaults.update(overrides)
-    mock = MagicMock(spec=Job)
-    for k, v in defaults.items():
-        setattr(mock, k, v)
-    return mock
-
-
 def make_job_dict(**overrides) -> dict:
-    """Return a plain dict matching what get_active_jobs() returns (Job columns + track counts)."""
+    """Return a plain dict matching the Job-columns dict the ripper API returns.
+
+    Used by router tests that mock ``arm_client.get_jobs_paginated`` /
+    ``get_active_jobs`` / ``get_job_detail``. Includes a default
+    ``track_counts`` so JobSchema's nested-counts field is populated.
+    """
     defaults = {
         **_JOB_DEFAULTS,
-        "tracks_total": 5,
-        "tracks_ripped": 0,
+        "track_counts": {"total": 5, "ripped": 0},
     }
     defaults.update(overrides)
     return defaults
-
-
-def make_track(**overrides) -> MagicMock:
-    """Return a MagicMock(spec=Track) with realistic defaults."""
-    defaults = {
-        "track_id": 1,
-        "job_id": 1,
-        "track_number": "1",
-        "length": 5400,
-        "aspect_ratio": "16:9",
-        "fps": 23.976,
-        "enabled": True,
-        "basename": "title_t01",
-        "filename": "title_t01.mkv",
-        "orig_filename": "title_t01.mkv",
-        "new_filename": "Test Movie (2024).mkv",
-        "ripped": True,
-        "status": "success",
-        "error": None,
-        "source": "/dev/sr0",
-        "title": None,
-        "year": None,
-        "imdb_id": None,
-        "poster_url": None,
-        "video_type": None,
-        "episode_number": None,
-        "episode_name": None,
-    }
-    defaults.update(overrides)
-    mock = MagicMock(spec=Track)
-    for k, v in defaults.items():
-        setattr(mock, k, v)
-    return mock
-
-
-def make_config(**overrides) -> Config:
-    """Return a real Config() instance (needed for __table__.columns iteration)."""
-    defaults = {
-        "CONFIG_ID": 1,
-        "job_id": 1,
-        "RIPMETHOD": "mkv",
-        "MAINFEATURE": "false",
-        "MINLENGTH": "600",
-        "MAXLENGTH": "99999",
-        "VIDEOTYPE": "auto",
-        "ARM_CHECK_UDF": "true",
-        "GET_VIDEO_TITLE": "true",
-        "MANUAL_WAIT": "true",
-        "MANUAL_WAIT_TIME": "60",
-        "RAW_PATH": "/home/arm/raw",
-        "TRANSCODE_PATH": "/home/arm/transcode",
-        "COMPLETED_PATH": "/home/arm/completed",
-        "EXTRAS_SUB": "extras",
-        "INSTALLPATH": "/opt/arm",
-        "LOGPATH": "/home/arm/logs",
-        "LOGLEVEL": "DEBUG",
-        "LOGLIFE": "1",
-        "DBFILE": "/home/arm/db/arm.db",
-        "WEBSERVER_IP": "0.0.0.0",
-        "WEBSERVER_PORT": "8080",
-        "SET_MEDIA_PERMISSIONS": "false",
-        "CHMOD_VALUE": "777",
-        "SET_MEDIA_OWNER": "false",
-        "CHOWN_USER": "arm",
-        "CHOWN_GROUP": "arm",
-        "MKV_ARGS": "",
-        "DELRAWFILES": "true",
-        "HASHEDKEYS": "",
-        "EMBY_REFRESH": "false",
-        "EMBY_SERVER": "",
-        "EMBY_PORT": "8096",
-        "NOTIFY_RIP": "true",
-        "NOTIFY_TRANSCODE": "true",
-        # Sensitive fields
-        "EMBY_API_KEY": "secret_emby_key",
-        "EMBY_PASSWORD": "secret_emby_pw",
-        "IFTTT_KEY": "secret_ifttt",
-        "PB_KEY": "secret_pb",
-        "OMDB_API_KEY": "secret_omdb",
-        "PO_USER_KEY": "secret_po_user",
-        "PO_APP_KEY": "secret_po_app",
-        "APPRISE": "tgram://secret_token",
-    }
-    defaults.update(overrides)
-    config = Config()
-    for k, v in defaults.items():
-        setattr(config, k, v)
-    return config
-
-
-def make_drive(**overrides) -> MagicMock:
-    """Return a MagicMock(spec=SystemDrives) with realistic defaults."""
-    defaults = {
-        "drive_id": 1,
-        "name": "BD Drive 1",
-        "mount": "/mnt/dev/sr0",
-        "job_id_current": None,
-        "job_id_previous": None,
-        "description": "Primary Blu-ray drive",
-        "drive_mode": "auto",
-        "maker": "LG",
-        "model": "WH16NS60",
-        "serial": "ABC123",
-        "connection": "SATA",
-        "read_cd": True,
-        "read_dvd": True,
-        "read_bd": True,
-        "firmware": "1.02",
-        "location": "0:0:0:0",
-        "stale": False,
-        "mdisc": 0,
-        "serial_id": "lg-wh16ns60-abc123",
-    }
-    defaults.update(overrides)
-    mock = MagicMock(spec=SystemDrives)
-    for k, v in defaults.items():
-        setattr(mock, k, v)
-    return mock

@@ -22,8 +22,7 @@ function createJob(overrides: Partial<Job> = {}): Job {
 		stage: 'Ripping title 1',
 		no_of_titles: 3,
 		logfile: 'test.log',
-		tracks_total: 3,
-		tracks_ripped: 1,
+		track_counts: { total: 3, ripped: 1 },
 		wait_start_time: null,
 		source_type: null,
 		source_path: null,
@@ -107,7 +106,7 @@ describe('ActiveJobRow', () => {
 
 		it('shows track counts when expanded', async () => {
 			renderComponent(ActiveJobRow, {
-				props: { job: createJob({ tracks_total: 5, tracks_ripped: 2 }) }
+				props: { job: createJob({ track_counts: { total: 5, ripped: 2 } }) }
 			});
 			await fireEvent.click(screen.getByText('Test Movie'));
 			await waitFor(() => {

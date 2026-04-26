@@ -86,7 +86,7 @@ export interface SystemInfoData {
 		writable: boolean;
 	}>;
 	database: {
-		path: string;
+		path: string | null;
 		size_bytes: number | null;
 		available: boolean;
 		migration_current: string | null;
