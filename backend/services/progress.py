@@ -9,12 +9,28 @@ For music (abcde) rips, progress is parsed from the main job log using
 Grabbing/Encoding/Tagging track patterns.
 """
 import logging
-import os
 import re
+from pathlib import Path
 
 from backend.config import settings
 
 log = logging.getLogger(__name__)
+
+
+def _safe_log_path(*parts: str) -> Path | None:
+    """Resolve a path under settings.arm_log_path, refusing anything that escapes.
+
+    Returns None if the resolved path falls outside the configured log root,
+    which guards against path-traversal even if a caller bypasses FastAPI's
+    int-typed path-parameter parsing.
+    """
+    root = Path(settings.arm_log_path).resolve()
+    candidate = (root / Path(*parts)).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return None
+    return candidate
 
 
 def _parse_progress_lines(lines: list[str]) -> tuple:
@@ -45,8 +61,8 @@ def get_rip_progress(job_id: int) -> dict:
     """
     result: dict = {"progress": None, "stage": None}
 
-    path = os.path.join(settings.arm_log_path, "progress", f"{job_id}.log")
-    if not os.path.isfile(path):
+    path = _safe_log_path("progress", f"{job_id}.log")
+    if path is None or not path.is_file():
         return result
 
     try:
@@ -90,8 +106,8 @@ def get_music_progress(logfile: str | None, total_tracks: int) -> dict:
     if not logfile:
         return result
 
-    path = os.path.join(settings.arm_log_path, logfile)
-    if not os.path.isfile(path):
+    path = _safe_log_path(logfile)
+    if path is None or not path.is_file():
         return result
 
     try:
