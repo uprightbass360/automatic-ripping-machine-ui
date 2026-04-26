@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.services import arm_client, arm_db, image_cache, transcoder_client
+from backend.services import arm_client, image_cache, transcoder_client
 
 log = logging.getLogger(__name__)
 
@@ -35,10 +35,7 @@ def _check_arm(result: dict[str, Any] | None) -> dict[str, Any]:
 
 @router.get("/maintenance/summary")
 async def get_summary():
-    """Aggregate counts from ARM, notifications DB, and transcoder."""
-
-    async def _arm_counts():
-        return await arm_client.get_maintenance_counts()
+    """Aggregate counts from ARM (orphans + notifications) and transcoder."""
 
     async def _transcoder_counts():
         completed = await transcoder_client.get_jobs(status="completed", limit=1)
@@ -52,17 +49,17 @@ async def get_summary():
             total += failed["total"]
         return total
 
-    arm_task = asyncio.create_task(_arm_counts())
-    tc_task = asyncio.create_task(_transcoder_counts())
-
-    arm_counts = await arm_task
-    tc_count = await tc_task
+    arm_counts, notif_counts, tc_count = await asyncio.gather(
+        arm_client.get_maintenance_counts(),
+        arm_client.get_notification_count(),
+        _transcoder_counts(),
+    )
 
     return {
         "orphan_logs": arm_counts.get("orphan_logs") if arm_counts else None,
         "orphan_folders": arm_counts.get("orphan_folders") if arm_counts else None,
-        "unseen_notifications": arm_db.get_notification_count(),
-        "cleared_notifications": arm_db.get_cleared_notification_count(),
+        "unseen_notifications": notif_counts.get("unseen") if notif_counts else None,
+        "cleared_notifications": notif_counts.get("cleared") if notif_counts else None,
         "stale_transcoder_jobs": tc_count,
     }
 
@@ -99,14 +96,12 @@ async def bulk_delete_folders(req: BulkPathRequest):
 
 @router.post("/maintenance/dismiss-all-notifications")
 async def dismiss_all_notifications():
-    count = arm_db.dismiss_all_notifications()
-    return {"success": True, "count": count}
+    return _check_arm(await arm_client.dismiss_all_notifications())
 
 
 @router.post("/maintenance/purge-notifications")
 async def purge_notifications():
-    count = arm_db.purge_cleared_notifications()
-    return {"success": True, "count": count}
+    return _check_arm(await arm_client.purge_cleared_notifications())
 
 
 @router.post("/maintenance/cleanup-transcoder")

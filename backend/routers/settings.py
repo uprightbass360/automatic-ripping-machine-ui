@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from backend.config import settings as app_settings
 from backend.dependencies import require_transcoder_enabled
 from backend.models.schemas import SettingsResponse
-from backend.services import arm_client, arm_db, transcoder_client
+from backend.services import arm_client, transcoder_client
 
 router = APIRouter(prefix="/api", tags=["settings"])
 log = logging.getLogger(__name__)
@@ -37,7 +37,6 @@ def _read_hb_presets() -> list[str] | None:
 
 @router.get("/settings", response_model=SettingsResponse)
 async def get_settings():
-    # ARM config: prefer live API, fall back to DB snapshot
     arm_config = None
     arm_metadata = None
     naming_variables = None
@@ -46,8 +45,6 @@ async def get_settings():
         arm_config = arm_resp.get("config")
         arm_metadata = arm_resp.get("comments")
         naming_variables = arm_resp.get("naming_variables")
-    if not arm_config:
-        arm_config = arm_db.get_all_config_safe()
 
     # HandBrake presets from init container
     arm_handbrake_presets = _read_hb_presets()
@@ -245,22 +242,16 @@ async def test_transcoder_webhook(body: WebhookTestRequest):
     return await transcoder_client.test_webhook(body.webhook_secret)
 
 
-def _drive_capabilities(d) -> list[str]:
-    """Extract capability labels from a drive object."""
-    caps = []
-    for attr, label in (("read_cd", "CD"), ("read_dvd", "DVD"), ("read_bd", "BD"), ("uhd_capable", "UHD")):
-        if getattr(d, attr, False):
-            caps.append(label)
-    return caps
-
-
 @router.get("/settings/system-info")
 async def get_system_info():
-    """Gather system info: versions, paths, database, drives."""
-    arm_versions = await arm_client.get_version()
-    tc_health = await transcoder_client.health()
+    """Gather system info: versions, paths, database migration state, drives."""
+    arm_versions, tc_health, drives_resp, paths = await asyncio.gather(
+        arm_client.get_version(),
+        transcoder_client.health(),
+        arm_client.get_drives(),
+        arm_client.get_paths(),
+    )
 
-    # UI version from local VERSION file
     ui_version_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "VERSION")
 
     def _read_version() -> str:
@@ -273,7 +264,6 @@ async def get_system_info():
     ui_version = await asyncio.to_thread(_read_version)
     tc_version = tc_health.get("version") if tc_health else None
 
-    # DB migration info from ARM
     db_version = arm_versions.get("db_version", "unknown") if arm_versions else "offline"
     db_head = arm_versions.get("db_head", "unknown") if arm_versions else "offline"
     db_up_to_date = db_version == db_head if (db_version not in ("unknown", "offline") and db_head not in ("unknown", "offline")) else None
@@ -285,14 +275,14 @@ async def get_system_info():
         "ui": ui_version,
     }
 
-    db_path = app_settings.arm_db_path
+    drives = (drives_resp or {}).get("drives") or []
     drive_list = [
         {
-            "name": d.name, "mount": d.mount, "maker": d.maker,
-            "model": d.model, "capabilities": _drive_capabilities(d),
-            "firmware": d.firmware,
+            "name": d.get("name"), "mount": d.get("mount"), "maker": d.get("maker"),
+            "model": d.get("model"), "capabilities": d.get("capabilities") or [],
+            "firmware": d.get("firmware"),
         }
-        for d in arm_db.get_drives()
+        for d in drives
     ]
 
     return {
@@ -301,11 +291,11 @@ async def get_system_info():
             "arm": {"url": app_settings.arm_url, "reachable": arm_versions is not None},
             "transcoder": {"url": app_settings.transcoder_url, "reachable": tc_health is not None},
         },
-        "paths": await arm_client.get_paths() or [],
+        "paths": paths or [],
         "database": {
-            "path": db_path,
-            "size_bytes": os.path.getsize(db_path) if os.path.isfile(db_path) else None,
-            "available": arm_db.is_available(),
+            "path": arm_versions.get("db_path") if arm_versions else None,
+            "size_bytes": arm_versions.get("db_size_bytes") if arm_versions else None,
+            "available": arm_versions is not None,
             "migration_current": db_version,
             "migration_head": db_head,
             "up_to_date": db_up_to_date,

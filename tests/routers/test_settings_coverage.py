@@ -1,14 +1,13 @@
-"""Additional tests for backend.routers.settings — uncovered lines."""
+"""Additional tests for backend.routers.settings - uncovered lines."""
 
 from __future__ import annotations
 
 import json
-import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 
-from backend.routers.settings import _drive_capabilities, _read_hb_presets
+from backend.routers.settings import _read_hb_presets
 
 
 # --- _read_hb_presets ---
@@ -55,36 +54,6 @@ def test_read_hb_presets_non_list(tmp_path):
     assert result is None
 
 
-# --- _drive_capabilities ---
-
-
-def test_drive_capabilities_all():
-    drive = MagicMock()
-    drive.read_cd = True
-    drive.read_dvd = True
-    drive.read_bd = True
-    drive.uhd_capable = True
-    assert _drive_capabilities(drive) == ["CD", "DVD", "BD", "UHD"]
-
-
-def test_drive_capabilities_none():
-    drive = MagicMock()
-    drive.read_cd = False
-    drive.read_dvd = False
-    drive.read_bd = False
-    drive.uhd_capable = False
-    assert _drive_capabilities(drive) == []
-
-
-def test_drive_capabilities_partial():
-    drive = MagicMock()
-    drive.read_cd = True
-    drive.read_dvd = True
-    drive.read_bd = False
-    drive.uhd_capable = False
-    assert _drive_capabilities(drive) == ["CD", "DVD"]
-
-
 # --- GET /api/settings ---
 
 
@@ -104,7 +73,6 @@ async def test_get_settings_all_sources(app_client):
     }
     with (
         patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=arm_resp),
-        patch("backend.routers.settings.arm_db.get_all_config_safe", return_value=None),
         patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=tc_config),
         patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=health),
         patch("backend.routers.settings._read_hb_presets", return_value=["Fast 1080p30"]),
@@ -120,12 +88,10 @@ async def test_get_settings_all_sources(app_client):
     assert data["arm_handbrake_presets"] == ["Fast 1080p30"]
 
 
-async def test_get_settings_arm_offline_falls_back_to_db(app_client):
-    """get_settings falls back to arm_db when ARM API is unreachable."""
-    db_config = {"RIPMETHOD": "mkv", "OMDB_API_KEY": "***"}
+async def test_get_settings_arm_offline_returns_none_config(app_client):
+    """When the ripper API is unreachable, arm_config is None (no DB fallback)."""
     with (
         patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=None),
-        patch("backend.routers.settings.arm_db.get_all_config_safe", return_value=db_config),
         patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings._read_hb_presets", return_value=None),
@@ -133,7 +99,7 @@ async def test_get_settings_arm_offline_falls_back_to_db(app_client):
         resp = await app_client.get("/api/settings")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["arm_config"] == db_config
+    assert data["arm_config"] is None
     assert data["transcoder_config"] is None
     assert data["gpu_support"] is None
 
@@ -149,7 +115,6 @@ async def test_get_settings_transcoder_config_fallback_from_health(app_client):
     }
     with (
         patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=None),
-        patch("backend.routers.settings.arm_db.get_all_config_safe", return_value=None),
         patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=health),
         patch("backend.routers.settings._read_hb_presets", return_value=None),

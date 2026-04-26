@@ -69,17 +69,17 @@
 						</p>
 					{/if}
 					<div class="mt-2 flex flex-wrap gap-1.5">
-						{#if drive.read_cd}
+						{#if drive.capabilities?.includes('CD')}
 							<span class="inline-flex items-center gap-1 rounded-sm bg-green-500/20 px-1.5 py-0.5 text-xs text-green-700 dark:text-green-400">
 								<DiscTypeIcon disctype="music" size="h-3.5 w-3.5" />CD
 							</span>
 						{/if}
-						{#if drive.read_dvd}
+						{#if drive.capabilities?.includes('DVD')}
 							<span class="inline-flex items-center gap-1 rounded-sm bg-primary/15 px-1.5 py-0.5 text-xs text-primary-text dark:text-primary-text-dark">
 								<DiscTypeIcon disctype="dvd" size="h-3.5 w-3.5" />DVD
 							</span>
 						{/if}
-						{#if drive.read_bd}
+						{#if drive.capabilities?.includes('BD')}
 							<span class="inline-flex items-center gap-1 rounded-sm bg-purple-500/20 px-1.5 py-0.5 text-xs text-purple-700 dark:text-purple-400">
 								<DiscTypeIcon disctype="bluray" size="h-3.5 w-3.5" />Blu-ray
 							</span>

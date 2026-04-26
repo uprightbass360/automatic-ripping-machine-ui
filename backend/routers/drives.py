@@ -1,14 +1,23 @@
 from fastapi import APIRouter, HTTPException
 
 from backend.models.schemas import DriveUpdateRequest
-from backend.services import arm_db, arm_client
+from backend.services import arm_client
 
 router = APIRouter(prefix="/api", tags=["drives"])
 
 
 @router.get("/drives")
-def list_drives():
-    return arm_db.get_drives_with_jobs()
+async def list_drives():
+    """Return non-stale drives with their current job attached.
+
+    Returns an empty list if the ripper API is unreachable so the dashboard
+    can still render (the offline state is signaled separately by the
+    /api/dashboard endpoint).
+    """
+    resp = await arm_client.get_drives_with_jobs()
+    if resp is None:
+        return []
+    return resp.get("drives") or []
 
 
 @router.post("/drives/rescan", responses={502: {"description": "ARM unreachable"}})

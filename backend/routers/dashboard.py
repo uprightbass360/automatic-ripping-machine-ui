@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from backend.config import settings as app_settings
 from backend.models.schemas import DashboardResponse, HardwareInfoSchema, JobSchema, SystemStatsSchema
-from backend.services import arm_client, arm_db, transcoder_client, system_cache
+from backend.services import arm_client, transcoder_client, system_cache
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
 
@@ -29,21 +29,39 @@ async def _fetch_transcoder() -> tuple[bool, dict | None, list]:
     return True, stats, active
 
 
-def _load_db_state() -> tuple[list, int, dict[str, str], int, bool]:
-    """Read all dashboard state derived from the ARM database."""
-    active_jobs = arm_db.get_active_jobs()
-    drives = arm_db.get_drives()
-    drives_online = sum(1 for d in drives if not getattr(d, 'stale', False))
-    # Normalize mount paths — drives store /mnt/dev/sr0, jobs store /dev/sr0
+async def _fetch_arm_state() -> tuple[bool, list, int, dict[str, str], int, bool]:
+    """Fetch all ARM-derived dashboard state via the ripper REST API.
+
+    Returns (db_available, active_jobs, drives_online, drive_names,
+    notification_count, ripping_paused). All four endpoints are issued
+    concurrently. db_available is True iff every call succeeded; any
+    None response degrades the dashboard to its empty-state values.
+    """
+    active_data, drives_data, notif_count_data, ripping_data = await asyncio.gather(
+        arm_client.get_active_jobs(),
+        arm_client.get_drives(),
+        arm_client.get_notification_count(),
+        arm_client.get_ripping_enabled(),
+    )
+
+    db_available = all(d is not None for d in (active_data, drives_data, notif_count_data, ripping_data))
+    if not db_available:
+        return False, [], 0, {}, 0, False
+
+    active_jobs = active_data.get("jobs") or []
+    drives = drives_data.get("drives") or []
+    drives_online = sum(1 for d in drives if not d.get("stale", False))
+    # Normalize mount paths - drives store /mnt/dev/sr0, jobs store /dev/sr0
     drive_names: dict[str, str] = {}
     for d in drives:
-        if d.mount and d.name:
-            drive_names[d.mount] = d.name
-            basename = d.mount.rsplit("/", 1)[-1]
-            drive_names[f"/dev/{basename}"] = d.name
-    notification_count = arm_db.get_notification_count()
-    ripping_paused = arm_db.get_ripping_paused()
-    return active_jobs, drives_online, drive_names, notification_count, ripping_paused
+        mount, name = d.get("mount"), d.get("name")
+        if mount and name:
+            drive_names[mount] = name
+            basename = mount.rsplit("/", 1)[-1]
+            drive_names[f"/dev/{basename}"] = name
+    notification_count = notif_count_data.get("unseen", 0)
+    ripping_paused = not ripping_data.get("ripping_enabled", True)
+    return True, active_jobs, drives_online, drive_names, notification_count, ripping_paused
 
 
 async def _fetch_transcoder_system_stats() -> SystemStatsSchema | None:
@@ -56,19 +74,13 @@ async def _fetch_transcoder_system_stats() -> SystemStatsSchema | None:
 
 @router.get("/dashboard", response_model=DashboardResponse)
 async def get_dashboard():
-    db_available = arm_db.is_available()
-
-    if db_available:
-        active_jobs, drives_online, drive_names, notification_count, ripping_paused = _load_db_state()
-    else:
-        active_jobs, drives_online, drive_names, notification_count, ripping_paused = [], 0, {}, 0, False
-
-    # Transcoder + ARM system stats in parallel
+    arm_state_task = asyncio.create_task(_fetch_arm_state())
     transcoder_task = asyncio.create_task(_fetch_transcoder())
     stats_task = asyncio.create_task(arm_client.get_system_stats())
     transcoder_stats_task = asyncio.create_task(_fetch_transcoder_system_stats())
     ripping_task = asyncio.create_task(system_cache.get_ripping_data())
 
+    db_available, active_jobs, drives_online, drive_names, notification_count, ripping_paused = await arm_state_task
     transcoder_online, transcoder_stats, active_transcodes = await transcoder_task
 
     system_stats: SystemStatsSchema | None = None

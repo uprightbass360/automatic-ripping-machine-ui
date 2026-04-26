@@ -1,4 +1,4 @@
-"""Tests for backend.routers.jobs — list/detail/metadata endpoints."""
+"""Tests for backend.routers.jobs - list/detail/metadata endpoints."""
 
 from __future__ import annotations
 
@@ -6,7 +6,22 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from tests.factories import make_job, make_track
+from tests.factories import make_job_dict
+
+
+def _track_dict(**overrides) -> dict:
+    """Ripper-shaped track dict (matches arm/api/v1/jobs.py:_track_to_dict)."""
+    defaults = {
+        "track_id": 1, "job_id": 1, "track_number": "1",
+        "length": 5400, "aspect_ratio": "16:9", "fps": 23.976,
+        "enabled": True, "basename": "title_t01", "filename": "title_t01.mkv",
+        "orig_filename": "title_t01.mkv", "new_filename": "Test Movie (2024).mkv",
+        "ripped": True, "status": "success", "error": None, "source": "/dev/sr0",
+        "title": None, "year": None, "imdb_id": None, "poster_url": None, "video_type": None,
+        "episode_number": None, "episode_name": None,
+    }
+    defaults.update(overrides)
+    return defaults
 
 
 # --- GET /api/jobs ---
@@ -14,15 +29,17 @@ from tests.factories import make_job, make_track
 
 async def test_list_jobs(app_client):
     """GET /api/jobs returns paginated job list."""
-    job = make_job(job_id=1, title="Test Movie")
     paginated = {
-        "jobs": [job],
+        "jobs": [make_job_dict(job_id=1, title="Test Movie")],
         "total": 1,
         "page": 1,
         "per_page": 25,
         "pages": 1,
     }
-    with patch("backend.routers.jobs.arm_db.get_jobs_paginated_response", return_value=paginated):
+    with patch(
+        "backend.routers.jobs.arm_client.get_jobs_paginated",
+        new_callable=AsyncMock, return_value=paginated,
+    ):
         resp = await app_client.get("/api/jobs")
     assert resp.status_code == 200
     data = resp.json()
@@ -32,12 +49,29 @@ async def test_list_jobs(app_client):
 
 
 async def test_list_jobs_with_pagination_params(app_client):
-    """GET /api/jobs passes pagination params through."""
+    """GET /api/jobs passes pagination params through to the ripper client."""
     paginated = {"jobs": [], "total": 0, "page": 3, "per_page": 10, "pages": 1}
-    with patch("backend.routers.jobs.arm_db.get_jobs_paginated_response", return_value=paginated) as mock_fn:
+    with patch(
+        "backend.routers.jobs.arm_client.get_jobs_paginated",
+        new_callable=AsyncMock, return_value=paginated,
+    ) as mock_fn:
         resp = await app_client.get("/api/jobs?page=3&per_page=10&status=active")
     assert resp.status_code == 200
-    mock_fn.assert_called_once_with(3, 10, "active", None, None, None, None, None, None)
+    mock_fn.assert_awaited_once_with(
+        page=3, per_page=10, status="active", search=None,
+        video_type=None, disctype=None, days=None,
+        sort_by=None, sort_dir=None,
+    )
+
+
+async def test_list_jobs_arm_unreachable(app_client):
+    """GET /api/jobs returns 502 when ARM is unreachable."""
+    with patch(
+        "backend.routers.jobs.arm_client.get_jobs_paginated",
+        new_callable=AsyncMock, return_value=None,
+    ):
+        resp = await app_client.get("/api/jobs")
+    assert resp.status_code == 502
 
 
 # --- GET /api/jobs/{job_id} ---
@@ -45,11 +79,16 @@ async def test_list_jobs_with_pagination_params(app_client):
 
 async def test_get_job_detail(app_client):
     """GET /api/jobs/{id} returns job with tracks and config."""
-    job = make_job(job_id=5, title="Detail Movie")
-    track = make_track(track_id=1, job_id=5)
-    job.tracks = [track]
-    config_dict = {"RIPMETHOD": "mkv", "MINLENGTH": "600"}
-    with patch("backend.routers.jobs.arm_db.get_job_with_config", return_value=(job, config_dict)):
+    detail = {
+        "job": make_job_dict(job_id=5, title="Detail Movie"),
+        "config": {"RIPMETHOD": "mkv", "MINLENGTH": "600"},
+        "tracks": [_track_dict(job_id=5)],
+        "track_counts": {"total": 1, "ripped": 1},
+    }
+    with patch(
+        "backend.routers.jobs.arm_client.get_job_detail",
+        new_callable=AsyncMock, return_value=detail,
+    ):
         resp = await app_client.get("/api/jobs/5")
     assert resp.status_code == 200
     data = resp.json()
@@ -59,10 +98,23 @@ async def test_get_job_detail(app_client):
 
 
 async def test_get_job_404(app_client):
-    """GET /api/jobs/{id} returns 404 when job not found."""
-    with patch("backend.routers.jobs.arm_db.get_job_with_config", return_value=(None, None)):
+    """GET /api/jobs/{id} returns 404 when ARM returns success=False."""
+    with patch(
+        "backend.routers.jobs.arm_client.get_job_detail",
+        new_callable=AsyncMock, return_value={"success": False, "error": "Job not found"},
+    ):
         resp = await app_client.get("/api/jobs/999")
     assert resp.status_code == 404
+
+
+async def test_get_job_arm_unreachable(app_client):
+    """GET /api/jobs/{id} returns 502 when ARM is unreachable."""
+    with patch(
+        "backend.routers.jobs.arm_client.get_job_detail",
+        new_callable=AsyncMock, return_value=None,
+    ):
+        resp = await app_client.get("/api/jobs/5")
+    assert resp.status_code == 502
 
 
 # --- GET /api/metadata/search ---
@@ -95,10 +147,14 @@ async def test_metadata_search_502_on_arm_unreachable(app_client):
 
 async def test_get_job_progress_with_track_counts(app_client):
     """GET /api/jobs/{id}/progress returns rip progress enriched with track counts."""
-    job = make_job(job_id=5, title="Test Movie")
-    with patch("backend.routers.jobs.arm_db.get_job", return_value=job), \
-         patch("backend.routers.jobs.progress.get_rip_progress", return_value={"progress": 45, "stage": "rip"}), \
-         patch("backend.routers.jobs.arm_db.get_job_track_counts", return_value={"tracks_total": 10, "tracks_ripped": 3}):
+    state = {
+        "track_counts": {"total": 10, "ripped": 3},
+        "disctype": "bluray", "logfile": "job_5.log", "no_of_titles": 10,
+    }
+    with patch("backend.routers.jobs.arm_client.get_job_progress_state",
+               new_callable=AsyncMock, return_value=state), \
+         patch("backend.routers.jobs.progress.get_rip_progress",
+               return_value={"progress": 45, "stage": "rip"}):
         resp = await app_client.get("/api/jobs/5/progress")
     assert resp.status_code == 200
     data = resp.json()
@@ -108,18 +164,32 @@ async def test_get_job_progress_with_track_counts(app_client):
 
 
 async def test_get_job_progress_404(app_client):
-    """GET /api/jobs/{id}/progress returns 404 when job not found."""
-    with patch("backend.routers.jobs.arm_db.get_job", return_value=None):
+    """GET /api/jobs/{id}/progress returns 404 when ripper returns success=False."""
+    with patch("backend.routers.jobs.arm_client.get_job_progress_state",
+               new_callable=AsyncMock,
+               return_value={"success": False, "error": "Job not found"}):
         resp = await app_client.get("/api/jobs/999/progress")
     assert resp.status_code == 404
 
 
+async def test_get_job_progress_arm_unreachable(app_client):
+    """GET /api/jobs/{id}/progress returns 502 when ARM is unreachable."""
+    with patch("backend.routers.jobs.arm_client.get_job_progress_state",
+               new_callable=AsyncMock, return_value=None):
+        resp = await app_client.get("/api/jobs/5/progress")
+    assert resp.status_code == 502
+
+
 async def test_get_job_progress_music_branch(app_client):
     """GET /api/jobs/{id}/progress uses music progress parser for disctype=music."""
-    job = make_job(job_id=7, title="Greatest Hits", disctype="music", logfile="job_7.log")
-    with patch("backend.routers.jobs.arm_db.get_job", return_value=job), \
-         patch("backend.routers.jobs.progress.get_music_progress", return_value={"progress": 66.7, "stage": "2/3 - encoding track 3"}) as mock_music, \
-         patch("backend.routers.jobs.arm_db.get_job_track_counts", return_value={"tracks_total": 3, "tracks_ripped": 2}):
+    state = {
+        "track_counts": {"total": 3, "ripped": 2},
+        "disctype": "music", "logfile": "job_7.log", "no_of_titles": 3,
+    }
+    with patch("backend.routers.jobs.arm_client.get_job_progress_state",
+               new_callable=AsyncMock, return_value=state), \
+         patch("backend.routers.jobs.progress.get_music_progress",
+               return_value={"progress": 66.7, "stage": "2/3 - encoding track 3"}) as mock_music:
         resp = await app_client.get("/api/jobs/7/progress")
     assert resp.status_code == 200
     data = resp.json()
@@ -130,10 +200,14 @@ async def test_get_job_progress_music_branch(app_client):
 
 async def test_get_job_progress_includes_no_of_titles(app_client):
     """GET /api/jobs/{id}/progress includes no_of_titles from the job."""
-    job = make_job(job_id=8, title="Multi Title Disc", no_of_titles=12)
-    with patch("backend.routers.jobs.arm_db.get_job", return_value=job), \
-         patch("backend.routers.jobs.progress.get_rip_progress", return_value={"progress": None, "stage": None}), \
-         patch("backend.routers.jobs.arm_db.get_job_track_counts", return_value={"tracks_total": 0, "tracks_ripped": 0}):
+    state = {
+        "track_counts": {"total": 0, "ripped": 0},
+        "disctype": "bluray", "logfile": "job_8.log", "no_of_titles": 12,
+    }
+    with patch("backend.routers.jobs.arm_client.get_job_progress_state",
+               new_callable=AsyncMock, return_value=state), \
+         patch("backend.routers.jobs.progress.get_rip_progress",
+               return_value={"progress": None, "stage": None}):
         resp = await app_client.get("/api/jobs/8/progress")
     assert resp.status_code == 200
     data = resp.json()

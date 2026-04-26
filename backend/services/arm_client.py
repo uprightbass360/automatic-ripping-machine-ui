@@ -507,3 +507,129 @@ async def run_preflight() -> dict[str, Any] | None:
 async def fix_preflight(items: list[str]) -> dict[str, Any] | None:
     """Fix specified preflight issues, then re-check. Returns None if ARM is unreachable."""
     return await _request("POST", "/api/v1/system/preflight/fix", json={"fix": items}, timeout=30.0)
+
+
+# --- Jobs (read-side, replaces direct DB access via backend.services.arm_db) ---
+
+
+async def get_active_jobs() -> dict[str, Any] | None:
+    """Active jobs with track counts. Returns None if ARM is unreachable."""
+    return await _request("GET", "/api/v1/jobs/active")
+
+
+async def get_jobs_paginated(
+    page: int = 1,
+    per_page: int = 25,
+    status: str | None = None,
+    search: str | None = None,
+    video_type: str | None = None,
+    disctype: str | None = None,
+    days: int | None = None,
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
+) -> dict[str, Any] | None:
+    """Paginated job list with filters. Returns None if ARM is unreachable."""
+    params: dict[str, Any] = {"page": page, "per_page": per_page}
+    for key, val in (
+        ("status", status), ("search", search), ("video_type", video_type),
+        ("disctype", disctype), ("days", days),
+        ("sort_by", sort_by), ("sort_dir", sort_dir),
+    ):
+        if val is not None and val != "":
+            params[key] = val
+    return await _request("GET", "/api/v1/jobs/paginated", params=params)
+
+
+async def get_jobs_stats(
+    search: str | None = None,
+    video_type: str | None = None,
+    disctype: str | None = None,
+    days: int | None = None,
+) -> dict[str, Any] | None:
+    """Filter-aware bucketed counts (total/active/waiting/success/fail).
+
+    Calls /api/v1/jobs/stats. Distinct from the legacy get_job_stats() which
+    hits /system/stats/jobs and returns raw by-status counts with no filter
+    support. Returns None if ARM is unreachable.
+    """
+    params: dict[str, Any] = {}
+    for key, val in (
+        ("search", search), ("video_type", video_type),
+        ("disctype", disctype), ("days", days),
+    ):
+        if val is not None and val != "":
+            params[key] = val
+    return await _request("GET", "/api/v1/jobs/stats", params=params)
+
+
+async def get_job_detail(job_id: int) -> dict[str, Any] | None:
+    """Job + (masked) config + track_counts. Returns None if ARM is unreachable."""
+    return await _request("GET", f"/api/v1/jobs/{job_id}/detail")
+
+
+async def get_job_track_counts(job_id: int) -> dict[str, Any] | None:
+    """Lightweight {total, ripped} for one job. Returns None if ARM is unreachable."""
+    return await _request("GET", f"/api/v1/jobs/{job_id}/track-counts")
+
+
+async def get_job_progress_state(job_id: int) -> dict[str, Any] | None:
+    """Track counts + disctype/logfile/no_of_titles for the BFF progress endpoint.
+
+    One round trip instead of three - keeps the dashboard's per-job
+    progress polls cheap. Returns None if ARM is unreachable.
+    """
+    return await _request("GET", f"/api/v1/jobs/{job_id}/progress-state")
+
+
+async def get_job_retranscode_info(job_id: int) -> dict[str, Any] | None:
+    """Retranscode payload for one job. Returns None if ARM is unreachable."""
+    return await _request("GET", f"/api/v1/jobs/{job_id}/retranscode-info")
+
+
+# --- Drives (read-side) ---
+
+
+async def get_drives(include_stale: bool = True) -> dict[str, Any] | None:
+    """List system drives. Default include_stale=True matches the legacy
+    arm_db.get_drives() shape; pass False for non-stale drives only.
+    Returns None if ARM is unreachable.
+    """
+    params = {"include_stale": "true"} if include_stale else None
+    return await _request("GET", "/api/v1/drives", params=params)
+
+
+async def get_drives_with_jobs() -> dict[str, Any] | None:
+    """Drives + current-job summaries. Returns None if ARM is unreachable."""
+    return await _request("GET", "/api/v1/drives/with-jobs")
+
+
+# --- Notifications (read + bulk write) ---
+
+
+async def get_notifications(include_cleared: bool = False) -> dict[str, Any] | None:
+    """Notification list. Returns None if ARM is unreachable."""
+    params = {"include_cleared": "true"} if include_cleared else None
+    return await _request("GET", "/api/v1/notifications", params=params)
+
+
+async def get_notification_count() -> dict[str, Any] | None:
+    """Notification counts: {total, unseen, seen, cleared}. Returns None if ARM is unreachable."""
+    return await _request("GET", "/api/v1/notifications/count")
+
+
+async def dismiss_all_notifications() -> dict[str, Any] | None:
+    """Mark all unseen notifications as seen. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/notifications/dismiss-all")
+
+
+async def purge_cleared_notifications() -> dict[str, Any] | None:
+    """Hard-delete all cleared notifications. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/notifications/purge")
+
+
+# --- Health ---
+
+
+async def is_available() -> bool:
+    """True iff the ripper API responds to a cheap GET. Replaces arm_db.is_available()."""
+    return await get_version() is not None

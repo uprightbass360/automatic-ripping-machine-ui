@@ -1,5 +1,5 @@
-# Standalone dev UI — connects to ARM and Transcoder on the host network.
-# Requires an ARM database volume from the ARM-neu compose project.
+# Standalone dev UI - connects to ARM and Transcoder on the host network.
+# Talks to the ripper exclusively over HTTP; no shared database volume.
 #
 # Set ARM_NEU_PATH in .env if the ARM-neu repo is not at the default location:
 #   ARM_NEU_PATH=../automatic-ripping-machine-neu
@@ -12,7 +12,6 @@ services:
     build: .
     network_mode: host
     environment:
-      - ARM_UI_ARM_DB_PATH=/data/db/arm.db
       - ARM_UI_ARM_LOG_PATH=/data/logs
       - ARM_UI_ARM_CONFIG_PATH=/data/config/arm.yaml
       - ARM_UI_ARM_URL=http://localhost:8080
@@ -23,7 +22,6 @@ services:
       - ARM_UI_ARM_THEMES_PATH=/data/config/themes
       - ARM_UI_IMAGE_CACHE_PATH=/data/cache/images
     volumes:
-      - arm-db:/data/db:rw
       - ${ARM_LOGS_PATH:-./dev-data/logs}:/data/logs:ro
       - ${ARM_NEU_PATH:-../automatic-ripping-machine-neu}/dev-data/config:/data/config:rw
       - image-cache:/data/cache/images:rw
@@ -31,8 +29,3 @@ services:
 
 volumes:
   image-cache:
-  arm-db:
-    # Created by the ARM-neu compose project. Name depends on the directory name.
-    # Default assumes ARM-neu repo is in a sibling directory named automatic-ripping-machine-neu.
-    name: automatic-ripping-machine-neu_arm-db
-    external: true

@@ -146,7 +146,6 @@ async def test_settings_includes_auth_status(app_client):
     }
     with (
         patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=None),
-        patch("backend.routers.settings.arm_db.get_all_config_safe", return_value={"RIPMETHOD": "mkv"}),
         patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=health),
         patch("backend.routers.settings._read_hb_presets", return_value=None),
@@ -240,10 +239,8 @@ def _system_info_patches(arm_version_resp, tc_health_resp=None):
             patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=tc_health_resp),
             patch("backend.routers.settings.asyncio.to_thread", new_callable=AsyncMock, return_value="11.0.0"),
             patch("backend.routers.settings.arm_client.get_paths", new_callable=AsyncMock, return_value=[]),
-            patch("backend.routers.settings.arm_db.get_drives", return_value=[]),
-            patch("backend.routers.settings.arm_db.is_available", return_value=True),
-            patch("backend.routers.settings.app_settings", arm_db_path="/home/arm/db/arm.db", arm_url="https://arm:8080", transcoder_url="https://tc:5000"),
-            patch("backend.routers.settings.os.path.isfile", return_value=False),
+            patch("backend.routers.settings.arm_client.get_drives", new_callable=AsyncMock, return_value={"drives": []}),
+            patch("backend.routers.settings.app_settings", arm_url="https://arm:8080", transcoder_url="https://tc:5000"),
         ):
             yield
 
@@ -332,8 +329,7 @@ async def test_settings_aggregate_skips_transcoder_when_disabled(ripper_only_app
     monkeypatch.setattr(transcoder_client, "health", _should_not_be_called)
 
     with patch("backend.routers.settings.arm_client.get_config", new=AsyncMock(return_value=None)):
-        with patch("backend.routers.settings.arm_db.get_all_config_safe", return_value={}):
-            resp = await ripper_only_app_client.get("/api/settings")
+        resp = await ripper_only_app_client.get("/api/settings")
 
     assert resp.status_code == 200
     data = resp.json()

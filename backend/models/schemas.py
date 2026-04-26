@@ -9,12 +9,26 @@ from typing import Any
 
 from pydantic import BaseModel, field_validator
 
-from backend.services.arm_db import TRANSCODE_OVERRIDES_ALLOWLIST
-
 log = logging.getLogger(__name__)
 
 
+# Top-level keys accepted in per-job transcode overrides. Mirrors the field
+# names of arm_contracts.TranscodeJobConfig; kept in sync by hand.
+TRANSCODE_OVERRIDES_ALLOWLIST: frozenset[str] = frozenset({
+    "preset_slug",
+    "overrides",
+    "delete_source",
+    "output_extension",
+})
+
+
 # --- ARM Job Schemas ---
+
+
+class TrackCountsSchema(BaseModel):
+    """Rippable-track progress for one job. Mirrors the ripper API shape."""
+    total: int = 0
+    ripped: int = 0
 
 
 class TrackSchema(BaseModel):
@@ -163,8 +177,7 @@ class JobSchema(BaseModel):
     episode_manual: str | None = None
     ejected: bool | None = None
     pid: int | None = None
-    tracks_total: int | None = None
-    tracks_ripped: int | None = None
+    track_counts: TrackCountsSchema | None = None
 
     model_config = {"from_attributes": True}
 

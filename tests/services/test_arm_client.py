@@ -462,3 +462,213 @@ async def test_fix_preflight_uses_30s_timeout(mock_client):
 async def test_fix_preflight_unreachable(mock_client):
     _set_request_connect_error(mock_client)
     assert await arm_client.fix_preflight([]) is None
+
+
+# --- Jobs (read-side, replaces direct DB access) ---
+
+
+async def test_get_active_jobs(mock_client):
+    _set_request_response(mock_client, {"jobs": [{"job_id": 1}]})
+    result = await arm_client.get_active_jobs()
+    assert result == {"jobs": [{"job_id": 1}]}
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/jobs/active")
+
+
+async def test_get_active_jobs_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_active_jobs() is None
+
+
+async def test_get_jobs_paginated_passes_filters(mock_client):
+    _set_request_response(mock_client, {"jobs": [], "total": 0, "page": 2, "per_page": 10, "pages": 1})
+    await arm_client.get_jobs_paginated(
+        page=2, per_page=10, status="active", search="serial",
+        video_type="movie", disctype="bluray", days=7,
+        sort_by="title", sort_dir="asc",
+    )
+    mock_client.request.assert_awaited_once_with(
+        "GET", "/api/v1/jobs/paginated",
+        params={
+            "page": 2, "per_page": 10, "status": "active", "search": "serial",
+            "video_type": "movie", "disctype": "bluray", "days": 7,
+            "sort_by": "title", "sort_dir": "asc",
+        },
+    )
+
+
+async def test_get_jobs_paginated_drops_empty_filters(mock_client):
+    """Empty/None filter values are not sent so the ripper sees defaults."""
+    _set_request_response(mock_client, {"jobs": [], "total": 0, "page": 1, "per_page": 25, "pages": 1})
+    await arm_client.get_jobs_paginated()
+    mock_client.request.assert_awaited_once_with(
+        "GET", "/api/v1/jobs/paginated",
+        params={"page": 1, "per_page": 25},
+    )
+
+
+async def test_get_jobs_paginated_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_jobs_paginated() is None
+
+
+async def test_get_jobs_stats_passes_filters(mock_client):
+    _set_request_response(mock_client, {"total": 5, "active": 1, "waiting": 0, "success": 3, "fail": 1})
+    await arm_client.get_jobs_stats(search="x", video_type="movie", disctype="dvd", days=30)
+    mock_client.request.assert_awaited_once_with(
+        "GET", "/api/v1/jobs/stats",
+        params={"search": "x", "video_type": "movie", "disctype": "dvd", "days": 30},
+    )
+
+
+async def test_get_jobs_stats_no_filters(mock_client):
+    _set_request_response(mock_client, {"total": 0, "active": 0, "waiting": 0, "success": 0, "fail": 0})
+    await arm_client.get_jobs_stats()
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/jobs/stats", params={})
+
+
+async def test_get_jobs_stats_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_jobs_stats() is None
+
+
+async def test_get_job_detail(mock_client):
+    _set_request_response(mock_client, {"job": {"job_id": 5}, "config": None, "track_counts": {"total": 0, "ripped": 0}})
+    result = await arm_client.get_job_detail(5)
+    assert result["job"]["job_id"] == 5
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/jobs/5/detail")
+
+
+async def test_get_job_detail_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_job_detail(5) is None
+
+
+async def test_get_job_track_counts(mock_client):
+    _set_request_response(mock_client, {"total": 3, "ripped": 1})
+    result = await arm_client.get_job_track_counts(7)
+    assert result == {"total": 3, "ripped": 1}
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/jobs/7/track-counts")
+
+
+async def test_get_job_track_counts_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_job_track_counts(7) is None
+
+
+async def test_get_job_retranscode_info(mock_client):
+    _set_request_response(mock_client, {"webhook_payload": {}, "preset_slug": "balanced"})
+    result = await arm_client.get_job_retranscode_info(9)
+    assert "preset_slug" in result
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/jobs/9/retranscode-info")
+
+
+async def test_get_job_retranscode_info_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_job_retranscode_info(9) is None
+
+
+# --- Drives (read-side) ---
+
+
+async def test_get_drives_default_includes_stale(mock_client):
+    """Default include_stale=True matches arm_db.get_drives() which returned all drives."""
+    _set_request_response(mock_client, {"drives": [{"drive_id": 1}]})
+    result = await arm_client.get_drives()
+    assert result == {"drives": [{"drive_id": 1}]}
+    mock_client.request.assert_awaited_once_with(
+        "GET", "/api/v1/drives", params={"include_stale": "true"},
+    )
+
+
+async def test_get_drives_excludes_stale_when_requested(mock_client):
+    _set_request_response(mock_client, {"drives": []})
+    await arm_client.get_drives(include_stale=False)
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/drives", params=None)
+
+
+async def test_get_drives_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_drives() is None
+
+
+async def test_get_drives_with_jobs(mock_client):
+    _set_request_response(mock_client, {"drives": []})
+    result = await arm_client.get_drives_with_jobs()
+    assert result == {"drives": []}
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/drives/with-jobs")
+
+
+async def test_get_drives_with_jobs_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_drives_with_jobs() is None
+
+
+# --- Notifications ---
+
+
+async def test_get_notifications_default(mock_client):
+    _set_request_response(mock_client, [])
+    await arm_client.get_notifications()
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/notifications", params=None)
+
+
+async def test_get_notifications_include_cleared(mock_client):
+    _set_request_response(mock_client, [])
+    await arm_client.get_notifications(include_cleared=True)
+    mock_client.request.assert_awaited_once_with(
+        "GET", "/api/v1/notifications", params={"include_cleared": "true"},
+    )
+
+
+async def test_get_notifications_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_notifications() is None
+
+
+async def test_get_notification_count(mock_client):
+    _set_request_response(mock_client, {"total": 5, "unseen": 2, "seen": 1, "cleared": 2})
+    result = await arm_client.get_notification_count()
+    assert result == {"total": 5, "unseen": 2, "seen": 1, "cleared": 2}
+    mock_client.request.assert_awaited_once_with("GET", "/api/v1/notifications/count")
+
+
+async def test_get_notification_count_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.get_notification_count() is None
+
+
+async def test_dismiss_all_notifications(mock_client):
+    _set_request_response(mock_client, {"affected": 3})
+    result = await arm_client.dismiss_all_notifications()
+    assert result == {"affected": 3}
+    mock_client.request.assert_awaited_once_with("POST", "/api/v1/notifications/dismiss-all")
+
+
+async def test_dismiss_all_notifications_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.dismiss_all_notifications() is None
+
+
+async def test_purge_cleared_notifications(mock_client):
+    _set_request_response(mock_client, {"deleted": 2})
+    result = await arm_client.purge_cleared_notifications()
+    assert result == {"deleted": 2}
+    mock_client.request.assert_awaited_once_with("POST", "/api/v1/notifications/purge")
+
+
+async def test_purge_cleared_notifications_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.purge_cleared_notifications() is None
+
+
+# --- Health ---
+
+
+async def test_is_available_true_when_version_returns(mock_client):
+    _set_request_response(mock_client, {"version": "16.3.1"})
+    assert await arm_client.is_available() is True
+
+
+async def test_is_available_false_when_unreachable(mock_client):
+    _set_request_connect_error(mock_client)
+    assert await arm_client.is_available() is False

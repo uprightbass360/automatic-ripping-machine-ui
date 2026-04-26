@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from tests.factories import make_job
+from tests.factories import make_job_dict
 
 
 # ---------------------------------------------------------------------------
@@ -202,11 +202,19 @@ class TestMusicDetail:
 # ---------------------------------------------------------------------------
 
 
+def _detail(crc_id: str | None) -> dict:
+    """Build a /jobs/{id}/detail-shaped response with the given crc_id."""
+    return {
+        "job": make_job_dict(job_id=1, crc_id=crc_id),
+        "config": None, "tracks": [], "track_counts": {"total": 0, "ripped": 0},
+    }
+
+
 class TestCrcLookup:
     async def test_success(self, app_client):
-        job = make_job(job_id=1, crc_id="abc123")
         crc_result = {"found": True, "results": [{"title": "Matrix"}], "has_api_key": True}
-        with patch("backend.routers.jobs.arm_db.get_job", return_value=job), \
+        with patch("backend.routers.jobs.arm_client.get_job_detail",
+                   new_callable=AsyncMock, return_value=_detail("abc123")), \
              patch("backend.routers.jobs.arm_client.lookup_crc",
                    new_callable=AsyncMock, return_value=crc_result):
             resp = await app_client.get("/api/jobs/1/crc-lookup")
@@ -214,13 +222,21 @@ class TestCrcLookup:
         assert resp.json()["found"] is True
 
     async def test_job_not_found(self, app_client):
-        with patch("backend.routers.jobs.arm_db.get_job", return_value=None):
+        with patch("backend.routers.jobs.arm_client.get_job_detail",
+                   new_callable=AsyncMock,
+                   return_value={"success": False, "error": "Job not found"}):
             resp = await app_client.get("/api/jobs/999/crc-lookup")
         assert resp.status_code == 404
 
+    async def test_arm_unreachable(self, app_client):
+        with patch("backend.routers.jobs.arm_client.get_job_detail",
+                   new_callable=AsyncMock, return_value=None):
+            resp = await app_client.get("/api/jobs/1/crc-lookup")
+        assert resp.status_code == 502
+
     async def test_no_crc(self, app_client):
-        job = make_job(job_id=1, crc_id="")
-        with patch("backend.routers.jobs.arm_db.get_job", return_value=job):
+        with patch("backend.routers.jobs.arm_client.get_job_detail",
+                   new_callable=AsyncMock, return_value=_detail("")):
             resp = await app_client.get("/api/jobs/1/crc-lookup")
         assert resp.status_code == 200
         data = resp.json()
@@ -228,16 +244,16 @@ class TestCrcLookup:
         assert data["found"] is False
 
     async def test_http_status_error_passthrough(self, app_client):
-        job = make_job(job_id=1, crc_id="abc123")
-        with patch("backend.routers.jobs.arm_db.get_job", return_value=job), \
+        with patch("backend.routers.jobs.arm_client.get_job_detail",
+                   new_callable=AsyncMock, return_value=_detail("abc123")), \
              patch("backend.routers.jobs.arm_client.lookup_crc",
                    new_callable=AsyncMock, side_effect=_make_status_error(503)):
             resp = await app_client.get("/api/jobs/1/crc-lookup")
         assert resp.status_code == 503
 
     async def test_connect_error_returns_502(self, app_client):
-        job = make_job(job_id=1, crc_id="abc123")
-        with patch("backend.routers.jobs.arm_db.get_job", return_value=job), \
+        with patch("backend.routers.jobs.arm_client.get_job_detail",
+                   new_callable=AsyncMock, return_value=_detail("abc123")), \
              patch("backend.routers.jobs.arm_client.lookup_crc",
                    new_callable=AsyncMock, side_effect=httpx.ConnectError("offline")):
             resp = await app_client.get("/api/jobs/1/crc-lookup")

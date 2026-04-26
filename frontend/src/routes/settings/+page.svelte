@@ -2031,7 +2031,7 @@
 							<dl class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
 								<div>
 									<dt class="text-gray-500 dark:text-gray-400">Path</dt>
-									<dd class="mt-1 font-mono text-xs text-gray-900 dark:text-white">{systemInfo.database.path}</dd>
+									<dd class="mt-1 font-mono text-xs text-gray-900 dark:text-white">{systemInfo.database.path ?? 'N/A'}</dd>
 								</div>
 								<div>
 									<dt class="text-gray-500 dark:text-gray-400">Size</dt>

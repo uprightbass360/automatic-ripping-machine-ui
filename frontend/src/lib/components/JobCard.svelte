@@ -72,8 +72,8 @@
 						<!-- Folder imports use "all" mode — don't show per-track counts -->
 					{:else if job.status === 'info'}
 						<span>Scanning{job.no_of_titles ? `... ${job.no_of_titles} titles` : '...'}</span>
-					{:else if job.tracks_total != null && job.tracks_total > 0}
-						<span>{job.tracks_ripped ?? 0} / {job.tracks_total} titles</span>
+					{:else if job.track_counts && job.track_counts.total > 0}
+						<span>{job.track_counts.ripped} / {job.track_counts.total} titles</span>
 					{:else if job.no_of_titles != null}
 						<span>{job.no_of_titles} title{job.no_of_titles === 1 ? '' : 's'}</span>
 					{/if}

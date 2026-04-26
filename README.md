@@ -118,13 +118,12 @@ cd automatic-ripping-machine-ui
 cp .env.example .env
 ```
 
-Edit `.env` with your ARM database path and service URLs:
+Edit `.env` with your service URLs (the UI talks to the ripper over HTTP, no shared database):
 
 ```bash
-ARM_UI_ARM_DB_PATH=/home/arm/db/arm.db
-ARM_UI_ARM_LOG_PATH=/home/arm/logs
 ARM_UI_ARM_URL=http://ARM_IP:8080
 ARM_UI_TRANSCODER_URL=http://TRANSCODER_IP:5000
+ARM_UI_ARM_LOG_PATH=/home/arm/logs
 ```
 
 Start with Docker:
@@ -139,7 +138,6 @@ The UI is available at `http://localhost:8888`.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ARM_UI_ARM_DB_PATH` | `/home/arm/db/arm.db` | Path to ARM's SQLite database (read-only) |
 | `ARM_UI_ARM_LOG_PATH` | `/home/arm/logs` | Path to ARM's log directory |
 | `ARM_UI_ARM_CONFIG_PATH` | *(empty)* | Path to ARM's `arm.yaml` config file |
 | `ARM_UI_ARM_HB_PRESETS_PATH` | *(empty)* | Path to HandBrake presets JSON file |

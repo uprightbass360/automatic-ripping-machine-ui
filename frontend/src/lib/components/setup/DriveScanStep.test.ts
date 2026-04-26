@@ -6,7 +6,7 @@ function mockFetchJson(data: unknown) {
 	vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(data) })));
 }
 
-const sampleDrive = { drive_id: 1, name: 'Main Drive', mount: '/dev/sr0', maker: 'LG', model: 'WH16NS40', read_cd: true, read_dvd: true, read_bd: true };
+const sampleDrive = { drive_id: 1, name: 'Main Drive', mount: '/dev/sr0', maker: 'LG', model: 'WH16NS40', capabilities: ['CD', 'DVD', 'BD'] };
 
 describe('DriveScanStep', () => {
 	afterEach(() => { cleanup(); vi.restoreAllMocks(); });

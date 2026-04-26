@@ -15,8 +15,8 @@ function createDrive(overrides: Partial<Drive> = {}): Drive {
 		drive_id: 1, name: 'Main Drive', mount: '/dev/sr0',
 		job_id_current: null, job_id_previous: null, description: null, drive_mode: null,
 		maker: 'LG', model: 'WH16NS40', serial: null, connection: null,
-		read_cd: true, read_dvd: true, read_bd: true,
-		firmware: null, location: null, stale: false, mdisc: null, serial_id: null,
+		capabilities: ['CD', 'DVD', 'BD'],
+		firmware: null, stale: false,
 		uhd_capable: false, current_job: null, rip_speed: null,
 		prescan_cache_mb: null, prescan_timeout: null, prescan_retries: null, disc_enum_timeout: null,
 		...overrides
@@ -52,12 +52,12 @@ describe('DriveCard', () => {
 		});
 
 		it('shows 4K tag for Blu-ray drives', () => {
-			renderDrive({ read_bd: true });
+			renderDrive({ capabilities: ['CD', 'DVD', 'BD'] });
 			expect(screen.getByText('4K')).toBeInTheDocument();
 		});
 
 		it('hides 4K tag for non-Blu-ray drives', () => {
-			renderDrive({ read_bd: false });
+			renderDrive({ capabilities: ['CD', 'DVD'] });
 			expect(screen.queryByText('4K')).not.toBeInTheDocument();
 		});
 
