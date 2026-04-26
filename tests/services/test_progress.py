@@ -221,3 +221,12 @@ class TestGetMusicProgress:
             with patch("builtins.open", side_effect=OSError("denied")):
                 result = get_music_progress("music.log", total_tracks=5)
         assert result == {"progress": None, "stage": None}
+
+    def test_path_traversal_rejected(self, tmp_path):
+        """logfile values that escape arm_log_path resolve to None and are not opened."""
+        outside = tmp_path.parent / "outside.log"
+        outside.write_text("Grabbing track 1: foo\n")
+        with patch("backend.services.progress.settings") as mock_settings:
+            mock_settings.arm_log_path = str(tmp_path)
+            result = get_music_progress("../outside.log", total_tracks=5)
+        assert result == {"progress": None, "stage": None}
