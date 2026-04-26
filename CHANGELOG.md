@@ -1,5 +1,21 @@
 # Changelog
 
+## [17.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.5.1...v17.0.0) (2026-04-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* The BFF response schema and runtime contract change in several places. Any external consumer of the arm-ui HTTP API or anyone overriding the published compose/.env must update.
+
+### Features
+
+* drop direct DB reads, talk to ripper over HTTP only ([7e05dfd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7e05dfda5432b35dda4870c55430837cd7a9e089))
+
+
+### Bug Fixes
+
+* **security:** contain progress-file paths under arm_log_path ([a6abbc2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a6abbc2dc0e2991d8d2046e1ee0f233c550063f7))
+
 ## [16.5.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.5.0...v16.5.1) (2026-04-25)
 
 
