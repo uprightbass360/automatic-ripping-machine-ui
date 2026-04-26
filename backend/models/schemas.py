@@ -225,9 +225,7 @@ class DriveSchema(BaseModel):
     model: str | None = None
     serial: str | None = None
     connection: str | None = None
-    read_cd: bool | None = None
-    read_dvd: bool | None = None
-    read_bd: bool | None = None
+    capabilities: list[str] | None = None
     firmware: str | None = None
     location: str | None = None
     stale: bool | None = None
