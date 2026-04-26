@@ -56,16 +56,15 @@ The original upstream project: [automatic-ripping-machine/automatic-ripping-mach
 flowchart LR
     subgraph ui["ARM UI"]
         FE["SvelteKit Frontend"]
-        BE["FastAPI Backend"]
+        BE["FastAPI BFF"]
     end
 
     FE -- "REST /api/*" --> BE
-    BE -- "read-only" --> DB["ARM SQLite DB"]
-    BE -- "JSON API" --> ARM["ARM Service"]
+    BE -- "REST /api/v1/*" --> ARM["ARM Ripper"]
     BE -- "REST API" --> TC["ARM Transcoder"]
 ```
 
-The backend reads ARM's SQLite database directly (read-only) for job data, calls ARM's JSON API for actions (abandon, delete, fix permissions), and talks to the transcoder's REST API for transcode job monitoring.
+The backend is a thin BFF (backend-for-frontend) that aggregates calls to the ripper's HTTP API and the transcoder's REST API into single dashboard-shaped responses for the SvelteKit frontend. As of v17.0.0 the BFF holds no database connection - all job data, drives, notifications, and config live behind the ripper's `/api/v1/*` endpoints. Requires arm-neu >= v17.0.0.
 
 ## Features
 
@@ -96,7 +95,7 @@ The backend reads ARM's SQLite database directly (read-only) for job data, calls
 
 **Frontend:** SvelteKit 2, Svelte 5, TypeScript 6, Tailwind CSS 4, Vite 8
 
-**Backend:** FastAPI, SQLAlchemy 2 (read-only), httpx, Pydantic Settings, Uvicorn
+**Backend:** FastAPI BFF, httpx, Pydantic Settings, Uvicorn (HTTP-only against the ripper - no DB driver)
 
 ## Docker Images
 
