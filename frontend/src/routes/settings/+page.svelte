@@ -1676,11 +1676,11 @@
 						{/if}
 
 						<!-- Logging settings -->
-						{#if settings.transcoder_config.updatable_keys.some((k) => TC_LOGGING_KEYS.includes(k))}
+						{#if (settings.transcoder_config?.updatable_keys ?? []).some((k) => TC_LOGGING_KEYS.includes(k))}
 							<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
 								<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Logging</h3>
 								<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-									{#each TC_LOGGING_KEYS.filter((k) => settings.transcoder_config.updatable_keys.includes(k)) as key}
+									{#each TC_LOGGING_KEYS.filter((k) => (settings.transcoder_config?.updatable_keys ?? []).includes(k)) as key}
 										{@const selectOpts = tcSelectOptions(key)}
 										<div class="relative {isTcFieldDirty(key) ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
 											<div class="{isTcFieldDirty(key) ? 'px-3 py-3' : ''}">
