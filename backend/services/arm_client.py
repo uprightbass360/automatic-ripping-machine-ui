@@ -498,16 +498,18 @@ async def check_makemkv_key() -> dict[str, Any] | None:
 async def run_preflight() -> dict[str, Any] | None:
     """Run ARM preflight checks. Returns None if ARM is unreachable.
 
-    Uses a 30-second timeout: preflight includes MakeMKV key validation
-    (which may fetch the beta key from forum.makemkv.com) plus per-path
-    stat/chown probes, so the default 10s is too tight.
+    Uses a 60-second timeout: preflight includes MakeMKV key validation
+    (which may fetch the beta key from forum.makemkv.com via curl with
+    a 15s cap) plus per-path stat/chown probes. 30s used to be enough,
+    but a slow forum.makemkv.com round-trip plus the API key probes can
+    push us past it; the upstream caps the MakeMKV step itself.
     """
-    return await _request("POST", "/api/v1/system/preflight", timeout=30.0)
+    return await _request("POST", "/api/v1/system/preflight", timeout=60.0)
 
 
 async def fix_preflight(items: list[str]) -> dict[str, Any] | None:
     """Fix specified preflight issues, then re-check. Returns None if ARM is unreachable."""
-    return await _request("POST", "/api/v1/system/preflight/fix", json={"fix": items}, timeout=30.0)
+    return await _request("POST", "/api/v1/system/preflight/fix", json={"fix": items}, timeout=60.0)
 
 
 # --- Jobs (read-side, replaces direct DB access via backend.services.arm_db) ---

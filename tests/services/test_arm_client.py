@@ -433,12 +433,12 @@ async def test_restart_arm_unreachable(mock_client):
 # --- run_preflight / fix_preflight ---
 
 
-async def test_run_preflight_uses_30s_timeout(mock_client):
-    """run_preflight uses a 30s timeout to absorb slow ARM preflight responses."""
+async def test_run_preflight_uses_60s_timeout(mock_client):
+    """run_preflight uses a 60s timeout to absorb slow ARM preflight responses."""
     _set_request_response(mock_client, {"checks": [], "paths": []})
     result = await arm_client.run_preflight()
     assert result == {"checks": [], "paths": []}
-    mock_client.request.assert_awaited_once_with("POST", "/api/v1/system/preflight", timeout=30.0)
+    mock_client.request.assert_awaited_once_with("POST", "/api/v1/system/preflight", timeout=60.0)
 
 
 async def test_run_preflight_unreachable(mock_client):
@@ -446,8 +446,8 @@ async def test_run_preflight_unreachable(mock_client):
     assert await arm_client.run_preflight() is None
 
 
-async def test_fix_preflight_uses_30s_timeout(mock_client):
-    """fix_preflight uses a 30s timeout since it re-runs preflight after applying fixes."""
+async def test_fix_preflight_uses_60s_timeout(mock_client):
+    """fix_preflight uses a 60s timeout since it re-runs preflight after applying fixes."""
     _set_request_response(mock_client, {"checks": [], "paths": []})
     result = await arm_client.fix_preflight(["RAW_PATH", "LOGPATH"])
     assert result == {"checks": [], "paths": []}
@@ -455,7 +455,7 @@ async def test_fix_preflight_uses_30s_timeout(mock_client):
         "POST",
         "/api/v1/system/preflight/fix",
         json={"fix": ["RAW_PATH", "LOGPATH"]},
-        timeout=30.0,
+        timeout=60.0,
     )
 
 
