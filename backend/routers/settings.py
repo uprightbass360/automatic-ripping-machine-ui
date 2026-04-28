@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import os
 from typing import NoReturn
@@ -20,21 +19,6 @@ _TRANSCODER_UNREACHABLE = "Transcoder service unreachable"
 _TRANSCODER_UNREACHABLE_RESPONSE = {502: {"description": _TRANSCODER_UNREACHABLE}}
 
 
-def _read_hb_presets() -> list[str] | None:
-    """Read HandBrake presets from the JSON file written by the init container."""
-    path = app_settings.arm_hb_presets_path
-    if not path or not os.path.isfile(path):
-        return None
-    try:
-        with open(path) as f:
-            data = json.load(f)
-        if isinstance(data, list):
-            return data
-    except (json.JSONDecodeError, OSError) as e:
-        log.warning("Failed to read HandBrake presets: %s", e)
-    return None
-
-
 @router.get("/settings", response_model=SettingsResponse)
 async def get_settings():
     arm_config = None
@@ -45,9 +29,6 @@ async def get_settings():
         arm_config = arm_resp.get("config")
         arm_metadata = arm_resp.get("comments")
         naming_variables = arm_resp.get("naming_variables")
-
-    # HandBrake presets from init container
-    arm_handbrake_presets = _read_hb_presets()
 
     # Transcoder config + GPU support
     transcoder_config = None
@@ -76,7 +57,6 @@ async def get_settings():
     return SettingsResponse(
         arm_config=arm_config,
         arm_metadata=arm_metadata,
-        arm_handbrake_presets=arm_handbrake_presets,
         naming_variables=naming_variables,
         transcoder_config=transcoder_config,
         transcoder_gpu_support=transcoder_gpu_support,
@@ -237,8 +217,11 @@ class WebhookTestRequest(BaseModel):
 
 
 @router.post("/settings/transcoder/test-webhook",
+             responses={400: {"description": "webhook_secret is required"}},
              dependencies=[Depends(require_transcoder_enabled)])
 async def test_transcoder_webhook(body: WebhookTestRequest):
+    if not body.webhook_secret:
+        raise HTTPException(status_code=400, detail="webhook_secret is required")
     return await transcoder_client.test_webhook(body.webhook_secret)
 
 

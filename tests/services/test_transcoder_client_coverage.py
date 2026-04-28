@@ -568,26 +568,6 @@ async def test_test_connection_config_lost_connection():
 # --- test_webhook edge cases ---
 
 
-async def test_test_webhook_empty_secret_reads_yaml():
-    """test_webhook reads from arm.yaml when secret is empty."""
-    mock_resp = _mock_response({"status": "ok"})
-
-    with patch("asyncio.to_thread", new_callable=AsyncMock, return_value="yaml-secret"), \
-         patch("backend.services.transcoder_client.httpx.AsyncClient") as MockClient:
-        ctx = AsyncMock()
-        ctx.post.return_value = mock_resp
-        MockClient.return_value.__aenter__ = AsyncMock(return_value=ctx)
-        MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
-        result = await transcoder_client.test_webhook("")
-
-    assert result["reachable"] is True
-    assert result["secret_ok"] is True
-    # Verify the header was sent with yaml-read secret
-    call_kwargs = ctx.post.call_args
-    headers = call_kwargs[1].get("headers", {})
-    assert headers.get("X-Webhook-Secret") == "yaml-secret"
-
-
 async def test_test_webhook_http_error():
     """test_webhook handles generic HTTP errors."""
     with patch("backend.services.transcoder_client.httpx.AsyncClient") as MockClient:

@@ -56,7 +56,7 @@ def _validate_theme(data: Any) -> bool:
 
 def _user_themes_dir() -> Path:
     """Return the user themes directory, creating it if needed."""
-    p = Path(settings.arm_themes_path)
+    p = Path(settings.themes_path)
     p.mkdir(parents=True, exist_ok=True)
     return p
 

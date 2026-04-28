@@ -808,7 +808,7 @@
 		// Transcoder Integration
 		SKIP_TRANSCODE: { label: 'Skip Transcoding (Global Default)', description: 'When enabled, ripped files are finalized directly without sending to the transcoder. Can be overridden per-job from the review panel.' },
 		TRANSCODER_URL: { label: 'Transcoder Webhook URL', description: 'URL of the arm-transcoder webhook endpoint (leave empty to disable)' },
-		TRANSCODER_WEBHOOK_SECRET: { label: 'Transcoder Webhook Secret', description: 'Must match WEBHOOK_SECRET in arm-transcoder .env' },
+		TRANSCODER_WEBHOOK_SECRET: { label: 'Transcoder Webhook Secret', description: 'Used by the ripper for outbound transcoder webhooks. arm-ui reads its own copy from ARM_UI_TRANSCODER_WEBHOOK_SECRET at startup; rotating requires updating the env on both services + restarting the containers.' },
 		LOCAL_RAW_PATH: { label: 'Local Raw Path', description: 'Local scratch storage where ARM rips to (for file move before notify)' },
 		SHARED_RAW_PATH: { label: 'Shared Raw Path', description: 'Shared/NFS storage the transcoder reads from (for file move before notify)' },
 	};
@@ -1422,12 +1422,12 @@
 								placeholder="Enter secret to test..."
 								bind:value={webhookSecret}
 							/>
-							<p class="mt-1 text-xs text-gray-400">Leave empty to test with the saved TRANSCODER_WEBHOOK_SECRET from arm.yaml.</p>
+							<p class="mt-1 text-xs text-gray-400">Enter a candidate secret to validate it end-to-end against the transcoder. The deployed secret&apos;s configured/missing status is shown in the Authentication panel below.</p>
 						</div>
 						<button
 							type="button"
 							onclick={handleTestWebhook}
-							disabled={webhookTesting}
+							disabled={webhookTesting || !webhookSecret.trim()}
 							class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
 						>
 							{webhookTesting ? 'Testing...' : 'Test Webhook'}

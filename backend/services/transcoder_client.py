@@ -128,11 +128,14 @@ async def test_connection() -> dict[str, Any]:
 
 
 async def test_webhook(webhook_secret: str) -> dict[str, Any]:
-    """Send a test webhook payload to verify the webhook secret."""
-    import asyncio
-    import os
-    import yaml
+    """Send a test webhook payload to verify a candidate webhook secret.
 
+    The caller must provide a non-empty ``webhook_secret``. There is no
+    deploy-env fallback: whether the deployed secret is configured is
+    already surfaced in /health (transcoder_auth_status.webhook_secret_configured),
+    and silently testing the deploy value would make the result ambiguous
+    about which secret was actually validated.
+    """
     result: dict[str, Any] = {
         "reachable": False,
         "secret_ok": False,
@@ -140,23 +143,7 @@ async def test_webhook(webhook_secret: str) -> dict[str, Any]:
         "error": None,
     }
 
-    # Fall back to saved secret from arm.yaml when field is empty
-    if not webhook_secret:
-        def _read_secret() -> str:
-            yaml_path = settings.arm_config_path
-            if yaml_path and os.path.isfile(yaml_path):
-                try:
-                    with open(yaml_path, "r") as f:
-                        arm_cfg = yaml.safe_load(f) or {}
-                    return arm_cfg.get("TRANSCODER_WEBHOOK_SECRET", "") or ""
-                except Exception:
-                    pass
-            return ""
-        webhook_secret = await asyncio.to_thread(_read_secret)
-
-    headers: dict[str, str] = {}
-    if webhook_secret:
-        headers["X-Webhook-Secret"] = webhook_secret
+    headers = {"X-Webhook-Secret": webhook_secret}
 
     try:
         # Use a fresh client without the shared X-API-Key header
@@ -188,25 +175,13 @@ async def test_webhook(webhook_secret: str) -> dict[str, Any]:
 async def send_webhook(payload: dict) -> dict[str, Any]:
     """Send a webhook payload to the transcoder to trigger a transcode job.
 
+    Reads ``TRANSCODER_WEBHOOK_SECRET`` from the deploy environment (set on
+    both arm-neu and arm-ui sides at deploy time, mirroring how
+    ``transcoder_api_key`` is wired).
+
     Returns {"success": True} or {"success": False, "error": "..."}.
     """
-    import asyncio
-    import os
-    import yaml
-
-    def _read_webhook_secret() -> str:
-        yaml_path = settings.arm_config_path
-        if yaml_path and os.path.isfile(yaml_path):
-            try:
-                with open(yaml_path, "r") as f:
-                    arm_cfg = yaml.safe_load(f) or {}
-                return arm_cfg.get("TRANSCODER_WEBHOOK_SECRET", "") or ""
-            except Exception:
-                pass
-        return ""
-
-    # Read webhook secret directly from arm.yaml (API masks secrets)
-    webhook_secret = await asyncio.to_thread(_read_webhook_secret)
+    webhook_secret = settings.transcoder_webhook_secret
 
     headers: dict[str, str] = {}
     if webhook_secret:
