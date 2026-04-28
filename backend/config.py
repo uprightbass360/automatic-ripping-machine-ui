@@ -2,7 +2,6 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    arm_log_path: str = "/home/arm/logs"
     themes_path: str = "/data/themes"
     image_cache_path: str = "/data/cache/images"
     arm_url: str = "http://localhost:8080"

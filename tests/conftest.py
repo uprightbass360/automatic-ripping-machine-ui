@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 
 # --- Environment overrides (before any backend imports) ---
-os.environ.setdefault("ARM_UI_ARM_LOG_PATH", "/tmp/arm_logs")
 os.environ.setdefault("ARM_UI_ARM_URL", "http://arm-test:8080")
 os.environ.setdefault("ARM_UI_TRANSCODER_URL", "http://transcoder-test:5000")
 
