@@ -69,6 +69,22 @@ async def test_download_log_success(app_client):
     assert resp.headers["content-type"].startswith("text/plain")
 
 
+async def test_download_log_forwards_content_disposition(app_client):
+    """When upstream sets Content-Disposition, the BFF forwards it to the client."""
+    upstream = _mock_streaming_response(status_code=200, body=b"x")
+    upstream.headers = {
+        "content-type": "text/plain",
+        "content-disposition": 'attachment; filename="arm.log"',
+    }
+    with patch(
+        "backend.routers.logs.arm_client.stream_log_download",
+        AsyncMock(return_value=upstream),
+    ):
+        resp = await app_client.get("/api/logs/arm.log/download")
+    assert resp.status_code == 200
+    assert resp.headers["content-disposition"] == 'attachment; filename="arm.log"'
+
+
 async def test_download_log_not_found(app_client):
     upstream = _mock_streaming_response(status_code=404)
     with patch(
@@ -87,4 +103,22 @@ async def test_download_log_502_when_unreachable(app_client):
         AsyncMock(return_value=None),
     ):
         resp = await app_client.get("/api/logs/arm.log/download")
+    assert resp.status_code == 502
+
+
+async def test_download_log_502_when_upstream_500(app_client):
+    """Upstream non-200/non-404 (eg. 500) collapses to a BFF 502."""
+    upstream = _mock_streaming_response(status_code=500)
+    with patch(
+        "backend.routers.logs.arm_client.stream_log_download",
+        AsyncMock(return_value=upstream),
+    ):
+        resp = await app_client.get("/api/logs/arm.log/download")
+    assert resp.status_code == 502
+    upstream.aclose.assert_awaited()
+
+
+async def test_list_logs_502_when_unreachable(app_client):
+    with patch("backend.routers.logs.arm_client.list_logs", AsyncMock(return_value=None)):
+        resp = await app_client.get("/api/logs")
     assert resp.status_code == 502

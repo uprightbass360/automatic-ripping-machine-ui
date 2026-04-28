@@ -207,3 +207,88 @@ async def test_get_naming_variables():
         result = await arm_client.get_naming_variables()
     assert len(result["variables"]) == 8
     assert "title" in result["variables"]
+
+
+# --- Logs API client wrappers ---
+
+
+async def test_list_logs_proxies_to_api():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response([{"filename": "a.log", "size": 1, "modified": "x"}])
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.list_logs()
+    assert result[0]["filename"] == "a.log"
+    mock_client.request.assert_called_once_with("GET", "/api/v1/logs")
+
+
+async def test_read_log_proxies_with_params():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({"filename": "a.log", "content": "x", "lines": 1})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.read_log("a.log", mode="full", lines=42)
+    assert result["lines"] == 1
+    args, kwargs = mock_client.request.call_args
+    assert args == ("GET", "/api/v1/logs/a.log")
+    assert kwargs["params"] == {"mode": "full", "lines": "42"}
+
+
+async def test_read_log_structured_omits_unset_filters():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({"filename": "a.log", "entries": [], "lines": 0})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        await arm_client.read_log_structured("a.log")
+    _, kwargs = mock_client.request.call_args
+    assert "level" not in kwargs["params"]
+    assert "search" not in kwargs["params"]
+
+
+async def test_read_log_structured_includes_filters():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({"filename": "a.log", "entries": [], "lines": 0})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        await arm_client.read_log_structured("a.log", level="error", search="boom")
+    _, kwargs = mock_client.request.call_args
+    assert kwargs["params"]["level"] == "error"
+    assert kwargs["params"]["search"] == "boom"
+
+
+async def test_delete_log_proxies():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({"success": True, "filename": "a.log"})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.delete_log("a.log")
+    assert result["success"] is True
+    mock_client.request.assert_called_once_with("DELETE", "/api/v1/logs/a.log")
+
+
+async def test_log_filename_is_url_encoded():
+    """Defence in depth: a malicious filename can't escape the /logs/ subtree."""
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({"filename": "x", "content": "", "lines": 0})
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        await arm_client.read_log("../etc/passwd")
+    args, _ = mock_client.request.call_args
+    # `/` and `.` percent-encoded; result is contained under /api/v1/logs/
+    assert args[1] == "/api/v1/logs/..%2Fetc%2Fpasswd"
+
+
+async def test_stream_log_download_returns_response():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    fake_resp = MagicMock(spec=httpx.Response)
+    fake_resp.status_code = 200
+    mock_client.build_request = MagicMock(return_value=MagicMock())
+    mock_client.send = AsyncMock(return_value=fake_resp)
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        resp = await arm_client.stream_log_download("a.log")
+    assert resp.status_code == 200
+    args, kwargs = mock_client.build_request.call_args
+    assert args == ("GET", "/api/v1/logs/a.log/download")
+
+
+async def test_stream_log_download_handles_unreachable():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.build_request = MagicMock(return_value=MagicMock())
+    mock_client.send = AsyncMock(side_effect=httpx.ConnectError("nope"))
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        resp = await arm_client.stream_log_download("a.log")
+    assert resp is None

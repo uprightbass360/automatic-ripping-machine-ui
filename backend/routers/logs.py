@@ -4,6 +4,8 @@ Keeps the public BFF route shape unchanged so the frontend doesn't need
 to be touched. Filesystem reads moved to arm-neu in v17.3.0; this
 container no longer needs the LOGPATH bind mount.
 """
+from typing import Annotated
+
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
@@ -15,6 +17,10 @@ router = APIRouter(prefix="/api", tags=["logs"])
 _ARM_UNREACHABLE = "ARM service unreachable"
 _NOT_FOUND = "Log file not found"
 
+_404 = {404: {"description": _NOT_FOUND}}
+_502 = {502: {"description": _ARM_UNREACHABLE}}
+_404_502 = {**_404, **_502}
+
 
 def _check_or_404(result):
     """Raise 502 if upstream is unreachable, 404 if it returned an error."""
@@ -25,7 +31,7 @@ def _check_or_404(result):
     return result
 
 
-@router.get("/logs", response_model=list[LogFileSchema])
+@router.get("/logs", response_model=list[LogFileSchema], responses=_502)
 async def list_logs():
     result = await arm_client.list_logs()
     if result is None:
@@ -33,7 +39,7 @@ async def list_logs():
     return result
 
 
-@router.get("/logs/{filename}/download", responses={404: {"description": _NOT_FOUND}})
+@router.get("/logs/{filename}/download", responses=_404_502)
 async def download_log(filename: str):
     """Stream the upstream raw log download to the client."""
     resp = await arm_client.stream_log_download(filename)
@@ -63,7 +69,7 @@ async def download_log(filename: str):
     )
 
 
-@router.delete("/logs/{filename}", responses={404: {"description": _NOT_FOUND}})
+@router.delete("/logs/{filename}", responses=_404_502)
 async def delete_log(filename: str):
     result = await arm_client.delete_log(filename)
     return _check_or_404(result)
@@ -72,14 +78,14 @@ async def delete_log(filename: str):
 @router.get(
     "/logs/{filename}/structured",
     response_model=StructuredLogResponse,
-    responses={404: {"description": _NOT_FOUND}},
+    responses=_404_502,
 )
 async def get_structured_log(
     filename: str,
-    mode: str = Query("tail", pattern="^(tail|full)$"),
-    lines: int = Query(100, ge=1, le=10000),
-    level: str | None = Query(None),
-    search: str | None = Query(None),
+    mode: Annotated[str, Query(pattern="^(tail|full)$")] = "tail",
+    lines: Annotated[int, Query(ge=1, le=10000)] = 100,
+    level: Annotated[str | None, Query()] = None,
+    search: Annotated[str | None, Query()] = None,
 ):
     result = await arm_client.read_log_structured(
         filename, mode=mode, lines=lines, level=level, search=search,
@@ -90,12 +96,12 @@ async def get_structured_log(
 @router.get(
     "/logs/{filename}",
     response_model=LogContentResponse,
-    responses={404: {"description": _NOT_FOUND}},
+    responses=_404_502,
 )
 async def get_log(
     filename: str,
-    mode: str = Query("tail", pattern="^(tail|full)$"),
-    lines: int = Query(100, ge=1, le=10000),
+    mode: Annotated[str, Query(pattern="^(tail|full)$")] = "tail",
+    lines: Annotated[int, Query(ge=1, le=10000)] = 100,
 ):
     result = await arm_client.read_log(filename, mode=mode, lines=lines)
     return _check_or_404(result)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -585,6 +586,17 @@ async def get_job_progress_state(job_id: int) -> dict[str, Any] | None:
 # --- Logs (read + delete) ---
 
 
+def _quote_log_name(filename: str) -> str:
+    """Percent-encode a log filename so it cannot escape the /logs/ subtree.
+
+    safe="" forces / and reserved chars to be encoded too, so a malicious
+    `filename` cannot route to a different upstream endpoint. The arm-neu
+    side does its own basename-strip + LOGPATH containment check, so this
+    is defence in depth (Sonar python:S5145 - URL path from user data).
+    """
+    return quote(filename, safe="")
+
+
 async def list_logs() -> list[dict[str, Any]] | None:
     """List log files in the ripper's LOGPATH. Returns None if unreachable."""
     return await _request("GET", "/api/v1/logs")
@@ -597,7 +609,7 @@ async def read_log(
     dict with `error` set if the upstream returned 4xx/5xx (caller maps
     that to 404)."""
     return await _request(
-        "GET", f"/api/v1/logs/{filename}",
+        "GET", f"/api/v1/logs/{_quote_log_name(filename)}",
         params={"mode": mode, "lines": str(lines)},
     )
 
@@ -616,13 +628,14 @@ async def read_log_structured(
     if search:
         params["search"] = search
     return await _request(
-        "GET", f"/api/v1/logs/{filename}/structured", params=params,
+        "GET", f"/api/v1/logs/{_quote_log_name(filename)}/structured",
+        params=params,
     )
 
 
 async def delete_log(filename: str) -> dict[str, Any] | None:
     """Delete a log file by name. Returns None if unreachable."""
-    return await _request("DELETE", f"/api/v1/logs/{filename}")
+    return await _request("DELETE", f"/api/v1/logs/{_quote_log_name(filename)}")
 
 
 async def stream_log_download(filename: str):
@@ -630,12 +643,12 @@ async def stream_log_download(filename: str):
 
     Yields (status_code, headers, async-byte-iterator). The caller is
     responsible for relaying the status + content-type + bytes to the user.
-    Returns (None, None, None) if the upstream is unreachable.
+    Returns None if the upstream is unreachable.
     """
     try:
         client = get_client()
         req = client.build_request(
-            "GET", f"/api/v1/logs/{filename}/download"
+            "GET", f"/api/v1/logs/{_quote_log_name(filename)}/download"
         )
         resp = await client.send(req, stream=True)
         return resp
