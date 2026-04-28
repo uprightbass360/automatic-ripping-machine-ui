@@ -1,10 +1,7 @@
 """FastAPI application for ARM UI."""
 
-import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-
-log = logging.getLogger(__name__)
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,21 +26,12 @@ from backend.routers import (
     themes,
     transcoder,
 )
-from backend.config import settings as app_settings
 from backend.services import arm_client, transcoder_client
 from backend.services import image_cache, system_cache
-from backend.services.themes_migration import migrate_legacy_themes
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Theme migration must never fail startup. A misconfigured volume,
-    # read-only filesystem, or stale bind mount during the upcoming
-    # one-release transition shouldn't take the whole app down.
-    try:
-        migrate_legacy_themes(app_settings.themes_path)
-    except Exception:
-        log.exception("Theme migration failed; continuing startup.")
     await system_cache.refresh()
     image_cache.startup_scan()
     yield
