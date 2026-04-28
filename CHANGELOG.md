@@ -1,5 +1,12 @@
 # Changelog
 
+## [17.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.0.0...v17.1.0) (2026-04-28)
+
+
+### Features
+
+* decouple from ripper-side bind mounts ([89ebb13](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/89ebb13971709f64a678a7c452443e1afbd135bc))
+
 ## [17.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v16.5.1...v17.0.0) (2026-04-26)
 
 
