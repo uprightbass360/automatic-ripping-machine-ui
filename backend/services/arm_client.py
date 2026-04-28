@@ -573,12 +573,75 @@ async def get_job_track_counts(job_id: int) -> dict[str, Any] | None:
 
 
 async def get_job_progress_state(job_id: int) -> dict[str, Any] | None:
-    """Track counts + disctype/logfile/no_of_titles for the BFF progress endpoint.
+    """Track counts + disctype/logfile/no_of_titles plus realtime PRGV/abcde
+    progress for the BFF progress endpoint.
 
     One round trip instead of three - keeps the dashboard's per-job
     progress polls cheap. Returns None if ARM is unreachable.
     """
     return await _request("GET", f"/api/v1/jobs/{job_id}/progress-state")
+
+
+# --- Logs (read + delete) ---
+
+
+async def list_logs() -> list[dict[str, Any]] | None:
+    """List log files in the ripper's LOGPATH. Returns None if unreachable."""
+    return await _request("GET", "/api/v1/logs")
+
+
+async def read_log(
+    filename: str, mode: str = "tail", lines: int = 100
+) -> dict[str, Any] | None:
+    """Read a log file (tail or full). Returns None if unreachable, or a
+    dict with `error` set if the upstream returned 4xx/5xx (caller maps
+    that to 404)."""
+    return await _request(
+        "GET", f"/api/v1/logs/{filename}",
+        params={"mode": mode, "lines": str(lines)},
+    )
+
+
+async def read_log_structured(
+    filename: str,
+    mode: str = "tail",
+    lines: int = 100,
+    level: str | None = None,
+    search: str | None = None,
+) -> dict[str, Any] | None:
+    """Read a log file with parsed entries + optional filters."""
+    params: dict[str, str] = {"mode": mode, "lines": str(lines)}
+    if level:
+        params["level"] = level
+    if search:
+        params["search"] = search
+    return await _request(
+        "GET", f"/api/v1/logs/{filename}/structured", params=params,
+    )
+
+
+async def delete_log(filename: str) -> dict[str, Any] | None:
+    """Delete a log file by name. Returns None if unreachable."""
+    return await _request("DELETE", f"/api/v1/logs/{filename}")
+
+
+async def stream_log_download(filename: str):
+    """Async-iterate the upstream download bytes for the logs/{name}/download endpoint.
+
+    Yields (status_code, headers, async-byte-iterator). The caller is
+    responsible for relaying the status + content-type + bytes to the user.
+    Returns (None, None, None) if the upstream is unreachable.
+    """
+    try:
+        client = get_client()
+        req = client.build_request(
+            "GET", f"/api/v1/logs/{filename}/download"
+        )
+        resp = await client.send(req, stream=True)
+        return resp
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError, httpx.ReadError, RuntimeError, OSError) as exc:
+        log.debug("ARM unreachable for log download (%s): %s", filename, exc)
+        return None
 
 
 async def get_job_retranscode_info(job_id: int) -> dict[str, Any] | None:

@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -18,7 +19,7 @@ from backend.models.schemas import (
 )
 import httpx
 
-from backend.services import arm_client, progress, transcoder_client
+from backend.services import arm_client, transcoder_client
 
 log = logging.getLogger(__name__)
 
@@ -171,9 +172,27 @@ async def get_job(job_id: int):
     return JobDetailSchema(**job_data, tracks=tracks, config=detail.get("config"))
 
 
+# Tiny TTL cache for upstream progress-state to absorb dashboard polling.
+# The dashboard polls every 2s per active job; multiple browser tabs
+# multiply that load against arm-neu. A 1s cache caps it at one upstream
+# call per job per second regardless of how many tabs poll.
+_PROGRESS_CACHE: dict[int, tuple[float, dict | None]] = {}
+_PROGRESS_TTL = 1.0
+
+
+async def _cached_progress_state(job_id: int) -> dict | None:
+    now = time.monotonic()
+    cached = _PROGRESS_CACHE.get(job_id)
+    if cached is not None and now - cached[0] < _PROGRESS_TTL:
+        return cached[1]
+    state = await arm_client.get_job_progress_state(job_id)
+    _PROGRESS_CACHE[job_id] = (now, state)
+    return state
+
+
 @router.get("/jobs/{job_id}/progress", responses=_404_JOB)
 async def get_job_progress(job_id: int):
-    state = await arm_client.get_job_progress_state(job_id)
+    state = await _cached_progress_state(job_id)
     if state is None:
         raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
     if state.get("success") is False:
@@ -186,23 +205,26 @@ async def get_job_progress(job_id: int):
         "tracks_ripped": counts_raw.get("ripped", 0),
     }
     if state.get("disctype") == "music":
-        result = progress.get_music_progress(state.get("logfile"), counts["tracks_total"])
+        progress_value = state.get("music_progress")
+        stage_value = state.get("music_stage")
+        realtime_ripped = state.get("tracks_ripped_realtime")
     else:
-        result = progress.get_rip_progress(job_id)
-    # Merge DB counts, but keep the higher tracks_ripped value.
-    # The progress file provides a real-time count from PRGC messages
-    # (titles currently being saved), while the DB count comes from
-    # FILE_ADDED messages (titles fully saved).  During ripping the
-    # progress-file count leads; after completion the DB count is
-    # authoritative.
-    progress_ripped = result.get("tracks_ripped", 0) or 0
+        progress_value = state.get("rip_progress")
+        stage_value = state.get("rip_stage")
+        realtime_ripped = state.get("tracks_ripped_realtime")
+
+    # Merge DB counts with the real-time ripped count from PRGC/encoding
+    # messages. During ripping the realtime count leads; after
+    # completion the DB count is authoritative, so take the max.
     db_ripped = counts["tracks_ripped"] or 0
-    result.update(counts)
-    result["tracks_ripped"] = max(progress_ripped, db_ripped)
-    # Include no_of_titles so the frontend can show title count even before
-    # Track rows are created in the DB (early scan/decrypt phase).
-    result["no_of_titles"] = state.get("no_of_titles")
-    return result
+    realtime = realtime_ripped or 0
+    return {
+        "progress": progress_value,
+        "stage": stage_value,
+        "tracks_total": counts["tracks_total"],
+        "tracks_ripped": max(realtime, db_ripped),
+        "no_of_titles": state.get("no_of_titles"),
+    }
 
 
 @router.get("/jobs/{job_id}/crc-lookup", responses=_404_502_ARM)

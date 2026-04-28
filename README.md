@@ -122,7 +122,6 @@ Edit `.env` with your service URLs (the UI talks to the ripper over HTTP, no sha
 ```bash
 ARM_UI_ARM_URL=http://ARM_IP:8080
 ARM_UI_TRANSCODER_URL=http://TRANSCODER_IP:5000
-ARM_UI_ARM_LOG_PATH=/home/arm/logs
 ```
 
 Start with Docker:
@@ -137,7 +136,6 @@ The UI is available at `http://localhost:8888`.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ARM_UI_ARM_LOG_PATH` | `/home/arm/logs` | Path to ARM's log directory |
 | `ARM_UI_ARM_URL` | `http://localhost:8080` | ARM web UI base URL (for job actions) |
 | `ARM_UI_TRANSCODER_URL` | `http://localhost:5000` | Transcoder API base URL |
 | `ARM_UI_TRANSCODER_API_KEY` | *(empty)* | Optional transcoder API key |

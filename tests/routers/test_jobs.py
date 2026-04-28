@@ -150,21 +150,28 @@ async def test_get_job_progress_with_track_counts(app_client):
     state = {
         "track_counts": {"total": 10, "ripped": 3},
         "disctype": "bluray", "logfile": "job_5.log", "no_of_titles": 10,
+        "rip_progress": 45, "rip_stage": "rip",
+        "music_progress": None, "music_stage": None,
+        "tracks_ripped_realtime": None,
     }
+    # Bypass the BFF's 1s TTL cache so each test sees a fresh upstream call.
+    from backend.routers import jobs as jobs_router
+    jobs_router._PROGRESS_CACHE.clear()
     with patch("backend.routers.jobs.arm_client.get_job_progress_state",
-               new_callable=AsyncMock, return_value=state), \
-         patch("backend.routers.jobs.progress.get_rip_progress",
-               return_value={"progress": 45, "stage": "rip"}):
+               new_callable=AsyncMock, return_value=state):
         resp = await app_client.get("/api/jobs/5/progress")
     assert resp.status_code == 200
     data = resp.json()
     assert data["progress"] == 45
+    assert data["stage"] == "rip"
     assert data["tracks_total"] == 10
     assert data["tracks_ripped"] == 3
 
 
 async def test_get_job_progress_404(app_client):
     """GET /api/jobs/{id}/progress returns 404 when ripper returns success=False."""
+    from backend.routers import jobs as jobs_router
+    jobs_router._PROGRESS_CACHE.clear()
     with patch("backend.routers.jobs.arm_client.get_job_progress_state",
                new_callable=AsyncMock,
                return_value={"success": False, "error": "Job not found"}):
@@ -174,6 +181,8 @@ async def test_get_job_progress_404(app_client):
 
 async def test_get_job_progress_arm_unreachable(app_client):
     """GET /api/jobs/{id}/progress returns 502 when ARM is unreachable."""
+    from backend.routers import jobs as jobs_router
+    jobs_router._PROGRESS_CACHE.clear()
     with patch("backend.routers.jobs.arm_client.get_job_progress_state",
                new_callable=AsyncMock, return_value=None):
         resp = await app_client.get("/api/jobs/5/progress")
@@ -181,21 +190,23 @@ async def test_get_job_progress_arm_unreachable(app_client):
 
 
 async def test_get_job_progress_music_branch(app_client):
-    """GET /api/jobs/{id}/progress uses music progress parser for disctype=music."""
+    """GET /api/jobs/{id}/progress uses music_progress for disctype=music."""
     state = {
         "track_counts": {"total": 3, "ripped": 2},
         "disctype": "music", "logfile": "job_7.log", "no_of_titles": 3,
+        "rip_progress": None, "rip_stage": None,
+        "music_progress": 66.7, "music_stage": "2/3 - encoding track 3",
+        "tracks_ripped_realtime": 2,
     }
+    from backend.routers import jobs as jobs_router
+    jobs_router._PROGRESS_CACHE.clear()
     with patch("backend.routers.jobs.arm_client.get_job_progress_state",
-               new_callable=AsyncMock, return_value=state), \
-         patch("backend.routers.jobs.progress.get_music_progress",
-               return_value={"progress": 66.7, "stage": "2/3 - encoding track 3"}) as mock_music:
+               new_callable=AsyncMock, return_value=state):
         resp = await app_client.get("/api/jobs/7/progress")
     assert resp.status_code == 200
     data = resp.json()
     assert data["progress"] == pytest.approx(66.7)
     assert "encoding" in data["stage"]
-    mock_music.assert_called_once_with("job_7.log", 3)
 
 
 async def test_get_job_progress_includes_no_of_titles(app_client):
@@ -203,15 +214,56 @@ async def test_get_job_progress_includes_no_of_titles(app_client):
     state = {
         "track_counts": {"total": 0, "ripped": 0},
         "disctype": "bluray", "logfile": "job_8.log", "no_of_titles": 12,
+        "rip_progress": None, "rip_stage": None,
+        "music_progress": None, "music_stage": None,
+        "tracks_ripped_realtime": None,
     }
+    from backend.routers import jobs as jobs_router
+    jobs_router._PROGRESS_CACHE.clear()
     with patch("backend.routers.jobs.arm_client.get_job_progress_state",
-               new_callable=AsyncMock, return_value=state), \
-         patch("backend.routers.jobs.progress.get_rip_progress",
-               return_value={"progress": None, "stage": None}):
+               new_callable=AsyncMock, return_value=state):
         resp = await app_client.get("/api/jobs/8/progress")
     assert resp.status_code == 200
     data = resp.json()
     assert data["no_of_titles"] == 12
+
+
+async def test_get_job_progress_realtime_overrides_db_count(app_client):
+    """When realtime ripped > DB ripped, return the higher value."""
+    state = {
+        "track_counts": {"total": 10, "ripped": 2},
+        "disctype": "bluray", "logfile": "job_9.log", "no_of_titles": 10,
+        "rip_progress": 50, "rip_stage": "Title 5: Saving to MKV file",
+        "music_progress": None, "music_stage": None,
+        "tracks_ripped_realtime": 4,
+    }
+    from backend.routers import jobs as jobs_router
+    jobs_router._PROGRESS_CACHE.clear()
+    with patch("backend.routers.jobs.arm_client.get_job_progress_state",
+               new_callable=AsyncMock, return_value=state):
+        resp = await app_client.get("/api/jobs/9/progress")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["tracks_ripped"] == 4  # realtime wins
+    assert data["tracks_total"] == 10
+
+
+async def test_get_job_progress_uses_ttl_cache(app_client):
+    """Two rapid polls hit upstream once thanks to the 1s TTL cache."""
+    state = {
+        "track_counts": {"total": 10, "ripped": 3},
+        "disctype": "bluray", "logfile": "job_42.log", "no_of_titles": 10,
+        "rip_progress": 50, "rip_stage": None,
+        "music_progress": None, "music_stage": None,
+        "tracks_ripped_realtime": None,
+    }
+    from backend.routers import jobs as jobs_router
+    jobs_router._PROGRESS_CACHE.clear()
+    mock = AsyncMock(return_value=state)
+    with patch("backend.routers.jobs.arm_client.get_job_progress_state", mock):
+        await app_client.get("/api/jobs/42/progress")
+        await app_client.get("/api/jobs/42/progress")
+    assert mock.await_count == 1
 
 
 # --- GET /api/jobs/{job_id}/naming-preview ---
