@@ -665,7 +665,12 @@
 		// Preset-managed keys (rendered in the PresetEditor section, not as raw fields)
 		'global_overrides',
 		'selected_preset_slug',
+		// Logging keys rendered in their own sub-panel below Operational
+		'log_level',
+		'log_level_libraries',
 	]);
+
+	const TC_LOGGING_KEYS = ['log_level', 'log_level_libraries'];
 
 	// Transcoder number fields: key → [min, max, step?]
 	const TC_NUMBER_FIELDS: Record<string, [number, number, number?]> = {
@@ -1285,14 +1290,18 @@
 	</div>
 {/snippet}
 
-<!-- Reusable snippet for GPU support cards -->
+<!-- Reusable snippet for GPU support cards.
+     Filters to the detected vendor's group(s); falls back to showing all
+     groups when nothing is detected so the user can see what's missing. -->
 {#snippet gpuCards(gpu: Record<string, boolean>)}
+	{@const detected = HW_GROUPS.filter((g) => hasAny(gpu, g.keys))}
+	{@const visibleGroups = detected.length > 0 ? detected : HW_GROUPS}
 	<section>
 		<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
 			Hardware Encoding
 		</h2>
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-			{#each HW_GROUPS as group}
+			{#each visibleGroups as group}
 				{@const available = hasAny(gpu, group.keys)}
 				<div
 					class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark"
@@ -1656,6 +1665,51 @@
 													/>
 												{/if}
 
+												{#if TC_HELP[key]}
+													<p class="mt-1 text-xs text-gray-400">{TC_HELP[key]}</p>
+												{/if}
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+
+						<!-- Logging settings -->
+						{#if settings.transcoder_config.updatable_keys.some((k) => TC_LOGGING_KEYS.includes(k))}
+							<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
+								<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Logging</h3>
+								<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+									{#each TC_LOGGING_KEYS.filter((k) => settings.transcoder_config.updatable_keys.includes(k)) as key}
+										{@const selectOpts = tcSelectOptions(key)}
+										<div class="relative {isTcFieldDirty(key) ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
+											<div class="{isTcFieldDirty(key) ? 'px-3 py-3' : ''}">
+												<div class="mb-1 flex items-center gap-1">
+													<label for="tc-{key}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+														{TC_LABELS[key] ?? key}
+													</label>
+													{#if isTcFieldDirty(key)}
+														<span class="ml-1 h-1.5 w-1.5 rounded-full bg-primary" title="Modified"></span>
+													{/if}
+												</div>
+												{#if selectOpts}
+													<select
+														id="tc-{key}"
+														class={inputClass}
+														bind:value={tcForm[key]}
+													>
+														{#each selectOpts as opt}
+															<option value={opt}>{opt}</option>
+														{/each}
+													</select>
+												{:else}
+													<input
+														id="tc-{key}"
+														type="text"
+														class={inputClass}
+														bind:value={tcForm[key]}
+													/>
+												{/if}
 												{#if TC_HELP[key]}
 													<p class="mt-1 text-xs text-gray-400">{TC_HELP[key]}</p>
 												{/if}

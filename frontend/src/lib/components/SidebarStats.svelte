@@ -23,17 +23,30 @@
 		}
 	});
 
-	const hasGpu = $derived($transcoderEnabled && transcoderOnline && transcoderStats?.gpu != null);
+	// Sticky last-known values so the panel does not blank out when a single
+	// dashboard poll returns null (eg. arm-neu /system/stats hiccup, transient
+	// timeout). Stays empty until first real value, then never reverts to null.
+	let stickySystemStats = $state<SystemStats | null>(null);
+	let stickyTranscoderStats = $state<SystemStats | null>(null);
+	let stickySystemInfo = $state<HardwareInfo | null>(null);
+	let stickyTranscoderInfo = $state<HardwareInfo | null>(null);
 
-	const activeHw = $derived(activePanel === 'ripper' ? (armOnline ? systemInfo : null) : (transcoderOnline ? transcoderInfo : null));
-	const activeStats = $derived(activePanel === 'ripper' ? (armOnline ? systemStats : null) : (transcoderOnline ? transcoderStats : null));
+	$effect(() => { if (systemStats) stickySystemStats = systemStats; });
+	$effect(() => { if (transcoderStats) stickyTranscoderStats = transcoderStats; });
+	$effect(() => { if (systemInfo) stickySystemInfo = systemInfo; });
+	$effect(() => { if (transcoderInfo) stickyTranscoderInfo = transcoderInfo; });
+
+	const hasGpu = $derived($transcoderEnabled && transcoderOnline && stickyTranscoderStats?.gpu != null);
+
+	const activeHw = $derived(activePanel === 'ripper' ? (armOnline ? stickySystemInfo : null) : (transcoderOnline ? stickyTranscoderInfo : null));
+	const activeStats = $derived(activePanel === 'ripper' ? (armOnline ? stickySystemStats : null) : (transcoderOnline ? stickyTranscoderStats : null));
 
 	// Map storage display names to file root keys for deep linking
 	const storageNameToRoot: Record<string, string> = {
 		'Raw': 'raw', 'Transcode': 'transcode', 'Work': 'transcode', 'Completed': 'completed',
 	};
 	const rootPaths = $derived(
-		(systemStats?.storage ?? []).reduce<Record<string, string>>((acc, sp) => {
+		(stickySystemStats?.storage ?? []).reduce<Record<string, string>>((acc, sp) => {
 			const key = storageNameToRoot[sp.name];
 			if (key) acc[key] = sp.path.replace(/\/+$/, '');
 			return acc;
@@ -90,8 +103,8 @@
 	{#if activePanel === 'gpu'}
 		{#if !transcoderOnline}
 			<p class="text-xs text-orange-500 dark:text-orange-400">Cannot reach the transcoder service</p>
-		{:else if transcoderStats?.gpu}
-			{@const gpu = transcoderStats.gpu}
+		{:else if stickyTranscoderStats?.gpu}
+			{@const gpu = stickyTranscoderStats.gpu}
 			<div class="mb-2 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
 				<span class="rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize {vendorPillClasses(gpu.vendor)}">{gpu.vendor}</span>
 				{#if gpu.temperature_c != null}

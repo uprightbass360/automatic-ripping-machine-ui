@@ -22,9 +22,16 @@
 		}
 	});
 
-	const hasGpu = $derived($transcoderEnabled && transcoderOnline && transcoderStats?.gpu != null);
+	// Sticky last-known values so the bar does not blank out when a single
+	// dashboard poll returns null.
+	let stickySystemStats = $state<SystemStats | null>(null);
+	let stickyTranscoderStats = $state<SystemStats | null>(null);
+	$effect(() => { if (systemStats) stickySystemStats = systemStats; });
+	$effect(() => { if (transcoderStats) stickyTranscoderStats = transcoderStats; });
 
-	const activeStats = $derived(activePanel === 'ripper' ? (armOnline ? systemStats : null) : (transcoderOnline ? transcoderStats : null));
+	const hasGpu = $derived($transcoderEnabled && transcoderOnline && stickyTranscoderStats?.gpu != null);
+
+	const activeStats = $derived(activePanel === 'ripper' ? (armOnline ? stickySystemStats : null) : (transcoderOnline ? stickyTranscoderStats : null));
 	const isOffline = $derived(
 		activePanel === 'gpu'
 			? !transcoderOnline
@@ -62,7 +69,7 @@
 
 	// Use ripper storage paths for file links (file roots match ripper paths)
 	const rootPaths = $derived(
-		(systemStats?.storage ?? []).reduce<Record<string, string>>((acc, sp) => {
+		(stickySystemStats?.storage ?? []).reduce<Record<string, string>>((acc, sp) => {
 			const key = storageNameToRoot[sp.name];
 			if (key) acc[key] = sp.path.replace(/\/+$/, '');
 			return acc;
@@ -114,8 +121,8 @@
 	{#if activePanel === 'gpu'}
 		{#if !transcoderOnline}
 			<span class="text-xs text-orange-500 dark:text-orange-400">{offlineMessage}</span>
-		{:else if transcoderStats?.gpu}
-			{@const gpu = transcoderStats.gpu}
+		{:else if stickyTranscoderStats?.gpu}
+			{@const gpu = stickyTranscoderStats.gpu}
 			<!-- Vendor -->
 			<span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold capitalize {vendorPillClasses(gpu.vendor)}">{gpu.vendor}</span>
 
