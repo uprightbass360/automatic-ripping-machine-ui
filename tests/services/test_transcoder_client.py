@@ -129,3 +129,19 @@ async def test_test_webhook_unreachable():
 
     assert result["reachable"] is False
     assert result["error"] is not None
+
+
+async def test_test_webhook_uses_caller_secret_in_header():
+    """Caller-supplied secret is sent in X-Webhook-Secret. No env fallback."""
+    mock_resp = _mock_response({"status": "ignored"})
+
+    with patch("backend.services.transcoder_client.httpx.AsyncClient") as MockClient:
+        ctx = AsyncMock()
+        ctx.post.return_value = mock_resp
+        MockClient.return_value.__aenter__ = AsyncMock(return_value=ctx)
+        MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+        result = await transcoder_client.test_webhook("candidate-secret")
+
+    _, kwargs = ctx.post.call_args
+    assert kwargs["headers"]["X-Webhook-Secret"] == "candidate-secret"
+    assert result["secret_ok"] is True

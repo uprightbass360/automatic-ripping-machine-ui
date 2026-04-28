@@ -329,7 +329,6 @@ export interface TranscoderConfig {
 	valid_audio_encoders?: string[];
 	valid_subtitle_modes?: string[];
 	valid_log_levels?: string[];
-	valid_handbrake_presets?: string[];
 	valid_preset_files?: string[];
 	presets_by_file?: Record<string, string[]>;
 }
@@ -375,7 +374,6 @@ export interface FolderCreateResponse {
 export interface SettingsData {
 	arm_config: Record<string, string | null> | null;
 	arm_metadata: Record<string, string> | null;
-	arm_handbrake_presets: string[] | null;
 	naming_variables: Record<string, string> | null;
 	transcoder_config: TranscoderConfig | null;
 	transcoder_gpu_support: Record<string, boolean> | null;

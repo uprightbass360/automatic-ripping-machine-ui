@@ -2,56 +2,9 @@
 
 from __future__ import annotations
 
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
-
-from backend.routers.settings import _read_hb_presets
-
-
-# --- _read_hb_presets ---
-
-
-def test_read_hb_presets_success(tmp_path):
-    presets_file = tmp_path / "presets.json"
-    presets_file.write_text(json.dumps(["Very Fast 1080p30", "Fast 1080p30"]))
-    with patch("backend.routers.settings.app_settings") as mock_settings:
-        mock_settings.arm_hb_presets_path = str(presets_file)
-        result = _read_hb_presets()
-    assert result == ["Very Fast 1080p30", "Fast 1080p30"]
-
-
-def test_read_hb_presets_missing_file():
-    with patch("backend.routers.settings.app_settings") as mock_settings:
-        mock_settings.arm_hb_presets_path = "/nonexistent/presets.json"
-        result = _read_hb_presets()
-    assert result is None
-
-
-def test_read_hb_presets_none_path():
-    with patch("backend.routers.settings.app_settings") as mock_settings:
-        mock_settings.arm_hb_presets_path = None
-        result = _read_hb_presets()
-    assert result is None
-
-
-def test_read_hb_presets_invalid_json(tmp_path):
-    presets_file = tmp_path / "presets.json"
-    presets_file.write_text("not valid json{{{")
-    with patch("backend.routers.settings.app_settings") as mock_settings:
-        mock_settings.arm_hb_presets_path = str(presets_file)
-        result = _read_hb_presets()
-    assert result is None
-
-
-def test_read_hb_presets_non_list(tmp_path):
-    presets_file = tmp_path / "presets.json"
-    presets_file.write_text(json.dumps({"key": "value"}))
-    with patch("backend.routers.settings.app_settings") as mock_settings:
-        mock_settings.arm_hb_presets_path = str(presets_file)
-        result = _read_hb_presets()
-    assert result is None
 
 
 # --- GET /api/settings ---
@@ -75,7 +28,6 @@ async def test_get_settings_all_sources(app_client):
         patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=arm_resp),
         patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=tc_config),
         patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=health),
-        patch("backend.routers.settings._read_hb_presets", return_value=["Fast 1080p30"]),
     ):
         resp = await app_client.get("/api/settings")
     assert resp.status_code == 200
@@ -85,7 +37,6 @@ async def test_get_settings_all_sources(app_client):
     assert data["naming_variables"] == {"title": "Movie title"}
     assert data["transcoder_config"] == tc_config
     assert data["gpu_support"] == {"nvenc": True}
-    assert data["arm_handbrake_presets"] == ["Fast 1080p30"]
 
 
 async def test_get_settings_arm_offline_returns_none_config(app_client):
@@ -94,7 +45,6 @@ async def test_get_settings_arm_offline_returns_none_config(app_client):
         patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=None),
-        patch("backend.routers.settings._read_hb_presets", return_value=None),
     ):
         resp = await app_client.get("/api/settings")
     assert resp.status_code == 200
@@ -117,7 +67,6 @@ async def test_get_settings_transcoder_config_fallback_from_health(app_client):
         patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=health),
-        patch("backend.routers.settings._read_hb_presets", return_value=None),
     ):
         resp = await app_client.get("/api/settings")
     assert resp.status_code == 200

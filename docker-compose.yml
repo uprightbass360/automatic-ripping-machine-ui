@@ -1,11 +1,15 @@
 # Standalone dev UI - connects to ARM and Transcoder on the host network.
-# Talks to the ripper exclusively over HTTP; no shared database volume.
-#
-# Set ARM_NEU_PATH in .env if the ARM-neu repo is not at the default location:
-#   ARM_NEU_PATH=../automatic-ripping-machine-neu
+# Talks to the ripper exclusively over HTTP; uses UI-owned named volumes
+# for themes and image cache. The only remaining bind mount is the log
+# directory (read-only), which is being retired in PR #2 of the
+# UI bind-mount decoupling project.
 #
 # Set ARM_LOGS_PATH in .env to override the log directory (e.g. for production):
 #   ARM_LOGS_PATH=/nfs/files/Containers/arm/logs
+#
+# Set WEBHOOK_SECRET in .env to authenticate outbound transcoder webhook
+# calls. Must match WEBHOOK_SECRET on the transcoder host (same operator-
+# facing variable name used by the arm-neu compose stacks).
 
 services:
   arm-ui:
@@ -13,19 +17,19 @@ services:
     network_mode: host
     environment:
       - ARM_UI_ARM_LOG_PATH=/data/logs
-      - ARM_UI_ARM_CONFIG_PATH=/data/config/arm.yaml
       - ARM_UI_ARM_URL=http://localhost:8080
       - ARM_UI_TRANSCODER_URL=${ARM_UI_TRANSCODER_URL:-http://localhost:5000}
       - ARM_UI_TRANSCODER_ENABLED=${ARM_UI_TRANSCODER_ENABLED:-true}
-      - ARM_UI_ARM_HB_PRESETS_PATH=/data/hb-presets/presets.json
       - ARM_UI_TRANSCODER_API_KEY=${ARM_UI_TRANSCODER_API_KEY:-}
-      - ARM_UI_ARM_THEMES_PATH=/data/config/themes
+      - ARM_UI_TRANSCODER_WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
+      - ARM_UI_THEMES_PATH=/data/themes
       - ARM_UI_IMAGE_CACHE_PATH=/data/cache/images
     volumes:
       - ${ARM_LOGS_PATH:-./dev-data/logs}:/data/logs:ro
-      - ${ARM_NEU_PATH:-../automatic-ripping-machine-neu}/dev-data/config:/data/config:rw
+      - arm-ui-themes:/data/themes:rw
       - image-cache:/data/cache/images:rw
     restart: unless-stopped
 
 volumes:
+  arm-ui-themes:
   image-cache:

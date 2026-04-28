@@ -138,13 +138,12 @@ The UI is available at `http://localhost:8888`.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ARM_UI_ARM_LOG_PATH` | `/home/arm/logs` | Path to ARM's log directory |
-| `ARM_UI_ARM_CONFIG_PATH` | *(empty)* | Path to ARM's `arm.yaml` config file |
-| `ARM_UI_ARM_HB_PRESETS_PATH` | *(empty)* | Path to HandBrake presets JSON file |
 | `ARM_UI_ARM_URL` | `http://localhost:8080` | ARM web UI base URL (for job actions) |
 | `ARM_UI_TRANSCODER_URL` | `http://localhost:5000` | Transcoder API base URL |
 | `ARM_UI_TRANSCODER_API_KEY` | *(empty)* | Optional transcoder API key |
+| `ARM_UI_TRANSCODER_WEBHOOK_SECRET` | *(empty)* | Webhook secret for outbound transcoder calls. Must match `WEBHOOK_SECRET` on the transcoder host. Read once at startup; rotation requires a container restart. |
 | `ARM_UI_TRANSCODER_ENABLED` | `true` | Set `false` for ripper-only deployments (no transcoder). Hides all transcoder UI surfaces and short-circuits transcoder HTTP calls. See [ripper-only deployment](https://github.com/uprightbass360/automatic-ripping-machine-neu#ripper-only) in the ARM-neu README. |
-| `ARM_UI_ARM_THEMES_PATH` | `/data/config/themes` | Directory for custom color scheme JSON files |
+| `ARM_UI_THEMES_PATH` | `/data/themes` | Directory for custom color scheme JSON/CSS files |
 | `ARM_UI_IMAGE_CACHE_PATH` | `/data/cache/images` | Directory for cached poster/cover images |
 | `ARM_UI_PORT` | `8888` | Server port |
 

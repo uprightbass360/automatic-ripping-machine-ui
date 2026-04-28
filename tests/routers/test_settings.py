@@ -116,20 +116,27 @@ async def test_webhook_bad_secret(app_client):
     assert data["secret_required"] is True
 
 
-async def test_webhook_empty_body(app_client):
-    """test-webhook defaults to empty secret when body has no webhook_secret."""
-    result = {"reachable": True, "secret_ok": True, "secret_required": False, "error": None}
+async def test_webhook_empty_body_returns_400(app_client):
+    """test-webhook rejects empty/missing webhook_secret without calling the client.
+
+    The deployed-secret-configured status is already surfaced via /health, so
+    this endpoint exists only to validate a candidate string the user supplied.
+    """
     with patch(
         "backend.routers.settings.transcoder_client.test_webhook",
         new_callable=AsyncMock,
-        return_value=result,
     ) as mock_fn:
-        resp = await app_client.post(
+        resp_missing = await app_client.post(
             "/api/settings/transcoder/test-webhook",
             json={},
         )
-    assert resp.status_code == 200
-    mock_fn.assert_awaited_once_with("")
+        resp_empty = await app_client.post(
+            "/api/settings/transcoder/test-webhook",
+            json={"webhook_secret": ""},
+        )
+    assert resp_missing.status_code == 400
+    assert resp_empty.status_code == 400
+    mock_fn.assert_not_awaited()
 
 
 # --- GET /api/settings (auth status) ---
@@ -148,7 +155,6 @@ async def test_settings_includes_auth_status(app_client):
         patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
         patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=health),
-        patch("backend.routers.settings._read_hb_presets", return_value=None),
     ):
         resp = await app_client.get("/api/settings")
     assert resp.status_code == 200

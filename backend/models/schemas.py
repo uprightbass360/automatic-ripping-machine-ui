@@ -365,7 +365,6 @@ class StructuredLogResponse(BaseModel):
 class SettingsResponse(BaseModel):
     arm_config: dict[str, Any] | None = None
     arm_metadata: dict[str, Any] | None = None
-    arm_handbrake_presets: list[str] | None = None
     naming_variables: dict[str, str] | None = None
     transcoder_config: dict[str, Any] | None = None
     transcoder_gpu_support: dict[str, Any] | None = None

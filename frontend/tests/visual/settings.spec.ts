@@ -11,7 +11,6 @@ test.describe('Settings visual', () => {
                     body: JSON.stringify({
                         arm_config: {},
                         arm_metadata: null,
-                        arm_handbrake_presets: null,
                         naming_variables: null,
                         transcoder_config: null,
                         transcoder_gpu_support: null,
