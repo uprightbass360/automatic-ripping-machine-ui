@@ -353,5 +353,42 @@ describe('Settings Page', () => {
 			});
 			expect(screen.queryByText('nvidia')).not.toBeInTheDocument();
 		});
+
+		it('uses md:grid-cols-4 when Versions card has 4 entries', async () => {
+			const settingsApi = await import('$lib/api/settings');
+			vi.mocked(settingsApi.fetchSystemInfo).mockResolvedValueOnce({
+				versions: { arm: '17.3.0-rc', makemkv: '1.18.3', transcoder: '17.5.0-rc', ui: '17.2.0-rc' },
+				endpoints: { api: { url: 'http://localhost:8888', reachable: true } },
+				paths: [],
+				database: { path: '/db/arm.db', size_bytes: 0, available: true, migration_current: 'a', migration_head: 'a', up_to_date: true },
+				drives: []
+			});
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const systemTab = screen.getAllByText('System');
+			await fireEvent.click(systemTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Versions')).toBeInTheDocument();
+			});
+			const grid = screen.getByText('Versions').parentElement?.querySelector('div.grid');
+			expect(grid?.className).toContain('md:grid-cols-4');
+		});
+
+		it('uses md:grid-cols-3 when Versions card has 3 entries (e.g. transcoder disabled)', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const systemTab = screen.getAllByText('System');
+			await fireEvent.click(systemTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Versions')).toBeInTheDocument();
+			});
+			// Default mock has 3 versions: arm, transcoder, ui
+			const grid = screen.getByText('Versions').parentElement?.querySelector('div.grid');
+			expect(grid?.className).toContain('md:grid-cols-3');
+		});
 	});
 });
