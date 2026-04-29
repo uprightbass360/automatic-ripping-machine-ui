@@ -1985,7 +1985,7 @@
 					<!-- Versions -->
 					<section>
 						<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
-						<div class="grid grid-cols-2 gap-4 md:grid-cols-5">
+						<div class="grid grid-cols-2 gap-4 {Object.keys(systemInfo.versions).length === 4 ? 'md:grid-cols-4' : Object.keys(systemInfo.versions).length === 3 ? 'md:grid-cols-3' : Object.keys(systemInfo.versions).length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-5'}">
 							{#each Object.entries(systemInfo.versions) as [name, version]}
 								{@const subtitle = name === 'transcoder' ? $dashboard.transcoder_system_stats?.gpu?.vendor : null}
 								<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
