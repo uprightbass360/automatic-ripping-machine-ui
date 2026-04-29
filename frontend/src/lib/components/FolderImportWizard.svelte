@@ -129,6 +129,16 @@
 		}
 	}
 
+	async function goToOmdbStep() {
+		// Re-seed the search with the current title so a user who edited
+		// the metadata on step 2 lands on results matching that edit.
+		searchQuery = editTitle.trim() || searchQuery;
+		step = 3;
+		if (searchResults.length === 0 && !searching && searchQuery.trim()) {
+			await handleSearch();
+		}
+	}
+
 	async function handleSelectResult(result: SearchResult) {
 		if (result.imdb_id) {
 			loadingDetail = true;
@@ -228,10 +238,9 @@
 					<FolderBrowser onselect={handleFolderSelect} />
 
 				{:else if step === 2}
-					<!-- Step 2: Verify & Match -->
+					<!-- Step 2: Verify metadata -->
 					{#if scanResult}
-						<!-- Pinned: scan info + poster + fields -->
-						<div class="shrink-0 border-b border-primary/10 pb-4 dark:border-primary/10">
+						<div class="min-h-0 flex-1 overflow-y-auto">
 							<!-- Scan info badges -->
 							<div class="mb-3 flex flex-wrap gap-3 text-sm">
 								<span class="rounded-sm bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
@@ -292,70 +301,76 @@
 								</div>
 							</div>
 						</div>
-
-						<!-- Scrollable: search + results -->
-						<div class="min-h-0 flex-1 overflow-y-auto pt-4">
-							<div class="space-y-3">
-								<div class="flex gap-2">
-									<input
-										type="text"
-										bind:value={searchQuery}
-										onkeydown={handleSearchKeydown}
-										placeholder="Search title..."
-										class="flex-1 {inputBase}"
-									/>
-									<button
-										type="button"
-										onclick={handleSearch}
-										disabled={searching || !searchQuery.trim()}
-										class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
-									>
-										{searching ? 'Searching...' : 'Search'}
-									</button>
-								</div>
-
-								{#if searchError}
-									<p class="text-sm text-gray-500 dark:text-gray-400">{searchError}</p>
-								{/if}
-
-								{#if loadingDetail}
-									<p class="text-sm text-gray-400">Loading details...</p>
-								{/if}
-
-								{#if searchResults.length > 0}
-									<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-										{#each searchResults as result}
-											<button
-												type="button"
-												onclick={() => handleSelectResult(result)}
-												class="flex flex-col overflow-hidden rounded-lg border text-left transition-all border-primary/20 hover:border-primary/40 dark:border-primary/20 dark:hover:border-primary/40"
-											>
-												{#if result.poster_url}
-													<PosterImage
-														url={result.poster_url}
-														alt={result.title}
-														class="aspect-[2/3] w-full object-cover"
-													/>
-												{:else}
-													<div class="flex aspect-[2/3] w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15">
-														<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-														</svg>
-													</div>
-												{/if}
-												<div class="p-1.5">
-													<p class="text-xs font-medium text-gray-900 dark:text-white line-clamp-2">{result.title}</p>
-													<span class="text-[10px] text-gray-500 dark:text-gray-400">{result.year}</span>
-												</div>
-											</button>
-										{/each}
-									</div>
-								{/if}
-							</div>
-						</div>
 					{/if}
 
 				{:else if step === 3}
+					<!-- Step 3: OMDB Match -->
+					<div class="flex min-h-0 flex-1 flex-col">
+						<div class="shrink-0 space-y-3 pb-3">
+							<p class="text-sm text-gray-500 dark:text-gray-400">
+								Search OMDB to refine the auto-detected metadata. Selecting a result fills in the title, year, type, IMDb ID, and poster.
+							</p>
+							<div class="flex gap-2">
+								<input
+									type="text"
+									bind:value={searchQuery}
+									onkeydown={handleSearchKeydown}
+									placeholder="Search title..."
+									class="flex-1 {inputBase}"
+								/>
+								<button
+									type="button"
+									onclick={handleSearch}
+									disabled={searching || !searchQuery.trim()}
+									class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
+								>
+									{searching ? 'Searching...' : 'Search'}
+								</button>
+							</div>
+
+							{#if searchError}
+								<p class="text-sm text-gray-500 dark:text-gray-400">{searchError}</p>
+							{/if}
+
+							{#if loadingDetail}
+								<p class="text-sm text-gray-400">Loading details...</p>
+							{/if}
+						</div>
+
+						<div class="min-h-0 flex-1 overflow-y-auto">
+							{#if searchResults.length > 0}
+								<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+									{#each searchResults as result}
+										<button
+											type="button"
+											onclick={() => handleSelectResult(result)}
+											class="flex flex-col overflow-hidden rounded-lg border text-left transition-all {result.imdb_id && result.imdb_id === editImdbId ? 'border-primary ring-2 ring-primary' : 'border-primary/20 hover:border-primary/40 dark:border-primary/20 dark:hover:border-primary/40'}"
+										>
+											{#if result.poster_url}
+												<PosterImage
+													url={result.poster_url}
+													alt={result.title}
+													class="aspect-[2/3] w-full object-cover"
+												/>
+											{:else}
+												<div class="flex aspect-[2/3] w-full items-center justify-center bg-primary/10 text-gray-400 dark:bg-primary/15">
+													<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+													</svg>
+												</div>
+											{/if}
+											<div class="p-1.5">
+												<p class="text-xs font-medium text-gray-900 dark:text-white line-clamp-2">{result.title}</p>
+												<span class="text-[10px] text-gray-500 dark:text-gray-400">{result.year}</span>
+											</div>
+										</button>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					</div>
+
+				{:else if step === 4}
 					<!-- Step 3: Confirm -->
 					<!-- Pinned: summary card -->
 					<div class="shrink-0 rounded-lg border border-primary/20 p-4 dark:border-primary/20">
@@ -432,7 +447,7 @@
 				</div>
 				<!-- Progress dots -->
 				<div class="flex items-center gap-2">
-					{#each [1, 2, 3] as s}
+					{#each [1, 2, 3, 4] as s}
 						<div
 							class="h-2 w-2 rounded-full transition-colors {s === step
 								? 'bg-primary'
@@ -442,7 +457,7 @@
 						></div>
 					{/each}
 				</div>
-				<div class="flex w-20 justify-end">
+				<div class="flex justify-end gap-2">
 					{#if step === 1}
 						<button
 							type="button"
@@ -455,13 +470,30 @@
 					{:else if step === 2}
 						<button
 							type="button"
-							onclick={() => step = 3}
+							onclick={goToOmdbStep}
+							disabled={!editTitle.trim()}
+							class="{btnBase} border border-primary/30 text-gray-700 hover:bg-primary/5 dark:text-gray-300 dark:hover:bg-primary/10"
+						>
+							Search OMDB
+						</button>
+						<button
+							type="button"
+							onclick={() => step = 4}
+							disabled={!editTitle.trim()}
+							class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
+						>
+							Looks good
+						</button>
+					{:else if step === 3}
+						<button
+							type="button"
+							onclick={() => step = 4}
 							disabled={!editTitle.trim()}
 							class="{btnBase} bg-primary text-on-primary hover:bg-primary/90"
 						>
 							Next
 						</button>
-					{:else if step === 3}
+					{:else if step === 4}
 						<button
 							type="button"
 							onclick={handleImport}

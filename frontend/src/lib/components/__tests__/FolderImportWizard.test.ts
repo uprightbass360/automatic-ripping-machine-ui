@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { renderComponent, screen, cleanup } from '$lib/test-utils';
+import { renderComponent, screen, cleanup, fireEvent, waitFor } from '$lib/test-utils';
 import FolderImportWizard from '../FolderImportWizard.svelte';
+import FolderBrowserMock from './FolderBrowserMock.svelte';
+
+vi.mock('$lib/components/FolderBrowser.svelte', async () => ({
+	default: (await import('./FolderBrowserMock.svelte')).default
+}));
+
+const searchMetadataMock = vi.fn(() => Promise.resolve([]));
 
 vi.mock('$lib/api/folder', () => ({
 	scanFolder: vi.fn(() => Promise.resolve({
@@ -21,9 +28,11 @@ vi.mock('$lib/api/folder', () => ({
 }));
 
 vi.mock('$lib/api/jobs', () => ({
-	searchMetadata: vi.fn(() => Promise.resolve([])),
+	searchMetadata: (...args: unknown[]) => searchMetadataMock(...(args as [])),
 	fetchMediaDetail: vi.fn(() => Promise.resolve({}))
 }));
+
+void FolderBrowserMock; // ensure import isn't tree-shaken
 
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
@@ -57,7 +66,8 @@ describe('FolderImportWizard', () => {
 			props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
 		});
 		const dots = container.querySelectorAll('.h-2.w-2.rounded-full');
-		expect(dots.length).toBe(3);
+		// 4-step wizard: Pick Folder -> Verify metadata -> OMDB Match -> Confirm
+		expect(dots.length).toBe(4);
 	});
 
 	it('renders folder browser on step 1', () => {
@@ -73,5 +83,43 @@ describe('FolderImportWizard', () => {
 			props: { open: false, onclose: vi.fn(), oncreated: vi.fn() }
 		});
 		expect(screen.queryByText('Import Folder')).not.toBeInTheDocument();
+	});
+
+	describe('4-step flow (Pick -> Verify -> OMDB -> Confirm)', () => {
+		async function advanceToStep2() {
+			renderComponent(FolderImportWizard, {
+				props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
+			});
+			// Step 1: pick a folder via the mocked FolderBrowser, then click Next.
+			await fireEvent.click(screen.getByTestId('folder-browser-mock-select'));
+			await fireEvent.click(screen.getByText('Next'));
+			// scanFolder resolves, wizard auto-advances to step 2.
+			await waitFor(() => expect(screen.getByText('Looks good')).toBeInTheDocument());
+		}
+
+		it('step 2 shows both "Looks good" (skip OMDB) and "Search OMDB" buttons', async () => {
+			await advanceToStep2();
+			expect(screen.getByText('Looks good')).toBeInTheDocument();
+			expect(screen.getByText('Search OMDB')).toBeInTheDocument();
+		});
+
+		it('"Looks good" on step 2 jumps directly to step 4 (Confirm), skipping OMDB', async () => {
+			await advanceToStep2();
+			await fireEvent.click(screen.getByText('Looks good'));
+			// Step 4 has the Import button
+			await waitFor(() => expect(screen.getByText('Import')).toBeInTheDocument());
+		});
+
+		it('"Search OMDB" on step 2 advances to step 3 and auto-fires the search', async () => {
+			searchMetadataMock.mockClear();
+			await advanceToStep2();
+			await fireEvent.click(screen.getByText('Search OMDB'));
+			// Step 3 has a "Next" button (advances to Confirm) and a search input.
+			await waitFor(() => {
+				expect(screen.getByPlaceholderText('Search title...')).toBeInTheDocument();
+			});
+			// Auto-search fires with the seeded title.
+			await waitFor(() => expect(searchMetadataMock).toHaveBeenCalled());
+		});
 	});
 });
