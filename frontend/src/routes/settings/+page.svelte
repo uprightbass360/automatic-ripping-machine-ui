@@ -22,6 +22,7 @@
 	import { fetchTranscoderScheme, fetchTranscoderPresets, createCustomPreset } from '$lib/api/settings';
 	import type { Scheme, Preset, Overrides, PresetEditorState } from '$lib/types/presets';
 	import { transcoderEnabled } from '$lib/stores/config';
+	import { dashboard } from '$lib/stores/dashboard';
 	import { get } from 'svelte/store';
 
 	let settings = $state<SettingsData | null>(null);
@@ -1986,12 +1987,16 @@
 						<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
 						<div class="grid grid-cols-2 gap-4 md:grid-cols-5">
 							{#each Object.entries(systemInfo.versions) as [name, version]}
+								{@const subtitle = name === 'transcoder' ? $dashboard.transcoder_system_stats?.gpu?.vendor : null}
 								<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 									<p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{name}</p>
 									<div class="mt-1 flex items-center gap-2">
 										<div class="h-2 w-2 rounded-full {version === 'offline' ? 'bg-red-400' : version === 'unknown' ? 'bg-gray-400' : 'bg-green-400'}"></div>
 										<p class="text-sm font-semibold text-gray-900 dark:text-white">{version}</p>
 									</div>
+									{#if subtitle}
+										<p class="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{subtitle}</p>
+									{/if}
 								</div>
 							{/each}
 						</div>

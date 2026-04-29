@@ -41,7 +41,7 @@ vi.mock('$lib/api/settings', () => ({
 	testTranscoderConnection: vi.fn(() => Promise.resolve({ reachable: true, auth_ok: true, auth_required: false, gpu_support: null, worker_running: true, queue_size: 0, error: null })),
 	testTranscoderWebhook: vi.fn(() => Promise.resolve({ reachable: true, secret_ok: true, secret_required: true, error: null })),
 	fetchSystemInfo: vi.fn(() => Promise.resolve({
-		versions: { arm: '2.0.0', python: '3.12' },
+		versions: { arm: '2.0.0', transcoder: '17.4.0', ui: '17.1.0' },
 		endpoints: { api: { url: 'http://localhost:8888', reachable: true } },
 		paths: [{ setting: 'RAW_PATH', path: '/raw', exists: true, writable: true }],
 		database: { path: '/db/arm.db', size_bytes: 102400, available: true, migration_current: 'abc', migration_head: 'abc', up_to_date: true },
@@ -113,6 +113,17 @@ vi.mock('$lib/stores/polling', async () => {
 		}))
 	};
 });
+
+// Lifted so individual tests can swap dashboard state via mockDashboard.set(...).
+// async vi.hoisted runs before module imports but supports dynamic import().
+const mockDashboard = await vi.hoisted(async () => {
+	const { writable } = await import('svelte/store');
+	return writable<{ transcoder_system_stats: { gpu: { vendor: string } | null } | null }>({
+		transcoder_system_stats: null
+	});
+});
+
+vi.mock('$lib/stores/dashboard', () => ({ dashboard: mockDashboard }));
 
 describe('Settings Page', () => {
 	afterEach(() => cleanup());
@@ -292,6 +303,55 @@ describe('Settings Page', () => {
 			});
 			// Run Check button should not be visible when collapsed
 			expect(screen.queryByText('Run Check')).not.toBeInTheDocument();
+		});
+
+		it('shows transcoder GPU vendor as subtitle on Versions card when present', async () => {
+			mockDashboard.set({
+				transcoder_system_stats: { gpu: { vendor: 'nvidia' } }
+			});
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const systemTab = screen.getAllByText('System');
+			await fireEvent.click(systemTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Versions')).toBeInTheDocument();
+			});
+			// Vendor subtitle renders as visible text alongside the version
+			expect(screen.getByText('nvidia')).toBeInTheDocument();
+		});
+
+		it('omits GPU vendor subtitle when transcoder has no GPU monitor', async () => {
+			mockDashboard.set({
+				transcoder_system_stats: { gpu: null }
+			});
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const systemTab = screen.getAllByText('System');
+			await fireEvent.click(systemTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Versions')).toBeInTheDocument();
+			});
+			expect(screen.queryByText('nvidia')).not.toBeInTheDocument();
+			expect(screen.queryByText('intel')).not.toBeInTheDocument();
+			expect(screen.queryByText('amd')).not.toBeInTheDocument();
+		});
+
+		it('omits GPU vendor subtitle when transcoder is offline (no stats)', async () => {
+			mockDashboard.set({ transcoder_system_stats: null });
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			const systemTab = screen.getAllByText('System');
+			await fireEvent.click(systemTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Versions')).toBeInTheDocument();
+			});
+			expect(screen.queryByText('nvidia')).not.toBeInTheDocument();
 		});
 	});
 });
