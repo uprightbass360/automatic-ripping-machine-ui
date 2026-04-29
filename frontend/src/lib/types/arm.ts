@@ -33,6 +33,7 @@ export interface Job {
 	job_id: number;
 	arm_version: string | null;
 	crc_id: string | null;
+	guid: string | null;
 	logfile: string | null;
 	start_time: string | null;
 	stop_time: string | null;
@@ -40,6 +41,11 @@ export interface Job {
 	status: string | null;
 	stage: string | null;
 	no_of_titles: number | null;
+	errors: string | null;
+	updated: boolean | null;
+	ejected: boolean | null;
+	pid: number | null;
+	pid_hash: number | null;
 	title: string | null;
 	title_auto: string | null;
 	title_manual: string | null;
@@ -58,12 +64,14 @@ export interface Job {
 	devpath: string | null;
 	mountpoint: string | null;
 	hasnicetitle: boolean | null;
-	errors: string | null;
 	disctype: string | null;
 	label: string | null;
 	path: string | null;
 	raw_path: string | null;
 	transcode_path: string | null;
+	source_type: string | null;
+	source_path: string | null;
+	is_iso: boolean | null;
 	artist: string | null;
 	artist_auto: string | null;
 	artist_manual: string | null;
@@ -76,20 +84,18 @@ export interface Job {
 	episode: string | null;
 	episode_auto: string | null;
 	episode_manual: string | null;
-	transcode_overrides: Record<string, unknown> | null;
 	multi_title: boolean | null;
-	title_pattern_override: string | null;
-	folder_pattern_override: string | null;
 	disc_number: number | null;
 	disc_total: number | null;
-	ejected: boolean | null;
-	pid: number | null;
-	manual_pause: boolean | null;
-	source_type?: string;
-	source_path?: string;
-	wait_start_time: string | null;
-	track_counts: TrackCounts | null;
 	tvdb_id: number | null;
+	manual_start: boolean | null;
+	manual_pause: boolean | null;
+	manual_mode: boolean | null;
+	wait_start_time: string | null;
+	title_pattern_override: string | null;
+	folder_pattern_override: string | null;
+	transcode_overrides: Record<string, unknown> | null;
+	track_counts: TrackCounts | null;
 }
 
 export interface TrackCounts {

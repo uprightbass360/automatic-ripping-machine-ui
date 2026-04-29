@@ -1,4 +1,18 @@
-"""Pydantic response schemas for the API."""
+"""Pydantic response schemas for the API.
+
+The Job/Track/JobSummary/TrackCounts/JobProgressState shapes are owned by
+`arm_contracts` (Phase B/C of the shared-contracts rollout). This module
+re-exports those types under their legacy `*Schema` names so call sites
+in this repo don't need to change, and adds two arm-ui-only behaviors on
+top of the contract:
+
+- JobSchema.transcode_overrides field validator: strips legacy top-level
+  keys (video_encoder, handbrake_preset*, etc.) with a WARN log and gates
+  the post-strip dict against TranscodeJobConfig. Producer (arm-neu) emits
+  clean shape going forward; this layer absorbs pre-v15 ARM data.
+- JobDetailSchema: extends Job with tracks + config (the BFF builds these
+  by composing two ripper endpoints).
+"""
 
 from __future__ import annotations
 
@@ -7,6 +21,12 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from arm_contracts import (
+    Job as _JobContract,
+    JobSummary,
+    Track as TrackSchema,
+    TrackCounts as TrackCountsSchema,
+)
 from pydantic import BaseModel, field_validator
 
 log = logging.getLogger(__name__)
@@ -25,93 +45,9 @@ TRANSCODE_OVERRIDES_ALLOWLIST: frozenset[str] = frozenset({
 # --- ARM Job Schemas ---
 
 
-class TrackCountsSchema(BaseModel):
-    """Rippable-track progress for one job. Mirrors the ripper API shape."""
-    total: int = 0
-    ripped: int = 0
-
-
-class TrackSchema(BaseModel):
-    track_id: int
-    job_id: int
-    track_number: str | None = None
-    length: int | None = None
-    aspect_ratio: str | None = None
-    fps: float | None = None
-    enabled: bool | None = None
-    basename: str | None = None
-    filename: str | None = None
-    orig_filename: str | None = None
-    new_filename: str | None = None
-    ripped: bool | None = None
-    status: str | None = None
-    error: str | None = None
-    source: str | None = None
-    # Per-track title metadata (null = inherits from job)
-    title: str | None = None
-    year: str | None = None
-    imdb_id: str | None = None
-    poster_url: str | None = None
-    video_type: str | None = None
-    # TVDB episode matching
-    episode_number: str | None = None
-    episode_name: str | None = None
-
-    model_config = {"from_attributes": True}
-
-    @classmethod
-    def from_orm_compat(cls, track) -> "TrackSchema":
-        """Build from a Track ORM object, falling back main_feature -> enabled."""
-        schema = cls.model_validate(track)
-        if schema.enabled is None:
-            schema.enabled = getattr(track, "main_feature", None)
-        return schema
-
-
-class JobSchema(BaseModel):
-    job_id: int
-    arm_version: str | None = None
-    crc_id: str | None = None
-    logfile: str | None = None
-    start_time: datetime | None = None
-    stop_time: datetime | None = None
-    job_length: str | None = None
-    status: str | None = None
-    stage: str | None = None
-    no_of_titles: int | None = None
-    title: str | None = None
-    title_auto: str | None = None
-    title_manual: str | None = None
-    year: str | None = None
-    year_auto: str | None = None
-    year_manual: str | None = None
-    video_type: str | None = None
-    video_type_auto: str | None = None
-    video_type_manual: str | None = None
-    imdb_id: str | None = None
-    imdb_id_auto: str | None = None
-    imdb_id_manual: str | None = None
-    poster_url: str | None = None
-    poster_url_auto: str | None = None
-    poster_url_manual: str | None = None
-    devpath: str | None = None
-    mountpoint: str | None = None
-    hasnicetitle: bool | None = None
-    errors: str | None = None
-    disctype: str | None = None
-    label: str | None = None
-    path: str | None = None
-    raw_path: str | None = None
-    transcode_path: str | None = None
-    source_type: str | None = None
-    source_path: str | None = None
-    transcode_overrides: dict | None = None
-    multi_title: bool | None = None
-    disc_number: int | None = None
-    disc_total: int | None = None
-    manual_pause: bool | None = None
-    wait_start_time: datetime | None = None
-    tvdb_id: int | None = None
+class JobSchema(_JobContract):
+    """arm-ui's view of a Job: the shared contract plus a transcode_overrides
+    field validator that strips legacy keys before contract validation."""
 
     @field_validator("transcode_overrides", mode="before")
     @classmethod
@@ -163,24 +99,6 @@ class JobSchema(BaseModel):
             return None
         return parsed
 
-    artist: str | None = None
-    artist_auto: str | None = None
-    artist_manual: str | None = None
-    album: str | None = None
-    album_auto: str | None = None
-    album_manual: str | None = None
-    season: str | None = None
-    season_auto: str | None = None
-    season_manual: str | None = None
-    episode: str | None = None
-    episode_auto: str | None = None
-    episode_manual: str | None = None
-    ejected: bool | None = None
-    pid: int | None = None
-    track_counts: TrackCountsSchema | None = None
-
-    model_config = {"from_attributes": True}
-
 
 class JobDetailSchema(JobSchema):
     tracks: list[TrackSchema] = []
@@ -193,6 +111,17 @@ class JobListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+
+
+__all__ = [
+    "JobDetailSchema",
+    "JobListResponse",
+    "JobSchema",
+    "JobSummary",
+    "TRANSCODE_OVERRIDES_ALLOWLIST",
+    "TrackCountsSchema",
+    "TrackSchema",
+]
 
 
 # --- System Schemas ---
@@ -237,7 +166,7 @@ class DriveSchema(BaseModel):
     prescan_timeout: int | None = None
     prescan_retries: int | None = None
     disc_enum_timeout: int | None = None
-    current_job: JobSchema | None = None
+    current_job: JobSummary | None = None
 
     model_config = {"from_attributes": True}
 
