@@ -1,5 +1,26 @@
 # Changelog
 
+## [17.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.1.0...v17.2.0) (2026-04-29)
+
+
+### Features
+
+* bump components/contracts to 1f17568 ([be0a1b2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/be0a1b26598a9773e0e32242304bb9defd60d2c7))
+* **folder-import:** split OMDB match into its own step ([dadf30f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/dadf30f3f939e320e194149827b05b065569bc67))
+* retire last ripper bind mount via arm-neu logs API ([171888d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/171888de287cd6b6dec2321491ccbd364b99bf8b))
+* **schemas:** adopt shared Job/Track/JobSummary contracts (Phase C) ([2368947](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2368947cd0a6521d3231440cf846dcedbafe29ae))
+* **settings:** scale Versions card columns to entry count ([46de78d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/46de78dafcf00ec15689bc8a4d608af7c30aa7c5))
+* **settings:** show transcoder GPU vendor under version ([741db61](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/741db613e2ad4659b36950aedc50cd4f84e24987))
+* **version:** stamp build identity into VERSION at image-build time ([5669fc2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5669fc248bd19460eff1c0f9feba868ff6e96614))
+
+
+### Bug Fixes
+
+* **dashboard:** degrade ARM endpoints per-field, sticky-merge in store ([7c1714c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7c1714cb6c36c06355c50f97c3a7f9d196913b82))
+* **preflight:** bump BFF timeout 30s -&gt; 60s ([933ebed](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/933ebedc234fd310b7fd0286cac3630e7b6424b8))
+* **settings:** null-guard transcoder_config in Logging block ([40eb1f2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/40eb1f2a77fdca1808b47d451b71628883c4de06))
+* **settings:** UI polish on transcoder Configuration tab ([4822935](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/482293507c051a7a2c55b3b7b1090c178ffd0846))
+
 ## [17.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.0.0...v17.1.0) (2026-04-28)
 
 
