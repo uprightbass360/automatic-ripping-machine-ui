@@ -299,12 +299,15 @@ class SystemStatsSchema(BaseModel):
 class DashboardResponse(BaseModel):
     db_available: bool = True
     arm_online: bool = False
-    active_jobs: list[JobSchema] = []
+    # Per-field optionality: None signals "this ARM endpoint blipped on
+    # this poll, frontend should keep its prior value" rather than
+    # overwriting with zero/empty and flickering badges to nothing.
+    active_jobs: list[JobSchema] | None = None
     system_info: HardwareInfoSchema | None = None
-    drives_online: int = 0
-    drive_names: dict[str, str] = {}
-    notification_count: int = 0
-    ripping_enabled: bool = True
+    drives_online: int | None = None
+    drive_names: dict[str, str] | None = None
+    notification_count: int | None = None
+    ripping_enabled: bool | None = None
     makemkv_key_valid: bool | None = None
     makemkv_key_checked_at: str | None = None
     transcoder_online: bool = False

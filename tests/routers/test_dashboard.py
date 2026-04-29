@@ -95,7 +95,13 @@ async def test_dashboard_full(app_client):
 
 
 async def test_dashboard_db_unavailable(app_client):
-    """Dashboard degrades gracefully when the ripper API is unreachable."""
+    """Dashboard degrades gracefully when ALL ripper endpoints fail.
+
+    db_available flips False; sticky fields (active_jobs, drives_online,
+    drive_names, notification_count, ripping_enabled) come back as None
+    so the polling store keeps the prior value rather than overwriting
+    with zero/empty (which flickered badges/counts to nothing).
+    """
     with (
         patch("backend.routers.dashboard.arm_client.get_active_jobs",
               new_callable=AsyncMock, return_value=None),
@@ -116,11 +122,48 @@ async def test_dashboard_db_unavailable(app_client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["db_available"] is False
-    assert data["active_jobs"] == []
-    assert data["drives_online"] == 0
-    assert data["notification_count"] == 0
+    assert data["active_jobs"] is None
+    assert data["drives_online"] is None
+    assert data["drive_names"] is None
+    assert data["notification_count"] is None
+    assert data["ripping_enabled"] is None
     assert data["transcoder_online"] is False
     assert data["system_stats"] is None
+
+
+async def test_dashboard_partial_arm_failure_keeps_other_fields(app_client):
+    """When SOME ripper endpoints blip, only those specific fields come back
+    None. Independent endpoints keep their fresh values, so notification
+    count doesn't flicker to zero just because the drives endpoint timed out.
+    """
+    with (
+        patch("backend.routers.dashboard.arm_client.get_active_jobs",
+              new_callable=AsyncMock, return_value={"jobs": []}),
+        patch("backend.routers.dashboard.arm_client.get_drives",
+              new_callable=AsyncMock, return_value=None),  # this one blips
+        patch("backend.routers.dashboard.arm_client.get_notification_count",
+              new_callable=AsyncMock, return_value={"unseen": 7}),
+        patch("backend.routers.dashboard.arm_client.get_ripping_enabled",
+              new_callable=AsyncMock, return_value={"ripping_enabled": True}),
+        patch("backend.routers.dashboard.transcoder_client.health",
+              new_callable=AsyncMock, return_value=None),
+        patch("backend.routers.dashboard.arm_client.get_system_stats",
+              new_callable=AsyncMock, return_value=None),
+        patch("backend.routers.dashboard.system_cache.get_arm_info", return_value=None),
+        patch("backend.routers.dashboard.system_cache.get_transcoder_info", return_value=None),
+    ):
+        resp = await app_client.get("/api/dashboard")
+    assert resp.status_code == 200
+    data = resp.json()
+    # ARM partially up: db_available is True (at least one endpoint succeeded).
+    assert data["db_available"] is True
+    # The succeeding endpoints carry their fresh values through.
+    assert data["active_jobs"] == []
+    assert data["notification_count"] == 7
+    assert data["ripping_enabled"] is True
+    # Only the blipped endpoint's fields are None (frontend sticky-merges).
+    assert data["drives_online"] is None
+    assert data["drive_names"] is None
 
 
 async def test_dashboard_transcoder_offline(app_client):
