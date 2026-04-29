@@ -21,5 +21,30 @@ const emptyDashboard: DashboardData = {
 	transcoder_info: null
 };
 
+// Fields the BFF marks `null` when their underlying ARM endpoint blipped on
+// this poll. We hold the previous value for these so a transient timeout
+// doesn't flicker badges/counts to zero.
+const STICKY_FIELDS = [
+	'active_jobs',
+	'drives_online',
+	'drive_names',
+	'notification_count',
+	'ripping_enabled'
+] as const satisfies readonly (keyof DashboardData)[];
+
+let lastGood: DashboardData = emptyDashboard;
+
+async function fetchDashboardSticky(): Promise<DashboardData> {
+	const fresh = (await fetchDashboard()) as DashboardData & Partial<Record<(typeof STICKY_FIELDS)[number], unknown>>;
+	const merged = { ...fresh } as DashboardData;
+	for (const key of STICKY_FIELDS) {
+		if (fresh[key] === null || fresh[key] === undefined) {
+			(merged[key] as unknown) = lastGood[key];
+		}
+	}
+	lastGood = merged;
+	return merged;
+}
+
 /** Singleton dashboard store — survives page navigations, retains last-known data. */
-export const dashboard = createPollingStore(fetchDashboard, emptyDashboard, 5000);
+export const dashboard = createPollingStore(fetchDashboardSticky, emptyDashboard, 5000);

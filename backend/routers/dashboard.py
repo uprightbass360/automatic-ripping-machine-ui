@@ -29,13 +29,15 @@ async def _fetch_transcoder() -> tuple[bool, dict | None, list]:
     return True, stats, active
 
 
-async def _fetch_arm_state() -> tuple[bool, list, int, dict[str, str], int, bool]:
+async def _fetch_arm_state() -> tuple[bool, list | None, int | None, dict[str, str] | None, int | None, bool | None]:
     """Fetch all ARM-derived dashboard state via the ripper REST API.
 
     Returns (db_available, active_jobs, drives_online, drive_names,
     notification_count, ripping_paused). All four endpoints are issued
-    concurrently. db_available is True iff every call succeeded; any
-    None response degrades the dashboard to its empty-state values.
+    concurrently. db_available is True iff at least one call succeeded;
+    each derived field is None when its specific endpoint failed, so the
+    BFF response can carry None and the polling store keeps the prior
+    value instead of overwriting with zero on a transient blip.
     """
     active_data, drives_data, notif_count_data, ripping_data = await asyncio.gather(
         arm_client.get_active_jobs(),
@@ -44,24 +46,27 @@ async def _fetch_arm_state() -> tuple[bool, list, int, dict[str, str], int, bool
         arm_client.get_ripping_enabled(),
     )
 
-    db_available = all(d is not None for d in (active_data, drives_data, notif_count_data, ripping_data))
-    if not db_available:
-        return False, [], 0, {}, 0, False
+    db_available = any(d is not None for d in (active_data, drives_data, notif_count_data, ripping_data))
 
-    active_jobs = active_data.get("jobs") or []
-    drives = drives_data.get("drives") or []
-    drives_online = sum(1 for d in drives if not d.get("stale", False))
-    # Normalize mount paths - drives store /mnt/dev/sr0, jobs store /dev/sr0
-    drive_names: dict[str, str] = {}
-    for d in drives:
-        mount, name = d.get("mount"), d.get("name")
-        if mount and name:
-            drive_names[mount] = name
-            basename = mount.rsplit("/", 1)[-1]
-            drive_names[f"/dev/{basename}"] = name
-    notification_count = notif_count_data.get("unseen", 0)
-    ripping_paused = not ripping_data.get("ripping_enabled", True)
-    return True, active_jobs, drives_online, drive_names, notification_count, ripping_paused
+    active_jobs = (active_data.get("jobs") or []) if active_data is not None else None
+
+    drives_online: int | None = None
+    drive_names: dict[str, str] | None = None
+    if drives_data is not None:
+        drives = drives_data.get("drives") or []
+        drives_online = sum(1 for d in drives if not d.get("stale", False))
+        # Normalize mount paths - drives store /mnt/dev/sr0, jobs store /dev/sr0
+        drive_names = {}
+        for d in drives:
+            mount, name = d.get("mount"), d.get("name")
+            if mount and name:
+                drive_names[mount] = name
+                basename = mount.rsplit("/", 1)[-1]
+                drive_names[f"/dev/{basename}"] = name
+
+    notification_count = notif_count_data.get("unseen", 0) if notif_count_data is not None else None
+    ripping_paused = (not ripping_data.get("ripping_enabled", True)) if ripping_data is not None else None
+    return db_available, active_jobs, drives_online, drive_names, notification_count, ripping_paused
 
 
 async def _fetch_transcoder_system_stats() -> SystemStatsSchema | None:
@@ -105,12 +110,12 @@ async def get_dashboard():
     return DashboardResponse(
         db_available=db_available,
         arm_online=arm_online,
-        active_jobs=[JobSchema(**j) for j in active_jobs],
+        active_jobs=[JobSchema(**j) for j in active_jobs] if active_jobs is not None else None,
         system_info=HardwareInfoSchema(**arm_hw) if arm_hw else None,
         drives_online=drives_online,
         drive_names=drive_names,
         notification_count=notification_count,
-        ripping_enabled=not ripping_paused,
+        ripping_enabled=(not ripping_paused) if ripping_paused is not None else None,
         makemkv_key_valid=makemkv_key_valid,
         makemkv_key_checked_at=makemkv_key_checked_at,
         transcoder_online=transcoder_online,
