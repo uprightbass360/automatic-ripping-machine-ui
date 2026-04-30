@@ -40,6 +40,7 @@
 	let transcoderProgress = $state<number | null>(null);
 	let transcoderFps = $state<number | null>(null);
 	let transcoderJobStatus = $state<string | null>(null);
+	let transcoderPhase = $state<string | null>(null);
 	let ripProgress = $state<RipProgress | null>(null);
 
 	let isFolderImport = $derived(job?.source_type === 'folder');
@@ -277,17 +278,20 @@
 						transcoderProgress = info.progress ?? null;
 						transcoderFps = info.current_fps ?? null;
 						transcoderJobStatus = info.status ?? null;
+						transcoderPhase = info.phase ?? null;
 					} else {
 						transcoderLogfile = null;
 						transcoderProgress = null;
 						transcoderFps = null;
 						transcoderJobStatus = null;
+						transcoderPhase = null;
 					}
 				}).catch(() => {
 					transcoderLogfile = null;
 					transcoderProgress = null;
 					transcoderFps = null;
 					transcoderJobStatus = null;
+					transcoderPhase = null;
 				});
 			}
 		} catch (e) {
@@ -341,14 +345,17 @@
 					transcoderProgress = info.progress ?? null;
 					transcoderFps = info.current_fps ?? null;
 					transcoderJobStatus = info.status ?? null;
+					transcoderPhase = info.phase ?? null;
 				} else {
 					transcoderProgress = null;
 					transcoderFps = null;
 					transcoderJobStatus = null;
+					transcoderPhase = null;
 				}
 			} catch {
 				transcoderProgress = null;
 				transcoderFps = null;
+				transcoderPhase = null;
 			}
 		}
 	}
@@ -594,15 +601,31 @@
 		{:else if job.status === 'transcoding'}
 			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<div class="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-					<span>Transcoding</span>
-					{#if transcoderJobStatus}
+					<span>
+						{#if transcoderPhase === 'copying_source'}
+							Copying source files
+						{:else if transcoderPhase === 'finalizing'}
+							Finalizing
+						{:else}
+							Transcoding
+						{/if}
+					</span>
+					{#if transcoderPhase === 'copying_source'}
+						<span class="text-xs text-gray-500 dark:text-gray-400">Moving source files to local scratch.</span>
+					{:else if transcoderPhase === 'finalizing'}
+						<span class="text-xs text-gray-500 dark:text-gray-400">Moving output to completed and running cleanup.</span>
+					{:else if transcoderJobStatus}
 						<span class="text-xs text-gray-500 dark:text-gray-400">({transcoderJobStatus})</span>
 					{/if}
-					{#if typeof transcoderFps === 'number' && transcoderFps > 0}
+					{#if transcoderPhase === 'encoding' && typeof transcoderFps === 'number' && transcoderFps > 0}
 						<span class="ml-auto font-mono text-xs text-gray-500 dark:text-gray-400" title="Encoder frames per second">{transcoderFps.toFixed(1)} fps</span>
 					{/if}
 				</div>
-				{#if transcoderProgress != null}
+				{#if transcoderPhase === 'copying_source' || transcoderPhase === 'finalizing'}
+					<div class="h-2.5 overflow-hidden rounded-full bg-primary/15">
+						<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
+					</div>
+				{:else if transcoderProgress != null}
 					<ProgressBar value={transcoderProgress} color="bg-primary" />
 				{:else}
 					<div class="h-2.5 overflow-hidden rounded-full bg-primary/15">

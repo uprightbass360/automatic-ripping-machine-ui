@@ -336,6 +336,38 @@ async def test_get_job_for_arm_passes_progress_field(app_client):
     assert result["status"] == "processing"
 
 
+async def test_get_job_for_arm_passes_phase_field(app_client):
+    """phase field is surfaced so the detail page can show 'Copying source files'
+    or 'Finalizing' instead of an empty 0% bar / stale 97% during periods where
+    no encoder progress is being reported."""
+    data = {"jobs": [{
+        "id": 10, "logfile": "job_10.log", "status": "processing",
+        "progress": 0.0, "phase": "copying_source",
+    }]}
+    with patch(
+        "backend.routers.transcoder.transcoder_client.get_jobs",
+        new_callable=AsyncMock,
+        return_value=data,
+    ):
+        resp = await app_client.get("/api/transcoder/job-for-arm/42")
+    assert resp.status_code == 200
+    result = resp.json()
+    assert result["phase"] == "copying_source"
+
+
+async def test_get_job_for_arm_phase_none_when_missing(app_client):
+    """Older transcoder builds without phase column return None (forwards-compat)."""
+    data = {"jobs": [{"id": 10, "logfile": "job_10.log", "status": "completed", "progress": 100.0}]}
+    with patch(
+        "backend.routers.transcoder.transcoder_client.get_jobs",
+        new_callable=AsyncMock,
+        return_value=data,
+    ):
+        resp = await app_client.get("/api/transcoder/job-for-arm/42")
+    assert resp.status_code == 200
+    assert resp.json()["phase"] is None
+
+
 async def test_get_job_for_arm_not_found(app_client):
     """GET job-for-arm returns found=False when no matching jobs."""
     with patch(
