@@ -72,6 +72,10 @@ export async function fetchTranscoderLogForArmJob(
 	logfile?: string;
 	transcoder_job_id?: number;
 	status?: string;
+	/** Sub-status inside JobStatus.processing — surfaces what the worker is doing
+	 * during periods where no encoder progress is being reported. Wire values
+	 * come from arm_contracts.TranscodePhase. */
+	phase?: string | null;
 	progress?: number | null;
 	current_fps?: number | null;
 }> {
