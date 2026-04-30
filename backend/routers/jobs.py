@@ -142,17 +142,35 @@ async def bulk_purge_jobs(req: BulkJobRequest):
 
 
 async def _resolve_job_ids(req: BulkJobRequest) -> list[int]:
-    """Resolve a bulk request to a list of job IDs (explicit IDs or by-status query)."""
+    """Resolve a bulk request to a list of job IDs (explicit IDs or by-status query).
+
+    Pages through ARM at the per_page=100 cap (Query(le=100) on /jobs/paginated)
+    so a `Purge All Failed` on a deployment with hundreds of failed jobs still
+    catches everything, instead of getting 422'd into a silent zero.
+    """
     if req.job_ids:
         return req.job_ids
-    if req.status:
+    if not req.status:
+        return []
+
+    page_size = 100
+    ids: list[int] = []
+    page = 1
+    while True:
         data = await arm_client.get_jobs_paginated(
-            page=1, per_page=10000, status=req.status,
+            page=page, per_page=page_size, status=req.status,
         )
         if not data:
-            return []
-        return [j["job_id"] for j in (data.get("jobs") or []) if "job_id" in j]
-    return []
+            return ids
+        if data.get("success") is False:
+            log.warning("ARM rejected paginated lookup for status=%s: %s",
+                        req.status, data.get("error"))
+            return ids
+        page_jobs = data.get("jobs") or []
+        ids.extend(j["job_id"] for j in page_jobs if "job_id" in j)
+        if len(page_jobs) < page_size or page >= (data.get("pages") or page):
+            return ids
+        page += 1
 
 
 @router.get("/jobs/{job_id}", response_model=JobDetailSchema, responses=_404_JOB)

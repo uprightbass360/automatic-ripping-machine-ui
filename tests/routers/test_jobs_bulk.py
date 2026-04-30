@@ -22,7 +22,7 @@ async def test_bulk_delete_empty_ids(app_client):
 async def test_bulk_delete_by_status(app_client):
     paginated = {
         "jobs": [make_job_dict(job_id=i, status="fail") for i in range(1, 4)],
-        "total": 3, "page": 1, "per_page": 10000, "pages": 1,
+        "total": 3, "page": 1, "per_page": 100, "pages": 1,
     }
     mock_del = AsyncMock(return_value={"success": True})
     with patch(
@@ -58,3 +58,51 @@ async def test_bulk_purge_empty_ids(app_client):
     resp = await app_client.post("/api/jobs/bulk-purge", json={"job_ids": []})
     assert resp.status_code == 200
     assert resp.json()["purged"] == 0
+
+
+async def test_bulk_delete_by_status_pages_under_per_page_cap(app_client):
+    """ARM caps /jobs/paginated at per_page=100. The BFF must page through
+    rather than ask for per_page=10000 (which 422s into a silent zero).
+
+    Reproduces the 'Purge All Failed shows 0 purged' bug: 150 failed jobs
+    spread across two ARM pages, BFF must catch all of them.
+    """
+    page_one = {
+        "jobs": [make_job_dict(job_id=i, status="fail") for i in range(1, 101)],
+        "total": 150, "page": 1, "per_page": 100, "pages": 2,
+    }
+    page_two = {
+        "jobs": [make_job_dict(job_id=i, status="fail") for i in range(101, 151)],
+        "total": 150, "page": 2, "per_page": 100, "pages": 2,
+    }
+    paginated_mock = AsyncMock(side_effect=[page_one, page_two])
+    mock_del = AsyncMock(return_value={"success": True})
+    with patch(
+        "backend.routers.jobs.arm_client.get_jobs_paginated",
+        paginated_mock,
+    ), patch("backend.routers.jobs.arm_client.delete_job", mock_del):
+        resp = await app_client.post("/api/jobs/bulk-delete", json={"status": "fail"})
+    assert resp.status_code == 200
+    assert resp.json()["deleted"] == 150
+    assert paginated_mock.call_count == 2
+    # Must request at-or-under ARM's le=100 cap, not the old per_page=10000
+    for call in paginated_mock.call_args_list:
+        assert call.kwargs["per_page"] <= 100
+
+
+async def test_bulk_delete_by_status_handles_arm_error(app_client):
+    """If ARM returns an error dict (e.g. validation failure), don't loop
+    forever or silently treat it as 'no jobs'; surface zero with a logged
+    warning. Regression guard for the silent-zero bug."""
+    error_dict = {"success": False, "error": "ARM error (422): ..."}
+    paginated_mock = AsyncMock(return_value=error_dict)
+    mock_del = AsyncMock(return_value={"success": True})
+    with patch(
+        "backend.routers.jobs.arm_client.get_jobs_paginated",
+        paginated_mock,
+    ), patch("backend.routers.jobs.arm_client.delete_job", mock_del):
+        resp = await app_client.post("/api/jobs/bulk-delete", json={"status": "fail"})
+    assert resp.status_code == 200
+    assert resp.json()["deleted"] == 0
+    assert paginated_mock.call_count == 1  # one attempt, no retry loop
+    assert mock_del.call_count == 0
