@@ -7,13 +7,15 @@ import { createJob } from './__fixtures__/job';
 vi.mock('$lib/api/jobs', () => ({
 	abandonJob: vi.fn(() => Promise.resolve()),
 	deleteJob: vi.fn(() => Promise.resolve()),
-	fixJobPermissions: vi.fn(() => Promise.resolve())
+	fixJobPermissions: vi.fn(() => Promise.resolve()),
+	bulkPurgeJobs: vi.fn(() => Promise.resolve({ purged: 1, errors: [] }))
 }));
 
-import { abandonJob, deleteJob, fixJobPermissions } from '$lib/api/jobs';
+import { abandonJob, deleteJob, fixJobPermissions, bulkPurgeJobs } from '$lib/api/jobs';
 const mockAbandon = vi.mocked(abandonJob);
 const mockDelete = vi.mocked(deleteJob);
 const mockFixPerms = vi.mocked(fixJobPermissions);
+const mockPurge = vi.mocked(bulkPurgeJobs);
 
 // Mock window.confirm
 vi.stubGlobal('confirm', vi.fn(() => true));
@@ -160,6 +162,23 @@ describe('JobActions', () => {
 			});
 			await fireEvent.click(screen.getByText('Delete'));
 			await waitFor(() => {
+				expect(ondelete).toHaveBeenCalled();
+				expect(onaction).not.toHaveBeenCalled();
+			});
+		});
+
+		it('calls ondelete after purge so detail page redirects (job is gone)', async () => {
+			// Bug guard: Purge wipes the job record, so the detail page must
+			// navigate away via ondelete just like Delete does. Without this
+			// the user sees a stale detail page that 404s on next refresh.
+			const ondelete = vi.fn();
+			const onaction = vi.fn();
+			renderComponent(JobActions, {
+				props: { job: createJob({ status: 'fail' }), ondelete, onaction }
+			});
+			await fireEvent.click(screen.getByText('Purge'));
+			await waitFor(() => {
+				expect(mockPurge).toHaveBeenCalledWith({ job_ids: [1] });
 				expect(ondelete).toHaveBeenCalled();
 				expect(onaction).not.toHaveBeenCalled();
 			});

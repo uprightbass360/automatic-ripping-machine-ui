@@ -84,6 +84,10 @@
 		feedback = null;
 		try {
 			await bulkPurgeJobs({ job_ids: [job.job_id] });
+			if (ondelete) {
+				ondelete();
+				return;
+			}
 			feedback = { type: 'success', message: 'Job purged' };
 			onaction?.();
 		} catch (e) {
