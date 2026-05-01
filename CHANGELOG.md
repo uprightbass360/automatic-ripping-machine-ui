@@ -1,5 +1,19 @@
 # Changelog
 
+## [17.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.2.0...v17.3.0) (2026-05-01)
+
+
+### Features
+
+* **phase:** surface transcoder sub-status on job detail page ([d8514b7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d8514b7e6b8c9a0f944724b738fe53abc8d0e0e1))
+
+
+### Bug Fixes
+
+* bump components/contracts to 67eba7b for rip_progress float fix ([120d90e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/120d90e2f9f87638b06454f8b276c008409ea889))
+* **jobs:** purge redirects on detail page; bulk-purge pages under per_page cap ([e254d03](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e254d03ccff15490042be819399a274d7a1053ac))
+* **security:** strip CRLF from user-controlled values before logging ([18d51e9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/18d51e9a4141d0e59042e42b7155ae405064bf91))
+
 ## [17.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.1.0...v17.2.0) (2026-04-29)
 
 
