@@ -163,8 +163,10 @@ async def _resolve_job_ids(req: BulkJobRequest) -> list[int]:
         if not data:
             return ids
         if data.get("success") is False:
+            safe_status = str(req.status).replace("\n", "").replace("\r", "")
+            safe_err = str(data.get("error")).replace("\n", "").replace("\r", "")
             log.warning("ARM rejected paginated lookup for status=%s: %s",
-                        req.status, data.get("error"))
+                        safe_status, safe_err)
             return ids
         page_jobs = data.get("jobs") or []
         ids.extend(j["job_id"] for j in page_jobs if "job_id" in j)
