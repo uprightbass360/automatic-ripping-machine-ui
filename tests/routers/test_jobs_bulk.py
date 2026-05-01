@@ -106,3 +106,33 @@ async def test_bulk_delete_by_status_handles_arm_error(app_client):
     assert resp.json()["deleted"] == 0
     assert paginated_mock.call_count == 1  # one attempt, no retry loop
     assert mock_del.call_count == 0
+
+
+async def test_bulk_delete_strips_crlf_from_logged_user_input(app_client, caplog):
+    """User-controlled status + ARM error string must be CRLF-stripped before
+    logging. Sonar python:S5145 (log injection): a malicious status containing
+    \\n could otherwise forge fake log lines."""
+    import logging
+    error_dict = {"success": False, "error": "boom\nFAKE LOG LINE\rmore"}
+    paginated_mock = AsyncMock(return_value=error_dict)
+    with patch(
+        "backend.routers.jobs.arm_client.get_jobs_paginated", paginated_mock,
+    ), patch("backend.routers.jobs.arm_client.delete_job", AsyncMock()), \
+         caplog.at_level(logging.WARNING, logger="backend.routers.jobs"):
+        resp = await app_client.post(
+            "/api/jobs/bulk-delete",
+            json={"status": "fail\ninjected"},
+        )
+    assert resp.status_code == 200
+    msgs = [r.getMessage() for r in caplog.records]
+    assert msgs, "expected warning to be emitted"
+    combined = "\n".join(msgs)
+    # The warning text itself uses \n as a record separator between log
+    # records; the assertion is that no individual record contains an
+    # embedded \n or \r from the user-controlled fields.
+    for record in caplog.records:
+        assert "\n" not in record.getMessage()
+        assert "\r" not in record.getMessage()
+    # And the sanitized values still appear, just without the CRLF.
+    assert "failinjected" in combined
+    assert "boomFAKE LOG LINEmore" in combined
