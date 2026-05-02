@@ -45,10 +45,15 @@ export function elapsedTime(startTime: string | null): string {
  * Map a status string to a CSS class. Receives values from three different
  * enums depending on caller:
  *   - arm_contracts.JobState (arm-neu Job.status) - StatusBadge in JobRow,
- *     JobCard, ActiveJobRow, DriveCard, jobs/[id]
+ *     JobCard, ActiveJobRow, DriveCard, jobs/[id]. Disambiguated in v2.0.0:
+ *     'ripping' -> 'video_ripping'/'audio_ripping', 'waiting' ->
+ *     'manual_paused'/'makemkv_throttled'. Old strings kept as defensive
+ *     fallbacks for in-flight jobs observed mid-deploy.
  *   - arm_contracts.JobStatus (transcoder TranscodeJob.status) - StatusBadge
  *     in TranscodeCard, transcoder/+page.svelte
- *   - arm_contracts.TrackStatus (Track.status) - StatusBadge at jobs/[id]:849
+ *   - arm_contracts.TrackStatus (Track.status) - StatusBadge at jobs/[id]:849.
+ *     'failed' is a real TrackStatus member as of v2.0.0 (was previously
+ *     only handled defensively for transcoder JobStatus).
  * Plus two locally-generated literals: 'importing' (folder-import override
  * for status='ripping') and 'skipped' (UI-only marker for filtered/disabled
  * tracks). Both are produced inline at the StatusBadge call site, not by any
@@ -59,7 +64,9 @@ export function statusColor(status: string | null): string {
 		case 'identifying':
 			return 'status-scanning';
 		case 'ready':
-		case 'ripping':
+		case 'ripping':         // legacy pre-v2.0.0; in-flight jobs mid-deploy
+		case 'video_ripping':
+		case 'audio_ripping':
 		case 'importing': // locally generated when isFolderImport && status='ripping'
 			return 'status-active';
 		case 'copying':
@@ -73,9 +80,11 @@ export function statusColor(status: string | null): string {
 		case 'transcoded': // TrackStatus terminal (transcode-phase)
 			return 'status-success';
 		case 'fail':
-		case 'failed': // JobStatus (transcoder) terminal
+		case 'failed': // JobStatus (transcoder) terminal AND TrackStatus.failed (v2.0.0+)
 			return 'status-error';
-		case 'waiting':
+		case 'waiting':         // legacy pre-v2.0.0; in-flight jobs mid-deploy
+		case 'manual_paused':
+		case 'makemkv_throttled':
 		case 'waiting_transcode':
 		case 'pending': // JobStatus (transcoder) + TrackStatus member
 			return 'status-warning';
@@ -90,7 +99,9 @@ const STATUS_LABELS: Record<string, string> = {
 	identifying: 'Scanning',
 	ready: 'Ready',
 	active: 'Active',
-	ripping: 'Ripping',
+	ripping: 'Ripping',           // legacy pre-v2.0.0; in-flight jobs mid-deploy
+	video_ripping: 'Ripping',
+	audio_ripping: 'Ripping',
 	importing: 'Processing',
 	copying: 'Copying',
 	ejecting: 'Ejecting',
@@ -102,7 +113,9 @@ const STATUS_LABELS: Record<string, string> = {
 	fail: 'Failed',
 	failed: 'Failed',
 	error: 'Error',
-	waiting: 'Waiting',
+	waiting: 'Waiting',           // legacy pre-v2.0.0; in-flight jobs mid-deploy
+	manual_paused: 'Paused',
+	makemkv_throttled: 'Throttled',
 	waiting_transcode: 'Waiting to Transcode',
 	pending: 'Pending',
 	skipped: 'Skipped',

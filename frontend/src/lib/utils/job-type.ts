@@ -71,14 +71,22 @@ export function getVideoTypeConfig(videoType: string | null): VideoTypeConfig {
 // nothing else. Transcoder-side JobStatus ('processing', 'pending') and
 // TrackStatus ('pending') are intentionally absent - they never reach
 // isJobActive in current code paths.
+//
+// v2.0.0 disambiguation: 'ripping' split into 'video_ripping'/'audio_ripping',
+// 'waiting' split into 'manual_paused'/'makemkv_throttled'. Old strings kept
+// as defensive fallbacks for in-flight jobs observed mid-deploy.
 const ACTIVE_STATUSES = new Set([
 	'identifying',
 	'ready',
-	'ripping',
+	'ripping',                  // legacy pre-v2.0.0
+	'video_ripping',
+	'audio_ripping',
 	'copying',
 	'ejecting',
 	'transcoding',
-	'waiting',
+	'waiting',                  // legacy pre-v2.0.0
+	'manual_paused',
+	'makemkv_throttled',
 	'waiting_transcode',
 ]);
 

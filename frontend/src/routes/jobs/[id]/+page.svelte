@@ -339,13 +339,15 @@
 	async function refreshProgress() {
 		if (!job) return;
 		const s = job.status?.toLowerCase();
-		if (s === 'ripping') {
+		// 'ripping' kept as legacy fallback for in-flight jobs mid-deploy (pre-v2.0.0).
+		const isRipping = s === 'video_ripping' || s === 'audio_ripping' || s === 'ripping';
+		if (isRipping) {
 			try {
 				ripProgress = await fetchJobProgress(job.job_id);
 			} catch {
 				ripProgress = null;
 			}
-		} else if (ripProgress && s !== 'ripping') {
+		} else if (ripProgress) {
 			// Clear stale rip progress once the phase changes so 100% doesn't linger
 			ripProgress = null;
 		}
@@ -426,7 +428,7 @@
 				{#if job.year && job.year !== '0000'}
 					<span class="text-base text-gray-400 dark:text-gray-500">({job.year})</span>
 				{/if}
-				<StatusBadge status={isFolderImport && job.status === 'ripping' ? 'importing' : job.status} />
+				<StatusBadge status={isFolderImport && (job.status === 'video_ripping' || job.status === 'ripping') ? 'importing' : job.status} />
 				{#if job.multi_title}
 					<span class="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
 				{/if}
@@ -574,7 +576,8 @@
 		</div>
 
 		<!-- Progress widget: ripping, copying, waiting_transcode, transcoding -->
-		{#if job.status === 'ripping'}
+		<!-- 'ripping' kept as legacy fallback for in-flight jobs mid-deploy (pre-v2.0.0). -->
+		{#if job.status === 'video_ripping' || job.status === 'audio_ripping' || job.status === 'ripping'}
 			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 				<div class="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
 					<span>Ripping</span>
