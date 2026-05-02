@@ -64,16 +64,20 @@ export function getVideoTypeConfig(videoType: string | null): VideoTypeConfig {
 	return TYPE_MAP[videoType.toLowerCase()] ?? FALLBACK_CONFIG;
 }
 
+// Source of truth: arm_contracts.JobState (see components/contracts).
+// isJobActive() is only ever called with arm-neu Job.status values
+// (ActiveJobRow / JobCard / JobRow / JobActions / job-fields / jobs/[id]),
+// so this set deliberately tracks JobState's non-terminal members and
+// nothing else. Transcoder-side JobStatus ('processing', 'pending') and
+// TrackStatus ('pending') are intentionally absent - they never reach
+// isJobActive in current code paths.
 const ACTIVE_STATUSES = new Set([
 	'identifying',
 	'ready',
-	'active',
 	'ripping',
 	'copying',
 	'ejecting',
-	'processing',
 	'transcoding',
-	'pending',
 	'waiting',
 	'waiting_transcode',
 ]);

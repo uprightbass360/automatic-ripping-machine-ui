@@ -15,25 +15,34 @@ describe('formatBytes', () => {
 
 describe('statusColor', () => {
 	it.each<[string | null, string]>([
+		// JobState (arm-neu Job.status)
 		['success', 'status-success'],
-		['completed', 'status-success'],
-		['complete', 'status-success'],
 		['fail', 'status-error'],
-		['failed', 'status-error'],
-		['error', 'status-error'],
 		['copying', 'status-warning'],
 		['ejecting', 'status-warning'],
 		['waiting', 'status-warning'],
 		['waiting_transcode', 'status-warning'],
-		['pending', 'status-warning'],
 		['identifying', 'status-scanning'],
 		['ready', 'status-active'],
-		['active', 'status-active'],
 		['ripping', 'status-active'],
 		['transcoding', 'status-processing'],
+		// JobStatus (transcoder TranscodeJob.status)
+		['completed', 'status-success'],
+		['failed', 'status-error'],
+		['pending', 'status-warning'],
 		['processing', 'status-processing'],
+		// TrackStatus (Track.status)
+		['transcoded', 'status-success'],
+		// Locally-generated literals
+		['importing', 'status-active'],
+		['skipped', 'status-unknown'],
+		// Fallthrough
 		['unknown', 'status-unknown'],
-		[null, 'status-unknown']
+		[null, 'status-unknown'],
+		// Removed legacy synonyms - now fall through to status-unknown
+		['active', 'status-unknown'],
+		['complete', 'status-unknown'],
+		['error', 'status-unknown']
 	])('statusColor(%s) = %s', (input, expected) => {
 		expect(statusColor(input)).toBe(expected);
 	});
