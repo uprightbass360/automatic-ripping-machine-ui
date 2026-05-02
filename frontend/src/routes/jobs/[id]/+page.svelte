@@ -57,13 +57,25 @@
 	let namingPreviews = $state<Record<string, NamingPreviewTrack>>({});
 
 	let minlength = $derived(Number(job?.config?.MINLENGTH) || 120);
+	let maxlength = $derived(Number(job?.config?.MAXLENGTH) || 99999);
 
-	function isBelowMinlength(track: { length: number | null }): boolean {
-		return track.length != null && track.length < minlength;
+	function isFiltered(track: { process?: boolean }): boolean {
+		return track.process === false;
+	}
+
+	function skipTooltip(track: { skip_reason?: string | null }): string {
+		switch (track.skip_reason) {
+			case 'too_short':       return `Skipped: shorter than minimum length (${minlength}s)`;
+			case 'too_long':        return `Skipped: longer than maximum length (${maxlength}s)`;
+			case 'makemkv_skipped': return `Skipped by MakeMKV (likely below ${minlength}s)`;
+			case 'user_disabled':   return 'Skipped: deselected';
+			case 'below_main_feature': return 'Skipped: below the main feature';
+			default:                return 'Skipped';
+		}
 	}
 
 	let rippableTracks = $derived(
-		job?.tracks?.filter((t) => !isBelowMinlength(t)) ?? []
+		job?.tracks?.filter((t) => !isFiltered(t)) ?? []
 	);
 	let allEnabled = $derived(
 		!!rippableTracks.length && rippableTracks.every((t) => t.enabled)
@@ -714,8 +726,8 @@
 						</thead>
 						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each job.tracks as track}
-								{@const tooShort = !isMusicDisc && isBelowMinlength(track)}
-								<tr class="{tooShort ? 'opacity-40' : ''} hover:bg-page dark:hover:bg-gray-800/50">
+								{@const filtered = !isMusicDisc && isFiltered(track)}
+								<tr class="{filtered ? 'opacity-40' : ''} hover:bg-page dark:hover:bg-gray-800/50">
 									<td class="px-4 py-3" data-label="#">{track.track_number ?? ''}</td>
 									{#if isMusicDisc}
 										<td class="max-w-[300px] truncate px-4 py-3" data-label="Name">{track.title || track.filename || '--'}</td>
@@ -797,7 +809,7 @@
 													loadJob();
 												}}
 												placeholder="--"
-												disabled={tooShort || !track.enabled}
+												disabled={filtered || !track.enabled}
 												class="w-12 rounded-sm border border-primary/25 bg-primary/5 px-1.5 py-0.5 text-center text-sm text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary disabled:opacity-30 dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 											/>
 											{#if track.episode_name}
@@ -811,8 +823,8 @@
 										<td class="px-4 py-3" data-label="Aspect">{track.aspect_ratio ?? ''}</td>
 										<td class="px-4 py-3" data-label="FPS">{track.fps ?? ''}</td>
 										<td class="pl-1 pr-4 py-3" data-label="Rip">
-											{#if tooShort}
-												<span class="ml-4 text-[10px] text-gray-400 dark:text-gray-500" title="Too short to rip (below {minlength}s minimum)">skip</span>
+											{#if filtered}
+												<span class="ml-4 text-[10px] text-gray-400 dark:text-gray-500" title={skipTooltip(track)}>skip</span>
 											{:else}
 												<input
 													type="checkbox"
@@ -825,7 +837,7 @@
 										</td>
 									{/if}
 									<td class="px-4 py-3" data-label="Ripped">
-										{#if track.enabled && !tooShort}
+										{#if track.enabled && !filtered}
 											<span class="rounded-sm px-1.5 py-0.5 text-[10px] font-semibold {track.ripped
 												? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
 												: 'bg-gray-100 text-gray-400 dark:bg-gray-700/50 dark:text-gray-500'}"
@@ -834,7 +846,7 @@
 											</span>
 										{/if}
 									</td>
-									<td class="px-4 py-3" data-label="Status"><StatusBadge status={!track.enabled || tooShort ? 'skipped' : track.status} /></td>
+									<td class="px-4 py-3" data-label="Status"><StatusBadge status={!track.enabled || filtered ? 'skipped' : track.status} /></td>
 									</tr>
 								{#if editingTrackId === track.track_id}
 									<tr>
