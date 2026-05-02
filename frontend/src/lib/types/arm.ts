@@ -27,6 +27,8 @@ export interface Track {
 	episode_name: string | null;
 	// User-specified output filename (overrides pattern rendering)
 	custom_filename: string | null;
+	process?: boolean;
+	skip_reason?: 'too_short' | 'too_long' | 'makemkv_skipped' | 'user_disabled' | 'below_main_feature' | null;
 }
 
 export interface Job {
