@@ -15,20 +15,26 @@ describe('formatBytes', () => {
 
 describe('statusColor', () => {
 	it.each<[string | null, string]>([
-		// JobState (arm-neu Job.status)
+		// JobState (arm-neu Job.status) - v2.0.0 disambiguated members
 		['success', 'status-success'],
 		['fail', 'status-error'],
 		['copying', 'status-warning'],
 		['ejecting', 'status-warning'],
-		['waiting', 'status-warning'],
+		['manual_paused', 'status-warning'],
+		['makemkv_throttled', 'status-warning'],
 		['waiting_transcode', 'status-warning'],
 		['identifying', 'status-scanning'],
 		['ready', 'status-active'],
-		['ripping', 'status-active'],
+		['video_ripping', 'status-active'],
+		['audio_ripping', 'status-active'],
 		['transcoding', 'status-processing'],
+		// JobState legacy pre-v2.0.0 wire strings (kept as defensive fallbacks
+		// for in-flight jobs observed mid-deploy)
+		['ripping', 'status-active'],
+		['waiting', 'status-warning'],
 		// JobStatus (transcoder TranscodeJob.status)
 		['completed', 'status-success'],
-		['failed', 'status-error'],
+		['failed', 'status-error'],   // also TrackStatus.failed (v2.0.0+)
 		['pending', 'status-warning'],
 		['processing', 'status-processing'],
 		// TrackStatus (Track.status)
@@ -51,10 +57,16 @@ describe('statusColor', () => {
 describe('statusLabel', () => {
 	it.each<[string | null, string]>([
 		['identifying', 'Scanning'],
+		// v2.0.0 disambiguated JobState members
+		['video_ripping', 'Ripping'],
+		['audio_ripping', 'Ripping'],
+		['manual_paused', 'Paused'],
+		['makemkv_throttled', 'Throttled'],
+		// Legacy pre-v2.0.0 fallbacks (in-flight jobs mid-deploy)
 		['ripping', 'Ripping'],
+		['waiting', 'Waiting'],
 		['success', 'Success'],
 		['fail', 'Failed'],
-		['waiting', 'Waiting'],
 		['transcoding', 'Transcoding'],
 		['info', 'Scanning'],
 		[null, 'Unknown'],

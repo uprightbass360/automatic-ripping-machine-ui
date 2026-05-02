@@ -69,7 +69,7 @@
 
 		<!-- Status badge -->
 		<div class="shrink-0">
-			<StatusBadge status={isFolderImport && job.status === 'ripping' ? 'importing' : job.status} />
+			<StatusBadge status={isFolderImport && (job.status === 'video_ripping' || job.status === 'ripping') ? 'importing' : job.status} />
 		</div>
 
 		<!-- Type + disc badges -->
@@ -175,7 +175,7 @@
 								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Job ID</td>
 								<td class="py-1 text-gray-900 dark:text-white">{job.job_id}</td>
 								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">Status</td>
-								<td class="py-1"><StatusBadge status={isFolderImport && job.status === 'ripping' ? 'importing' : job.status} /></td>
+								<td class="py-1"><StatusBadge status={isFolderImport && (job.status === 'video_ripping' || job.status === 'ripping') ? 'importing' : job.status} /></td>
 							</tr>
 							<tr>
 								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Type</td>

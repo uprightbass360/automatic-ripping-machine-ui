@@ -54,15 +54,24 @@ describe('isJobActive', () => {
 		expect(isJobActive(null)).toBe(false);
 	});
 
-	it('returns true for JobState non-terminal members', () => {
+	it('returns true for JobState non-terminal members (v2.0.0 disambiguated)', () => {
 		expect(isJobActive('identifying')).toBe(true);
 		expect(isJobActive('ready')).toBe(true);
-		expect(isJobActive('ripping')).toBe(true);
+		expect(isJobActive('video_ripping')).toBe(true);
+		expect(isJobActive('audio_ripping')).toBe(true);
 		expect(isJobActive('copying')).toBe(true);
 		expect(isJobActive('ejecting')).toBe(true);
 		expect(isJobActive('transcoding')).toBe(true);
-		expect(isJobActive('waiting')).toBe(true);
+		expect(isJobActive('manual_paused')).toBe(true);
+		expect(isJobActive('makemkv_throttled')).toBe(true);
 		expect(isJobActive('waiting_transcode')).toBe(true);
+	});
+
+	it('returns true for legacy pre-v2.0.0 wire strings (defensive fallback)', () => {
+		// Kept so in-flight jobs observed during a mid-deploy window still
+		// register as active rather than silently flipping to terminal.
+		expect(isJobActive('ripping')).toBe(true);
+		expect(isJobActive('waiting')).toBe(true);
 	});
 
 	it('is case-insensitive', () => {
