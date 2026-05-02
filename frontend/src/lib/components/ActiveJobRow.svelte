@@ -2,12 +2,13 @@
 	import type { Job } from '$lib/types/arm';
 	import StatusBadge from './StatusBadge.svelte';
 	import ProgressBar from './ProgressBar.svelte';
-	import { elapsedTime, etaTime } from '$lib/utils/format';
+	import { elapsedTime, etaTime, statusAccentVar } from '$lib/utils/format';
 	import { getVideoTypeConfig, isJobActive, discTypeLabel } from '$lib/utils/job-type';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import TimeAgo from './TimeAgo.svelte';
 	import PosterImage from './PosterImage.svelte';
 	import SkeletonCard from './SkeletonCard.svelte';
+	import { abandonJob } from '$lib/api/jobs';
 	import { slide } from 'svelte/transition';
 
 	interface Props {
@@ -31,6 +32,12 @@
 	let active = $derived(isJobActive(job?.status ?? null));
 	let hasErrors = $derived(!!job?.errors && job.errors.trim().length > 0);
 	let isFolderImport = $derived(job?.source_type === 'folder');
+	let accentVar = $derived(
+		statusAccentVar(isFolderImport && job?.status === 'ripping' ? 'importing' : job?.status)
+	);
+	let etaDisplay = $derived(
+		active && job?.start_time ? etaTime(job.start_time, progress) : null
+	);
 	let discLabelDiffers = $derived(
 		!!job?.label && !!job?.title && job.label.toLowerCase() !== job.title.toLowerCase()
 	);
@@ -39,6 +46,23 @@
 		// Don't toggle when clicking links/buttons inside
 		if ((e.target as HTMLElement).closest('a, button:not(.row-toggle)')) return;
 		expanded = !expanded;
+	}
+
+	let abandoning = $state(false);
+	let abandonError = $state<string | null>(null);
+
+	async function handleAbandon() {
+		if (!job) return;
+		if (!confirm(`Abandon job "${job.title || job.label || job.job_id}"?`)) return;
+		abandoning = true;
+		abandonError = null;
+		try {
+			await abandonJob(job.job_id);
+		} catch (e) {
+			abandonError = e instanceof Error ? e.message : 'Failed to abandon';
+		} finally {
+			abandoning = false;
+		}
 	}
 </script>
 
@@ -53,95 +77,99 @@
 	tabindex="0"
 >
 	<!-- Collapsed row -->
-	<div class="flex items-center gap-3 px-4 py-2.5 cursor-pointer">
-		<!-- Poster thumbnail -->
-		<PosterImage url={job.poster_url} alt="" class="h-10 w-7 shrink-0 rounded-sm object-cover" />
+	<div class="cursor-pointer px-4 pt-2.5" class:pb-2.5={!active}>
+		<div class="flex items-center gap-3">
+			<!-- Poster thumbnail -->
+			<PosterImage url={job.poster_url} alt="" class="h-10 w-7 shrink-0 rounded-sm object-cover" />
 
-		<!-- Title -->
-		<h3 class="min-w-0 flex-shrink truncate font-semibold text-sm text-gray-900 dark:text-white">
-			{job.title || job.label || 'Untitled'}
-		</h3>
+			<!-- Title -->
+			<h3 class="min-w-0 flex-shrink truncate font-semibold text-sm text-gray-900 dark:text-white">
+				{job.title || job.label || 'Untitled'}
+			</h3>
 
-		<!-- Year -->
-		{#if job.year}
-			<span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{job.year}</span>
-		{/if}
-
-		<!-- Status badge -->
-		<div class="shrink-0">
-			<StatusBadge status={isFolderImport && (job.status === 'video_ripping' || job.status === 'ripping') ? 'importing' : job.status} />
-		</div>
-
-		<!-- Type + disc badges -->
-		<div class="hidden sm:flex shrink-0 items-center gap-1.5">
-			<span class="rounded-sm px-1.5 py-0.5 text-xs font-medium {typeConfig.badgeClasses}">{typeConfig.label}</span>
-			{#if job.disctype}
-				<span class="inline-flex items-center gap-0.5 rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs dark:bg-primary/15">
-					<DiscTypeIcon disctype={job.disctype} size="h-3 w-3" />
-					{discTypeLabel(job.disctype)}
-				</span>
+			<!-- Year -->
+			{#if job.year}
+				<span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{job.year}</span>
 			{/if}
-		</div>
 
-		<!-- Drive / source -->
-		<span class="hidden md:inline shrink-0 text-xs text-gray-500 dark:text-gray-400">
-			{#if job.devpath}
-				{driveName ?? job.devpath}
-			{:else if job.source_path}
-				{job.source_path.split('/').slice(-1)[0]}
-			{/if}
-		</span>
+			<!-- Status badge: folder-import jobs in the rip phase render as
+			     'importing' regardless of which JobState rip variant arm-neu
+			     emits. Both v2.0.0 'video_ripping' and the legacy 'ripping'
+			     are matched so in-flight jobs mid-deploy still show the
+			     correct badge. -->
+			<div class="shrink-0">
+				<StatusBadge status={isFolderImport && (job.status === 'video_ripping' || job.status === 'ripping') ? 'importing' : job.status} />
+			</div>
 
-		<!-- Progress bar (inline) -->
-		{#if active}
-			<div class="hidden lg:block flex-1 min-w-24">
-				{#if progress != null && progress > 0}
-					<ProgressBar value={progress} color="bg-primary" />
-				{:else}
-					<div class="h-2 overflow-hidden rounded-full bg-primary/15">
-						<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
-					</div>
+			<!-- Type + disc badges -->
+			<div class="hidden sm:flex shrink-0 items-center gap-1.5">
+				<span class="rounded-sm px-1.5 py-0.5 text-xs font-medium {typeConfig.badgeClasses}">{typeConfig.label}</span>
+				{#if job.disctype}
+					<span class="inline-flex items-center gap-0.5 rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs dark:bg-primary/15">
+						<DiscTypeIcon disctype={job.disctype} size="h-3 w-3" />
+						{discTypeLabel(job.disctype)}
+					</span>
 				{/if}
 			</div>
-		{/if}
 
-		<!-- Track counts -->
-		{#if active && displayTotal > 0 && !isFolderImport}
-			<span class="hidden lg:inline shrink-0 text-xs text-gray-500 dark:text-gray-400">
-				{displayRipped}/{displayTotal}
+			<!-- Drive / source -->
+			<span class="hidden md:inline shrink-0 text-xs text-gray-500 dark:text-gray-400">
+				{#if job.devpath}
+					{driveName ?? job.devpath}
+				{:else if job.source_path}
+					{job.source_path.split('/').slice(-1)[0]}
+				{/if}
 			</span>
-		{/if}
 
-		<!-- Elapsed -->
-		{#if active && job.start_time}
-			<span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{elapsedTime(job.start_time)}</span>
-		{/if}
+			<!-- Spacer -->
+			<span class="flex-1"></span>
 
-		<!-- Errors indicator -->
-		{#if hasErrors}
-			<span class="shrink-0 text-red-500 dark:text-red-400" title={job.errors ?? ''}>
-				<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+			<!-- Track counts -->
+			{#if active && displayTotal > 0 && !isFolderImport}
+				<span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+					{displayRipped}/{displayTotal}
+				</span>
+			{/if}
+
+			<!-- ETA (active) or Elapsed (inactive but recent) -->
+			{#if active}
+				<span class="shrink-0 text-xs text-gray-500 dark:text-gray-400" title="Estimated time remaining">
+					{etaDisplay ? `~${etaDisplay}` : elapsedTime(job.start_time)}
+				</span>
+			{/if}
+
+			<!-- Errors indicator -->
+			{#if hasErrors}
+				<span class="shrink-0 text-red-500 dark:text-red-400" title={job.errors ?? ''}>
+					<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+						<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+					</svg>
+				</span>
+			{/if}
+
+			<!-- Expand chevron -->
+			<button class="row-toggle shrink-0 p-0.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-transform" class:rotate-180={expanded} title={expanded ? 'Collapse' : 'Expand'}>
+				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
 				</svg>
-			</span>
-		{/if}
-
-		<!-- Expand chevron -->
-		<button class="row-toggle shrink-0 p-0.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-transform" class:rotate-180={expanded} title={expanded ? 'Collapse' : 'Expand'}>
-			<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-				<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-			</svg>
-		</button>
+			</button>
+		</div>
 	</div>
 
-	<!-- Mobile progress (below collapsed row) -->
-	{#if active && !expanded}
-		<div class="lg:hidden px-4 pb-2.5">
+	<!-- Progress row: own line below a divider, indented under content -->
+	{#if active}
+		<div class="mt-2 border-t border-primary/10 dark:border-primary/15 px-4 pl-[64px] pr-4 py-2.5">
 			{#if progress != null && progress > 0}
-				<ProgressBar value={progress} color="bg-primary" />
+				<ProgressBar value={progress} colorVar={accentVar} />
 			{:else}
-				<div class="h-2 overflow-hidden rounded-full bg-primary/15">
-					<div class="h-full w-1/3 animate-indeterminate rounded-full bg-primary/60"></div>
+				<div class="flex items-center gap-2">
+					<div class="h-2.5 flex-1 overflow-hidden rounded-full bg-primary/15">
+						<div
+							class="h-full w-1/3 animate-indeterminate rounded-full"
+							style="background: {accentVar}; opacity: 0.6"
+						></div>
+					</div>
+					<span class="min-w-[3ch] text-right text-xs text-gray-500 dark:text-gray-400">…</span>
 				</div>
 			{/if}
 		</div>
@@ -155,18 +183,25 @@
 				<PosterImage url={job.poster_url} alt={job.title ?? 'Poster'} class="h-32 w-22 shrink-0 rounded-sm object-cover" />
 
 				<div class="min-w-0 flex-1">
-					<!-- Title + links -->
+					<!-- Title + links + abandon -->
 					<div class="mb-2 flex items-start justify-between gap-2">
 						<a href="/jobs/{job.job_id}" class="text-sm font-semibold text-primary hover:underline">{job.title || job.label || 'Untitled'}</a>
 						<div class="flex items-center gap-2">
 							{#if job.imdb_id}
 								<a href="https://www.imdb.com/title/{job.imdb_id}/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-sm bg-yellow-400 px-1.5 py-0.5 text-xs font-bold text-black hover:bg-yellow-300">IMDb</a>
 							{/if}
-							{#if job.logfile}
-								<a href="/logs/{job.logfile}" class="text-xs text-primary hover:underline">Log</a>
+							{#if active}
+								<button
+									onclick={handleAbandon}
+									disabled={abandoning}
+									class="text-xs font-medium text-red-500 hover:underline disabled:opacity-50 dark:text-red-400"
+								>{abandoning ? 'Abandoning…' : 'Abandon'}</button>
 							{/if}
 						</div>
 					</div>
+					{#if abandonError}
+						<div class="mb-2 text-xs text-red-500 dark:text-red-400">{abandonError}</div>
+					{/if}
 
 					<!-- Data table -->
 					<table class="w-full text-xs">
@@ -289,9 +324,18 @@
 						</div>
 					{/if}
 
-					<!-- View detail link -->
-					<div class="mt-2">
-						<a href="/jobs/{job.job_id}" class="inline-block text-xs text-primary hover:underline">View full details</a>
+					<!-- Actions -->
+					<div class="mt-3 flex items-center gap-2">
+						<a
+							href="/jobs/{job.job_id}"
+							class="rounded-md border border-primary/30 bg-primary/15 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/25"
+						>Open details</a>
+						{#if job.logfile}
+							<a
+								href="/logs/{job.logfile}"
+								class="rounded-md border border-primary/25 bg-transparent px-3 py-1 text-xs font-medium text-gray-600 hover:bg-primary/10 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+							>View log</a>
+						{/if}
 					</div>
 				</div>
 			</div>

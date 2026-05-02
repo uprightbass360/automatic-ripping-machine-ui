@@ -68,7 +68,7 @@ describe('ActiveJobRow', () => {
 
 		it('does not show expanded detail by default', () => {
 			renderComponent(ActiveJobRow, { props: { job: createJob() } });
-			expect(screen.queryByText('View full details')).not.toBeInTheDocument();
+			expect(screen.queryByText('Open details')).not.toBeInTheDocument();
 		});
 	});
 
@@ -80,7 +80,7 @@ describe('ActiveJobRow', () => {
 			// Click the row to expand
 			await fireEvent.click(screen.getByText('Test Movie'));
 			await waitFor(() => {
-				expect(screen.getByText('View full details')).toBeInTheDocument();
+				expect(screen.getByText('Open details')).toBeInTheDocument();
 			});
 		});
 
@@ -130,7 +130,7 @@ describe('ActiveJobRow', () => {
 			});
 			await fireEvent.click(screen.getByText('Test Movie'));
 			await waitFor(() => {
-				expect(screen.getByText('View full details')).toBeInTheDocument();
+				expect(screen.getByText('Open details')).toBeInTheDocument();
 			});
 		});
 	});

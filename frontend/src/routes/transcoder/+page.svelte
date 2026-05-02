@@ -390,12 +390,10 @@
 									{#if job.year}
 										<span>{job.year}</span>
 									{/if}
-									{#if job.arm_job_id}
-										<a
-											href="/jobs/{job.arm_job_id}"
-											class="inline-flex items-center rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary-text hover:bg-primary/20 dark:bg-primary/15 dark:text-primary-text-dark dark:hover:bg-primary/25"
-										>ARM #{job.arm_job_id}</a>
-									{/if}
+									<a
+										href="/jobs/{job.id}"
+										class="inline-flex items-center rounded-sm bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary-text hover:bg-primary/20 dark:bg-primary/15 dark:text-primary-text-dark dark:hover:bg-primary/25"
+									>Job #{job.id}</a>
 									{#if job.source_path}
 										<span class="truncate font-mono text-xs text-gray-400 dark:text-gray-500" title={job.source_path}>{sourceBasename(job.source_path)}</span>
 									{/if}

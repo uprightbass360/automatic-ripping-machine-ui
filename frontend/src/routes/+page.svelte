@@ -424,13 +424,7 @@
 				<div class="space-y-2">
 					{#each dash.active_transcodes as tc (tc.id)}
 						<div in:fade|local={fadeIn} out:fade|local={fadeOut}>
-							{#if tc.arm_job_id}
-								<a href="/jobs/{tc.arm_job_id}" class="block transition-opacity hover:opacity-80">
-									<TranscodeCard job={tc} />
-								</a>
-							{:else}
-								<TranscodeCard job={tc} />
-							{/if}
+							<TranscodeCard job={tc} />
 						</div>
 					{/each}
 				</div>

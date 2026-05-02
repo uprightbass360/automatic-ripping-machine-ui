@@ -9,7 +9,7 @@ vi.mock('$lib/api/transcoder', () => ({
 	})),
 	fetchTranscoderJobs: vi.fn(() => Promise.resolve({
 		jobs: [
-			{ id: 1, title: 'Movie 1', source_path: '/raw/movie1.mkv', status: 'processing', progress: 50, error: null, logfile: 'tc_1.log', video_type: 'movie', year: '2024', disctype: 'bluray', arm_job_id: null, output_path: null, total_tracks: null, poster_url: null, config_overrides: null, created_at: '2025-06-15T10:00:00Z', started_at: '2025-06-15T10:05:00Z', completed_at: null }
+			{ id: 1, title: 'Movie 1', source_path: '/raw/movie1.mkv', status: 'processing', progress: 50, error: null, logfile: 'tc_1.log', video_type: 'movie', year: '2024', disctype: 'bluray', output_path: null, total_tracks: null, poster_url: null, config_overrides: null, created_at: '2025-06-15T10:00:00Z', started_at: '2025-06-15T10:05:00Z', completed_at: null }
 		],
 		total: 1
 	})),

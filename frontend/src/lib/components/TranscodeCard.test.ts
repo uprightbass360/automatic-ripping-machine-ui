@@ -16,7 +16,6 @@ function createTranscodeJob(overrides: Partial<TranscoderJob> = {}): TranscoderJ
 		video_type: 'movie',
 		year: '2024',
 		disctype: 'bluray',
-		arm_job_id: null,
 		output_path: null,
 		total_tracks: null,
 		poster_url: null,
@@ -70,8 +69,16 @@ describe('TranscodeCard', () => {
 			expect(matches.length).toBeGreaterThanOrEqual(1);
 		});
 
-		it('shows elapsed time', () => {
+		it('shows ETA when actively transcoding', () => {
+			// elapsed 1h 55m at 45% progress -> ~2h22m remaining, prefixed with ~
 			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
+			expect(screen.getByText(/^~/)).toBeInTheDocument();
+		});
+
+		it('shows elapsed time when not actively transcoding', () => {
+			renderComponent(TranscodeCard, {
+				props: { job: createTranscodeJob({ status: 'completed', completed_at: '2025-06-15T11:55:00Z' }) }
+			});
 			expect(screen.getByText('1h 55m')).toBeInTheDocument();
 		});
 
@@ -84,7 +91,8 @@ describe('TranscodeCard', () => {
 
 		it('does not show expanded detail by default', () => {
 			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
-			expect(screen.queryByText('View full details')).not.toBeInTheDocument();
+			expect(screen.queryByText('Open job')).not.toBeInTheDocument();
+			expect(screen.queryByText('Open transcoder')).not.toBeInTheDocument();
 		});
 	});
 
@@ -101,19 +109,16 @@ describe('TranscodeCard', () => {
 			});
 		});
 
-		it('shows view full details link when arm_job_id is set', async () => {
-			renderComponent(TranscodeCard, { props: { job: createTranscodeJob({ arm_job_id: '42' }) } });
-			await fireEvent.click(screen.getByText('My Movie'));
-			await waitFor(() => {
-				expect(screen.getByText('View full details')).toBeInTheDocument();
-			});
-		});
-
-		it('hides view full details link when arm_job_id is null', async () => {
+		it('shows Open job + Open transcoder buttons when expanded', async () => {
+			// Unified-ID schema: transcoder.id == arm.job_id, so Open job
+			// always renders and points to /jobs/{id}.
 			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
 			await fireEvent.click(screen.getByText('My Movie'));
 			await waitFor(() => {
-				expect(screen.queryByText('View full details')).not.toBeInTheDocument();
+				const openJob = screen.getByText('Open job');
+				expect(openJob).toBeInTheDocument();
+				expect(openJob.getAttribute('href')).toBe('/jobs/1');
+				expect(screen.getByText('Open transcoder')).toBeInTheDocument();
 			});
 		});
 
@@ -144,13 +149,13 @@ describe('TranscodeCard', () => {
 			});
 		});
 
-		it('shows ARM job ID when present', async () => {
-			renderComponent(TranscodeCard, {
-				props: { job: createTranscodeJob({ arm_job_id: '42' }) }
-			});
+		it('renders Job ID as a link to the unified job page', async () => {
+			renderComponent(TranscodeCard, { props: { job: createTranscodeJob() } });
 			await fireEvent.click(screen.getByText('My Movie'));
 			await waitFor(() => {
-				expect(screen.getByText('(ARM #42)')).toBeInTheDocument();
+				const idLink = screen.getByText('#1');
+				expect(idLink).toBeInTheDocument();
+				expect(idLink.getAttribute('href')).toBe('/jobs/1');
 			});
 		});
 	});
