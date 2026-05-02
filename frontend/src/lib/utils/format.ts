@@ -71,6 +71,55 @@ export function etaTime(
 }
 
 /**
+ * Map a job status to a themeable CSS variable reference suitable for
+ * inline `style="background: ${statusAccentVar(status)}"` use. Falls back
+ * to the primary brand color so unrecognized statuses still pick up
+ * theme tinting.
+ *
+ * Accepts JobState (arm-neu Job.status), JobStatus (transcoder), or
+ * TrackStatus values. v2.0.0 disambiguated 'ripping' into
+ * 'video_ripping'/'audio_ripping' and 'waiting' into
+ * 'manual_paused'/'makemkv_throttled'; both new and legacy strings are
+ * mapped here so in-flight jobs observed mid-deploy still tint correctly.
+ */
+export function statusAccentVar(status: string | null | undefined): string {
+	switch (status?.toLowerCase()) {
+		case 'identifying':
+			return 'var(--color-status-scanning)';
+		case 'ready':
+		case 'active':
+		case 'ripping':         // legacy pre-v2.0.0
+		case 'video_ripping':
+		case 'audio_ripping':
+		case 'importing':
+			return 'var(--color-status-ripping)';
+		case 'copying':
+		case 'ejecting':
+			return 'var(--color-status-finishing)';
+		case 'transcoding':
+		case 'processing':
+			return 'var(--color-status-transcoding)';
+		case 'success':
+		case 'completed':
+		case 'complete':
+		case 'transcoded':
+			return 'var(--color-status-success)';
+		case 'fail':
+		case 'failed':
+		case 'error':
+			return 'var(--color-status-error)';
+		case 'waiting':         // legacy pre-v2.0.0
+		case 'manual_paused':
+		case 'makemkv_throttled':
+		case 'waiting_transcode':
+		case 'pending':
+			return 'var(--color-status-waiting)';
+		default:
+			return 'var(--color-primary)';
+	}
+}
+
+/**
  * Map a status string to a CSS class. Receives values from three different
  * enums depending on caller:
  *   - arm_contracts.JobState (arm-neu Job.status) - StatusBadge in JobRow,
@@ -100,7 +149,7 @@ export function statusColor(status: string | null): string {
 			return 'status-active';
 		case 'copying':
 		case 'ejecting':
-			return 'status-warning';
+			return 'status-finishing';
 		case 'transcoding':
 		case 'processing': // JobStatus (transcoder) - TranscodeCard / transcoder page
 			return 'status-processing';
