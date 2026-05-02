@@ -54,16 +54,13 @@ describe('isJobActive', () => {
 		expect(isJobActive(null)).toBe(false);
 	});
 
-	it('returns true for active statuses', () => {
+	it('returns true for JobState non-terminal members', () => {
 		expect(isJobActive('identifying')).toBe(true);
 		expect(isJobActive('ready')).toBe(true);
-		expect(isJobActive('active')).toBe(true);
 		expect(isJobActive('ripping')).toBe(true);
 		expect(isJobActive('copying')).toBe(true);
 		expect(isJobActive('ejecting')).toBe(true);
-		expect(isJobActive('processing')).toBe(true);
 		expect(isJobActive('transcoding')).toBe(true);
-		expect(isJobActive('pending')).toBe(true);
 		expect(isJobActive('waiting')).toBe(true);
 		expect(isJobActive('waiting_transcode')).toBe(true);
 	});
@@ -73,9 +70,17 @@ describe('isJobActive', () => {
 		expect(isJobActive('RIPPING')).toBe(true);
 	});
 
-	it('returns false for terminal statuses', () => {
+	it('returns false for terminal JobState members', () => {
 		expect(isJobActive('success')).toBe(false);
 		expect(isJobActive('fail')).toBe(false);
+	});
+
+	it('returns false for non-JobState values (transcoder JobStatus, TrackStatus, legacy)', () => {
+		// Defensive check: isJobActive is only called on arm-neu Job.status.
+		// Transcoder JobStatus values and legacy synonyms should not slip in.
+		expect(isJobActive('active')).toBe(false);
+		expect(isJobActive('processing')).toBe(false);
+		expect(isJobActive('pending')).toBe(false);
 		expect(isJobActive('completed')).toBe(false);
 		expect(isJobActive('error')).toBe(false);
 	});

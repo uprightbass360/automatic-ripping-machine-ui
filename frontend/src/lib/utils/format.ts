@@ -41,35 +41,45 @@ export function elapsedTime(startTime: string | null): string {
 	return `${seconds}s`;
 }
 
+/**
+ * Map a status string to a CSS class. Receives values from three different
+ * enums depending on caller:
+ *   - arm_contracts.JobState (arm-neu Job.status) - StatusBadge in JobRow,
+ *     JobCard, ActiveJobRow, DriveCard, jobs/[id]
+ *   - arm_contracts.JobStatus (transcoder TranscodeJob.status) - StatusBadge
+ *     in TranscodeCard, transcoder/+page.svelte
+ *   - arm_contracts.TrackStatus (Track.status) - StatusBadge at jobs/[id]:849
+ * Plus two locally-generated literals: 'importing' (folder-import override
+ * for status='ripping') and 'skipped' (UI-only marker for filtered/disabled
+ * tracks). Both are produced inline at the StatusBadge call site, not by any
+ * backend.
+ */
 export function statusColor(status: string | null): string {
 	switch (status?.toLowerCase()) {
 		case 'identifying':
 			return 'status-scanning';
 		case 'ready':
-		case 'active':
 		case 'ripping':
-		case 'importing':
+		case 'importing': // locally generated when isFolderImport && status='ripping'
 			return 'status-active';
 		case 'copying':
 		case 'ejecting':
 			return 'status-warning';
 		case 'transcoding':
-		case 'processing':
+		case 'processing': // JobStatus (transcoder) - TranscodeCard / transcoder page
 			return 'status-processing';
 		case 'success':
-		case 'completed':
-		case 'complete':
-		case 'transcoded':
+		case 'completed': // JobStatus (transcoder) terminal
+		case 'transcoded': // TrackStatus terminal (transcode-phase)
 			return 'status-success';
 		case 'fail':
-		case 'failed':
-		case 'error':
+		case 'failed': // JobStatus (transcoder) terminal
 			return 'status-error';
 		case 'waiting':
 		case 'waiting_transcode':
-		case 'pending':
+		case 'pending': // JobStatus (transcoder) + TrackStatus member
 			return 'status-warning';
-		case 'skipped':
+		case 'skipped': // locally generated for !track.enabled || filtered (jobs/[id]:849)
 			return 'status-unknown';
 		default:
 			return 'status-unknown';
