@@ -8,7 +8,7 @@ describe('StatusBadge', () => {
 	it.each([
 		['ripping', 'Ripping', 'status-active'],
 		['SUCCESS', 'Success', 'status-success'],
-		['copying', 'Copying', 'status-warning'],
+		['copying', 'Copying', 'status-finishing'],
 		['something_new', 'something_new', 'status-unknown']
 	])('renders status=%s as "%s" with class %s', (status, expectedText, expectedClass) => {
 		renderComponent(StatusBadge, { props: { status } });

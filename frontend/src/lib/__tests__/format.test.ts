@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { formatBytes, statusColor, statusLabel, timeAgo, elapsedTime, etaTime, formatDateTime } from '../utils/format';
+import { formatBytes, statusColor, statusLabel, statusAccentVar, timeAgo, elapsedTime, etaTime, formatDateTime } from '../utils/format';
 
 describe('formatBytes', () => {
 	it.each([
@@ -18,8 +18,11 @@ describe('statusColor', () => {
 		// JobState (arm-neu Job.status) - v2.0.0 disambiguated members
 		['success', 'status-success'],
 		['fail', 'status-error'],
-		['copying', 'status-warning'],
-		['ejecting', 'status-warning'],
+		// status-finishing is a distinct theme token (introduced alongside
+		// statusAccentVar) to highlight the copying/ejecting wind-down phase
+		// separately from the warning-tinted waiting bucket.
+		['copying', 'status-finishing'],
+		['ejecting', 'status-finishing'],
 		['manual_paused', 'status-warning'],
 		['makemkv_throttled', 'status-warning'],
 		['waiting_transcode', 'status-warning'],
@@ -107,6 +110,28 @@ describe('elapsedTime', () => {
 		['2025-06-15T09:45:00Z', '2h 15m']
 	])('elapsedTime(%s) = %s', (input, expected) => {
 		expect(elapsedTime(input)).toBe(expected);
+	});
+});
+
+describe('statusAccentVar', () => {
+	it.each<[string | null | undefined, string]>([
+		['ripping', 'var(--color-status-ripping)'],
+		['identifying', 'var(--color-status-scanning)'],
+		['transcoding', 'var(--color-status-transcoding)'],
+		['processing', 'var(--color-status-transcoding)'],
+		['copying', 'var(--color-status-finishing)'],
+		['ejecting', 'var(--color-status-finishing)'],
+		['waiting', 'var(--color-status-waiting)'],
+		['waiting_transcode', 'var(--color-status-waiting)'],
+		['success', 'var(--color-status-success)'],
+		['transcoded', 'var(--color-status-success)'],
+		['fail', 'var(--color-status-error)'],
+		['failed', 'var(--color-status-error)'],
+		[null, 'var(--color-primary)'],
+		[undefined, 'var(--color-primary)'],
+		['something-new', 'var(--color-primary)']
+	])('statusAccentVar(%s) = %s', (input, expected) => {
+		expect(statusAccentVar(input)).toBe(expected);
 	});
 });
 

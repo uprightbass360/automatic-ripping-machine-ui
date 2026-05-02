@@ -18,6 +18,17 @@
 	--color-surface: rgb(241, 247, 255);
 	--color-surface-dark: rgb(22, 28, 45);
 
+	/* Status semantic colors — overrideable per theme via colorScheme tokens.
+	   Cards and badges read these via var() so themes can re-tone them
+	   independently of the primary brand color. */
+	--color-status-ripping: rgb(59, 130, 246);
+	--color-status-transcoding: rgb(139, 92, 246);
+	--color-status-finishing: rgb(245, 158, 11);
+	--color-status-waiting: rgb(234, 179, 8);
+	--color-status-scanning: rgb(6, 182, 212);
+	--color-status-success: rgb(34, 197, 94);
+	--color-status-error: rgb(239, 68, 68);
+
 	--radius-sm: calc(var(--radius) * 0.25);
 	--radius-md: calc(var(--radius) * 0.75);
 	--radius-lg: var(--radius);
@@ -110,13 +121,16 @@
 		border-right: 2px solid color-mix(in srgb, var(--_accent) 30%, transparent);
 	}
 
-	/* Status badge semantic colors */
-	.status-scanning   { @apply bg-cyan-500; }
-	.status-active     { @apply bg-blue-500; }
-	.status-warning    { @apply bg-yellow-500; }
-	.status-processing { @apply bg-indigo-500; }
-	.status-success    { @apply bg-green-500; }
-	.status-error      { @apply bg-red-500; }
+	/* Status badge semantic colors — back the .status-* classes used by
+	   StatusBadge with the themeable --color-status-* tokens. The unknown
+	   bucket stays neutral gray (not theme-tinted on purpose). */
+	.status-scanning   { background: var(--color-status-scanning); }
+	.status-active     { background: var(--color-status-ripping); }
+	.status-finishing  { background: var(--color-status-finishing); }
+	.status-warning    { background: var(--color-status-waiting); }
+	.status-processing { background: var(--color-status-transcoding); }
+	.status-success    { background: var(--color-status-success); }
+	.status-error      { background: var(--color-status-error); }
 	.status-unknown    { @apply bg-gray-500; }
 
 	/* File icon category colors */
