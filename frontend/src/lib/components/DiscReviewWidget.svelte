@@ -74,17 +74,29 @@
 		}
 	}
 
-	// MakeMKV's minlength threshold - tracks shorter than this are silently
-	// skipped during ripping regardless of checkbox state.
+	// MakeMKV's minlength threshold - retained for tooltip text. The actual
+	// filter decision is made by the backend (track.process / skip_reason).
 	let minlength = $derived(Number(detail?.config?.MINLENGTH) || 120);
+	let maxlength = $derived(Number(detail?.config?.MAXLENGTH) || 99999);
 
-	function isBelowMinlength(track: { length: number | null }): boolean {
-		return track.length != null && track.length < minlength;
+	function isFiltered(track: { process?: boolean }): boolean {
+		return track.process === false;
 	}
 
-	// "All enabled" only considers tracks that are long enough to be ripped
+	function skipTooltip(track: { skip_reason?: string | null }): string {
+		switch (track.skip_reason) {
+			case 'too_short':       return `Skipped: shorter than minimum length (${minlength}s)`;
+			case 'too_long':        return `Skipped: longer than maximum length (${maxlength}s)`;
+			case 'makemkv_skipped': return `Skipped by MakeMKV (likely below ${minlength}s)`;
+			case 'user_disabled':   return 'Skipped: deselected';
+			case 'below_main_feature': return 'Skipped: below the main feature';
+			default:                return 'Skipped';
+		}
+	}
+
+	// "All enabled" only considers tracks the backend will actually rip
 	let rippableTracks = $derived(
-		detail?.tracks?.filter((t) => !isBelowMinlength(t)) ?? []
+		detail?.tracks?.filter((t) => !isFiltered(t)) ?? []
 	);
 	let allEnabled = $derived(
 		!!rippableTracks.length && rippableTracks.every((t) => t.enabled)
@@ -809,8 +821,8 @@
 									</thead>
 									<tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
 										{#each detail.tracks as track}
-											{@const tooShort = !isMusic && isBelowMinlength(track)}
-											<tr class="{tooShort ? 'opacity-40' : track.enabled && !isMusic ? 'bg-primary-light-bg/50 dark:bg-primary-light-bg-dark/10' : ''}">
+											{@const filtered = !isMusic && isFiltered(track)}
+											<tr class="{filtered ? 'opacity-40' : track.enabled && !isMusic ? 'bg-primary-light-bg/50 dark:bg-primary-light-bg-dark/10' : ''}">
 												<td class="px-3 py-1.5 font-mono text-gray-700 dark:text-gray-300">{track.track_number ?? '--'}</td>
 												{#if isMusic}
 													<td class="px-3 py-1.5 text-gray-700 dark:text-gray-300">{track.title || track.filename || '--'}</td>
@@ -841,7 +853,7 @@
 															value={track.episode_number ?? ''}
 															onchange={(e) => handleTrackFieldUpdate(track.track_id, 'episode_number', e.currentTarget.value.trim())}
 															placeholder="--"
-															disabled={tooShort || !track.enabled}
+															disabled={filtered || !track.enabled}
 															class="w-10 rounded-sm border border-primary/25 bg-primary/5 px-1 py-0.5 text-center text-xs text-gray-900 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary disabled:opacity-30 dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 														/>
 													</td>
@@ -851,8 +863,8 @@
 													<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.aspect_ratio ?? '--'}</td>
 													<td class="px-3 py-1.5 text-gray-500 dark:text-gray-400">{track.fps ?? '--'}</td>
 													<td class="pl-1 pr-3 py-1.5">
-														{#if tooShort}
-															<span class="ml-3 text-[10px] text-gray-400 dark:text-gray-500" title="Too short to rip (below {minlength}s minimum)">skip</span>
+														{#if filtered}
+															<span class="ml-3 text-[10px] text-gray-400 dark:text-gray-500" title={skipTooltip(track)}>skip</span>
 														{:else}
 															<input
 																type="checkbox"
@@ -903,7 +915,7 @@
 														{/if}
 													</td>
 												{/if}
-												{#if job.multi_title && !isMusic && !tooShort}
+												{#if job.multi_title && !isMusic && !filtered}
 													<td class="px-1 py-1.5">
 														<button
 															onclick={() => toggleTrackSearch(track.track_id)}
@@ -917,7 +929,7 @@
 													</td>
 												{/if}
 											</tr>
-											{#if job.multi_title && !tooShort && openSearchTrackIds.has(track.track_id)}
+											{#if job.multi_title && !filtered && openSearchTrackIds.has(track.track_id)}
 												<tr>
 													<td colspan="99" class="px-3 py-2">
 														<TrackTitleSearch jobId={job.job_id} {track} onapply={() => handleTrackTitleApply(track.track_id)} onclear={() => { onrefresh?.(); loadDetail(); }} onclose={() => toggleTrackSearch(track.track_id)} />
