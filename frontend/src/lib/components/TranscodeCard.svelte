@@ -2,7 +2,7 @@
 	import type { TranscoderJob } from '$lib/types/transcoder';
 	import StatusBadge from './StatusBadge.svelte';
 	import ProgressBar from './ProgressBar.svelte';
-	import { elapsedTime } from '$lib/utils/format';
+	import { elapsedTime, etaTime } from '$lib/utils/format';
 	import { discTypeLabel } from '$lib/utils/job-type';
 	import PosterImage from './PosterImage.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
@@ -169,13 +169,13 @@
 								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Started</td>
 								<td class="py-1 text-gray-900 dark:text-white">{#if job.started_at}<TimeAgo date={job.started_at} />{:else}—{/if}</td>
 								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">
-									{#if job.completed_at}Completed{:else}Elapsed{/if}
+									{#if job.completed_at}Completed{:else}ETA{/if}
 								</td>
 								<td class="py-1 text-gray-900 dark:text-white">
 									{#if job.completed_at}
 										<TimeAgo date={job.completed_at} />
-									{:else if job.started_at}
-										{elapsedTime(job.started_at)}
+									{:else if isActive}
+										{etaTime(job.started_at, job.progress) ?? '—'}
 									{:else}
 										—
 									{/if}
@@ -183,14 +183,12 @@
 							</tr>
 							<tr>
 								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">Progress</td>
-								<td class="py-1 text-gray-900 dark:text-white">
+								<td class="py-1 text-gray-900 dark:text-white" colspan="3">
 									{typeof job.progress === 'number' ? `${job.progress}%` : '—'}
 									{#if isActive && typeof job.current_fps === 'number' && job.current_fps > 0}
 										<span class="ml-2 font-mono text-xs text-gray-500 dark:text-gray-400">{job.current_fps.toFixed(1)} fps</span>
 									{/if}
 								</td>
-								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">Created</td>
-								<td class="py-1 text-gray-900 dark:text-white">{#if job.created_at}<TimeAgo date={job.created_at} />{:else}—{/if}</td>
 							</tr>
 						</tbody>
 					</table>

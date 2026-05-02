@@ -42,6 +42,35 @@ export function elapsedTime(startTime: string | null): string {
 }
 
 /**
+ * Estimate time remaining for an in-flight job.
+ * Returns null when an ETA can't be reasonably computed (just started,
+ * already done, no progress signal); the caller renders an em-dash.
+ *
+ * The 30s elapsed threshold smooths the noisy first-percent jitter
+ * that MakeMKV/abcde produce during drive-spin and warm-up.
+ * Capped at 24h+ to avoid printing absurd estimates from sub-1%
+ * progress values that haven't yet stabilised.
+ */
+export function etaTime(
+	startTime: string | null,
+	progressPct: number | null | undefined
+): string | null {
+	if (!startTime || progressPct == null) return null;
+	if (progressPct <= 0 || progressPct >= 100) return null;
+	const start = new Date(startTime);
+	const elapsedSec = (Date.now() - start.getTime()) / 1000;
+	if (elapsedSec < 30) return null;
+	const remainingSec = (elapsedSec * (100 - progressPct)) / progressPct;
+	if (remainingSec >= 24 * 3600) return '24h+';
+	const h = Math.floor(remainingSec / 3600);
+	const m = Math.floor((remainingSec % 3600) / 60);
+	const s = Math.floor(remainingSec % 60);
+	if (h > 0) return `${h}h ${m}m`;
+	if (m > 0) return `${m}m ${s}s`;
+	return `${s}s`;
+}
+
+/**
  * Map a status string to a CSS class. Receives values from three different
  * enums depending on caller:
  *   - arm_contracts.JobState (arm-neu Job.status) - StatusBadge in JobRow,
