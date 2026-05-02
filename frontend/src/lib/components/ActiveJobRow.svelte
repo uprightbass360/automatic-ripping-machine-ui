@@ -2,7 +2,7 @@
 	import type { Job } from '$lib/types/arm';
 	import StatusBadge from './StatusBadge.svelte';
 	import ProgressBar from './ProgressBar.svelte';
-	import { elapsedTime } from '$lib/utils/format';
+	import { elapsedTime, etaTime } from '$lib/utils/format';
 	import { getVideoTypeConfig, isJobActive, discTypeLabel } from '$lib/utils/job-type';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import TimeAgo from './TimeAgo.svelte';
@@ -231,10 +231,12 @@
 										—
 									{/if}
 								</td>
-								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">Elapsed</td>
+								<td class="py-1 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap pl-6">
+									{#if !active && job.job_length}Total{:else}ETA{/if}
+								</td>
 								<td class="py-1 text-gray-900 dark:text-white">
 									{#if active && job.start_time}
-										{elapsedTime(job.start_time)}
+										{etaTime(job.start_time, progress) ?? '—'}
 									{:else if !active && job.job_length}
 										{job.job_length}
 									{:else}
