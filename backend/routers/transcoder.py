@@ -3,7 +3,15 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from backend.dependencies import require_transcoder_enabled
+from backend.models.files import OperationResult
 from backend.models.schemas import LogContentResponse, LogFileSchema, StructuredLogResponse, TranscoderJobListResponse, TranscoderStatsResponse
+from backend.models.transcoder import (
+    DeleteResult,
+    RetranscodeResult,
+    RetryResult,
+    TranscoderJobForArmResponse,
+    WorkersResponse,
+)
 from backend.services import transcoder_client
 
 router = APIRouter(
@@ -13,7 +21,7 @@ router = APIRouter(
 )
 
 
-@router.get("/workers")
+@router.get("/workers", response_model=WorkersResponse)
 async def get_workers() -> dict[str, Any]:
     """Per-worker status for dashboard display."""
     data = await transcoder_client.get_workers()
@@ -46,7 +54,11 @@ async def list_jobs(
     )
 
 
-@router.post("/jobs/{job_id}/retry", responses={503: {"description": "Transcoder offline"}})
+@router.post(
+    "/jobs/{job_id}/retry",
+    response_model=RetryResult,
+    responses={503: {"description": "Transcoder offline"}},
+)
 async def retry_job(job_id: int) -> dict[str, Any]:
     result = await transcoder_client.retry_job(job_id)
     if result is None:
@@ -54,7 +66,11 @@ async def retry_job(job_id: int) -> dict[str, Any]:
     return result
 
 
-@router.delete("/jobs/{job_id}", responses={503: {"description": "Transcoder offline or job not found"}})
+@router.delete(
+    "/jobs/{job_id}",
+    response_model=DeleteResult,
+    responses={503: {"description": "Transcoder offline or job not found"}},
+)
 async def delete_job(job_id: int) -> dict[str, str]:
     success = await transcoder_client.delete_job(job_id)
     if not success:
@@ -98,7 +114,15 @@ async def get_log(
     return data
 
 
-@router.post("/jobs/{job_id}/retranscode", responses={400: {"description": "Invalid job status"}, 404: {"description": "Transcoder job not found"}, 503: {"description": "Transcoder unavailable"}})
+@router.post(
+    "/jobs/{job_id}/retranscode",
+    response_model=RetranscodeResult,
+    responses={
+        400: {"description": "Invalid job status"},
+        404: {"description": "Transcoder job not found"},
+        503: {"description": "Transcoder unavailable"},
+    },
+)
 async def retranscode_transcoder_job(job_id: int):
     """Re-queue a completed or failed transcoder job for re-transcoding."""
     job = await transcoder_client.get_job(job_id)
@@ -125,7 +149,7 @@ async def retranscode_transcoder_job(job_id: int):
     return {"status": "ok", "message": "Transcode job re-queued"}
 
 
-@router.get("/job-for-arm/{arm_job_id}")
+@router.get("/job-for-arm/{arm_job_id}", response_model=TranscoderJobForArmResponse)
 async def get_transcoder_job_for_arm(arm_job_id: int) -> dict[str, Any]:
     """Look up the transcoder job for a given ARM job ID.
 

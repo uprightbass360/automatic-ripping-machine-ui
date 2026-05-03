@@ -12,7 +12,17 @@ import pytest
 
 async def test_get_stats_online(app_client):
     """GET /api/transcoder/stats returns online=True with stats."""
-    stats = {"queue_size": 3, "active_jobs": 1}
+    stats = {
+        "pending": 0,
+        "processing": 1,
+        "completed": 5,
+        "failed": 0,
+        "cancelled": 0,
+        "worker_running": True,
+        "current_job": None,
+        "active_count": 1,
+        "max_concurrent": 2,
+    }
     with patch(
         "backend.routers.transcoder.transcoder_client.get_stats",
         new_callable=AsyncMock,
@@ -22,7 +32,9 @@ async def test_get_stats_online(app_client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["online"] is True
-    assert data["stats"] == stats
+    assert data["stats"]["processing"] == 1
+    assert data["stats"]["completed"] == 5
+    assert data["stats"]["worker_running"] is True
 
 
 async def test_get_stats_offline(app_client):
@@ -44,7 +56,17 @@ async def test_get_stats_offline(app_client):
 
 async def test_list_jobs_success(app_client):
     """GET /api/transcoder/jobs returns jobs list."""
-    data = {"jobs": [{"id": 1, "status": "completed"}], "total": 1}
+    data = {
+        "jobs": [
+            {
+                "id": 1,
+                "title": "Test Movie",
+                "source_path": "/raw/test.iso",
+                "status": "completed",
+            }
+        ],
+        "total": 1,
+    }
     with patch(
         "backend.routers.transcoder.transcoder_client.get_jobs",
         new_callable=AsyncMock,
@@ -55,6 +77,7 @@ async def test_list_jobs_success(app_client):
     result = resp.json()
     assert result["total"] == 1
     assert len(result["jobs"]) == 1
+    assert result["jobs"][0]["title"] == "Test Movie"
 
 
 async def test_list_jobs_offline(app_client):

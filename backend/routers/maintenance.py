@@ -1,4 +1,4 @@
-"""Maintenance endpoints — orchestrates ARM proxy, notifications, and transcoder cleanup."""
+"""Maintenance endpoints - orchestrates ARM proxy, notifications, and transcoder cleanup."""
 from __future__ import annotations
 
 import asyncio
@@ -8,6 +8,16 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from backend.models.files import OperationResult
+from backend.models.maintenance import (
+    BulkOperationResult,
+    CleanupTranscoderResult,
+    ClearRawResult,
+    ImageCacheStats,
+    MaintenanceSummary,
+    OrphanFolderList,
+    OrphanLogList,
+)
 from backend.services import arm_client, image_cache, transcoder_client
 
 log = logging.getLogger(__name__)
@@ -33,7 +43,7 @@ def _check_arm(result: dict[str, Any] | None) -> dict[str, Any]:
     return result
 
 
-@router.get("/maintenance/summary")
+@router.get("/maintenance/summary", response_model=MaintenanceSummary)
 async def get_summary():
     """Aggregate counts from ARM (orphans + notifications) and transcoder."""
 
@@ -64,47 +74,47 @@ async def get_summary():
     }
 
 
-@router.get("/maintenance/orphan-logs")
+@router.get("/maintenance/orphan-logs", response_model=OrphanLogList)
 async def get_orphan_logs():
     return _check_arm(await arm_client.get_orphan_logs())
 
 
-@router.get("/maintenance/orphan-folders")
+@router.get("/maintenance/orphan-folders", response_model=OrphanFolderList)
 async def get_orphan_folders():
     return _check_arm(await arm_client.get_orphan_folders())
 
 
-@router.post("/maintenance/delete-log")
+@router.post("/maintenance/delete-log", response_model=OperationResult)
 async def delete_log(req: PathRequest):
     return _check_arm(await arm_client.delete_orphan_log(req.path))
 
 
-@router.post("/maintenance/delete-folder")
+@router.post("/maintenance/delete-folder", response_model=OperationResult)
 async def delete_folder(req: PathRequest):
     return _check_arm(await arm_client.delete_orphan_folder(req.path))
 
 
-@router.post("/maintenance/bulk-delete-logs")
+@router.post("/maintenance/bulk-delete-logs", response_model=BulkOperationResult)
 async def bulk_delete_logs(req: BulkPathRequest):
     return _check_arm(await arm_client.bulk_delete_logs(req.paths))
 
 
-@router.post("/maintenance/bulk-delete-folders")
+@router.post("/maintenance/bulk-delete-folders", response_model=BulkOperationResult)
 async def bulk_delete_folders(req: BulkPathRequest):
     return _check_arm(await arm_client.bulk_delete_folders(req.paths))
 
 
-@router.post("/maintenance/dismiss-all-notifications")
+@router.post("/maintenance/dismiss-all-notifications", response_model=OperationResult)
 async def dismiss_all_notifications():
     return _check_arm(await arm_client.dismiss_all_notifications())
 
 
-@router.post("/maintenance/purge-notifications")
+@router.post("/maintenance/purge-notifications", response_model=OperationResult)
 async def purge_notifications():
     return _check_arm(await arm_client.purge_cleared_notifications())
 
 
-@router.post("/maintenance/cleanup-transcoder")
+@router.post("/maintenance/cleanup-transcoder", response_model=CleanupTranscoderResult)
 async def cleanup_transcoder():
     """Delete completed and failed transcoder jobs. Paginates through all results."""
     deleted = 0
@@ -133,19 +143,19 @@ async def cleanup_transcoder():
     return {"success": True, "deleted": deleted, "errors": errors}
 
 
-@router.post("/maintenance/clear-raw")
+@router.post("/maintenance/clear-raw", response_model=ClearRawResult)
 async def clear_raw():
     """Clear all contents of the raw/scratch directory."""
     return _check_arm(await arm_client.clear_raw())
 
 
-@router.get("/maintenance/image-cache-stats")
+@router.get("/maintenance/image-cache-stats", response_model=ImageCacheStats)
 def get_image_cache_stats():
     """Return image cache statistics."""
     return image_cache.stats()
 
 
-@router.post("/maintenance/clear-image-cache")
+@router.post("/maintenance/clear-image-cache", response_model=ImageCacheStats)
 def clear_image_cache():
     """Clear all cached images."""
     return image_cache.clear()

@@ -134,8 +134,17 @@ def test_transcode_overrides_validator_rejects_non_dict_non_string():
 
 
 def test_job_detail_schema_extends_job_with_tracks_and_config():
-    d = JobDetailSchema(job_id=1, tracks=[TrackSchema(track_id=1, job_id=1)], config={"X": "y"})
+    # config is now typed (JobConfigSnapshot); the model accepts the
+    # DOS-cased keys defined by JobConfigUpdateRequest. Unknown keys are
+    # silently dropped (extra='ignore' on the model).
+    d = JobDetailSchema(
+        job_id=1,
+        tracks=[TrackSchema(track_id=1, job_id=1)],
+        config={"RIPMETHOD": "mkv", "MAINFEATURE": True},
+    )
     assert d.job_id == 1
     assert len(d.tracks) == 1
     assert d.tracks[0].track_id == 1
-    assert d.config == {"X": "y"}
+    assert d.config is not None
+    assert d.config.RIPMETHOD == "mkv"
+    assert d.config.MAINFEATURE is True

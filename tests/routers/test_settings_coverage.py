@@ -35,7 +35,11 @@ async def test_get_settings_all_sources(app_client):
     assert data["arm_config"] == {"RIPMETHOD": "mkv"}
     assert data["arm_metadata"] == {"RIPMETHOD": "Rip method"}
     assert data["naming_variables"] == {"title": "Movie title"}
-    assert data["transcoder_config"] == tc_config
+    # transcoder_config is now typed (TranscoderConfig); compare meaningful
+    # fields rather than full equality, since the typed model surfaces all
+    # optional fields with default None.
+    assert data["transcoder_config"]["config"] == tc_config["config"]
+    assert data["transcoder_config"]["updatable_keys"] == tc_config["updatable_keys"]
     assert data["gpu_support"] == {"nvenc": True}
 
 

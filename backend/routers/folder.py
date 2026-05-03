@@ -4,7 +4,12 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import RedirectResponse
 
-from backend.models.folder import FolderCreateRequest, FolderScanRequest
+from backend.models.folder import (
+    FolderCreateRequest,
+    FolderCreateResponse,
+    FolderScanRequest,
+    FolderScanResult,
+)
 from backend.services import arm_client
 
 router = APIRouter(prefix="/api/jobs/folder", tags=["folder"])
@@ -21,13 +26,13 @@ def _check_result(result: dict[str, Any] | None) -> dict[str, Any]:
     return result
 
 
-@router.post("/scan")
+@router.post("/scan", response_model=FolderScanResult)
 async def scan_folder(req: FolderScanRequest) -> dict[str, Any]:
     """Scan a folder for disc structure and metadata."""
     return _check_result(await arm_client.scan_folder(req.path))
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, response_model=FolderCreateResponse)
 async def create_folder_job(req: FolderCreateRequest) -> dict[str, Any]:
     """Create a folder import job."""
     return _check_result(await arm_client.create_folder_job(req.model_dump()))
