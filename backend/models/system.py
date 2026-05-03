@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class SystemInfoSchema(BaseModel):
@@ -55,3 +55,41 @@ class SystemStatsSchema(BaseModel):
     memory: MemoryInfoSchema | None = None
     storage: list[StoragePathSchema] = []
     gpu: GpuSnapshotSchema | None = None
+
+
+class JobStatsResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    total: int = 0
+    completed: int = 0
+    in_progress: int = 0
+    failed: int = 0
+
+
+class RestartResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    success: bool = True
+    message: str | None = None
+
+
+class PreflightResult(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    success: bool = True
+    issues: list[str] = []
+
+
+class PreflightFixResult(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    success: bool = True
+    fixed: list[str] = []
+    failed: list[str] = []
+
+
+class RippingEnabledResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    success: bool = True
+    ripping_enabled: bool | None = None

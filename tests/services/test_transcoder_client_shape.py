@@ -30,12 +30,9 @@ def test_job_list_shape_matches_contract():
     assert parsed.total == 1
     assert len(parsed.jobs) == 1
     job = parsed.jobs[0]
-    # job_list.json uses int id and float progress; the typed
-    # TranscoderJob model (added in the next commit) will surface those
-    # natively. Until then, the dict[str, Any] shape passes through.
-    assert job["id"] == 1
-    assert job["status"] == "processing"
-    assert job["progress"] == 42.5
+    assert job.id == 1
+    assert job.status == "processing"
+    assert job.progress == 42.5
 
 
 def test_stats_shape_matches_contract():
@@ -43,6 +40,5 @@ def test_stats_shape_matches_contract():
     parsed = TranscoderStatsResponse(**payload)
     assert parsed.online is True
     assert parsed.stats is not None
-    # stats is dict[str, Any] until tightened in the next commit.
-    assert parsed.stats["processing"] == 1
-    assert parsed.stats["worker_running"] is True
+    assert parsed.stats.processing == 1
+    assert parsed.stats.worker_running is True

@@ -71,3 +71,7 @@ class JobConfigUpdateRequest(BaseModel):
 class NamingPreviewRequest(BaseModel):
     pattern: str
     variables: dict[str, str] = {}
+
+
+class NamingPreviewResponse(BaseModel):
+    rendered: str

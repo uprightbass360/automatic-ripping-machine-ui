@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pydantic import BaseModel
 
 from backend.models.job import JobSchema
 from backend.models.system import HardwareInfoSchema, SystemStatsSchema
+from backend.models.transcoder import TranscoderJob, TranscoderStatsSummary
 
 
 class DashboardResponse(BaseModel):
@@ -25,8 +24,8 @@ class DashboardResponse(BaseModel):
     makemkv_key_valid: bool | None = None
     makemkv_key_checked_at: str | None = None
     transcoder_online: bool = False
-    transcoder_stats: dict[str, Any] | None = None
+    transcoder_stats: TranscoderStatsSummary | None = None
     transcoder_system_stats: SystemStatsSchema | None = None
-    active_transcodes: list[dict[str, Any]] = []
+    active_transcodes: list[TranscoderJob] = []
     system_stats: SystemStatsSchema | None = None
     transcoder_info: HardwareInfoSchema | None = None

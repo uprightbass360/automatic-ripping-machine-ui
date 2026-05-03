@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from backend.config import settings as app_settings
 from backend.models.schemas import DashboardResponse, HardwareInfoSchema, JobSchema, SystemStatsSchema
+from backend.models.transcoder import TranscoderJob, TranscoderStatsSummary
 from backend.services import arm_client, transcoder_client, system_cache
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
@@ -119,9 +120,11 @@ async def get_dashboard():
         makemkv_key_valid=makemkv_key_valid,
         makemkv_key_checked_at=makemkv_key_checked_at,
         transcoder_online=transcoder_online,
-        transcoder_stats=transcoder_stats,
+        transcoder_stats=(
+            TranscoderStatsSummary(**transcoder_stats) if transcoder_stats else None
+        ),
         transcoder_system_stats=transcoder_system_stats,
-        active_transcodes=active_transcodes,
+        active_transcodes=[TranscoderJob(**j) for j in active_transcodes],
         system_stats=system_stats,
         transcoder_info=HardwareInfoSchema(**transcoder_hw) if transcoder_hw else None,
     )

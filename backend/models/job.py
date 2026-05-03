@@ -17,7 +17,7 @@ from typing import Any
 
 from arm_contracts import Job as _JobContract
 from arm_contracts import Track as TrackSchema
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 log = logging.getLogger(__name__)
 
@@ -81,9 +81,26 @@ class JobSchema(_JobContract):
         return parsed
 
 
+class JobConfigSnapshot(BaseModel):
+    """Per-job config snapshot returned in JobDetailSchema.config.
+
+    Mirrors the keys of JobConfigUpdateRequest. extra='ignore' so old
+    config rows with extra keys round-trip without error.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    RIPMETHOD: str | None = None
+    DISCTYPE: str | None = None
+    MAINFEATURE: bool | None = None
+    MINLENGTH: int | None = None
+    MAXLENGTH: int | None = None
+    AUDIO_FORMAT: str | None = None
+    SKIP_TRANSCODE: bool | None = None
+
+
 class JobDetailSchema(JobSchema):
     tracks: list[TrackSchema] = []
-    config: dict[str, Any] | None = None
+    config: JobConfigSnapshot | None = None
 
 
 class JobListResponse(BaseModel):

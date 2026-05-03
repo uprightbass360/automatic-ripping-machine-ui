@@ -17,11 +17,24 @@ from arm_contracts import (
     TrackCounts as TrackCountsSchema,
 )
 
+from backend.models.config import RuntimeConfigResponse
 from backend.models.dashboard import DashboardResponse
 from backend.models.drive import DriveSchema, DriveUpdateRequest
-from backend.models.folder import FolderCreateRequest, FolderScanRequest
+from backend.models.files import (
+    DirectoryListing,
+    FileEntry,
+    FileRoot,
+    OperationResult,
+)
+from backend.models.folder import (
+    FolderCreateRequest,
+    FolderCreateResponse,
+    FolderScanRequest,
+    FolderScanResult,
+)
 from backend.models.job import (
     TRANSCODE_OVERRIDES_ALLOWLIST,
+    JobConfigSnapshot,
     JobDetailSchema,
     JobListResponse,
     JobSchema,
@@ -32,55 +45,111 @@ from backend.models.logs import (
     LogFileSchema,
     StructuredLogResponse,
 )
+from backend.models.maintenance import (
+    BulkOperationResult,
+    CleanupTranscoderResult,
+    ImageCacheStats,
+    MaintenanceSummary,
+    OrphanFolderList,
+    OrphanLogList,
+)
 from backend.models.metadata import (
     JobConfigUpdateRequest,
     MediaDetailSchema,
     MusicDetailSchema,
     MusicSearchResultSchema,
     NamingPreviewRequest,
+    NamingPreviewResponse,
     SearchResultSchema,
     TitleUpdateRequest,
 )
 from backend.models.notification import NotificationSchema
+from backend.models.preset import (
+    AdvancedField,
+    Encoder,
+    Overrides,
+    Preset,
+    PresetEditorState,
+    Scheme,
+)
 from backend.models.settings import SettingsResponse
+from backend.models.setup import SetupStatus
 from backend.models.system import (
     GpuSnapshotSchema,
     HardwareInfoSchema,
+    JobStatsResponse,
     MemoryInfoSchema,
+    PreflightFixResult,
+    PreflightResult,
+    RestartResponse,
+    RippingEnabledResponse,
     StoragePathSchema,
     SystemInfoSchema,
     SystemStatsSchema,
 )
 from backend.models.transcoder import (
+    TranscoderAuthStatus,
+    TranscoderConfig,
+    TranscoderJob,
     TranscoderJobListResponse,
     TranscoderStatsResponse,
+    TranscoderStatsSummary,
+    WorkerStatus,
+    WorkersResponse,
 )
 
 __all__ = [
     "TRANSCODE_OVERRIDES_ALLOWLIST",
+    "AdvancedField",
+    "BulkOperationResult",
+    "CleanupTranscoderResult",
     "DashboardResponse",
+    "DirectoryListing",
     "DriveSchema",
     "DriveUpdateRequest",
+    "Encoder",
+    "FileEntry",
+    "FileRoot",
     "FolderCreateRequest",
+    "FolderCreateResponse",
     "FolderScanRequest",
+    "FolderScanResult",
     "GpuSnapshotSchema",
     "HardwareInfoSchema",
+    "ImageCacheStats",
+    "JobConfigSnapshot",
     "JobConfigUpdateRequest",
     "JobDetailSchema",
     "JobListResponse",
     "JobSchema",
+    "JobStatsResponse",
     "JobSummary",
     "LogContentResponse",
     "LogEntrySchema",
     "LogFileSchema",
+    "MaintenanceSummary",
     "MediaDetailSchema",
     "MemoryInfoSchema",
     "MusicDetailSchema",
     "MusicSearchResultSchema",
     "NamingPreviewRequest",
+    "NamingPreviewResponse",
     "NotificationSchema",
+    "OperationResult",
+    "OrphanFolderList",
+    "OrphanLogList",
+    "Overrides",
+    "PreflightFixResult",
+    "PreflightResult",
+    "Preset",
+    "PresetEditorState",
+    "RestartResponse",
+    "RippingEnabledResponse",
+    "RuntimeConfigResponse",
+    "Scheme",
     "SearchResultSchema",
     "SettingsResponse",
+    "SetupStatus",
     "StoragePathSchema",
     "StructuredLogResponse",
     "SystemInfoSchema",
@@ -88,6 +157,12 @@ __all__ = [
     "TitleUpdateRequest",
     "TrackCountsSchema",
     "TrackSchema",
+    "TranscoderAuthStatus",
+    "TranscoderConfig",
+    "TranscoderJob",
     "TranscoderJobListResponse",
     "TranscoderStatsResponse",
+    "TranscoderStatsSummary",
+    "WorkerStatus",
+    "WorkersResponse",
 ]
