@@ -1,10 +1,10 @@
-"""Folder import proxy — routes folder scan/create through the ARM backend."""
+"""Folder import proxy - routes folder scan/create through the ARM backend."""
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
 
+from backend.models.folder import FolderCreateRequest, FolderScanRequest
 from backend.services import arm_client
 
 router = APIRouter(prefix="/api/jobs/folder", tags=["folder"])
@@ -19,24 +19,6 @@ def _check_result(result: dict[str, Any] | None) -> dict[str, Any]:
         detail = result.get("error") or "Action failed"
         raise HTTPException(status_code=502, detail=detail)
     return result
-
-
-class FolderScanRequest(BaseModel):
-    path: str
-
-
-class FolderCreateRequest(BaseModel):
-    source_path: str
-    title: str
-    year: str | None = None
-    video_type: str
-    disctype: str
-    imdb_id: str | None = None
-    poster_url: str | None = None
-    multi_title: bool = False
-    season: int | None = None
-    disc_number: int | None = None
-    disc_total: int | None = None
 
 
 @router.post("/scan")

@@ -1,0 +1,94 @@
+"""Job, JobDetail, and JobList response shapes for the BFF.
+
+JobSchema re-exports arm_contracts.Job and adds the transcode_overrides
+field validator that strips legacy top-level keys before contract
+validation. JobDetailSchema extends JobSchema with the per-detail tracks
+and config payload composed by the BFF.
+
+The transcode_overrides allowlist mirrors arm_contracts.TranscodeJobConfig
+field names; kept in sync by hand.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from typing import Any
+
+from arm_contracts import Job as _JobContract
+from arm_contracts import Track as TrackSchema
+from pydantic import BaseModel, field_validator
+
+log = logging.getLogger(__name__)
+
+
+TRANSCODE_OVERRIDES_ALLOWLIST: frozenset[str] = frozenset({
+    "preset_slug",
+    "overrides",
+    "delete_source",
+    "output_extension",
+})
+
+
+class JobSchema(_JobContract):
+    """arm-ui's view of a Job: the shared contract plus a transcode_overrides
+    field validator that strips legacy keys before contract validation."""
+
+    @field_validator("transcode_overrides", mode="before")
+    @classmethod
+    def _parse_transcode_overrides(cls, v: Any) -> dict | None:
+        """Validate transcode_overrides via TranscodeJobConfig.
+
+        Accepts a JSON string (from the arm-neu DB) or a dict (from the API
+        body). Strips legacy top-level keys (video_encoder, handbrake_preset*,
+        etc.) with a WARN log before validating so mixed legacy + new-shape
+        rows still yield their valid subset.
+        """
+        from arm_contracts import TranscodeJobConfig
+        from pydantic import ValidationError
+
+        if v is None:
+            return None
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+            except (json.JSONDecodeError, TypeError):
+                return None
+        elif isinstance(v, dict):
+            parsed = v
+        else:
+            return None
+
+        if not isinstance(parsed, dict):
+            return None
+
+        offending = set(parsed.keys()) - TRANSCODE_OVERRIDES_ALLOWLIST
+        if offending:
+            log.warning(
+                "Stripping legacy transcode_overrides keys: %s",
+                sorted(offending),
+            )
+            parsed = {k: v for k, v in parsed.items() if k in TRANSCODE_OVERRIDES_ALLOWLIST}
+
+        try:
+            TranscodeJobConfig.model_validate(parsed)
+        except ValidationError as exc:
+            log.warning(
+                "transcode_overrides failed contract validation: %s",
+                [{"loc": e["loc"], "msg": e["msg"]} for e in exc.errors()],
+            )
+            return None
+        return parsed
+
+
+class JobDetailSchema(JobSchema):
+    tracks: list[TrackSchema] = []
+    config: dict[str, Any] | None = None
+
+
+class JobListResponse(BaseModel):
+    jobs: list[JobSchema]
+    total: int
+    page: int
+    per_page: int
+    pages: int
