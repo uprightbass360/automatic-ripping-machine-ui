@@ -49,12 +49,19 @@
 			return s === 'identifying' || s === 'ready';
 		})
 	);
+	// 'waiting' is the legacy pre-v2.0.0 wire string; arm-neu now emits
+	// 'manual_paused' (user-pause / disc-review state). Keep both so an
+	// in-flight job observed mid-deploy still surfaces in the review panel.
 	let waitingJobs = $derived(
-		dash.active_jobs.filter(j => j.status?.toLowerCase() === 'waiting' && !dismissedJobIds.has(j.job_id))
+		dash.active_jobs.filter(j => {
+			const s = j.status?.toLowerCase();
+			return (s === 'manual_paused' || s === 'waiting') && !dismissedJobIds.has(j.job_id);
+		})
 	);
 	let nonWaitingActiveJobs = $derived(dash.active_jobs.filter(j => {
 		const s = j.status?.toLowerCase();
-		return s !== 'waiting' && s !== 'transcoding' && s !== 'waiting_transcode'
+		return s !== 'waiting' && s !== 'manual_paused' && s !== 'makemkv_throttled'
+			&& s !== 'transcoding' && s !== 'waiting_transcode'
 			&& s !== 'identifying' && s !== 'ready'
 			&& s !== 'copying' && s !== 'ejecting';
 	}));
@@ -95,7 +102,14 @@
 	}
 
 	async function pollProgress() {
-		const rippingJobs = dash.active_jobs.filter(j => j.status?.toLowerCase() === 'ripping');
+		// 'ripping' is the legacy pre-v2.0.0 wire string; arm-neu now emits
+		// 'video_ripping' (DVD/Blu-ray) and 'audio_ripping' (music). Match all
+		// three so progress polling stays accurate during the deploy and
+		// continues working post-deploy.
+		const rippingJobs = dash.active_jobs.filter(j => {
+			const s = j.status?.toLowerCase();
+			return s === 'video_ripping' || s === 'audio_ripping' || s === 'ripping';
+		});
 		if (rippingJobs.length === 0) {
 			progressMap = {};
 			return;
