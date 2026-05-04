@@ -27,7 +27,9 @@ async def get_settings():
     arm_resp = await arm_client.get_config()
     if arm_resp:
         arm_config = arm_resp.get("config")
-        arm_metadata = arm_resp.get("comments")
+        raw_comments = arm_resp.get("comments")
+        if isinstance(raw_comments, dict):
+            arm_metadata = {k: v for k, v in raw_comments.items() if isinstance(v, str)}
         naming_variables = arm_resp.get("naming_variables")
 
     # Transcoder config + GPU support
