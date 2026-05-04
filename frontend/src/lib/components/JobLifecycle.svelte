@@ -37,43 +37,33 @@
 		{/each}
 	</div>
 {:else}
-	<!-- Detail-page sized: pills with labels and connector lines. -->
+	<!-- Detail-page sized: each stage is a block with the label above a
+	     small colored bar. Stages laid out side-by-side. -->
 	<ol
-		class="flex items-center gap-1.5 text-xs"
+		class="grid w-full gap-2 text-xs"
+		style="grid-template-columns: repeat({nodes.length}, minmax(0, 1fr));"
 		role="list"
 		aria-label="Job lifecycle"
 	>
-		{#each nodes as node, i (node.id)}
-			<li class="flex items-center gap-1.5">
-				<span
-					class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium {node.state ===
-					'active'
-						? 'lifecycle-pulse'
-						: ''}"
-					style="background: {node.state === 'pending'
-						? 'transparent'
-						: lifecycleColorVar(node.state)}; color: {node.state === 'pending'
+		{#each nodes as node (node.id)}
+			<li class="flex flex-col gap-1.5" title={`${node.label}: ${node.state}`}>
+				<div class="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider"
+					style="color: {node.state === 'pending'
 						? 'var(--color-status-pending, #9ca3af)'
-						: 'white'}; border: 1px solid {lifecycleColorVar(node.state)}; opacity: {node.state ===
-					'pending'
-						? 0.55
-						: 1}"
-					title={`${node.label}: ${node.state}`}
+						: node.state === 'failed'
+						? 'var(--color-status-error)'
+						: 'var(--color-text, currentColor)'}; opacity: {node.state === 'pending' ? 0.55 : 1}"
 				>
 					{#if node.state === 'paused'}
 						<Pause class="h-3 w-3" />
 					{/if}
-					{node.label}
-				</span>
-				{#if i < nodes.length - 1}
-					<span
-						class="inline-block h-px w-3"
-						style="background: {lifecycleColorVar(
-							node.state === 'completed' ? 'completed' : 'pending'
-						)}"
-						aria-hidden="true"
-					></span>
-				{/if}
+					<span class="truncate">{node.label}</span>
+				</div>
+				<span
+					class="block h-2 w-full rounded-sm {node.state === 'active' ? 'lifecycle-pulse' : ''}"
+					style="background: {lifecycleColorVar(node.state)}; opacity: {node.state === 'pending' ? 0.35 : 1}"
+					aria-hidden="true"
+				></span>
 			</li>
 		{/each}
 	</ol>
