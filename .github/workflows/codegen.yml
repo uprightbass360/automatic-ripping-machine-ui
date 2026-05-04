@@ -43,6 +43,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Sync SvelteKit (generates .svelte-kit/tsconfig.json)
+        working-directory: frontend
+        run: npx svelte-kit sync
+
       - name: Run codegen
         run: bash scripts/codegen.sh
 

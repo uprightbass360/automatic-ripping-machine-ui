@@ -1,6 +1,5 @@
 import { apiFetch } from './client';
-import type { FolderScanResult, FolderCreateRequest, FolderCreateResponse } from '../types/arm';
-import type { DirectoryListing, FileRoot } from '../types/files';
+import type { FolderScanResult, FolderCreateRequest, FolderCreateResponse, DirectoryListing, FileRoot } from '../types/api.gen';
 
 export function scanFolder(path: string): Promise<FolderScanResult> {
 	return apiFetch('/api/jobs/folder/scan', {

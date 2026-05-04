@@ -90,16 +90,17 @@
 		scanning = true;
 		scanError = null;
 		try {
-			scanResult = await scanFolder(selectedPath);
-			editTitle = scanResult.title_suggestion ?? '';
-			editYear = scanResult.year_suggestion || '';
+			const result = await scanFolder(selectedPath);
+			scanResult = result;
+			editTitle = result.title_suggestion ?? '';
+			editYear = result.year_suggestion || '';
 			editType = 'movie';
 			editImdbId = '';
 			editPosterUrl = '';
-			editSeason = scanResult.season?.toString() || '';
-			editDiscNumber = scanResult.disc_number?.toString() || '';
-			editDiscTotal = scanResult.disc_total?.toString() || '';
-			searchQuery = scanResult.title_suggestion ?? '';
+			editSeason = result.season?.toString() || '';
+			editDiscNumber = result.disc_number?.toString() || '';
+			editDiscTotal = result.disc_total?.toString() || '';
+			searchQuery = result.title_suggestion ?? '';
 			searchResults = [];
 			searchError = null;
 			detail = null;
