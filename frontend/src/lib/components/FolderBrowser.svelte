@@ -79,7 +79,7 @@
 		filter = '';
 		try {
 			const listing = await fetchIngressDirectory(path);
-			currentPath = listing.path;
+			currentPath = listing.path ?? '';
 			entries = listing.entries;
 			scrollContainer?.scrollTo(0, 0);
 		} catch (e) {

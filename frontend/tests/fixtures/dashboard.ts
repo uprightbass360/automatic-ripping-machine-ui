@@ -1,6 +1,6 @@
-import type { DashboardData } from '$lib/types/arm';
+import type { DashboardResponse } from '$lib/types/api.gen';
 
-export const emptyDashboard: DashboardData = {
+export const emptyDashboard: DashboardResponse = {
     db_available: true,
     arm_online: true,
     active_jobs: [],

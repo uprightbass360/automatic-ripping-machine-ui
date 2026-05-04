@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { JobDetail } from '../types/arm';
+import type { JobDetailSchema as JobDetail } from '../types/api.gen';
 import { buildMetadataFields, type MetadataField } from '../utils/job-fields';
 
 // Mock format utilities so tests don't depend on locale/time
