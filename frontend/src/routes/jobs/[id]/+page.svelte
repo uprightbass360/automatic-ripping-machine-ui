@@ -19,6 +19,7 @@
 	import CrcLookup from '$lib/components/CrcLookup.svelte';
 	import InlineLogFeed from '$lib/components/InlineLogFeed.svelte';
 	import TrackTitleSearch from '$lib/components/TrackTitleSearch.svelte';
+	import JobLifecycle from '$lib/components/JobLifecycle.svelte';
 	import EpisodeMatch from '$lib/components/EpisodeMatch.svelte';
 	import { formatDateTime, timeAgo, statusLabel } from '$lib/utils/format';
 	import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
@@ -420,6 +421,11 @@
 
 		<!-- Main header container -->
 		<div class="rounded-lg border border-primary/20 bg-surface shadow-xs overflow-hidden dark:border-primary/20 dark:bg-surface-dark">
+
+			<!-- Lifecycle bar -->
+			<div class="border-b border-primary/15 px-5 py-2.5 dark:border-primary/15">
+				<JobLifecycle status={job.status} sourceType={job.source_type} size="md" />
+			</div>
 
 			<!-- Title bar -->
 			<div class="flex flex-wrap items-center gap-2 border-b border-primary/15 px-5 py-3 dark:border-primary/15">

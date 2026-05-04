@@ -8,6 +8,7 @@
 	import { getVideoTypeConfig, isJobActive, discTypeLabel } from '$lib/utils/job-type';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import SkeletonCard from './SkeletonCard.svelte';
+	import JobLifecycle from './JobLifecycle.svelte';
 
 	interface Props {
 		job?: Job;
@@ -65,6 +66,7 @@
 			<!-- Row 3: Active → stage/titles/elapsed; Completed → duration/finish -->
 			<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
 				{#if active}
+					<JobLifecycle status={job.status} sourceType={job.source_type} size="sm" />
 					{#if job.stage}
 						<span class="rounded-sm bg-primary-light-bg px-1.5 py-0.5 font-medium text-primary-text dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">{job.stage}</span>
 					{/if}
