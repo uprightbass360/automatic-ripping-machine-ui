@@ -422,11 +422,6 @@
 		<!-- Main header container -->
 		<div class="rounded-lg border border-primary/20 bg-surface shadow-xs overflow-hidden dark:border-primary/20 dark:bg-surface-dark">
 
-			<!-- Lifecycle bar -->
-			<div class="border-b border-primary/15 px-5 py-2.5 dark:border-primary/15">
-				<JobLifecycle status={job.status} sourceType={job.source_type} size="md" />
-			</div>
-
 			<!-- Title bar -->
 			<div class="flex flex-wrap items-center gap-2 border-b border-primary/15 px-5 py-3 dark:border-primary/15">
 				<h1 class="text-xl font-bold text-gray-900 dark:text-white">
@@ -580,6 +575,11 @@
 					<TranscodeOverrides {job} onsaved={loadJob} />
 				</div>
 			{/if}
+		</div>
+
+		<!-- Lifecycle widget: visual stage progression below header, above status bars -->
+		<div class="rounded-lg border border-primary/20 bg-surface px-4 py-3 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+			<JobLifecycle status={job.status} sourceType={job.source_type} size="md" />
 		</div>
 
 		<!-- Progress widget: ripping, copying, waiting_transcode, transcoding -->
