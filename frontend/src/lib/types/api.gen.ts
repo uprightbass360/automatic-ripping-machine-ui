@@ -251,15 +251,15 @@ export type DirectoryListing = {
     /**
      * Path
      */
-    path?: string | null;
+    path: string | null;
     /**
      * Parent
      */
-    parent?: string | null;
+    parent: string | null;
     /**
      * Entries
      */
-    entries?: Array<FileEntry>;
+    entries: Array<FileEntry>;
     /**
      * Readonly
      */
@@ -1793,7 +1793,7 @@ export type MusicDetailSchema = {
     /**
      * Tracks
      */
-    tracks?: Array<MusicTrackSchema>;
+    tracks: Array<MusicTrackSchema>;
 };
 
 /**
@@ -2688,12 +2688,32 @@ export type TrackCounts = {
  * TrackTitleUpdateRequest
  *
  * Per-track title override for multi-title discs.
+ *
+ * Upstream arm-neu accepts the full title-detail set (title + year +
+ * video_type + imdb_id + poster_url) so the frontend can apply a
+ * metadata search result directly to a single track.
  */
 export type TrackTitleUpdateRequest = {
     /**
      * Title
      */
     title?: string | null;
+    /**
+     * Year
+     */
+    year?: string | null;
+    /**
+     * Video Type
+     */
+    video_type?: string | null;
+    /**
+     * Imdb Id
+     */
+    imdb_id?: string | null;
+    /**
+     * Poster Url
+     */
+    poster_url?: string | null;
 };
 
 /**

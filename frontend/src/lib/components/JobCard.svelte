@@ -11,13 +11,13 @@
 
 	interface Props {
 		job?: Job;
-		driveNames?: Record<string, string>;
+		driveNames?: Record<string, string> | null;
 		progress?: number | null;
 		progressStage?: string | null;
 	}
 
-	let { job, driveNames = {}, progress = null, progressStage = null }: Props = $props();
-	let driveName = $derived(job?.devpath ? driveNames[job.devpath] : null);
+	let { job, driveNames, progress = null, progressStage = null }: Props = $props();
+	let driveName = $derived(job?.devpath ? (driveNames?.[job.devpath] ?? null) : null);
 
 	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null));
 	let active = $derived(isJobActive(job?.status ?? null));
@@ -72,8 +72,8 @@
 						<!-- Folder imports use "all" mode — don't show per-track counts -->
 					{:else if job.status === 'info'}
 						<span>Scanning{job.no_of_titles ? `... ${job.no_of_titles} titles` : '...'}</span>
-					{:else if job.track_counts && job.track_counts.total > 0}
-						<span>{job.track_counts.ripped} / {job.track_counts.total} titles</span>
+					{:else if job.track_counts && (job.track_counts.total ?? 0) > 0}
+						<span>{job.track_counts.ripped ?? 0} / {job.track_counts.total ?? 0} titles</span>
 					{:else if job.no_of_titles != null}
 						<span>{job.no_of_titles} title{job.no_of_titles === 1 ? '' : 's'}</span>
 					{/if}

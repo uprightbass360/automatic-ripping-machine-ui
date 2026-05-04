@@ -2,7 +2,7 @@
 	import { statusColor, statusLabel } from '$lib/utils/format';
 
 	interface Props {
-		status: string | null;
+		status: string | null | undefined;
 	}
 
 	let { status }: Props = $props();

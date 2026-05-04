@@ -138,7 +138,7 @@
 		}
 	}
 
-	function formatRuntime(seconds: number | null): string {
+	function formatRuntime(seconds: number | null | undefined): string {
 		if (!seconds) return '--';
 		const m = Math.floor(seconds / 60);
 		const s = seconds % 60;

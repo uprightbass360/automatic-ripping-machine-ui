@@ -53,7 +53,7 @@ class MusicDetailSchema(MusicSearchResultSchema):
     barcode: str | None = None
     status: str | None = None
     disc_count: int | None = None
-    tracks: list[MusicTrackSchema] = []
+    tracks: list[MusicTrackSchema]
 
 
 class MusicSearchResponse(BaseModel):
@@ -85,8 +85,17 @@ class TitleUpdateRequest(BaseModel):
 
 
 class TrackTitleUpdateRequest(BaseModel):
-    """Per-track title override for multi-title discs."""
+    """Per-track title override for multi-title discs.
+
+    Upstream arm-neu accepts the full title-detail set (title + year +
+    video_type + imdb_id + poster_url) so the frontend can apply a
+    metadata search result directly to a single track.
+    """
     title: str | None = None
+    year: str | None = None
+    video_type: str | None = None
+    imdb_id: str | None = None
+    poster_url: str | None = None
 
 
 class JobConfigUpdateRequest(BaseModel):

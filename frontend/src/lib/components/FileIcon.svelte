@@ -1,9 +1,9 @@
 <script lang="ts">
 	interface Props {
-		category: string;
+		category?: string;
 	}
 
-	let { category }: Props = $props();
+	let { category = '' }: Props = $props();
 
 	const icons: Record<string, { color: string; path: string }> = {
 		directory: {

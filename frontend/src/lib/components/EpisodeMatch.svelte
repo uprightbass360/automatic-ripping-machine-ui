@@ -60,14 +60,14 @@
 	);
 	let unmatched = $derived(mainTracks.length - matchCount);
 
-	function formatDuration(seconds: number | null): string {
+	function formatDuration(seconds: number | null | undefined): string {
 		if (!seconds) return '-';
 		const m = Math.floor(seconds / 60);
 		const s = seconds % 60;
 		return `${m}:${s.toString().padStart(2, '0')}`;
 	}
 
-	function deltaClass(trackLen: number | null, epRuntime: number | null): string {
+	function deltaClass(trackLen: number | null | undefined, epRuntime: number | null): string {
 		if (!trackLen || !epRuntime) return '';
 		const delta = Math.abs(trackLen - epRuntime * 60);
 		if (delta < 60) return 'text-green-400';
@@ -75,7 +75,7 @@
 		return 'text-red-400';
 	}
 
-	function deltaText(trackLen: number | null, epRuntime: number | null): string {
+	function deltaText(trackLen: number | null | undefined, epRuntime: number | null): string {
 		if (!trackLen || !epRuntime) return '-';
 		const delta = trackLen - epRuntime * 60;
 		const abs = Math.abs(delta);

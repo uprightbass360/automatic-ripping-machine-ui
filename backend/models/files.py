@@ -34,9 +34,9 @@ class FileEntry(BaseModel):
 class DirectoryListing(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    path: str | None = None
-    parent: str | None = None
-    entries: list[FileEntry] = []
+    path: str | None
+    parent: str | None
+    entries: list[FileEntry]
     readonly: bool = False
 
 

@@ -1,4 +1,4 @@
-export function timeAgo(dateString: string | null): string {
+export function timeAgo(dateString: string | null | undefined): string {
 	if (!dateString) return 'N/A';
 	const date = new Date(dateString);
 	const now = new Date();
@@ -21,12 +21,12 @@ export function formatBytes(bytes: number): string {
 	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-export function formatDateTime(dateString: string | null): string {
+export function formatDateTime(dateString: string | null | undefined): string {
 	if (!dateString) return 'N/A';
 	return new Date(dateString).toLocaleString();
 }
 
-export function elapsedTime(startTime: string | null): string {
+export function elapsedTime(startTime: string | null | undefined): string {
 	if (!startTime) return 'N/A';
 	const start = new Date(startTime);
 	const now = new Date();
@@ -52,7 +52,7 @@ export function elapsedTime(startTime: string | null): string {
  * progress values that haven't yet stabilised.
  */
 export function etaTime(
-	startTime: string | null,
+	startTime: string | null | undefined,
 	progressPct: number | null | undefined
 ): string | null {
 	if (!startTime || progressPct == null) return null;
@@ -137,7 +137,7 @@ export function statusAccentVar(status: string | null | undefined): string {
  * tracks). Both are produced inline at the StatusBadge call site, not by any
  * backend.
  */
-export function statusColor(status: string | null): string {
+export function statusColor(status: string | null | undefined): string {
 	switch (status?.toLowerCase()) {
 		case 'identifying':
 			return 'status-scanning';
@@ -202,7 +202,7 @@ const STATUS_LABELS: Record<string, string> = {
 	cancelled: 'Cancelled',
 };
 
-export function statusLabel(status: string | null): string {
+export function statusLabel(status: string | null | undefined): string {
 	if (!status) return 'Unknown';
 	return STATUS_LABELS[status.toLowerCase()] ?? status;
 }

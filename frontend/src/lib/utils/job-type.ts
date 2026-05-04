@@ -59,7 +59,7 @@ const TYPE_MAP: Record<string, VideoTypeConfig> = {
 	data: DATA_CONFIG,
 };
 
-export function getVideoTypeConfig(videoType: string | null): VideoTypeConfig {
+export function getVideoTypeConfig(videoType: string | null | undefined): VideoTypeConfig {
 	if (!videoType) return FALLBACK_CONFIG;
 	return TYPE_MAP[videoType.toLowerCase()] ?? FALLBACK_CONFIG;
 }
@@ -103,7 +103,7 @@ export function discTypeLabel(disctype: string | null | undefined): string {
 	return DISC_TYPE_LABELS[disctype.toLowerCase()] ?? disctype;
 }
 
-export function isJobActive(status: string | null): boolean {
+export function isJobActive(status: string | null | undefined): boolean {
 	if (!status) return false;
 	return ACTIVE_STATUSES.has(status.toLowerCase());
 }

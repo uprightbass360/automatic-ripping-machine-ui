@@ -6,7 +6,7 @@
 
 	interface Props {
 		entry?: FileEntry;
-		currentPath?: string;
+		currentPath?: string | null;
 		selected?: boolean;
 		readonly?: boolean;
 		onnavigate?: (path: string) => void;
@@ -16,12 +16,12 @@
 		onfixpermissions?: (path: string, name: string) => void;
 	}
 
-	let { entry, currentPath = '', selected = false, readonly: ro = false, onnavigate, onrename, ondelete, ontoggle, onfixpermissions }: Props = $props();
+	let { entry, currentPath, selected = false, readonly: ro = false, onnavigate, onrename, ondelete, ontoggle, onfixpermissions }: Props = $props();
 
 	let editing = $state(false);
 	let editName = $state('');
 
-	let fullPath = $derived(currentPath + '/' + (entry?.name ?? ''));
+	let fullPath = $derived((currentPath ?? '') + '/' + (entry?.name ?? ''));
 
 	function startRename() {
 		editName = entry?.name ?? '';

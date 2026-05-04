@@ -224,7 +224,7 @@
 		return `${m}:${s.toString().padStart(2, '0')}`;
 	}
 
-	function formatDiscDuration(secs: number | null): string {
+	function formatDiscDuration(secs: number | null | undefined): string {
 		if (!secs) return '--';
 		const m = Math.floor(secs / 60);
 		const s = secs % 60;
