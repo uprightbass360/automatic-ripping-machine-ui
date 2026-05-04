@@ -11,9 +11,11 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:visual": "playwright test",
-    "test:visual:update": "playwright test --update-snapshots"
+    "test:visual:update": "playwright test --update-snapshots",
+    "codegen": "cd .. && bash scripts/codegen.sh"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.97.0",
     "@playwright/test": "^1.59.1",
     "@sveltejs/adapter-static": "^3",
     "@sveltejs/kit": "^2",
