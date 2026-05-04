@@ -165,6 +165,29 @@ async def test_settings_includes_auth_status(app_client):
     assert auth["webhook_secret_configured"] is True
 
 
+async def test_settings_drops_non_string_comments(app_client):
+    """ARM may emit non-string entries in `comments` (e.g. ARM_CFG_GROUPS as a
+    per-section banner dict). The BFF must filter those out so the response
+    still validates against `arm_metadata: dict[str, str]`."""
+    arm_resp = {
+        "config": {"FOO": "bar"},
+        "comments": {
+            "FOO": "# comment for FOO",
+            "ARM_CFG_GROUPS": {"BEGIN": "# section banner", "DIR_SETUP": "# dirs"},
+        },
+        "naming_variables": {},
+    }
+    with (
+        patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=arm_resp),
+        patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
+        patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=None),
+    ):
+        resp = await app_client.get("/api/settings")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["arm_metadata"] == {"FOO": "# comment for FOO"}
+
+
 # --- GET /api/settings/abcde ---
 
 
