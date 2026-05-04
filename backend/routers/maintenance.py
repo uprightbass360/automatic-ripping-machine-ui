@@ -10,10 +10,11 @@ from pydantic import BaseModel
 
 from backend.models.files import OperationResult
 from backend.models.maintenance import (
-    BulkOperationResult,
     CleanupTranscoderResult,
     ClearRawResult,
     ImageCacheStats,
+    MaintenanceBulkDeleteResult,
+    MaintenanceDeleteResult,
     MaintenanceSummary,
     OrphanFolderList,
     OrphanLogList,
@@ -84,22 +85,22 @@ async def get_orphan_folders():
     return _check_arm(await arm_client.get_orphan_folders())
 
 
-@router.post("/maintenance/delete-log", response_model=OperationResult)
+@router.post("/maintenance/delete-log", response_model=MaintenanceDeleteResult)
 async def delete_log(req: PathRequest):
     return _check_arm(await arm_client.delete_orphan_log(req.path))
 
 
-@router.post("/maintenance/delete-folder", response_model=OperationResult)
+@router.post("/maintenance/delete-folder", response_model=MaintenanceDeleteResult)
 async def delete_folder(req: PathRequest):
     return _check_arm(await arm_client.delete_orphan_folder(req.path))
 
 
-@router.post("/maintenance/bulk-delete-logs", response_model=BulkOperationResult)
+@router.post("/maintenance/bulk-delete-logs", response_model=MaintenanceBulkDeleteResult)
 async def bulk_delete_logs(req: BulkPathRequest):
     return _check_arm(await arm_client.bulk_delete_logs(req.paths))
 
 
-@router.post("/maintenance/bulk-delete-folders", response_model=BulkOperationResult)
+@router.post("/maintenance/bulk-delete-folders", response_model=MaintenanceBulkDeleteResult)
 async def bulk_delete_folders(req: BulkPathRequest):
     return _check_arm(await arm_client.bulk_delete_folders(req.paths))
 

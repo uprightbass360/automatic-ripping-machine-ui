@@ -81,7 +81,11 @@ async def test_summary_arm_unavailable(app_client):
 
 async def test_orphan_logs_success(app_client):
     """GET /api/maintenance/orphan-logs returns log list from ARM."""
-    payload = {"success": True, "logs": ["/var/log/arm/orphan.log"]}
+    payload = {
+        "root": "/var/log/arm",
+        "total_size_bytes": 1024,
+        "files": [{"path": "/var/log/arm/orphan.log", "relative_path": "orphan.log", "size_bytes": 1024}],
+    }
     with patch(
         "backend.routers.maintenance.arm_client.get_orphan_logs",
         new_callable=AsyncMock,
@@ -90,8 +94,9 @@ async def test_orphan_logs_success(app_client):
         resp = await app_client.get("/api/maintenance/orphan-logs")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["success"] is True
-    assert "/var/log/arm/orphan.log" in data["logs"]
+    assert data["root"] == "/var/log/arm"
+    assert data["total_size_bytes"] == 1024
+    assert data["files"][0]["relative_path"] == "orphan.log"
 
 
 async def test_orphan_logs_arm_unreachable(app_client):
@@ -122,7 +127,16 @@ async def test_orphan_logs_arm_error(app_client):
 
 async def test_orphan_folders_success(app_client):
     """GET /api/maintenance/orphan-folders returns folder list from ARM."""
-    payload = {"success": True, "folders": ["/mnt/media/orphan_dir"]}
+    payload = {
+        "roots": ["/mnt/media/raw", "/mnt/media/completed"],
+        "total_size_bytes": 4096,
+        "folders": [{
+            "path": "/mnt/media/raw/orphan_dir",
+            "name": "orphan_dir",
+            "category": "raw",
+            "size_bytes": 4096,
+        }],
+    }
     with patch(
         "backend.routers.maintenance.arm_client.get_orphan_folders",
         new_callable=AsyncMock,
@@ -131,7 +145,8 @@ async def test_orphan_folders_success(app_client):
         resp = await app_client.get("/api/maintenance/orphan-folders")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["success"] is True
+    assert data["roots"] == ["/mnt/media/raw", "/mnt/media/completed"]
+    assert data["folders"][0]["name"] == "orphan_dir"
 
 
 async def test_orphan_folders_arm_unreachable(app_client):
@@ -153,14 +168,17 @@ async def test_delete_log_success(app_client):
     with patch(
         "backend.routers.maintenance.arm_client.delete_orphan_log",
         new_callable=AsyncMock,
-        return_value={"success": True, "deleted": "/var/log/arm/orphan.log"},
+        return_value={"success": True, "path": "orphan.log", "error": None},
     ):
         resp = await app_client.post(
             "/api/maintenance/delete-log",
-            json={"path": "/var/log/arm/orphan.log"},
+            json={"path": "orphan.log"},
         )
     assert resp.status_code == 200
-    assert resp.json()["success"] is True
+    body = resp.json()
+    assert body["success"] is True
+    assert body["error"] is None
+    assert body["path"] == "orphan.log"
 
 
 async def test_delete_log_arm_unreachable(app_client):
@@ -185,14 +203,16 @@ async def test_delete_folder_success(app_client):
     with patch(
         "backend.routers.maintenance.arm_client.delete_orphan_folder",
         new_callable=AsyncMock,
-        return_value={"success": True},
+        return_value={"success": True, "path": "orphan_dir", "error": None},
     ):
         resp = await app_client.post(
             "/api/maintenance/delete-folder",
-            json={"path": "/mnt/media/orphan_dir"},
+            json={"path": "orphan_dir"},
         )
     assert resp.status_code == 200
-    assert resp.json()["success"] is True
+    body = resp.json()
+    assert body["success"] is True
+    assert body["error"] is None
 
 
 # --- POST /api/maintenance/bulk-delete-logs ---
@@ -203,14 +223,17 @@ async def test_bulk_delete_logs_success(app_client):
     with patch(
         "backend.routers.maintenance.arm_client.bulk_delete_logs",
         new_callable=AsyncMock,
-        return_value={"success": True, "deleted": 2},
+        return_value={"success": True, "removed": ["a.log", "b.log"], "errors": []},
     ):
         resp = await app_client.post(
             "/api/maintenance/bulk-delete-logs",
-            json={"paths": ["/var/log/arm/a.log", "/var/log/arm/b.log"]},
+            json={"paths": ["a.log", "b.log"]},
         )
     assert resp.status_code == 200
-    assert resp.json()["success"] is True
+    body = resp.json()
+    assert body["success"] is True
+    assert body["removed"] == ["a.log", "b.log"]
+    assert body["errors"] == []
 
 
 async def test_bulk_delete_logs_arm_unreachable(app_client):
@@ -235,13 +258,16 @@ async def test_bulk_delete_folders_success(app_client):
     with patch(
         "backend.routers.maintenance.arm_client.bulk_delete_folders",
         new_callable=AsyncMock,
-        return_value={"success": True, "deleted": 1},
+        return_value={"success": True, "removed": ["orphan_dir"], "errors": []},
     ):
         resp = await app_client.post(
             "/api/maintenance/bulk-delete-folders",
-            json={"paths": ["/mnt/media/orphan_dir"]},
+            json={"paths": ["orphan_dir"]},
         )
     assert resp.status_code == 200
+    body = resp.json()
+    assert body["success"] is True
+    assert body["removed"] == ["orphan_dir"]
 
 
 # --- POST /api/maintenance/dismiss-all-notifications ---
@@ -384,7 +410,14 @@ async def test_clear_raw_success(app_client):
     with patch(
         "backend.routers.maintenance.arm_client.clear_raw",
         new_callable=AsyncMock,
-        return_value={"success": True, "cleared": 3, "freed_bytes": 5000000, "errors": [], "path": "/home/arm/media/raw"},
+        return_value={
+            "success": True,
+            "cleared": 3,
+            "freed_bytes": 5000000,
+            "errors": [],
+            "path": "/home/arm/media/raw",
+            "error": None,
+        },
     ):
         resp = await app_client.post("/api/maintenance/clear-raw")
     assert resp.status_code == 200
@@ -393,6 +426,8 @@ async def test_clear_raw_success(app_client):
     assert data["cleared"] == 3
     assert data["freed_bytes"] == 5000000
     assert data["path"] == "/home/arm/media/raw"
+    assert data["errors"] == []
+    assert data["error"] is None
 
 
 async def test_clear_raw_arm_unreachable(app_client):
@@ -407,11 +442,22 @@ async def test_clear_raw_arm_unreachable(app_client):
 
 
 async def test_clear_raw_arm_error(app_client):
-    """POST /api/maintenance/clear-raw returns 502 when ARM returns error."""
+    """POST /api/maintenance/clear-raw returns 502 when ARM returns error.
+
+    With arm-neu PR #322, the failure path emits the full success-shape with
+    zero defaults plus `error`; the BFF still maps `success=False` to 502.
+    """
     with patch(
         "backend.routers.maintenance.arm_client.clear_raw",
         new_callable=AsyncMock,
-        return_value={"success": False, "error": "RAW_PATH not configured"},
+        return_value={
+            "success": False,
+            "cleared": 0,
+            "freed_bytes": 0,
+            "errors": [],
+            "path": "/nonexistent",
+            "error": "RAW_PATH not configured",
+        },
     ):
         resp = await app_client.post("/api/maintenance/clear-raw")
     assert resp.status_code == 502

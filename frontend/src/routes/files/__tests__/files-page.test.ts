@@ -175,6 +175,7 @@ describe('Files Page', () => {
 
 		it('displays folder list in modal', async () => {
 			vi.mocked(fetchOrphanFolders).mockResolvedValueOnce({
+				roots: ['/media/raw', '/media/completed'],
 				total_size_bytes: 5000000,
 				folders: [
 					{ path: '/media/raw/orphan1', name: 'orphan1', size_bytes: 3000000, category: 'raw' },
