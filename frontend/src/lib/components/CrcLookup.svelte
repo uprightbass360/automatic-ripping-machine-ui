@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Job } from '$lib/types/arm';
+	import type { JobSchema as Job } from '$lib/types/api.gen';
 	import { fetchCrcLookup, submitToCrcDb, updateJobTitle } from '$lib/api/jobs';
 	import type { CrcLookupResponse, CrcLookupResult } from '$lib/api/jobs';
 	import PosterImage from './PosterImage.svelte';

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException
 
-from backend.models.schemas import DriveUpdateRequest
+from backend.models.schemas import DriveEjectResult, DriveSchema, DriveUpdateRequest, OperationResult
 from backend.services import arm_client
 
 router = APIRouter(prefix="/api", tags=["drives"])
 
 
-@router.get("/drives")
+@router.get("/drives", response_model=list[DriveSchema])
 async def list_drives():
     """Return non-stale drives with their current job attached.
 
@@ -20,7 +20,7 @@ async def list_drives():
     return resp.get("drives") or []
 
 
-@router.post("/drives/rescan", responses={502: {"description": "ARM unreachable"}})
+@router.post("/drives/rescan", response_model=OperationResult, responses={502: {"description": "ARM unreachable"}})
 async def rescan_drives(force: bool = False):
     """Re-detect optical drives and update the database.
 
@@ -40,7 +40,7 @@ async def drive_diagnostic():
     return result
 
 
-@router.delete("/drives/{drive_id}", responses={404: {"description": "Drive not found"}, 409: {"description": "Drive has active job"}, 502: {"description": "ARM unreachable"}})
+@router.delete("/drives/{drive_id}", response_model=OperationResult, responses={404: {"description": "Drive not found"}, 409: {"description": "Drive has active job"}, 502: {"description": "ARM unreachable"}})
 async def delete_drive(drive_id: int):
     result = await arm_client.delete_drive(drive_id)
     if result is None:
@@ -52,7 +52,7 @@ async def delete_drive(drive_id: int):
     return result
 
 
-@router.post("/drives/{drive_id}/scan", responses={404: {"description": "Drive not found"}, 502: {"description": "ARM unreachable"}})
+@router.post("/drives/{drive_id}/scan", response_model=OperationResult, responses={404: {"description": "Drive not found"}, 502: {"description": "ARM unreachable"}})
 async def scan_drive(drive_id: int):
     result = await arm_client.scan_drive(drive_id)
     if result is None:
@@ -63,7 +63,7 @@ async def scan_drive(drive_id: int):
     return result
 
 
-@router.post("/drives/{drive_id}/eject", responses={404: {"description": "Drive not found"}, 502: {"description": "ARM unreachable"}})
+@router.post("/drives/{drive_id}/eject", response_model=DriveEjectResult, responses={404: {"description": "Drive not found"}, 502: {"description": "ARM unreachable"}})
 async def eject_drive(drive_id: int, method: str = "toggle"):
     """Eject, close, or toggle the drive tray."""
     result = await arm_client.eject_drive(drive_id, method)
@@ -75,7 +75,7 @@ async def eject_drive(drive_id: int, method: str = "toggle"):
     return result
 
 
-@router.patch("/drives/{drive_id}", responses={400: {"description": "No fields to update"}, 404: {"description": "Update failed"}, 502: {"description": "ARM unreachable"}})
+@router.patch("/drives/{drive_id}", response_model=OperationResult, responses={400: {"description": "No fields to update"}, 404: {"description": "Update failed"}, 502: {"description": "ARM unreachable"}})
 async def update_drive(drive_id: int, body: DriveUpdateRequest):
     data = body.model_dump(exclude_unset=True)
     if not data:

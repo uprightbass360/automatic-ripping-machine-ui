@@ -5,7 +5,7 @@
 	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
 	import { fetchSettings, saveArmConfig, saveTranscoderConfig, testMetadataKey, testTranscoderConnection, testTranscoderWebhook, fetchSystemInfo, fetchAbcdeConfig, saveAbcdeConfig } from '$lib/api/settings';
 	import type { ConnectionTestResult, WebhookTestResult, SystemInfoData } from '$lib/api/settings';
-	import type { SettingsData, Drive } from '$lib/types/arm';
+	import type { SettingsResponse as SettingsData, DriveSchema as Drive } from '$lib/types/api.gen';
 	import { theme, toggleTheme } from '$lib/stores/theme';
 	import { colorScheme, COLOR_SCHEMES, schemeLocksMode, allSchemes, loadThemesFromApi } from '$lib/stores/colorScheme';
 	import { uploadTheme, deleteTheme as deleteThemeApi } from '$lib/api/themes';
@@ -20,7 +20,8 @@
 	import SystemHealth from '$lib/components/settings/SystemHealth.svelte';
 	import PresetEditor from '$lib/components/PresetEditor.svelte';
 	import { fetchTranscoderScheme, fetchTranscoderPresets, createCustomPreset } from '$lib/api/settings';
-	import type { Scheme, Preset, Overrides, PresetEditorState } from '$lib/types/presets';
+	import type { Scheme, Preset, Overrides } from '$lib/types/api.gen';
+	import type { PresetEditorState } from '$lib/types/presets';
 	import { transcoderEnabled } from '$lib/stores/config';
 	import { dashboard } from '$lib/stores/dashboard';
 	import { get } from 'svelte/store';

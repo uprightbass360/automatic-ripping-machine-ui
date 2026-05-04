@@ -126,12 +126,21 @@ class TestMediaDetail:
 
 class TestMusicSearch:
     async def test_success(self, app_client):
-        result = {"results": [{"title": "Master of Puppets"}], "total": 1}
+        result = {
+            "results": [{
+                "title": "Master of Puppets",
+                "artist": "Metallica",
+                "year": "1986",
+                "release_id": "abc-123",
+            }],
+            "total": 1,
+        }
         with patch("backend.routers.jobs.arm_client.search_music_metadata",
                    new_callable=AsyncMock, return_value=result):
             resp = await app_client.get("/api/metadata/music/search?q=Metallica")
         assert resp.status_code == 200
         assert resp.json()["total"] == 1
+        assert resp.json()["results"][0]["artist"] == "Metallica"
 
     async def test_with_filters(self, app_client):
         result = {"results": [], "total": 0}

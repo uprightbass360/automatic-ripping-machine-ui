@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { scanFolder, createFolderJob } from '$lib/api/folder';
 	import { searchMetadata, fetchMediaDetail } from '$lib/api/jobs';
-	import type { FolderScanResult, SearchResult, MediaDetail, FolderCreateRequest } from '$lib/types/arm';
+	import type { FolderScanResult, SearchResultSchema as SearchResult, MediaDetailSchema as MediaDetail, FolderCreateRequest } from '$lib/types/api.gen';
 	import FolderBrowser from '$lib/components/FolderBrowser.svelte';
 
 	import PosterImage from './PosterImage.svelte';

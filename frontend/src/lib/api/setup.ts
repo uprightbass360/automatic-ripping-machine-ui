@@ -1,6 +1,5 @@
 import { apiFetch } from './client';
-import type { SetupStatus } from '$lib/types/setup';
-
+import type { SetupStatus } from '$lib/types/api.gen';
 export function fetchSetupStatus(): Promise<SetupStatus> {
 	return apiFetch<SetupStatus>('/api/setup/status');
 }

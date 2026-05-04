@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { fetchIngressRoot, fetchIngressDirectory } from '$lib/api/folder';
 	import { showImportWizard } from '$lib/stores/importWizard';
-	import type { FileEntry } from '$lib/types/files';
+	import type { FileEntry } from '$lib/types/api.gen';
 	import FileIcon from '$lib/components/FileIcon.svelte';
 
 	interface Props {

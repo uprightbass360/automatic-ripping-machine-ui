@@ -1,8 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import ActiveJobRow from '../ActiveJobRow.svelte';
-import type { Job } from '$lib/types/arm';
-
+import type { JobSchema as Job } from '$lib/types/api.gen';
 function createJob(overrides: Partial<Job> = {}): Job {
 	return {
 		job_id: 1,

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Track, TrackTitleUpdate, SearchResult, MediaDetail } from '$lib/types/arm';
+	import type { Track, SearchResultSchema as SearchResult, MediaDetailSchema as MediaDetail, TrackTitleUpdateRequest as TrackTitleUpdate } from '$lib/types/api.gen';
 	import { searchMetadata, fetchMediaDetail, updateTrackTitle, clearTrackTitle } from '$lib/api/jobs';
 	import PosterImage from './PosterImage.svelte';
 

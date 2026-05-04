@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SetupStatus } from '$lib/types/setup';
+	import type { SetupStatus } from '$lib/types/api.gen';
 	import SetupWizard from '$lib/components/setup/SetupWizard.svelte';
 
 	let { data }: { data: { status: SetupStatus | null } } = $props();

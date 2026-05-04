@@ -1,4 +1,4 @@
-import type { Notification } from '$lib/types/arm';
+import type { NotificationSchema as Notification } from '$lib/types/api.gen';
 import { apiFetch } from './client';
 
 export function fetchNotifications(): Promise<Notification[]> {

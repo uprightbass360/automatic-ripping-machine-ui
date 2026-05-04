@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, cleanup, waitFor } from '$lib/test-utils';
 import WelcomeStep from './WelcomeStep.svelte';
-import type { SetupStatus } from '$lib/types/setup';
-
+import type { SetupStatus } from '$lib/types/api.gen';
 const mockStatus: SetupStatus = {
 	db_exists: true,
 	db_initialized: true,

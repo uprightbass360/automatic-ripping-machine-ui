@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { TranscoderJob } from '$lib/types/transcoder';
+	import type { TranscoderJob } from '$lib/types/api.gen';
 	import StatusBadge from './StatusBadge.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import { elapsedTime, etaTime, statusAccentVar } from '$lib/utils/format';

@@ -1,8 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup } from '$lib/test-utils';
 import PresetEditor from './PresetEditor.svelte';
-import type { Scheme, Preset } from '$lib/types/presets';
-
+import type { Scheme, Preset } from '$lib/types/api.gen';
 const mockScheme: Scheme = {
     slug: 'software',
     name: 'Software (CPU)',

@@ -1,5 +1,4 @@
-import type { Job, JobDetail, Track } from '$lib/types/arm';
-
+import type { JobSchema as Job, JobDetailSchema as JobDetail, Track } from '$lib/types/api.gen';
 const jobDefaults: Job = {
 	job_id: 1,
 	arm_version: '2.0',

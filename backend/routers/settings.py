@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from backend.config import settings as app_settings
 from backend.dependencies import require_transcoder_enabled
-from backend.models.schemas import SettingsResponse
+from backend.models.schemas import OperationResult, Preset, PresetCreateRequest, PresetListResponse, PresetUpdateRequest, Scheme, SettingsResponse
 from backend.services import arm_client, transcoder_client
 
 router = APIRouter(prefix="/api", tags=["settings"])
@@ -121,7 +121,8 @@ async def test_metadata_key(key: str | None = None, provider: str | None = None)
         return {"success": False, "message": "ARM service unreachable", "provider": "unknown"}
 
 
-@router.get("/settings/transcoder/scheme", responses=_TRANSCODER_UNREACHABLE_RESPONSE,
+@router.get("/settings/transcoder/scheme", response_model=Scheme,
+            responses=_TRANSCODER_UNREACHABLE_RESPONSE,
             dependencies=[Depends(require_transcoder_enabled)])
 async def get_transcoder_scheme():
     result = await transcoder_client.get_scheme()
@@ -130,7 +131,8 @@ async def get_transcoder_scheme():
     return result
 
 
-@router.get("/settings/transcoder/presets", responses=_TRANSCODER_UNREACHABLE_RESPONSE,
+@router.get("/settings/transcoder/presets", response_model=PresetListResponse,
+            responses=_TRANSCODER_UNREACHABLE_RESPONSE,
             dependencies=[Depends(require_transcoder_enabled)])
 async def get_transcoder_presets():
     result = await transcoder_client.get_presets()
@@ -150,11 +152,12 @@ def _raise_from_http_status_error(exc: httpx.HTTPStatusError) -> NoReturn:
 
 
 @router.post("/settings/transcoder/presets", status_code=201,
+             response_model=Preset,
              responses={409: {"description": "Slug conflict"}, 502: {"description": "Transcoder unreachable"}},
              dependencies=[Depends(require_transcoder_enabled)])
-async def create_transcoder_preset(body: dict):
+async def create_transcoder_preset(body: PresetCreateRequest):
     try:
-        result = await transcoder_client.create_preset(body)
+        result = await transcoder_client.create_preset(body.model_dump())
     except httpx.HTTPStatusError as exc:
         _raise_from_http_status_error(exc)
     if result is None:
@@ -163,11 +166,12 @@ async def create_transcoder_preset(body: dict):
 
 
 @router.patch("/settings/transcoder/presets/{slug}",
+              response_model=Preset,
               responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}},
               dependencies=[Depends(require_transcoder_enabled)])
-async def update_transcoder_preset(slug: str, body: dict):
+async def update_transcoder_preset(slug: str, body: PresetUpdateRequest):
     try:
-        result = await transcoder_client.update_preset(slug, body)
+        result = await transcoder_client.update_preset(slug, body.model_dump(exclude_none=True))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except httpx.HTTPStatusError as exc:
@@ -178,6 +182,7 @@ async def update_transcoder_preset(slug: str, body: dict):
 
 
 @router.delete("/settings/transcoder/presets/{slug}",
+               response_model=OperationResult,
                responses={400: {"description": "Invalid slug"}, 404: {"description": "Preset not found"}, 502: {"description": "Transcoder unreachable"}},
                dependencies=[Depends(require_transcoder_enabled)])
 async def delete_transcoder_preset(slug: str):

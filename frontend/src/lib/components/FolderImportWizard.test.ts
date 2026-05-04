@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import FolderImportWizard from './FolderImportWizard.svelte';
-import type { FolderScanResult } from '$lib/types/arm';
-
+import type { FolderScanResult } from '$lib/types/api.gen';
 const mockScanFolder = vi.fn<() => Promise<FolderScanResult>>();
 const mockCreateFolderJob = vi.fn(() => Promise.resolve({ job_id: 99 }));
 

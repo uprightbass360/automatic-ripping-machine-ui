@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from arm_contracts import JobSummary
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class DriveSchema(BaseModel):
@@ -45,3 +45,13 @@ class DriveUpdateRequest(BaseModel):
     prescan_timeout: int | None = None
     prescan_retries: int | None = None
     disc_enum_timeout: int | None = None
+
+
+class DriveEjectResult(BaseModel):
+    """`POST /drives/{id}/eject` upstream response."""
+    model_config = ConfigDict(extra="ignore")
+
+    success: bool
+    drive_id: int | None = None
+    method: str | None = None
+    error: str | None = None

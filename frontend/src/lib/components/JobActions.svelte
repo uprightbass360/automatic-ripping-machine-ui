@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Job } from '$lib/types/arm';
+	import type { JobSchema as Job } from '$lib/types/api.gen';
 	import { abandonJob, deleteJob, fixJobPermissions, bulkPurgeJobs } from '$lib/api/jobs';
 	import { isJobActive } from '$lib/utils/job-type';
 

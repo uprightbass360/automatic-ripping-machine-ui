@@ -3,7 +3,7 @@
 	import { fetchDashboard } from '$lib/api/dashboard';
 	import { fetchJobs, fetchJobProgress, fetchJobStats, bulkDeleteJobs, bulkPurgeJobs } from '$lib/api/jobs';
 	import type { RipProgress, JobStats } from '$lib/api/jobs';
-	import type { DashboardData, JobListResponse } from '$lib/types/arm';
+	import type { DashboardResponse as DashboardData, JobListResponse } from '$lib/types/api.gen';
 	import DiscReviewWidget from '$lib/components/DiscReviewWidget.svelte';
 	import JobCard from '$lib/components/JobCard.svelte';
 	import ActiveJobRow from '$lib/components/ActiveJobRow.svelte';
@@ -43,8 +43,9 @@
 	let dashError = $state<Error | null>(null);
 
 	let dismissedJobIds = $state(new Set<number>());
+	let activeJobs = $derived(dash.active_jobs ?? []);
 	let scanningJobs = $derived(
-		dash.active_jobs.filter(j => {
+		activeJobs.filter(j => {
 			const s = j.status?.toLowerCase();
 			return s === 'identifying' || s === 'ready';
 		})
@@ -53,19 +54,19 @@
 	// 'manual_paused' (user-pause / disc-review state). Keep both so an
 	// in-flight job observed mid-deploy still surfaces in the review panel.
 	let waitingJobs = $derived(
-		dash.active_jobs.filter(j => {
+		activeJobs.filter(j => {
 			const s = j.status?.toLowerCase();
 			return (s === 'manual_paused' || s === 'waiting') && !dismissedJobIds.has(j.job_id);
 		})
 	);
-	let nonWaitingActiveJobs = $derived(dash.active_jobs.filter(j => {
+	let nonWaitingActiveJobs = $derived(activeJobs.filter(j => {
 		const s = j.status?.toLowerCase();
 		return s !== 'waiting' && s !== 'manual_paused' && s !== 'makemkv_throttled'
 			&& s !== 'transcoding' && s !== 'waiting_transcode'
 			&& s !== 'identifying' && s !== 'ready'
 			&& s !== 'copying' && s !== 'ejecting';
 	}));
-	let finishingJobs = $derived(dash.active_jobs.filter(j => {
+	let finishingJobs = $derived(activeJobs.filter(j => {
 		const s = j.status?.toLowerCase();
 		if (!$transcoderEnabled && s === 'waiting_transcode') return false;
 		return s === 'copying' || s === 'ejecting' || s === 'waiting_transcode';
@@ -106,7 +107,7 @@
 		// 'video_ripping' (DVD/Blu-ray) and 'audio_ripping' (music). Match all
 		// three so progress polling stays accurate during the deploy and
 		// continues working post-deploy.
-		const rippingJobs = dash.active_jobs.filter(j => {
+		const rippingJobs = activeJobs.filter(j => {
 			const s = j.status?.toLowerCase();
 			return s === 'video_ripping' || s === 'audio_ripping' || s === 'ripping';
 		});

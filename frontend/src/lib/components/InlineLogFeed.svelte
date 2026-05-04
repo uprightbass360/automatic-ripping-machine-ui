@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { LogEntry, StructuredLogContent } from '$lib/types/arm';
+	import type { LogEntrySchema as LogEntry, StructuredLogResponse as StructuredLogContent } from '$lib/types/api.gen';
 	import { fetchStructuredLogContent } from '$lib/api/logs';
 
 	interface Props {

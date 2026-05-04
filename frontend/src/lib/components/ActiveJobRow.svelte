@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Job } from '$lib/types/arm';
+	import type { JobSchema as Job } from '$lib/types/api.gen';
 	import StatusBadge from './StatusBadge.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import { elapsedTime, etaTime, statusAccentVar } from '$lib/utils/format';
@@ -13,21 +13,21 @@
 
 	interface Props {
 		job?: Job;
-		driveNames?: Record<string, string>;
+		driveNames?: Record<string, string> | null;
 		progress?: number | null;
 		progressStage?: string | null;
 		tracksRipped?: number | null;
 		tracksTotal?: number | null;
 	}
 
-	let { job, driveNames = {}, progress = null, progressStage = null, tracksRipped = null, tracksTotal = null }: Props = $props();
+	let { job, driveNames, progress = null, progressStage = null, tracksRipped = null, tracksTotal = null }: Props = $props();
 
 	// Use progress-polled counts when available (real-time), fall back to DB counts
 	let displayRipped = $derived(tracksRipped ?? job?.track_counts?.ripped ?? 0);
 	let displayTotal = $derived(tracksTotal ?? job?.track_counts?.total ?? 0);
 	let expanded = $state(false);
 
-	let driveName = $derived(job?.devpath ? driveNames[job.devpath] : null);
+	let driveName = $derived(job?.devpath ? (driveNames?.[job.devpath] ?? null) : null);
 	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null));
 	let active = $derived(isJobActive(job?.status ?? null));
 	let hasErrors = $derived(!!job?.errors && job.errors.trim().length > 0);

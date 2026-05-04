@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import TrackTitleSearch from './TrackTitleSearch.svelte';
-import type { Track } from '$lib/types/arm';
-
+import type { Track } from '$lib/types/api.gen';
 vi.mock('$lib/api/jobs', () => ({
 	searchMetadata: vi.fn(),
 	fetchMediaDetail: vi.fn(),

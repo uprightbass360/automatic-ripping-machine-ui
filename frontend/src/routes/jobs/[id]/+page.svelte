@@ -8,7 +8,7 @@
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
 	import PosterImage from '$lib/components/PosterImage.svelte';
 	import { fetchStructuredTranscoderLogContent, fetchTranscoderLogForArmJob } from '$lib/api/logs';
-	import type { JobDetail, MusicDetail } from '$lib/types/arm';
+	import type { JobDetailSchema as JobDetail, MusicDetailSchema as MusicDetail } from '$lib/types/api.gen';
 	import JobActions from '$lib/components/JobActions.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
@@ -215,7 +215,8 @@
 
 	function formatTvEpisodeName(track: { episode_number?: string | null; episode_name?: string | null }): string {
 		if (!job || !track.episode_number) return '--';
-		const pattern = job.config?.TV_TITLE_PATTERN ?? '{title} S{season}E{episode}';
+		const cfgStr = (job.config ?? {}) as unknown as Record<string, string | null | undefined>;
+		const pattern = cfgStr.TV_TITLE_PATTERN ?? '{title} S{season}E{episode}';
 		const season = String(job.season || job.season_auto || '0').padStart(2, '0');
 		const episode = track.episode_number.padStart(2, '0');
 		const title = job.title || job.label || '';

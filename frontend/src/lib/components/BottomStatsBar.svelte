@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { HardwareInfo, SystemStats } from '$lib/types/arm';
+	import type { HardwareInfoSchema as HardwareInfo, SystemStatsSchema as SystemStats } from '$lib/types/api.gen';
 	import { transcoderEnabled } from '$lib/stores/config';
 
 	interface Props {
@@ -195,9 +195,9 @@
 		<div class="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
 			<span class="shrink-0">CPU</span>
 			<div class="h-1 w-16 rounded-full bg-primary/15 dark:bg-primary/15">
-				<div class="h-1 rounded-full transition-all duration-500 {cpuColor(activeStats.cpu_percent)}" style="width: {Math.min(100, activeStats.cpu_percent)}%"></div>
+				<div class="h-1 rounded-full transition-all duration-500 {cpuColor(activeStats.cpu_percent ?? 0)}" style="width: {Math.min(100, activeStats.cpu_percent ?? 0)}%"></div>
 			</div>
-			<span class="shrink-0">{activeStats.cpu_percent}%</span>
+			<span class="shrink-0">{activeStats.cpu_percent ?? 0}%</span>
 		</div>
 
 		<div class="h-5 w-px shrink-0 bg-primary/15 dark:bg-primary/20"></div>

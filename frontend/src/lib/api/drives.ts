@@ -1,4 +1,4 @@
-import type { Drive } from '$lib/types/arm';
+import type { DriveSchema as Drive } from '$lib/types/api.gen';
 import { apiFetch } from './client';
 
 export function fetchDrives(): Promise<Drive[]> {

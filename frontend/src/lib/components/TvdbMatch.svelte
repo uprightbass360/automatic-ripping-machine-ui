@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { JobDetail } from '$lib/types/arm';
+	import type { JobDetailSchema as JobDetail } from '$lib/types/api.gen';
 	import {
 		tvdbMatch,
 		fetchTvdbEpisodes,

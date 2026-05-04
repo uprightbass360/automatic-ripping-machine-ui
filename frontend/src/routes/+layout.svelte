@@ -18,7 +18,7 @@
 	let mobileDrawerView = $state<'menu' | 'stats'>('menu');
 	let togglingPause = $state(false);
 	let quickMenuOpen = $state(false);
-	const rippingCount = $derived($dashboard.active_jobs.filter(j => {
+	const rippingCount = $derived(($dashboard.active_jobs ?? []).filter(j => {
 		const s = j.status?.toLowerCase();
 		return s !== 'transcoding' && s !== 'waiting_transcode';
 	}).length);
@@ -113,7 +113,7 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
 						</svg>
 						{item.label}
-						{#if item.href === '/notifications' && $dashboard.notification_count > 0}
+						{#if item.href === '/notifications' && ($dashboard.notification_count ?? 0) > 0}
 							<span class="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">{$dashboard.notification_count}</span>
 						{/if}
 					</a>
@@ -181,7 +181,7 @@
 					{#if $dashboard.transcoder_online && (Number($dashboard.transcoder_stats?.pending) || 0) > 0}
 						<span class="font-semibold text-yellow-600 dark:text-yellow-400">{$dashboard.transcoder_stats?.pending} queued</span>
 					{/if}
-					{#if $dashboard.notification_count > 0}
+					{#if ($dashboard.notification_count ?? 0) > 0}
 						<a href="/notifications" class="font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300">{$dashboard.notification_count} notification{$dashboard.notification_count !== 1 ? 's' : ''}</a>
 					{/if}
 				</div>
@@ -332,7 +332,7 @@
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
 									</svg>
 									{item.label}
-									{#if item.href === '/notifications' && $dashboard.notification_count > 0}
+									{#if item.href === '/notifications' && ($dashboard.notification_count ?? 0) > 0}
 										<span class="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">{$dashboard.notification_count}</span>
 								{/if}
 								</a>

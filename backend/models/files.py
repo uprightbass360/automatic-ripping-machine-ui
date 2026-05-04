@@ -45,13 +45,13 @@ class OperationResult(BaseModel):
 
     Designed permissively because upstream arm-neu actions return a
     family of envelopes (``{success}``, ``{success, paused}``,
-    ``{success, count}``, ``{success, deleted, ...}``, etc). Surfacing
-    common keys here lets a single model cover most of them; unknown
-    keys are dropped via ``extra='ignore'`` so the response_model
-    annotation can advertise the contract without forcing the BFF to
-    coerce upstream output.
+    ``{success, count}``, ``{success, deleted, ...}``, etc). Common
+    keys are surfaced for type help; ``extra='allow'`` keeps unknown
+    keys (e.g. ``updated``, ``overrides``) flowing through so callers
+    can read upstream-specific fields. Passthrough hardening into
+    dedicated models is tracked separately.
     """
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="allow")
 
     success: bool = True
     path: str | None = None

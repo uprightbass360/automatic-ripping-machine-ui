@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Job, SearchResult, MediaDetail, TitleUpdate } from '$lib/types/arm';
+	import type { JobSchema as Job, SearchResultSchema as SearchResult, MediaDetailSchema as MediaDetail, TitleUpdateRequest as TitleUpdate } from '$lib/types/api.gen';
 	import { searchMetadata, fetchMediaDetail, updateJobTitle } from '$lib/api/jobs';
 	import PosterImage from './PosterImage.svelte';
 

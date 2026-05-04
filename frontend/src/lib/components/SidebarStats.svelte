@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { HardwareInfo, SystemStats } from '$lib/types/arm';
+	import type { HardwareInfoSchema as HardwareInfo, SystemStatsSchema as SystemStats } from '$lib/types/api.gen';
 	import ProgressBar from './ProgressBar.svelte';
 	import { transcoderEnabled } from '$lib/stores/config';
 
@@ -196,15 +196,15 @@
 					<div class="mb-0.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
 						<span>CPU</span>
 						<span class="whitespace-nowrap">
-							{activeStats.cpu_percent}%
-							{#if activeStats.cpu_temp > 0}
-								<span class="text-orange-500">&nbsp;{activeStats.cpu_temp.toFixed(0)}&deg;C</span>
+							{activeStats.cpu_percent ?? 0}%
+							{#if (activeStats.cpu_temp ?? 0) > 0}
+								<span class="text-orange-500">&nbsp;{(activeStats.cpu_temp ?? 0).toFixed(0)}&deg;C</span>
 							{/if}
 						</span>
 					</div>
 					<ProgressBar
-						value={activeStats.cpu_percent}
-						color={activeStats.cpu_percent >= 90 ? 'bg-red-500' : activeStats.cpu_percent >= 70 ? 'bg-yellow-500' : 'bg-cyan-500'}
+						value={activeStats.cpu_percent ?? 0}
+						color={(activeStats.cpu_percent ?? 0) >= 90 ? 'bg-red-500' : (activeStats.cpu_percent ?? 0) >= 70 ? 'bg-yellow-500' : 'bg-cyan-500'}
 						showLabel={false}
 					/>
 				</div>
