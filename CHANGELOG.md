@@ -1,5 +1,18 @@
 # Changelog
 
+## [17.5.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.4.0...v17.5.0) (2026-05-04)
+
+
+### Features
+
+* **ui:** job-detail lifecycle as title-above-bar blocks below header ([5de7fbc](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/5de7fbce81f41bbdc47b3eb7ae95cdae48ec8285))
+* **ui:** visual job lifecycle widget on dashboard cards + detail page ([7b2c7f2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/7b2c7f2bf0e81d0c27acd66b17b797f520822415))
+
+
+### Bug Fixes
+
+* **settings:** drop non-string comments entries before model validation ([006dbdf](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/006dbdfe224af1c1d576f915ae7e118584a1d555))
+
 ## [17.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.3.0...v17.4.0) (2026-05-04)
 
 
