@@ -90,26 +90,6 @@ export type BulkJobRequest = {
 };
 
 /**
- * BulkOperationResult
- *
- * Bulk delete result. Upstream returns `deleted: <int count>`.
- */
-export type BulkOperationResult = {
-    /**
-     * Success
-     */
-    success?: boolean;
-    /**
-     * Deleted
-     */
-    deleted?: number | null;
-    /**
-     * Errors
-     */
-    errors?: Array<string> | null;
-};
-
-/**
  * BulkPathRequest
  */
 export type BulkPathRequest = {
@@ -123,48 +103,58 @@ export type BulkPathRequest = {
  * CleanupTranscoderResult
  *
  * Cleanup-transcoder counts deleted jobs.
+ *
+ * Handler always emits all three fields, so they are required in the
+ * typed shape (no `= ...` defaults that would make codegen mark them
+ * optional).
  */
 export type CleanupTranscoderResult = {
     /**
      * Success
      */
-    success?: boolean;
+    success: boolean;
     /**
      * Deleted
      */
-    deleted?: number;
+    deleted: number;
     /**
      * Errors
      */
-    errors?: Array<string>;
+    errors: Array<string>;
 };
 
 /**
  * ClearRawResult
  *
  * Clear-raw cleared count, bytes freed, and any errors.
+ *
+ * Wire shape is invariant across success/failure (arm-neu PR #322).
  */
 export type ClearRawResult = {
     /**
      * Success
      */
-    success?: boolean;
+    success: boolean;
     /**
      * Cleared
      */
-    cleared?: number;
+    cleared: number;
     /**
      * Freed Bytes
      */
-    freed_bytes?: number;
+    freed_bytes: number;
     /**
      * Errors
      */
-    errors?: Array<string>;
+    errors: Array<string>;
     /**
      * Path
      */
-    path?: string | null;
+    path: string;
+    /**
+     * Error
+     */
+    error: string | null;
 };
 
 /**
@@ -762,10 +752,10 @@ export type HardwareInfoSchema = {
 /**
  * ImageCacheStats
  *
- * Image cache snapshot. image_cache.stats() returns ``count`` and
- * ``size_bytes``; image_cache.clear() returns ``cleared`` (the count
- * of dropped entries). Both keys are surfaced so a single typed model
- * serves both endpoints.
+ * Image cache snapshot. ``stats()`` returns count, size_bytes, size_mb,
+ * oldest, path. ``clear()`` returns success, cleared, freed_bytes. The
+ * superset is modeled with optional fields so a single shape serves both
+ * endpoints.
  */
 export type ImageCacheStats = {
     /**
@@ -777,9 +767,29 @@ export type ImageCacheStats = {
      */
     size_bytes?: number | null;
     /**
+     * Size Mb
+     */
+    size_mb?: number | null;
+    /**
+     * Oldest
+     */
+    oldest?: number | null;
+    /**
+     * Path
+     */
+    path?: string | null;
+    /**
+     * Success
+     */
+    success?: boolean | null;
+    /**
      * Cleared
      */
     cleared?: number | null;
+    /**
+     * Freed Bytes
+     */
+    freed_bytes?: number | null;
 };
 
 /**
@@ -1615,6 +1625,54 @@ export type LogFileSchema = {
 };
 
 /**
+ * MaintenanceBulkDeleteResult
+ *
+ * Bulk delete result (bulk-delete-logs / bulk-delete-folders).
+ *
+ * `success` is True only when no entries failed; partial-failure surfaces
+ * as `success=False` with the failed paths in `errors`. Maintenance
+ * prefix mirrors MaintenanceDeleteResult for grep-friendly cohabitation.
+ */
+export type MaintenanceBulkDeleteResult = {
+    /**
+     * Success
+     */
+    success: boolean;
+    /**
+     * Removed
+     */
+    removed: Array<string>;
+    /**
+     * Errors
+     */
+    errors: Array<string>;
+};
+
+/**
+ * MaintenanceDeleteResult
+ *
+ * Single-target delete result (delete-log / delete-folder).
+ *
+ * Wire shape is invariant across success/failure: `error` is always
+ * present, `None` on success, `str` on failure. Named with a
+ * Maintenance prefix to disambiguate from transcoder.DeleteResult.
+ */
+export type MaintenanceDeleteResult = {
+    /**
+     * Success
+     */
+    success: boolean;
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Error
+     */
+    error: string | null;
+};
+
+/**
  * MaintenanceSummary
  */
 export type MaintenanceSummary = {
@@ -1957,11 +2015,15 @@ export type NotificationSchema = {
  *
  * Designed permissively because upstream arm-neu actions return a
  * family of envelopes (``{success}``, ``{success, paused}``,
- * ``{success, count}``, ``{success, deleted, ...}``, etc). Common
- * keys are surfaced for type help; ``extra='allow'`` keeps unknown
- * keys (e.g. ``updated``, ``overrides``) flowing through so callers
- * can read upstream-specific fields. Passthrough hardening into
- * dedicated models is tracked separately.
+ * ``{success, count}``, etc). Common keys are surfaced for type help;
+ * ``extra='allow'`` keeps unknown keys (e.g. ``updated``, ``overrides``)
+ * flowing through so callers can read upstream-specific fields.
+ * Passthrough hardening into dedicated models is tracked separately.
+ *
+ * Single-target delete (delete-log / delete-folder) and bulk delete
+ * (bulk-delete-logs / bulk-delete-folders) now have their own typed
+ * shapes (DeleteResult / BulkDeleteResult) - this model no longer
+ * needs to fit either of those.
  */
 export type OperationResult = {
     /**
@@ -1988,53 +2050,90 @@ export type OperationResult = {
      * Cleared
      */
     cleared?: number | null;
-    /**
-     * Deleted
-     */
-    deleted?: string | number | null;
     [key: string]: unknown;
 };
 
 /**
+ * OrphanFolderEntry
+ */
+export type OrphanFolderEntry = {
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Size Bytes
+     */
+    size_bytes: number;
+};
+
+/**
  * OrphanFolderList
+ *
+ * Orphan folders from arm-neu /api/v1/maintenance/orphan-folders.
+ *
+ * `roots` carries both scanned roots (RAW + COMPLETED) since orphan-folders
+ * spans two trees, mirroring the single `root` on orphan-logs.
  */
 export type OrphanFolderList = {
     /**
-     * Success
+     * Roots
      */
-    success?: boolean;
+    roots: Array<string>;
     /**
-     * Count
+     * Total Size Bytes
      */
-    count?: number | null;
+    total_size_bytes: number;
     /**
      * Folders
      */
-    folders?: Array<string> | null;
+    folders: Array<OrphanFolderEntry>;
+};
+
+/**
+ * OrphanLogEntry
+ */
+export type OrphanLogEntry = {
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Relative Path
+     */
+    relative_path: string;
+    /**
+     * Size Bytes
+     */
+    size_bytes: number;
 };
 
 /**
  * OrphanLogList
  *
- * Orphan logs payload from arm-neu.
- *
- * Real upstream shape is a generic `{success, count, items?}` envelope
- * rather than a typed list - typed permissively here so the BFF can
- * pass it through, and the frontend reads `count` for the badge.
+ * Orphan logs from arm-neu /api/v1/maintenance/orphan-logs.
  */
 export type OrphanLogList = {
     /**
-     * Success
+     * Root
      */
-    success?: boolean;
+    root: string;
     /**
-     * Count
+     * Total Size Bytes
      */
-    count?: number | null;
+    total_size_bytes: number;
     /**
-     * Logs
+     * Files
      */
-    logs?: Array<string> | null;
+    files: Array<OrphanLogEntry>;
 };
 
 /**
@@ -6395,7 +6494,7 @@ export type DeleteLogApiMaintenanceDeleteLogPostResponses = {
     /**
      * Successful Response
      */
-    200: OperationResult;
+    200: MaintenanceDeleteResult;
 };
 
 export type DeleteLogApiMaintenanceDeleteLogPostResponse = DeleteLogApiMaintenanceDeleteLogPostResponses[keyof DeleteLogApiMaintenanceDeleteLogPostResponses];
@@ -6420,7 +6519,7 @@ export type DeleteFolderApiMaintenanceDeleteFolderPostResponses = {
     /**
      * Successful Response
      */
-    200: OperationResult;
+    200: MaintenanceDeleteResult;
 };
 
 export type DeleteFolderApiMaintenanceDeleteFolderPostResponse = DeleteFolderApiMaintenanceDeleteFolderPostResponses[keyof DeleteFolderApiMaintenanceDeleteFolderPostResponses];
@@ -6445,7 +6544,7 @@ export type BulkDeleteLogsApiMaintenanceBulkDeleteLogsPostResponses = {
     /**
      * Successful Response
      */
-    200: BulkOperationResult;
+    200: MaintenanceBulkDeleteResult;
 };
 
 export type BulkDeleteLogsApiMaintenanceBulkDeleteLogsPostResponse = BulkDeleteLogsApiMaintenanceBulkDeleteLogsPostResponses[keyof BulkDeleteLogsApiMaintenanceBulkDeleteLogsPostResponses];
@@ -6470,7 +6569,7 @@ export type BulkDeleteFoldersApiMaintenanceBulkDeleteFoldersPostResponses = {
     /**
      * Successful Response
      */
-    200: BulkOperationResult;
+    200: MaintenanceBulkDeleteResult;
 };
 
 export type BulkDeleteFoldersApiMaintenanceBulkDeleteFoldersPostResponse = BulkDeleteFoldersApiMaintenanceBulkDeleteFoldersPostResponses[keyof BulkDeleteFoldersApiMaintenanceBulkDeleteFoldersPostResponses];

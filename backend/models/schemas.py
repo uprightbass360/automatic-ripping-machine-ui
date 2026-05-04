@@ -47,11 +47,15 @@ from backend.models.logs import (
     StructuredLogResponse,
 )
 from backend.models.maintenance import (
-    BulkOperationResult,
     CleanupTranscoderResult,
+    ClearRawResult,
     ImageCacheStats,
+    MaintenanceBulkDeleteResult,
+    MaintenanceDeleteResult,
     MaintenanceSummary,
+    OrphanFolderEntry,
     OrphanFolderList,
+    OrphanLogEntry,
     OrphanLogList,
 )
 from backend.models.metadata import (
@@ -108,8 +112,10 @@ from backend.models.transcoder import (
 __all__ = [
     "TRANSCODE_OVERRIDES_ALLOWLIST",
     "AdvancedField",
-    "BulkOperationResult",
     "CleanupTranscoderResult",
+    "ClearRawResult",
+    "MaintenanceBulkDeleteResult",
+    "MaintenanceDeleteResult",
     "DashboardResponse",
     "DirectoryListing",
     "DriveEjectResult",
@@ -147,7 +153,9 @@ __all__ = [
     "NamingPreviewResponse",
     "NotificationSchema",
     "OperationResult",
+    "OrphanFolderEntry",
     "OrphanFolderList",
+    "OrphanLogEntry",
     "OrphanLogList",
     "Overrides",
     "PreflightFixResult",

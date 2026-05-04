@@ -282,7 +282,9 @@
 		cacheConfirmOpen = false;
 		try {
 			const result = await clearImageCache();
-			cacheFeedback = { type: 'success', message: `Cleared ${result.cleared} cached image${result.cleared !== 1 ? 's' : ''} (${(result.freed_bytes / 1048576).toFixed(1)} MB)` };
+			const cleared = result.cleared ?? 0;
+			const freedMb = ((result.freed_bytes ?? 0) / 1048576).toFixed(1);
+			cacheFeedback = { type: 'success', message: `Cleared ${cleared} cached image${cleared !== 1 ? 's' : ''} (${freedMb} MB)` };
 			cacheStats = await fetchImageCacheStats();
 		} catch (e) {
 			cacheFeedback = { type: 'error', message: e instanceof Error ? e.message : 'Failed to clear cache' };
