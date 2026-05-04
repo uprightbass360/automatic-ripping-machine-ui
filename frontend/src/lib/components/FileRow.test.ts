@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup } from '$lib/test-utils';
 import FileRow from './FileRow.svelte';
-import type { FileEntry } from '$lib/types/files';
-
+import type { FileEntry } from '$lib/types/api.gen';
 function createEntry(overrides: Partial<FileEntry> = {}): FileEntry {
 	return {
 		name: 'movie.mkv',

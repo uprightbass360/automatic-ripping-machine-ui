@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderComponent, screen, waitFor, cleanup } from '$lib/test-utils';
 import { fireEvent } from '@testing-library/svelte';
 import TranscodeOverrides from './TranscodeOverrides.svelte';
-import type { Job } from '$lib/types/arm';
-
+import type { JobSchema as Job } from '$lib/types/api.gen';
 vi.mock('$lib/api/settings', () => ({
     fetchTranscoderScheme: vi.fn().mockResolvedValue({
         slug: 'software', name: 'Software (CPU)',

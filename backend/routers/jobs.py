@@ -11,11 +11,15 @@ from backend.models.schemas import (
     JobDetailSchema,
     JobListResponse,
     JobSchema,
+    JobTranscodeOverridesUpdate,
     MediaDetailSchema,
     MusicDetailSchema,
+    MusicSearchResponse,
     MusicSearchResultSchema,
+    OperationResult,
     SearchResultSchema,
     TrackSchema,
+    TrackTitleUpdateRequest,
 )
 import httpx
 
@@ -317,7 +321,7 @@ async def get_media_detail(imdb_id: str):
     return result
 
 
-@router.get("/metadata/music/search", responses=_502_ARM)
+@router.get("/metadata/music/search", response_model=MusicSearchResponse, responses=_502_ARM)
 async def search_music_metadata(
     q: str = Query(..., min_length=1),
     artist: str | None = None,
@@ -371,11 +375,15 @@ async def toggle_multi_title(job_id: int, request: Request):
     return result
 
 
-@router.put("/jobs/{job_id}/tracks/{track_id}/title", responses=_404_502_ARM)
-async def update_track_title(job_id: int, track_id: int, request: Request):
+@router.put(
+    "/jobs/{job_id}/tracks/{track_id}/title",
+    response_model=OperationResult,
+    responses=_404_502_ARM,
+)
+async def update_track_title(job_id: int, track_id: int, body: TrackTitleUpdateRequest):
     """Set per-track title metadata for a multi-title disc."""
-    body = await request.json()
-    result = await arm_client.update_track_title(job_id, track_id, body)
+    payload = body.model_dump(exclude_none=True)
+    result = await arm_client.update_track_title(job_id, track_id, payload)
     if result is None:
         raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
     if not result.get("success"):
@@ -384,7 +392,11 @@ async def update_track_title(job_id: int, track_id: int, request: Request):
     return result
 
 
-@router.delete("/jobs/{job_id}/tracks/{track_id}/title", responses=_404_502_ARM)
+@router.delete(
+    "/jobs/{job_id}/tracks/{track_id}/title",
+    response_model=OperationResult,
+    responses=_404_502_ARM,
+)
 async def clear_track_title(job_id: int, track_id: int):
     """Clear per-track title metadata (revert to job-level inheritance)."""
     result = await arm_client.clear_track_title(job_id, track_id)
@@ -469,14 +481,15 @@ async def get_naming_variables():
     return result
 
 
-@router.patch("/jobs/{job_id}/transcode-config", responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}, 502: {}, 503: {}},
-              dependencies=[Depends(require_transcoder_enabled)])
-async def update_transcode_config(job_id: int, request: Request):
+@router.patch(
+    "/jobs/{job_id}/transcode-config",
+    response_model=OperationResult,
+    responses={400: {"description": "Invalid request"}, 404: {"description": _JOB_NOT_FOUND}, 502: {}, 503: {}},
+    dependencies=[Depends(require_transcoder_enabled)],
+)
+async def update_transcode_config(job_id: int, body: JobTranscodeOverridesUpdate):
     """Set per-job transcode override settings (proxied to ARM)."""
-    body = await request.json()
-    if not isinstance(body, dict):
-        raise HTTPException(status_code=400, detail="Request body must be a JSON object")
-    result = await arm_client.update_transcode_overrides(job_id, body)
+    result = await arm_client.update_transcode_overrides(job_id, body.model_dump(exclude_none=True))
     if result is None:
         raise HTTPException(status_code=503, detail="ARM web UI is unreachable")
     if isinstance(result, dict) and result.get("success") is False:

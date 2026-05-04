@@ -84,10 +84,13 @@ class JobSchema(_JobContract):
 class JobConfigSnapshot(BaseModel):
     """Per-job config snapshot returned in JobDetailSchema.config.
 
-    Mirrors the keys of JobConfigUpdateRequest. extra='ignore' so old
-    config rows with extra keys round-trip without error.
+    The BFF surfaces a few high-traffic keys explicitly for type help,
+    but arm-neu's per-job arm.yaml has ~90 keys; extra='allow' keeps
+    the rest flowing through (e.g. TV_TITLE_PATTERN, MOVIE_TITLE_PATTERN,
+    naming variables) so the frontend can read them without a schema
+    update each time arm-neu adds a knob.
     """
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="allow")
 
     RIPMETHOD: str | None = None
     DISCTYPE: str | None = None
@@ -99,8 +102,23 @@ class JobConfigSnapshot(BaseModel):
 
 
 class JobDetailSchema(JobSchema):
-    tracks: list[TrackSchema] = []
-    config: JobConfigSnapshot | None = None
+    tracks: list[TrackSchema]
+    config: JobConfigSnapshot | None
+
+
+class JobTranscodeOverridesUpdate(BaseModel):
+    """Body for PATCH /jobs/{id}/transcode-config.
+
+    Mirrors arm_contracts.TranscodeJobConfig allowlist; arm-neu rejects
+    unknown keys server-side, so we accept extras here and let upstream
+    decide.
+    """
+    model_config = ConfigDict(extra="allow")
+
+    preset_slug: str | None = None
+    overrides: dict[str, Any] | None = None
+    delete_source: bool | str | None = None
+    output_extension: str | None = None
 
 
 class JobListResponse(BaseModel):

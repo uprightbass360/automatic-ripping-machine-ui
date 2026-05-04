@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Drive } from '$lib/types/arm';
+	import type { DriveSchema as Drive } from '$lib/types/api.gen';
 	import { onMount } from 'svelte';
 	import DiscTypeIcon from '$lib/components/DiscTypeIcon.svelte';
 

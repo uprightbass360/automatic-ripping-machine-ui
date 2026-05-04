@@ -5,7 +5,7 @@
 	import { fetchTranscoderStats, fetchTranscoderJobs, fetchTranscoderWorkers, retryTranscoderJob, deleteTranscoderJob, retranscodeTranscoderJob } from '$lib/api/transcoder';
 	import { fetchStructuredTranscoderLogContent } from '$lib/api/logs';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
-	import type { TranscoderStats, TranscoderJobListResponse, WorkersResponse } from '$lib/types/transcoder';
+	import type { TranscoderStatsResponse as TranscoderStats, TranscoderJobListResponse, WorkersResponse } from '$lib/types/api.gen';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import DiscTypeIcon from '$lib/components/DiscTypeIcon.svelte';
@@ -108,7 +108,7 @@
 	// Auto-refresh jobs when any are processing or pending
 	$effect(() => {
 		const s = $stats.stats;
-		if (s && (s.processing > 0 || s.pending > 0)) {
+		if (s && ((s.processing ?? 0) > 0 || (s.pending ?? 0) > 0)) {
 			startJobsPolling();
 		} else {
 			stopJobsPolling();
@@ -175,9 +175,9 @@
 				</div>
 				<span class="text-xs text-gray-400 dark:text-gray-500">Queue: {s.pending} pending</span>
 			</div>
-			{#if w.workers.length > 0}
-				<div class="grid gap-2 {w.max_concurrent > 1 ? 'sm:grid-cols-2 lg:grid-cols-3' : ''}">
-					{#each w.workers as worker}
+			{#if (w.workers ?? []).length > 0}
+				<div class="grid gap-2 {(w.max_concurrent ?? 0) > 1 ? 'sm:grid-cols-2 lg:grid-cols-3' : ''}">
+					{#each (w.workers ?? []) as worker}
 						<div class="flex items-center gap-3 rounded-md border px-3 py-2
 							{worker.status === 'processing'
 								? 'border-indigo-200 bg-indigo-50/50 dark:border-indigo-800 dark:bg-indigo-900/20'
@@ -315,7 +315,7 @@
 			data={jobs}
 			loading={loadingJobs}
 			error={jobsError}
-			isEmpty={(d) => d.jobs.length === 0}
+			isEmpty={(d) => (d.jobs ?? []).length === 0}
 			transitionKey="transcoder-jobs"
 		>
 			{#snippet loadingSlot()}
@@ -329,10 +329,10 @@
 				<p class="py-8 text-center text-gray-400">No transcode jobs found.</p>
 			{/snippet}
 			{#snippet ready(jobsData)}
-				{@const jobList = jobsData.jobs}
+				{@const jobList = jobsData.jobs ?? []}
 			<div class="space-y-3">
 				{#each jobList as job (job.id)}
-					{@const typeConfig = getVideoTypeConfig(job.video_type)}
+					{@const typeConfig = getVideoTypeConfig(job.video_type ?? null)}
 					<div in:fade|global={fadeIn} out:fade|global={fadeOut} class="rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 						<div class="flex gap-4">
 							<!-- Poster -->

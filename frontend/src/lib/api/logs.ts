@@ -1,4 +1,4 @@
-import type { LogContent, LogFile, StructuredLogContent } from '$lib/types/arm';
+import type { LogContentResponse as LogContent, LogFileSchema as LogFile, StructuredLogResponse as StructuredLogContent } from '$lib/types/api.gen';
 import { apiFetch } from './client';
 
 export function fetchLogs(): Promise<LogFile[]> {

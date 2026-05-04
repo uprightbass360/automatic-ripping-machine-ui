@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fetchNotifications, dismissNotification } from '$lib/api/notifications';
 	import { purgeNotifications } from '$lib/api/maintenance';
-	import type { Notification } from '$lib/types/arm';
+	import type { NotificationSchema as Notification } from '$lib/types/api.gen';
 	import { formatDateTime, timeAgo } from '$lib/utils/format';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import LoadState from '$lib/components/LoadState.svelte';

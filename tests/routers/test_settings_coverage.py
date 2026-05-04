@@ -252,7 +252,7 @@ async def test_get_transcoder_scheme_unreachable(app_client):
 
 
 async def test_get_transcoder_presets_success(app_client):
-    data = {"presets": [{"slug": "hq-1080p", "name": "HQ 1080p"}]}
+    data = {"presets": [{"slug": "hq-1080p", "name": "HQ 1080p", "scheme": "matroska"}]}
     with patch(
         "backend.routers.settings.transcoder_client.get_presets",
         new_callable=AsyncMock,
@@ -261,6 +261,7 @@ async def test_get_transcoder_presets_success(app_client):
         resp = await app_client.get("/api/settings/transcoder/presets")
     assert resp.status_code == 200
     assert resp.json()["presets"][0]["slug"] == "hq-1080p"
+    assert resp.json()["presets"][0]["scheme"] == "matroska"
 
 
 async def test_get_transcoder_presets_unreachable(app_client):
@@ -297,14 +298,20 @@ async def test_create_preset_proxy_success(app_client):
     with patch(
         "backend.routers.settings.transcoder_client.create_preset",
         new_callable=AsyncMock,
-        return_value={"slug": "x", "name": "X"},
+        return_value={"slug": "x", "name": "X", "scheme": "matroska"},
     ):
         resp = await app_client.post(
             "/api/settings/transcoder/presets",
-            json={"name": "X", "parent_slug": "y", "overrides": {}},
+            json={
+                "name": "X",
+                "parent_slug": "y",
+                "overrides": {"shared": {}, "tiers": {}},
+            },
         )
     assert resp.status_code == 201
-    assert resp.json() == {"slug": "x", "name": "X"}
+    body = resp.json()
+    assert body["slug"] == "x"
+    assert body["scheme"] == "matroska"
 
 
 async def test_create_preset_proxy_offline(app_client):
@@ -343,13 +350,14 @@ async def test_update_preset_proxy_success(app_client):
     with patch(
         "backend.routers.settings.transcoder_client.update_preset",
         new_callable=AsyncMock,
-        return_value={"slug": "x", "name": "Y"},
+        return_value={"slug": "x", "name": "Y", "scheme": "matroska"},
     ):
         resp = await app_client.patch(
             "/api/settings/transcoder/presets/x", json={"name": "Y"}
         )
     assert resp.status_code == 200
     assert resp.json()["name"] == "Y"
+    assert resp.json()["scheme"] == "matroska"
 
 
 async def test_update_preset_proxy_offline(app_client):

@@ -55,8 +55,8 @@ class Preset(BaseModel):
 class Overrides(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    shared: dict[str, Any] = {}
-    tiers: dict[str, dict[str, Any]] = {}
+    shared: dict[str, Any]
+    tiers: dict[str, dict[str, Any]]
 
 
 class PresetEditorState(BaseModel):
@@ -64,3 +64,29 @@ class PresetEditorState(BaseModel):
 
     preset_slug: str
     overrides: Overrides
+
+
+class PresetCreateRequest(BaseModel):
+    """Body for POST /settings/transcoder/presets - clone a built-in preset
+    with custom overrides."""
+    model_config = ConfigDict(extra="ignore")
+
+    name: str
+    parent_slug: str
+    overrides: Overrides = Overrides(shared={}, tiers={})
+
+
+class PresetUpdateRequest(BaseModel):
+    """Body for PATCH /settings/transcoder/presets/{slug} - rename and/or
+    swap overrides on an existing custom preset."""
+    model_config = ConfigDict(extra="ignore")
+
+    name: str | None = None
+    overrides: Overrides | None = None
+
+
+class PresetListResponse(BaseModel):
+    """Wrapper around the transcoder's `{presets: [...]}` shape."""
+    model_config = ConfigDict(extra="ignore")
+
+    presets: list[Preset] = []

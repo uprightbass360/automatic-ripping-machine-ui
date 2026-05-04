@@ -9,7 +9,7 @@ vi.mock('$lib/api/jobs', () => ({
 
 import { tvdbMatch, fetchTvdbEpisodes } from '$lib/api/jobs';
 import { createJob } from './__fixtures__/job';
-import type { JobDetail } from '$lib/types/arm';
+import type { JobDetailSchema as JobDetail } from '$lib/types/api.gen';
 const mockTvdbMatch = vi.mocked(tvdbMatch);
 const mockFetchEpisodes = vi.mocked(fetchTvdbEpisodes);
 

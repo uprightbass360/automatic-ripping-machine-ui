@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup } from '$lib/test-utils';
 import DriveCard from './DriveCard.svelte';
-import type { Drive } from '$lib/types/arm';
-
+import type { DriveSchema as Drive } from '$lib/types/api.gen';
 vi.mock('$lib/api/drives', () => ({
 	updateDrive: vi.fn(() => Promise.resolve()),
 	scanDrive: vi.fn(() => Promise.resolve()),

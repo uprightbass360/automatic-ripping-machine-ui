@@ -1,4 +1,4 @@
-import type { JobDetail } from '$lib/types/arm';
+import type { JobDetailSchema as JobDetail } from '$lib/types/api.gen';
 import { formatDateTime, timeAgo } from '$lib/utils/format';
 import { discTypeLabel, isJobActive } from '$lib/utils/job-type';
 

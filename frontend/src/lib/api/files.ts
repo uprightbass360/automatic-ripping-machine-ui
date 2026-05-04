@@ -1,6 +1,5 @@
 import { apiFetch } from './client';
-import type { FileRoot, DirectoryListing } from '$lib/types/files';
-
+import type { FileRoot, DirectoryListing } from '$lib/types/api.gen';
 export function fetchRoots(): Promise<FileRoot[]> {
 	return apiFetch<FileRoot[]>('/api/files/roots');
 }

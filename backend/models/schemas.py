@@ -19,7 +19,7 @@ from arm_contracts import (
 
 from backend.models.config import RuntimeConfigResponse
 from backend.models.dashboard import DashboardResponse
-from backend.models.drive import DriveSchema, DriveUpdateRequest
+from backend.models.drive import DriveEjectResult, DriveSchema, DriveUpdateRequest
 from backend.models.files import (
     DirectoryListing,
     FileEntry,
@@ -38,6 +38,7 @@ from backend.models.job import (
     JobDetailSchema,
     JobListResponse,
     JobSchema,
+    JobTranscodeOverridesUpdate,
 )
 from backend.models.logs import (
     LogContentResponse,
@@ -57,11 +58,14 @@ from backend.models.metadata import (
     JobConfigUpdateRequest,
     MediaDetailSchema,
     MusicDetailSchema,
+    MusicSearchResponse,
     MusicSearchResultSchema,
     NamingPreviewRequest,
     NamingPreviewResponse,
+    SearchResponse,
     SearchResultSchema,
     TitleUpdateRequest,
+    TrackTitleUpdateRequest,
 )
 from backend.models.notification import NotificationSchema
 from backend.models.preset import (
@@ -69,7 +73,10 @@ from backend.models.preset import (
     Encoder,
     Overrides,
     Preset,
+    PresetCreateRequest,
     PresetEditorState,
+    PresetListResponse,
+    PresetUpdateRequest,
     Scheme,
 )
 from backend.models.settings import SettingsResponse
@@ -105,6 +112,7 @@ __all__ = [
     "CleanupTranscoderResult",
     "DashboardResponse",
     "DirectoryListing",
+    "DriveEjectResult",
     "DriveSchema",
     "DriveUpdateRequest",
     "Encoder",
@@ -123,12 +131,15 @@ __all__ = [
     "JobListResponse",
     "JobSchema",
     "JobStatsResponse",
+    "JobTranscodeOverridesUpdate",
     "JobSummary",
     "LogContentResponse",
     "LogEntrySchema",
     "LogFileSchema",
     "MaintenanceSummary",
     "MediaDetailSchema",
+    "MusicSearchResponse",
+    "SearchResponse",
     "MemoryInfoSchema",
     "MusicDetailSchema",
     "MusicSearchResultSchema",
@@ -142,7 +153,10 @@ __all__ = [
     "PreflightFixResult",
     "PreflightResult",
     "Preset",
+    "PresetCreateRequest",
     "PresetEditorState",
+    "PresetListResponse",
+    "PresetUpdateRequest",
     "RestartResponse",
     "RippingEnabledResponse",
     "RuntimeConfigResponse",
@@ -156,6 +170,7 @@ __all__ = [
     "SystemStatsSchema",
     "TitleUpdateRequest",
     "TrackCountsSchema",
+    "TrackTitleUpdateRequest",
     "TrackSchema",
     "TranscoderAuthStatus",
     "TranscoderConfig",

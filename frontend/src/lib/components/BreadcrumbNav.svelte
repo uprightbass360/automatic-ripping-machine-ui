@@ -1,6 +1,5 @@
 <script lang="ts">
-	import type { FileRoot } from '$lib/types/files';
-
+	import type { FileRoot } from '$lib/types/api.gen';
 	interface Props {
 		path: string;
 		roots: FileRoot[];

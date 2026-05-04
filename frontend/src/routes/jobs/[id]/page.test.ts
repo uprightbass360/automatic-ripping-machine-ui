@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor, within } from '$lib/test-utils';
 import Page from './+page.svelte';
-import type { JobDetail } from '$lib/types/arm';
-
+import type { JobDetailSchema as JobDetail } from '$lib/types/api.gen';
 // --- Mocks ---
 
 const mockGoto = vi.fn();

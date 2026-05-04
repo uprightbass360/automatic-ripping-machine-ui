@@ -1,5 +1,5 @@
-import type { SettingsData } from '$lib/types/arm';
-import type { Scheme, Preset, Overrides } from '$lib/types/presets';
+import type { SettingsResponse as SettingsData } from '$lib/types/api.gen';
+import type { Scheme, Preset, Overrides } from '$lib/types/api.gen';
 import { apiFetch } from './client';
 
 export function fetchSettings(): Promise<SettingsData> {

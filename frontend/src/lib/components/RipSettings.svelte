@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { Job, JobConfigUpdate } from '$lib/types/arm';
+	import type { JobSchema as Job, JobConfigSnapshot, JobConfigUpdateRequest as JobConfigUpdate } from '$lib/types/api.gen';
 	import { updateJobConfig, updateJobNaming, fetchNamingVariables, fetchNamingPreview } from '$lib/api/jobs';
 	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { onMount } from 'svelte';
 
 	interface Props {
 		job: Job;
-		config: Record<string, string | null>;
+		config: JobConfigSnapshot;
 		isMusic?: boolean;
 		multiTitle?: boolean;
 		onsaved?: () => void;
@@ -17,20 +17,25 @@
 	let ripmethod = $state(String(config.RIPMETHOD ?? 'mkv').toLowerCase());
 	let disctype = $state(String(config.DISCTYPE ?? job.disctype ?? 'dvd').toLowerCase());
 	let mainfeature = $state(
-		config.MAINFEATURE === '1' || String(config.MAINFEATURE ?? '').toLowerCase() === 'true'
+		config.MAINFEATURE === true
+		|| String(config.MAINFEATURE ?? '').toLowerCase() === 'true'
+		|| String(config.MAINFEATURE ?? '') === '1'
 	);
 	let minlength = $state(Number(config.MINLENGTH) || 120);
 	let maxlength = $state(Number(config.MAXLENGTH) || 99999);
 	let audioFormat = $state(String(config.AUDIO_FORMAT ?? 'flac').toLowerCase());
 
-	// Naming patterns for current media type
+	// Naming patterns for current media type. JobConfigSnapshot is
+	// permissive (extra='allow') because arm-neu's per-job config has
+	// ~90 keys; cast to a plain string-map for the pattern lookup.
+	const cfgStr = config as unknown as Record<string, string | null | undefined>;
 	let namingPatterns = $derived.by(() => {
 		const vtype = job.video_type?.toLowerCase();
 		if (isMusic || disctype === 'music') {
 			return {
 				label: 'Music',
-				title: config.MUSIC_TITLE_PATTERN ?? '{artist} - {album}',
-				folder: config.MUSIC_FOLDER_PATTERN ?? '{artist}/{album} ({year})',
+				title: cfgStr.MUSIC_TITLE_PATTERN ?? '{artist} - {album}',
+				folder: cfgStr.MUSIC_FOLDER_PATTERN ?? '{artist}/{album} ({year})',
 				titleKey: 'MUSIC_TITLE_PATTERN',
 				folderKey: 'MUSIC_FOLDER_PATTERN',
 			};
@@ -38,16 +43,16 @@
 		if (vtype === 'series') {
 			return {
 				label: 'TV',
-				title: config.TV_TITLE_PATTERN ?? '{show} S{season}E{episode}',
-				folder: config.TV_FOLDER_PATTERN ?? '{show}/Season {season}',
+				title: cfgStr.TV_TITLE_PATTERN ?? '{show} S{season}E{episode}',
+				folder: cfgStr.TV_FOLDER_PATTERN ?? '{show}/Season {season}',
 				titleKey: 'TV_TITLE_PATTERN',
 				folderKey: 'TV_FOLDER_PATTERN',
 			};
 		}
 		return {
 			label: 'Movie',
-			title: config.MOVIE_TITLE_PATTERN ?? '{title} ({year})',
-			folder: config.MOVIE_FOLDER_PATTERN ?? '{title} ({year})',
+			title: cfgStr.MOVIE_TITLE_PATTERN ?? '{title} ({year})',
+			folder: cfgStr.MOVIE_FOLDER_PATTERN ?? '{title} ({year})',
 			titleKey: 'MOVIE_TITLE_PATTERN',
 			folderKey: 'MOVIE_FOLDER_PATTERN',
 		};

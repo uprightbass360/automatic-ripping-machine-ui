@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
 import TranscodeCard from './TranscodeCard.svelte';
-import type { TranscoderJob } from '$lib/types/transcoder';
+import type { TranscoderJob } from '$lib/types/api.gen';
 
 function createTranscodeJob(overrides: Partial<TranscoderJob> = {}): TranscoderJob {
 	return {

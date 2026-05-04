@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { JobDetail, Track } from '$lib/types/arm';
+	import type { JobDetailSchema as JobDetail, Track } from '$lib/types/api.gen';
 	import type { TvdbEpisode, NamingPreviewTrack } from '$lib/api/jobs';
 	import { tvdbMatch, fetchTvdbEpisodes, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
 

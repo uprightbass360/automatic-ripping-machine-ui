@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Job, JobDetail } from '$lib/types/arm';
+	import type { JobSchema as Job, JobDetailSchema as JobDetail } from '$lib/types/api.gen';
 	import { cancelWaitingJob, startWaitingJob, pauseWaitingJob, fetchJob, updateJobTitle, updateJobConfig, toggleMultiTitle, updateTrack, fetchNamingPreview } from '$lib/api/jobs';
 	import type { NamingPreviewTrack } from '$lib/api/jobs';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
@@ -20,15 +20,15 @@
 
 	interface Props {
 		job?: Job;
-		driveNames?: Record<string, string>;
+		driveNames?: Record<string, string> | null;
 		paused?: boolean;
 		onrefresh?: () => void;
 		ondismiss?: () => void;
 	}
 
-	let { job, driveNames = {}, paused = false, onrefresh, ondismiss }: Props = $props();
+	let { job, driveNames, paused = false, onrefresh, ondismiss }: Props = $props();
 	let effectivePaused = $derived(paused || !!job?.manual_pause);
-	let driveName = $derived(job?.devpath ? driveNames[job.devpath] : null);
+	let driveName = $derived(job?.devpath ? (driveNames?.[job.devpath] ?? null) : null);
 
 	let detail = $state<JobDetail | null>(null);
 	let initialLoading = $state(true);

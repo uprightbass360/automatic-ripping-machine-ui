@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
-    import type { Scheme, Preset, Overrides, PresetEditorState } from '$lib/types/presets';
-
+    import type { Scheme, Preset, Overrides } from '$lib/types/api.gen';
+    import type { PresetEditorState } from '$lib/types/presets';
     interface Props {
         scope: 'global' | 'job';
         initialState: PresetEditorState;
@@ -65,12 +65,12 @@
 
     function effectiveShared(key: string): unknown {
         if (key in overrides.shared) return overrides.shared[key];
-        return selectedPreset?.shared[key] ?? '';
+        return selectedPreset?.shared?.[key] ?? '';
     }
 
     function effectiveTier(tier: string, key: string): unknown {
         if (overrides.tiers[tier]?.[key] !== undefined) return overrides.tiers[tier][key];
-        const tierVal = selectedPreset?.tiers[tier as 'dvd' | 'bluray' | 'uhd']?.[key];
+        const tierVal = selectedPreset?.tiers?.[tier]?.[key];
         if (tierVal !== undefined) return tierVal;
         return selectedPreset?.shared?.[key] ?? '';
     }
@@ -316,7 +316,7 @@
                                     />
                                 </div>
                             </label>
-                            {#each Object.entries(scheme.advanced_fields) as [key, def]}
+                            {#each Object.entries(scheme.advanced_fields ?? {}) as [key, def]}
                                 <label class="space-y-1">
                                     <span class="text-xs text-gray-600 dark:text-gray-400">{key}</span>
                                     <div class={isTierDirty(tier, key) ? dirtyRing : ''}>

@@ -16,6 +16,36 @@ export type AbcdeConfigUpdate = {
 };
 
 /**
+ * AdvancedField
+ */
+export type AdvancedField = {
+    /**
+     * Type
+     */
+    type: 'enum' | 'int' | 'string';
+    /**
+     * Values
+     */
+    values?: Array<string> | null;
+    /**
+     * Default
+     */
+    default?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Min
+     */
+    min?: number | null;
+    /**
+     * Max
+     */
+    max?: number | null;
+};
+
+/**
  * ArmConfigUpdate
  */
 export type ArmConfigUpdate = {
@@ -144,54 +174,54 @@ export type DashboardResponse = {
     /**
      * Db Available
      */
-    db_available?: boolean;
+    db_available: boolean;
     /**
      * Arm Online
      */
-    arm_online?: boolean;
+    arm_online: boolean;
     /**
      * Active Jobs
      */
-    active_jobs?: Array<JobSchema> | null;
-    system_info?: HardwareInfoSchema | null;
+    active_jobs: Array<JobSchema> | null;
+    system_info: HardwareInfoSchema | null;
     /**
      * Drives Online
      */
-    drives_online?: number | null;
+    drives_online: number | null;
     /**
      * Drive Names
      */
-    drive_names?: {
+    drive_names: {
         [key: string]: string;
     } | null;
     /**
      * Notification Count
      */
-    notification_count?: number | null;
+    notification_count: number | null;
     /**
      * Ripping Enabled
      */
-    ripping_enabled?: boolean | null;
+    ripping_enabled: boolean | null;
     /**
      * Makemkv Key Valid
      */
-    makemkv_key_valid?: boolean | null;
+    makemkv_key_valid: boolean | null;
     /**
      * Makemkv Key Checked At
      */
-    makemkv_key_checked_at?: string | null;
+    makemkv_key_checked_at: string | null;
     /**
      * Transcoder Online
      */
-    transcoder_online?: boolean;
-    transcoder_stats?: TranscoderStatsSummary | null;
-    transcoder_system_stats?: SystemStatsSchema | null;
+    transcoder_online: boolean;
+    transcoder_stats: TranscoderStatsSummary | null;
+    transcoder_system_stats: SystemStatsSchema | null;
     /**
      * Active Transcodes
      */
-    active_transcodes?: Array<TranscoderJob>;
-    system_stats?: SystemStatsSchema | null;
-    transcoder_info?: HardwareInfoSchema | null;
+    active_transcodes: Array<TranscoderJob>;
+    system_stats: SystemStatsSchema | null;
+    transcoder_info: HardwareInfoSchema | null;
 };
 
 /**
@@ -237,6 +267,129 @@ export type DirectoryListing = {
 };
 
 /**
+ * DriveEjectResult
+ *
+ * `POST /drives/{id}/eject` upstream response.
+ */
+export type DriveEjectResult = {
+    /**
+     * Success
+     */
+    success: boolean;
+    /**
+     * Drive Id
+     */
+    drive_id?: number | null;
+    /**
+     * Method
+     */
+    method?: string | null;
+    /**
+     * Error
+     */
+    error?: string | null;
+};
+
+/**
+ * DriveSchema
+ */
+export type DriveSchema = {
+    /**
+     * Drive Id
+     */
+    drive_id: number;
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Mount
+     */
+    mount?: string | null;
+    /**
+     * Job Id Current
+     */
+    job_id_current?: number | null;
+    /**
+     * Job Id Previous
+     */
+    job_id_previous?: number | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Drive Mode
+     */
+    drive_mode?: string | null;
+    /**
+     * Maker
+     */
+    maker?: string | null;
+    /**
+     * Model
+     */
+    model?: string | null;
+    /**
+     * Serial
+     */
+    serial?: string | null;
+    /**
+     * Connection
+     */
+    connection?: string | null;
+    /**
+     * Capabilities
+     */
+    capabilities?: Array<string> | null;
+    /**
+     * Firmware
+     */
+    firmware?: string | null;
+    /**
+     * Location
+     */
+    location?: string | null;
+    /**
+     * Stale
+     */
+    stale?: boolean | null;
+    /**
+     * Mdisc
+     */
+    mdisc?: number | null;
+    /**
+     * Serial Id
+     */
+    serial_id?: string | null;
+    /**
+     * Uhd Capable
+     */
+    uhd_capable?: boolean | null;
+    /**
+     * Rip Speed
+     */
+    rip_speed?: number | null;
+    /**
+     * Prescan Cache Mb
+     */
+    prescan_cache_mb?: number | null;
+    /**
+     * Prescan Timeout
+     */
+    prescan_timeout?: number | null;
+    /**
+     * Prescan Retries
+     */
+    prescan_retries?: number | null;
+    /**
+     * Disc Enum Timeout
+     */
+    disc_enum_timeout?: number | null;
+    current_job?: JobSummary | null;
+};
+
+/**
  * DriveUpdateRequest
  */
 export type DriveUpdateRequest = {
@@ -276,6 +429,24 @@ export type DriveUpdateRequest = {
      * Disc Enum Timeout
      */
     disc_enum_timeout?: number | null;
+};
+
+/**
+ * Encoder
+ */
+export type Encoder = {
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Tuning Presets
+     */
+    tuning_presets?: Array<string>;
 };
 
 /**
@@ -616,8 +787,11 @@ export type ImageCacheStats = {
  *
  * Per-job config snapshot returned in JobDetailSchema.config.
  *
- * Mirrors the keys of JobConfigUpdateRequest. extra='ignore' so old
- * config rows with extra keys round-trip without error.
+ * The BFF surfaces a few high-traffic keys explicitly for type help,
+ * but arm-neu's per-job arm.yaml has ~90 keys; extra='allow' keeps
+ * the rest flowing through (e.g. TV_TITLE_PATTERN, MOVIE_TITLE_PATTERN,
+ * naming variables) so the frontend can read them without a schema
+ * update each time arm-neu adds a knob.
  */
 export type JobConfigSnapshot = {
     /**
@@ -648,6 +822,7 @@ export type JobConfigSnapshot = {
      * Skip Transcode
      */
     SKIP_TRANSCODE?: boolean | null;
+    [key: string]: unknown;
 };
 
 /**
@@ -958,8 +1133,8 @@ export type JobDetailSchema = {
     /**
      * Tracks
      */
-    tracks?: Array<Track>;
-    config?: JobConfigSnapshot | null;
+    tracks: Array<Track>;
+    config: JobConfigSnapshot | null;
 };
 
 /**
@@ -1287,6 +1462,89 @@ export type JobStatsResponse = {
 };
 
 /**
+ * JobSummary
+ *
+ * Slim 9-field Job projection for /drives/with-jobs.
+ *
+ * Carries only the fields the dashboard's "drive currently working on"
+ * badge needs to render. Producer is `_job_summary` in
+ * arm-neu/arm/api/v1/drives.py.
+ */
+export type JobSummary = {
+    /**
+     * Job Id
+     */
+    job_id: number;
+    /**
+     * Title
+     */
+    title?: string | null;
+    /**
+     * Year
+     */
+    year?: string | null;
+    /**
+     * Video Type
+     */
+    video_type?: string | null;
+    /**
+     * Status
+     */
+    status?: string | null;
+    /**
+     * Stage
+     */
+    stage?: string | null;
+    /**
+     * Disctype
+     */
+    disctype?: string | null;
+    /**
+     * Label
+     */
+    label?: string | null;
+    /**
+     * Poster Url
+     */
+    poster_url?: string | null;
+    /**
+     * No Of Titles
+     */
+    no_of_titles?: number | null;
+};
+
+/**
+ * JobTranscodeOverridesUpdate
+ *
+ * Body for PATCH /jobs/{id}/transcode-config.
+ *
+ * Mirrors arm_contracts.TranscodeJobConfig allowlist; arm-neu rejects
+ * unknown keys server-side, so we accept extras here and let upstream
+ * decide.
+ */
+export type JobTranscodeOverridesUpdate = {
+    /**
+     * Preset Slug
+     */
+    preset_slug?: string | null;
+    /**
+     * Overrides
+     */
+    overrides?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Delete Source
+     */
+    delete_source?: boolean | string | null;
+    /**
+     * Output Extension
+     */
+    output_extension?: string | null;
+    [key: string]: unknown;
+};
+
+/**
  * LogContentResponse
  */
 export type LogContentResponse = {
@@ -1535,9 +1793,105 @@ export type MusicDetailSchema = {
     /**
      * Tracks
      */
-    tracks?: Array<{
-        [key: string]: unknown;
-    }>;
+    tracks?: Array<MusicTrackSchema>;
+};
+
+/**
+ * MusicSearchResponse
+ *
+ * `GET /metadata/music/search` upstream envelope.
+ */
+export type MusicSearchResponse = {
+    /**
+     * Results
+     */
+    results: Array<MusicSearchResultSchema>;
+    /**
+     * Total
+     */
+    total?: number;
+    /**
+     * Offset
+     */
+    offset?: number;
+};
+
+/**
+ * MusicSearchResultSchema
+ */
+export type MusicSearchResultSchema = {
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Artist
+     */
+    artist: string;
+    /**
+     * Year
+     */
+    year: string;
+    /**
+     * Release Id
+     */
+    release_id: string;
+    /**
+     * Media Type
+     */
+    media_type?: string;
+    /**
+     * Poster Url
+     */
+    poster_url?: string | null;
+    /**
+     * Track Count
+     */
+    track_count?: number | null;
+    /**
+     * Country
+     */
+    country?: string | null;
+    /**
+     * Release Type
+     */
+    release_type?: string | null;
+    /**
+     * Format
+     */
+    format?: string | null;
+    /**
+     * Label
+     */
+    label?: string | null;
+};
+
+/**
+ * MusicTrackSchema
+ *
+ * A single track in a MusicBrainz release.
+ *
+ * Field names mirror what arm-neu emits (proxied from MusicBrainz):
+ * `number` and `title` are required; `length_ms` and `disc_number`
+ * are optional.
+ */
+export type MusicTrackSchema = {
+    /**
+     * Number
+     */
+    number: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Length Ms
+     */
+    length_ms?: number | null;
+    /**
+     * Disc Number
+     */
+    disc_number?: number | null;
 };
 
 /**
@@ -1603,11 +1957,11 @@ export type NotificationSchema = {
  *
  * Designed permissively because upstream arm-neu actions return a
  * family of envelopes (``{success}``, ``{success, paused}``,
- * ``{success, count}``, ``{success, deleted, ...}``, etc). Surfacing
- * common keys here lets a single model cover most of them; unknown
- * keys are dropped via ``extra='ignore'`` so the response_model
- * annotation can advertise the contract without forcing the BFF to
- * coerce upstream output.
+ * ``{success, count}``, ``{success, deleted, ...}``, etc). Common
+ * keys are surfaced for type help; ``extra='allow'`` keeps unknown
+ * keys (e.g. ``updated``, ``overrides``) flowing through so callers
+ * can read upstream-specific fields. Passthrough hardening into
+ * dedicated models is tracked separately.
  */
 export type OperationResult = {
     /**
@@ -1638,6 +1992,7 @@ export type OperationResult = {
      * Deleted
      */
     deleted?: string | number | null;
+    [key: string]: unknown;
 };
 
 /**
@@ -1683,6 +2038,26 @@ export type OrphanLogList = {
 };
 
 /**
+ * Overrides
+ */
+export type Overrides = {
+    /**
+     * Shared
+     */
+    shared: {
+        [key: string]: unknown;
+    };
+    /**
+     * Tiers
+     */
+    tiers: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+};
+
+/**
  * PathRequest
  */
 export type PathRequest = {
@@ -1722,6 +2097,102 @@ export type PreflightResult = {
      * Issues
      */
     issues?: Array<string>;
+};
+
+/**
+ * Preset
+ */
+export type Preset = {
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Scheme
+     */
+    scheme: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Builtin
+     */
+    builtin?: boolean;
+    /**
+     * Shared
+     */
+    shared?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Tiers
+     */
+    tiers?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+    /**
+     * Parent Slug
+     */
+    parent_slug?: string | null;
+    /**
+     * Unavailable
+     */
+    unavailable?: boolean | null;
+    /**
+     * Reason
+     */
+    reason?: string | null;
+};
+
+/**
+ * PresetCreateRequest
+ *
+ * Body for POST /settings/transcoder/presets - clone a built-in preset
+ * with custom overrides.
+ */
+export type PresetCreateRequest = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Parent Slug
+     */
+    parent_slug: string;
+    overrides?: Overrides;
+};
+
+/**
+ * PresetListResponse
+ *
+ * Wrapper around the transcoder's `{presets: [...]}` shape.
+ */
+export type PresetListResponse = {
+    /**
+     * Presets
+     */
+    presets?: Array<Preset>;
+};
+
+/**
+ * PresetUpdateRequest
+ *
+ * Body for PATCH /settings/transcoder/presets/{slug} - rename and/or
+ * swap overrides on an existing custom preset.
+ */
+export type PresetUpdateRequest = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    overrides?: Overrides | null;
 };
 
 /**
@@ -1810,6 +2281,38 @@ export type RuntimeConfigResponse = {
      * Transcoder Enabled
      */
     transcoder_enabled: boolean;
+};
+
+/**
+ * Scheme
+ */
+export type Scheme = {
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Supported Encoders
+     */
+    supported_encoders?: Array<Encoder>;
+    /**
+     * Supported Audio Encoders
+     */
+    supported_audio_encoders?: Array<string>;
+    /**
+     * Supported Subtitle Modes
+     */
+    supported_subtitle_modes?: Array<string>;
+    /**
+     * Advanced Fields
+     */
+    advanced_fields?: {
+        [key: string]: AdvancedField;
+    };
 };
 
 /**
@@ -2179,6 +2682,18 @@ export type TrackCounts = {
      * Ripped
      */
     ripped?: number;
+};
+
+/**
+ * TrackTitleUpdateRequest
+ *
+ * Per-track title override for multi-title discs.
+ */
+export type TrackTitleUpdateRequest = {
+    /**
+     * Title
+     */
+    title?: string | null;
 };
 
 /**
@@ -2981,8 +3496,10 @@ export type SearchMusicMetadataApiMetadataMusicSearchGetResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: MusicSearchResponse;
 };
+
+export type SearchMusicMetadataApiMetadataMusicSearchGetResponse = SearchMusicMetadataApiMetadataMusicSearchGetResponses[keyof SearchMusicMetadataApiMetadataMusicSearchGetResponses];
 
 export type GetMusicDetailApiMetadataMusicReleaseIdGetData = {
     body?: never;
@@ -3095,11 +3612,13 @@ export type ClearTrackTitleApiJobsJobIdTracksTrackIdTitleDeleteResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: OperationResult;
 };
 
+export type ClearTrackTitleApiJobsJobIdTracksTrackIdTitleDeleteResponse = ClearTrackTitleApiJobsJobIdTracksTrackIdTitleDeleteResponses[keyof ClearTrackTitleApiJobsJobIdTracksTrackIdTitleDeleteResponses];
+
 export type UpdateTrackTitleApiJobsJobIdTracksTrackIdTitlePutData = {
-    body?: never;
+    body: TrackTitleUpdateRequest;
     path: {
         /**
          * Job Id
@@ -3135,8 +3654,10 @@ export type UpdateTrackTitleApiJobsJobIdTracksTrackIdTitlePutResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: OperationResult;
 };
+
+export type UpdateTrackTitleApiJobsJobIdTracksTrackIdTitlePutResponse = UpdateTrackTitleApiJobsJobIdTracksTrackIdTitlePutResponses[keyof UpdateTrackTitleApiJobsJobIdTracksTrackIdTitlePutResponses];
 
 export type TvdbMatchApiJobsJobIdTvdbMatchPostData = {
     body?: never;
@@ -3324,7 +3845,7 @@ export type GetNamingVariablesApiNamingVariablesGetResponses = {
 };
 
 export type UpdateTranscodeConfigApiJobsJobIdTranscodeConfigPatchData = {
-    body?: never;
+    body: JobTranscodeOverridesUpdate;
     path: {
         /**
          * Job Id
@@ -3364,8 +3885,10 @@ export type UpdateTranscodeConfigApiJobsJobIdTranscodeConfigPatchResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: OperationResult;
 };
+
+export type UpdateTranscodeConfigApiJobsJobIdTranscodeConfigPatchResponse = UpdateTranscodeConfigApiJobsJobIdTranscodeConfigPatchResponses[keyof UpdateTranscodeConfigApiJobsJobIdTranscodeConfigPatchResponses];
 
 export type UpdateTrackFieldsApiJobsJobIdTracksTrackIdPatchData = {
     body?: never;
@@ -4276,10 +4799,14 @@ export type ListDrivesApiDrivesGetData = {
 
 export type ListDrivesApiDrivesGetResponses = {
     /**
+     * Response List Drives Api Drives Get
+     *
      * Successful Response
      */
-    200: unknown;
+    200: Array<DriveSchema>;
 };
+
+export type ListDrivesApiDrivesGetResponse = ListDrivesApiDrivesGetResponses[keyof ListDrivesApiDrivesGetResponses];
 
 export type RescanDrivesApiDrivesRescanPostData = {
     body?: never;
@@ -4310,8 +4837,10 @@ export type RescanDrivesApiDrivesRescanPostResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: OperationResult;
 };
+
+export type RescanDrivesApiDrivesRescanPostResponse = RescanDrivesApiDrivesRescanPostResponses[keyof RescanDrivesApiDrivesRescanPostResponses];
 
 export type DriveDiagnosticApiDrivesDiagnosticGetData = {
     body?: never;
@@ -4371,8 +4900,10 @@ export type DeleteDriveApiDrivesDriveIdDeleteResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: OperationResult;
 };
+
+export type DeleteDriveApiDrivesDriveIdDeleteResponse = DeleteDriveApiDrivesDriveIdDeleteResponses[keyof DeleteDriveApiDrivesDriveIdDeleteResponses];
 
 export type UpdateDriveApiDrivesDriveIdPatchData = {
     body: DriveUpdateRequest;
@@ -4411,8 +4942,10 @@ export type UpdateDriveApiDrivesDriveIdPatchResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: OperationResult;
 };
+
+export type UpdateDriveApiDrivesDriveIdPatchResponse = UpdateDriveApiDrivesDriveIdPatchResponses[keyof UpdateDriveApiDrivesDriveIdPatchResponses];
 
 export type ScanDriveApiDrivesDriveIdScanPostData = {
     body?: never;
@@ -4447,8 +4980,10 @@ export type ScanDriveApiDrivesDriveIdScanPostResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: OperationResult;
 };
+
+export type ScanDriveApiDrivesDriveIdScanPostResponse = ScanDriveApiDrivesDriveIdScanPostResponses[keyof ScanDriveApiDrivesDriveIdScanPostResponses];
 
 export type EjectDriveApiDrivesDriveIdEjectPostData = {
     body?: never;
@@ -4488,8 +5023,10 @@ export type EjectDriveApiDrivesDriveIdEjectPostResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: DriveEjectResult;
 };
+
+export type EjectDriveApiDrivesDriveIdEjectPostResponse = EjectDriveApiDrivesDriveIdEjectPostResponses[keyof EjectDriveApiDrivesDriveIdEjectPostResponses];
 
 export type ListLogsApiLogsGetData = {
     body?: never;
@@ -4832,8 +5369,10 @@ export type GetTranscoderSchemeApiSettingsTranscoderSchemeGetResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: Scheme;
 };
+
+export type GetTranscoderSchemeApiSettingsTranscoderSchemeGetResponse = GetTranscoderSchemeApiSettingsTranscoderSchemeGetResponses[keyof GetTranscoderSchemeApiSettingsTranscoderSchemeGetResponses];
 
 export type GetTranscoderPresetsApiSettingsTranscoderPresetsGetData = {
     body?: never;
@@ -4853,16 +5392,13 @@ export type GetTranscoderPresetsApiSettingsTranscoderPresetsGetResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: PresetListResponse;
 };
 
+export type GetTranscoderPresetsApiSettingsTranscoderPresetsGetResponse = GetTranscoderPresetsApiSettingsTranscoderPresetsGetResponses[keyof GetTranscoderPresetsApiSettingsTranscoderPresetsGetResponses];
+
 export type CreateTranscoderPresetApiSettingsTranscoderPresetsPostData = {
-    /**
-     * Body
-     */
-    body: {
-        [key: string]: unknown;
-    };
+    body: PresetCreateRequest;
     path?: never;
     query?: never;
     url: '/api/settings/transcoder/presets';
@@ -4889,8 +5425,10 @@ export type CreateTranscoderPresetApiSettingsTranscoderPresetsPostResponses = {
     /**
      * Successful Response
      */
-    201: unknown;
+    201: Preset;
 };
+
+export type CreateTranscoderPresetApiSettingsTranscoderPresetsPostResponse = CreateTranscoderPresetApiSettingsTranscoderPresetsPostResponses[keyof CreateTranscoderPresetApiSettingsTranscoderPresetsPostResponses];
 
 export type DeleteTranscoderPresetApiSettingsTranscoderPresetsSlugDeleteData = {
     body?: never;
@@ -4929,16 +5467,13 @@ export type DeleteTranscoderPresetApiSettingsTranscoderPresetsSlugDeleteResponse
     /**
      * Successful Response
      */
-    200: unknown;
+    200: OperationResult;
 };
 
+export type DeleteTranscoderPresetApiSettingsTranscoderPresetsSlugDeleteResponse = DeleteTranscoderPresetApiSettingsTranscoderPresetsSlugDeleteResponses[keyof DeleteTranscoderPresetApiSettingsTranscoderPresetsSlugDeleteResponses];
+
 export type UpdateTranscoderPresetApiSettingsTranscoderPresetsSlugPatchData = {
-    /**
-     * Body
-     */
-    body: {
-        [key: string]: unknown;
-    };
+    body: PresetUpdateRequest;
     path: {
         /**
          * Slug
@@ -4974,8 +5509,10 @@ export type UpdateTranscoderPresetApiSettingsTranscoderPresetsSlugPatchResponses
     /**
      * Successful Response
      */
-    200: unknown;
+    200: Preset;
 };
+
+export type UpdateTranscoderPresetApiSettingsTranscoderPresetsSlugPatchResponse = UpdateTranscoderPresetApiSettingsTranscoderPresetsSlugPatchResponses[keyof UpdateTranscoderPresetApiSettingsTranscoderPresetsSlugPatchResponses];
 
 export type UpdateTranscoderConfigApiSettingsTranscoderPatchData = {
     /**

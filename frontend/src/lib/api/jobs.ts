@@ -1,4 +1,5 @@
-import type { JobConfigUpdate, JobDetail, JobListResponse, MediaDetail, MusicDetail, MusicSearchResult, SearchResult, TitleUpdate, TrackTitleUpdate } from '$lib/types/arm';
+import type { JobConfigUpdateRequest as JobConfigUpdate, JobDetailSchema as JobDetail, JobListResponse, MediaDetailSchema as MediaDetail, MusicDetailSchema as MusicDetail, MusicSearchResultSchema as MusicSearchResult, SearchResultSchema as SearchResult, TitleUpdateRequest as TitleUpdate } from '$lib/types/api.gen';
+import type { TrackTitleUpdateRequest as TrackTitleUpdate } from '$lib/types/api.gen';
 import { apiFetch } from './client';
 
 export function fetchJobs(params?: {

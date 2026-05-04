@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Drive } from '$lib/types/arm';
+	import type { DriveSchema as Drive } from '$lib/types/api.gen';
 	import { updateDrive, scanDrive, deleteDrive, ejectDrive } from '$lib/api/drives';
 	import StatusBadge from './StatusBadge.svelte';
 	import DiscTypeIcon from './DiscTypeIcon.svelte';

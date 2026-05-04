@@ -1,4 +1,4 @@
-import type { DashboardData } from '$lib/types/arm';
+import type { DashboardResponse as DashboardData } from '$lib/types/api.gen';
 import { apiFetch } from './client';
 
 export function fetchDashboard(): Promise<DashboardData> {

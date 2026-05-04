@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Job, Track, MusicSearchResult, MusicDetail, TitleUpdate } from '$lib/types/arm';
+	import type { JobSchema as Job, Track, MusicSearchResultSchema as MusicSearchResult, MusicDetailSchema as MusicDetail, TitleUpdateRequest as TitleUpdate } from '$lib/types/api.gen';
 	import { searchMusicMetadata, fetchMusicDetail, updateJobTitle, setJobTracks } from '$lib/api/jobs';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
 
@@ -146,7 +146,7 @@
 						tracksToApply.map((t, i) => ({
 							track_number: t.number,
 							title: t.title,
-							length_ms: discTracks[i]?.length != null ? discTracks[i].length! * 1000 : t.length_ms
+							length_ms: discTracks[i]?.length != null ? discTracks[i].length! * 1000 : (t.length_ms ?? null)
 						}))
 					);
 				} catch {
@@ -212,11 +212,11 @@
 		failedImages = new Set(failedImages).add(url);
 	}
 
-	function hasValidPoster(url: string | null): boolean {
+	function hasValidPoster(url: string | null | undefined): boolean {
 		return !!url && !failedImages.has(url);
 	}
 
-	function formatDuration(ms: number | null): string {
+	function formatDuration(ms: number | null | undefined): string {
 		if (!ms) return '--';
 		const totalSec = Math.round(ms / 1000);
 		const m = Math.floor(totalSec / 60);
@@ -231,7 +231,7 @@
 		return `${m}:${s.toString().padStart(2, '0')}`;
 	}
 
-	function compareDurations(discSecs: number | null, mbMs: number | null): 'match' | 'close' | 'mismatch' | 'unknown' {
+	function compareDurations(discSecs: number | null | undefined, mbMs: number | null | undefined): 'match' | 'close' | 'mismatch' | 'unknown' {
 		if (discSecs == null || mbMs == null) return 'unknown';
 		const diff = Math.abs(discSecs - Math.round(mbMs / 1000));
 		if (diff <= 3) return 'match';

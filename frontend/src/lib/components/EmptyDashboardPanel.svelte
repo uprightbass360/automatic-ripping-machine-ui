@@ -2,7 +2,7 @@
     import { transcoderEnabled } from '$lib/stores/config';
 
     interface Props {
-        drivesOnline: number;
+        drivesOnline: number | null;
         armOnline: boolean;
         transcoderOnline: boolean;
     }

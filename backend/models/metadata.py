@@ -35,12 +35,38 @@ class MusicSearchResultSchema(BaseModel):
     label: str | None = None
 
 
+class MusicTrackSchema(BaseModel):
+    """A single track in a MusicBrainz release.
+
+    Field names mirror what arm-neu emits (proxied from MusicBrainz):
+    `number` and `title` are required; `length_ms` and `disc_number`
+    are optional.
+    """
+    number: str
+    title: str
+    length_ms: int | None = None
+    disc_number: int | None = None
+
+
 class MusicDetailSchema(MusicSearchResultSchema):
     catalog_number: str | None = None
     barcode: str | None = None
     status: str | None = None
     disc_count: int | None = None
-    tracks: list[dict[str, Any]] = []
+    tracks: list[MusicTrackSchema] = []
+
+
+class MusicSearchResponse(BaseModel):
+    """`GET /metadata/music/search` upstream envelope."""
+    results: list[MusicSearchResultSchema]
+    total: int = 0
+    offset: int = 0
+
+
+class SearchResponse(BaseModel):
+    """`GET /metadata/search` upstream envelope."""
+    results: list[SearchResultSchema]
+    total: int = 0
 
 
 class TitleUpdateRequest(BaseModel):
@@ -56,6 +82,11 @@ class TitleUpdateRequest(BaseModel):
     album: str | None = None
     season: str | None = None
     episode: str | None = None
+
+
+class TrackTitleUpdateRequest(BaseModel):
+    """Per-track title override for multi-title discs."""
+    title: str | None = None
 
 
 class JobConfigUpdateRequest(BaseModel):

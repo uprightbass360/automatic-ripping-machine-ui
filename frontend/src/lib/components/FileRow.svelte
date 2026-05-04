@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { FileEntry } from '$lib/types/files';
+	import type { FileEntry } from '$lib/types/api.gen';
 	import { formatBytes, formatDateTime } from '$lib/utils/format';
 	import FileIcon from './FileIcon.svelte';
 	import Skeleton from './Skeleton.svelte';

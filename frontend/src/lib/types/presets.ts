@@ -1,44 +1,13 @@
-export interface Encoder {
-    slug: string;
-    name: string;
-    tuning_presets: string[];
-}
-
-export interface AdvancedField {
-    type: 'enum' | 'int' | 'string';
-    values?: string[];
-    default?: string;
-    description?: string;
-    min?: number;
-    max?: number;
-}
-
-export interface Scheme {
-    slug: string;
-    name: string;
-    supported_encoders: Encoder[];
-    supported_audio_encoders: string[];
-    supported_subtitle_modes: string[];
-    advanced_fields: Record<string, AdvancedField>;
-}
-
-export interface Preset {
-    slug: string;
-    name: string;
-    scheme: string;
-    description: string;
-    builtin: boolean;
-    shared: Record<string, unknown>;
-    tiers: Record<'dvd' | 'bluray' | 'uhd', Record<string, unknown>>;
-    parent_slug?: string;
-    unavailable?: boolean;
-    reason?: string;
-}
-
-export interface Overrides {
-    shared: Record<string, unknown>;
-    tiers: Record<string, Record<string, unknown>>;
-}
+/**
+ * Frontend-only composition over generated `Overrides`.
+ *
+ * `PresetEditorState` is the in-memory shape the PresetEditor component
+ * passes around; nothing on the wire requires it (the BFF-side
+ * `PresetCreateRequest` and `PresetUpdateRequest` both already exist
+ * in api.gen.ts). Kept here as a thin alias rather than re-emitted
+ * from the BFF to avoid a one-shot endpoint just for codegen.
+ */
+import type { Overrides } from '$lib/types/api.gen';
 
 export interface PresetEditorState {
     preset_slug: string;

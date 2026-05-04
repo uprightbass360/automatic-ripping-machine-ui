@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Job } from '$lib/types/arm';
+	import type { JobSchema as Job } from '$lib/types/api.gen';
 	import JobActions from './JobActions.svelte';
 	import StatusBadge from './StatusBadge.svelte';
 	import TimeAgo from './TimeAgo.svelte';
