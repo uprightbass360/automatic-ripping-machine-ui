@@ -45,11 +45,15 @@ class OperationResult(BaseModel):
 
     Designed permissively because upstream arm-neu actions return a
     family of envelopes (``{success}``, ``{success, paused}``,
-    ``{success, count}``, ``{success, deleted, ...}``, etc). Common
-    keys are surfaced for type help; ``extra='allow'`` keeps unknown
-    keys (e.g. ``updated``, ``overrides``) flowing through so callers
-    can read upstream-specific fields. Passthrough hardening into
-    dedicated models is tracked separately.
+    ``{success, count}``, etc). Common keys are surfaced for type help;
+    ``extra='allow'`` keeps unknown keys (e.g. ``updated``, ``overrides``)
+    flowing through so callers can read upstream-specific fields.
+    Passthrough hardening into dedicated models is tracked separately.
+
+    Single-target delete (delete-log / delete-folder) and bulk delete
+    (bulk-delete-logs / bulk-delete-folders) now have their own typed
+    shapes (DeleteResult / BulkDeleteResult) - this model no longer
+    needs to fit either of those.
     """
     model_config = ConfigDict(extra="allow")
 
@@ -59,7 +63,3 @@ class OperationResult(BaseModel):
     paused: bool | None = None
     count: int | None = None
     cleared: int | None = None
-    # `deleted` may be either a path string (single-target delete) or
-    # an int count (bulk delete) depending on the upstream endpoint.
-    # Permissive str|int union keeps a single model usable across both.
-    deleted: str | int | None = None
