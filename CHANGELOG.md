@@ -1,5 +1,27 @@
 # Changelog
 
+## [17.4.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.3.0...v17.4.0) (2026-05-04)
+
+
+### Features
+
+* adopt arm_contracts v0.7.0 (JobState/SourceType/TrackStatus/WebhookEventType/SkipReason) ([dc5db5a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/dc5db5aff48c32829a52fb910479f6b28629232c))
+* adopt arm_contracts v2.0.0 JobState disambiguation ([77fdd11](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/77fdd116810cc60767e62abdceb266f572e574f4))
+* **codegen:** add FastAPI -&gt; TypeScript codegen pipeline ([c77401a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c77401a458579455390f3d1cb815e71c1d7f5926))
+* **disc-review:** apply backend skip_reason truth to DiscReviewWidget too ([fb08d0a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/fb08d0a60aee52ec9bb2bb15ef8f78b85383b76c))
+* **home:** redesign active rip + transcode cards ([80c9e6a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/80c9e6a0bcd5a41ac6b082b91df75a4369d46bc1))
+* **home:** replace Elapsed cell with computed ETA on active cards ([9b5c3f4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9b5c3f4f3d2f407b502f031633f1d2c4460e8927))
+* **jobs:** render disc-review filter state from backend skip_reason ([1aa78bd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1aa78bdcf31f9ce970b2a6e874150ef7a6d4c787))
+* **models:** add typed BFF response models, response_model coverage ([2d74332](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2d74332d31cdb811c566ff41dc043f63e5995729))
+* **theme:** add status-color tokens + statusAccentVar helper ([c319b12](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c319b12df33a1924154c50915a6242578741258b))
+* **types:** tighten BFF response models for accurate frontend types ([38be943](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/38be943acbfc0e5d3c5d828c65613da7da84d4b0))
+
+
+### Bug Fixes
+
+* **ci:** unstick codegen workflow + sweep leftover legacy type imports ([909646b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/909646b8513d52eac14660ebae1f27cb04f2ddcb))
+* **dashboard:** bucket disambiguated wire strings in waiting/ripping filters ([6b395be](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6b395be79f062e823de58ba61dd8a17fc432e0e2))
+
 ## [17.3.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.2.0...v17.3.0) (2026-05-01)
 
 
