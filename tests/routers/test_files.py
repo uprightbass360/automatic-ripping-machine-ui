@@ -29,11 +29,18 @@ async def test_get_roots_arm_unreachable(app_client):
 
 
 async def test_list_directory_success(app_client):
-    result = {"entries": [{"name": "movie.mkv", "type": "file", "size": 1024}]}
+    result = {
+        "path": "/media/raw",
+        "parent": "/media",
+        "entries": [{"name": "movie.mkv", "type": "file", "size": 1024}],
+    }
     with patch("backend.routers.files.arm_client.list_files", new_callable=AsyncMock, return_value=result):
         resp = await app_client.get("/api/files/list", params={"path": "/media/raw"})
     assert resp.status_code == 200
-    assert resp.json()["entries"][0]["name"] == "movie.mkv"
+    body = resp.json()
+    assert body["entries"][0]["name"] == "movie.mkv"
+    assert body["path"] == "/media/raw"
+    assert body["parent"] == "/media"
 
 
 async def test_list_directory_arm_unreachable(app_client):

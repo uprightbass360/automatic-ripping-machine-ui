@@ -91,7 +91,7 @@
 		scanError = null;
 		try {
 			scanResult = await scanFolder(selectedPath);
-			editTitle = scanResult.title_suggestion;
+			editTitle = scanResult.title_suggestion ?? '';
 			editYear = scanResult.year_suggestion || '';
 			editType = 'movie';
 			editImdbId = '';
@@ -99,7 +99,7 @@
 			editSeason = scanResult.season?.toString() || '';
 			editDiscNumber = scanResult.disc_number?.toString() || '';
 			editDiscTotal = scanResult.disc_total?.toString() || '';
-			searchQuery = scanResult.title_suggestion;
+			searchQuery = scanResult.title_suggestion ?? '';
 			searchResults = [];
 			searchError = null;
 			detail = null;
@@ -181,7 +181,7 @@
 				title: editTitle.trim(),
 				year: editYear.trim() || null,
 				video_type: editType,
-				disctype: scanResult.disc_type,
+				disctype: scanResult.disc_type ?? '',
 				imdb_id: editImdbId.trim() || null,
 				poster_url: editPosterUrl.trim() || null,
 				season: editSeason ? Number(editSeason) : null,
@@ -244,9 +244,9 @@
 							<!-- Scan info badges -->
 							<div class="mb-3 flex flex-wrap gap-3 text-sm">
 								<span class="rounded-sm bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-									{scanResult.disc_type.toUpperCase()}
+									{(scanResult.disc_type ?? 'unknown').toUpperCase()}
 								</span>
-								<span class="text-gray-500 dark:text-gray-400">{formatSize(scanResult.folder_size_bytes)}</span>
+								<span class="text-gray-500 dark:text-gray-400">{formatSize(scanResult.folder_size_bytes ?? 0)}</span>
 								<span class="text-gray-500 dark:text-gray-400">{scanResult.stream_count} streams</span>
 								<span class="text-gray-500 dark:text-gray-400">Label: {scanResult.label}</span>
 							</div>
@@ -399,7 +399,7 @@
 									</span>
 									{#if scanResult}
 										<span class="rounded-sm bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-											{scanResult.disc_type.toUpperCase()}
+											{(scanResult.disc_type ?? 'unknown').toUpperCase()}
 										</span>
 									{/if}
 								</div>

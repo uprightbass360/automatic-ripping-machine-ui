@@ -11,7 +11,7 @@ export interface MetadataField {
 	empty?: boolean;
 }
 
-function videoTypeLabel(vt: string | null): string {
+function videoTypeLabel(vt: string | null | undefined): string {
 	if (!vt) return 'Unknown';
 	const labels: Record<string, string> = {
 		movie: 'Movie',

@@ -694,8 +694,8 @@
 		if (!settings?.transcoder_config) return null;
 		const tc = settings.transcoder_config;
 		const map: Record<string, string[] | undefined> = {
-			log_level: tc.valid_log_levels,
-			log_level_libraries: tc.valid_log_levels,
+			log_level: tc.valid_log_levels ?? undefined,
+			log_level_libraries: tc.valid_log_levels ?? undefined,
 		};
 		const opts = map[key] ?? null;
 		if (!opts) return null;
@@ -1600,11 +1600,11 @@
 						</div>
 
 						<!-- Operational settings -->
-						{#if settings.transcoder_config.updatable_keys.filter((k) => !TC_PRESET_SET.has(k)).length > 0}
+						{#if (settings.transcoder_config.updatable_keys ?? []).filter((k) => !TC_PRESET_SET.has(k)).length > 0}
 							<div class="space-y-4 rounded-md border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
 								<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Operational</h3>
 								<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-									{#each settings.transcoder_config.updatable_keys.filter((k) => !TC_PRESET_SET.has(k)) as key}
+									{#each (settings.transcoder_config.updatable_keys ?? []).filter((k) => !TC_PRESET_SET.has(k)) as key}
 										{@const selectOpts = tcSelectOptions(key)}
 										<div class="relative {isTcFieldDirty(key) ? 'rounded-lg ring-2 ring-primary/40 dark:ring-primary/50' : ''}">
 											<div class="{isTcFieldDirty(key) ? 'px-3 py-3' : ''}">

@@ -31,8 +31,8 @@
 			.filter((e) => !filter || e.name.toLowerCase().includes(filter.toLowerCase()))
 			.sort((a, b) => {
 				let cmp: number;
-				if (sortKey === 'size') cmp = a.size - b.size;
-				else if (sortKey === 'modified') cmp = a.modified.localeCompare(b.modified);
+				if (sortKey === 'size') cmp = (a.size ?? 0) - (b.size ?? 0);
+				else if (sortKey === 'modified') cmp = (a.modified ?? '').localeCompare(b.modified ?? '');
 				else cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
 				return sortDir === 'asc' ? cmp : -cmp;
 			})
@@ -267,9 +267,9 @@
 										{/if}
 									</div>
 								</td>
-								<td class="px-4 py-2 text-gray-500 dark:text-gray-400">{formatSize(entry.size)}</td>
+								<td class="px-4 py-2 text-gray-500 dark:text-gray-400">{formatSize(entry.size ?? 0)}</td>
 								<td class="whitespace-nowrap px-4 py-2 text-gray-500 dark:text-gray-400">
-									{new Date(entry.modified).toLocaleDateString()}
+									{entry.modified ? new Date(entry.modified).toLocaleDateString() : '--'}
 								</td>
 							</tr>
 						{/each}

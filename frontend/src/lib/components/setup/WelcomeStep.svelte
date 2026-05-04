@@ -48,7 +48,7 @@
 
 		<InfoCard label="Database">
 			<span class="flex items-center gap-2">
-				<StatusIcon ok={status.db_initialized} />
+				<StatusIcon ok={!!status.db_initialized} />
 				<span class="text-lg font-medium {status.db_initialized ? 'setup-status-ok' : 'setup-status-warn'}">
 					{status.db_initialized ? 'Initialized' : 'Not initialized'}
 				</span>
@@ -72,7 +72,7 @@
 
 	<div class="grid grid-cols-1 gap-4 {$transcoderEnabled ? 'sm:grid-cols-3' : 'sm:grid-cols-1'}">
 		<InfoCard label="Drives">
-			<span class="text-sm font-medium text-gray-900 dark:text-white">{status.setup_steps.drives}</span>
+			<span class="text-sm font-medium text-gray-900 dark:text-white">{status.setup_steps?.drives ?? '?'}</span>
 		</InfoCard>
 
 		{#if $transcoderEnabled}

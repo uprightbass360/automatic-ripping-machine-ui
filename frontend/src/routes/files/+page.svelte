@@ -75,9 +75,9 @@
 			if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
 			let cmp: number;
 			if (sortKey === 'size') {
-				cmp = a.size - b.size;
+				cmp = (a.size ?? 0) - (b.size ?? 0);
 			} else if (sortKey === 'modified') {
-				cmp = a.modified.localeCompare(b.modified);
+				cmp = (a.modified ?? '').localeCompare(b.modified ?? '');
 			} else {
 				cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
 			}
@@ -139,7 +139,7 @@
 
 	async function loadRoots() {
 		try {
-			roots = (await fetchRoots()).sort((a, b) => (rootOrder[a.key] ?? 99) - (rootOrder[b.key] ?? 99));
+			roots = (await fetchRoots()).sort((a, b) => (rootOrder[a.key ?? ''] ?? 99) - (rootOrder[b.key ?? ''] ?? 99));
 			if (roots.length > 0 && !currentPath) {
 				currentPath = roots[0].path;
 			}
@@ -700,7 +700,7 @@
 								<FileRow
 									{entry}
 									currentPath={lst.path}
-									selected={selectedPaths.has(lst.path + '/' + entry.name)}
+									selected={selectedPaths.has((lst.path ?? '') + '/' + entry.name)}
 									readonly={isReadonly}
 									onnavigate={navigate}
 									onrename={handleRename}

@@ -237,7 +237,7 @@
 			job.title_auto !== job.title
 	);
 
-	function extractReleaseId(posterUrl: string | null): string | null {
+	function extractReleaseId(posterUrl: string | null | undefined): string | null {
 		if (!posterUrl) return null;
 		const match = posterUrl.match(/coverartarchive\.org\/release\/([a-f0-9-]+)\//);
 		return match?.[1] ?? null;
@@ -319,7 +319,7 @@
 		}
 	}
 
-	function formatDurationMs(ms: number | null): string {
+	function formatDurationMs(ms: number | null | undefined): string {
 		if (!ms) return '--';
 		const totalSec = Math.round(ms / 1000);
 		const m = Math.floor(totalSec / 60);

@@ -416,7 +416,7 @@
 		}
 	}
 
-	function formatLength(secs: number | null): string {
+	function formatLength(secs: number | null | undefined): string {
 		if (!secs) return '--';
 		const h = Math.floor(secs / 3600);
 		const m = Math.floor((secs % 3600) / 60);

@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { JobSchema as Job } from '$lib/types/api.gen';
-    import type { Scheme, Preset, Overrides, PresetEditorState } from '$lib/types/api.gen';
+    import type { Scheme, Preset, Overrides } from '$lib/types/api.gen';
+    import type { PresetEditorState } from '$lib/types/presets';
     import { fetchTranscoderScheme, fetchTranscoderPresets } from '$lib/api/settings';
     import { updateJobTranscodeConfig } from '$lib/api/jobs';
     import PresetEditor from './PresetEditor.svelte';
