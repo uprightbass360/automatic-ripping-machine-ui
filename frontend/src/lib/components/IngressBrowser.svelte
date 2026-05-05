@@ -4,10 +4,21 @@
 	import { fetchIngressRoot, fetchIngressDirectory } from '$lib/api/import-jobs';
 	import { showImportWizard } from '$lib/stores/importWizard';
 	import type { FileEntry } from '$lib/types/api.gen';
-	import FileIcon from '$lib/components/FileIcon.svelte';
+	import { Folder, FolderArchive, Disc, File as FileIcon } from 'lucide-svelte';
+
+	// NOTE: kind/importable are computed client-side until the BFF (arm-neu PR #333)
+	// emits them per entry. Once the BFF lands those fields and api.gen.ts picks
+	// them up via codegen, this fallback computation can be replaced by direct
+	// reads of entry.kind / entry.importable.
+	type EntryKind = 'dir' | 'iso' | 'other';
+
+	interface DecoratedEntry extends FileEntry {
+		kind: EntryKind;
+		importable: boolean;
+	}
 
 	interface Props {
-		onselect: (path: string) => void;
+		onselect: (selection: { path: string; kind: 'dir' | 'iso' }) => void;
 	}
 
 	let { onselect }: Props = $props();
@@ -24,10 +35,39 @@
 	let sortKey = $state<'name' | 'size' | 'modified'>('name');
 	let sortDir = $state<'asc' | 'desc'>('asc');
 
-	let allDirectories = $derived(entries.filter((e) => e.type === 'directory'));
-	let filterEnabled = $derived(allDirectories.length > 5);
-	let directories = $derived(
-		[...allDirectories]
+	function classifyEntry(entry: FileEntry, allEntries: readonly FileEntry[]): { kind: EntryKind; importable: boolean } {
+		// Prefer server-computed fields when present; codegen may not yet expose them.
+		const raw = entry as FileEntry & { kind?: EntryKind; importable?: boolean };
+		if (raw.kind) {
+			return { kind: raw.kind, importable: raw.importable ?? false };
+		}
+		if (entry.type === 'directory') {
+			// A folder is importable when it (or a sibling, in the disc-internal case)
+			// contains BDMV/VIDEO_TS. We can only see siblings so the importable signal
+			// here is heuristic: a top-level dir is treated as potentially importable
+			// (true) and the user discovers the actual disc structure on the next nav.
+			// Disc-structure internals (BDMV/VIDEO_TS themselves) are still flagged via
+			// the existing isDiscStructureDir helper and rendered greyed.
+			return { kind: 'dir', importable: true };
+		}
+		if (entry.name.toLowerCase().endsWith('.iso')) {
+			return { kind: 'iso', importable: true };
+		}
+		return { kind: 'other', importable: false };
+	}
+
+	let decoratedEntries = $derived<DecoratedEntry[]>(
+		entries.map((e) => ({ ...e, ...classifyEntry(e, entries) }))
+	);
+
+	let visibleEntries = $derived(
+		decoratedEntries.filter((e) => e.kind === 'dir' || e.kind === 'iso' || e.kind === 'other')
+	);
+
+	let allDirectories = $derived(visibleEntries.filter((e) => e.kind === 'dir'));
+	let filterEnabled = $derived(visibleEntries.length > 5);
+	let sortedEntries = $derived(
+		[...visibleEntries]
 			.filter((e) => !filter || e.name.toLowerCase().includes(filter.toLowerCase()))
 			.sort((a, b) => {
 				let cmp: number;
@@ -45,7 +85,7 @@
 
 	function sortIcon(key: string): string {
 		if (sortKey !== key) return '';
-		return sortDir === 'asc' ? ' \u25B4' : ' \u25BE';
+		return sortDir === 'asc' ? ' ▴' : ' ▾';
 	}
 
 	function formatSize(bytes: number): string {
@@ -60,7 +100,7 @@
 		return upper === 'BDMV' || upper === 'VIDEO_TS' || upper === 'CERTIFICATE' || upper === 'AUDIO_TS';
 	}
 
-	/** True if the current listing contains BDMV or VIDEO_TS — this folder IS a disc. */
+	/** True if the current listing contains BDMV or VIDEO_TS - this folder IS a disc. */
 	let currentIsDisc = $derived(
 		entries.some((e) => e.type === 'directory' && (e.name.toUpperCase() === 'BDMV' || e.name.toUpperCase() === 'VIDEO_TS'))
 	);
@@ -85,21 +125,24 @@
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : 'Failed to load directory';
 			error = msg.includes('unreachable') || msg.includes('503')
-				? 'ARM service is starting up — try again in a moment'
+				? 'ARM service is starting up - try again in a moment'
 				: msg;
 		} finally {
 			loading = false;
 		}
 	}
 
-	function handleSelect(entry: FileEntry) {
+	function handleSelect(entry: DecoratedEntry) {
+		if (!entry.importable) return;
 		const fullPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
 		selectedPath = fullPath;
-		onselect(fullPath);
+		const kind: 'dir' | 'iso' = entry.kind === 'iso' ? 'iso' : 'dir';
+		onselect({ path: fullPath, kind });
 	}
 
-	function handleOpen(entry: FileEntry) {
-		// Don't drill into disc structure internals
+	function handleOpen(entry: DecoratedEntry) {
+		// Don't drill into disc structure internals or non-directory entries
+		if (entry.kind !== 'dir') return;
 		if (isDiscStructureDir(entry.name)) return;
 		const fullPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
 		selectedPath = null;
@@ -110,7 +153,7 @@
 	$effect(() => {
 		if (currentIsDisc && currentPath) {
 			selectedPath = currentPath;
-			onselect(currentPath);
+			onselect({ path: currentPath, kind: 'dir' });
 		}
 	});
 
@@ -139,7 +182,7 @@
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : 'Failed to load file roots';
 			error = msg.includes('unreachable') || msg.includes('503')
-				? 'ARM service is starting up — try again in a moment'
+				? 'ARM service is starting up - try again in a moment'
 				: msg;
 			loading = false;
 		}
@@ -158,7 +201,7 @@
 					class="underline hover:text-amber-900 dark:hover:text-amber-300"
 					onclick={() => { showImportWizard.set(false); goto('/settings#ripping/media-directories'); }}
 				>Settings &rarr; Ripping &rarr; Media Directories</button>
-				to the directory containing your BDMV/VIDEO_TS folders.</p>
+				to the directory containing your BDMV/VIDEO_TS folders or ISO files.</p>
 		</div>
 	{:else if error}
 		<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
@@ -182,7 +225,7 @@
 				<span class="truncate text-gray-700 dark:text-gray-300">{currentPath || ingressPath}</span>
 			</div>
 			{#if !currentIsDisc}
-				<p class="text-xs text-gray-400 dark:text-gray-500">Navigate to a folder containing BDMV or VIDEO_TS and select it.</p>
+				<p class="text-xs text-gray-400 dark:text-gray-500">Navigate to a folder containing BDMV or VIDEO_TS, or pick an ISO file.</p>
 			{/if}
 
 			<!-- Filter -->
@@ -190,14 +233,14 @@
 				type="text"
 				bind:value={filter}
 				disabled={!filterEnabled}
-				placeholder="Filter folders..."
+				placeholder="Filter entries..."
 				class="w-full rounded-lg border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white dark:placeholder-gray-500 disabled:cursor-not-allowed disabled:opacity-40"
 			/>
 
 			<!-- Disc detected banner -->
 			{#if currentIsDisc}
 				<div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
-					Disc folder detected — this folder is ready to import.
+					Disc folder detected - this folder is ready to import.
 				</div>
 			{/if}
 		</div>
@@ -242,24 +285,38 @@
 							<td class="px-4 py-2"></td>
 						</tr>
 					{/if}
-					{#if directories.length === 0}
-						<tr><td colspan="3" class="px-4 py-6 text-center text-gray-400 dark:text-gray-500">No subdirectories found.</td></tr>
+					{#if sortedEntries.length === 0}
+						<tr><td colspan="3" class="px-4 py-6 text-center text-gray-400 dark:text-gray-500">No entries found.</td></tr>
 					{/if}
-						{#each directories as entry (entry.name)}
+						{#each sortedEntries as entry (entry.name)}
 							{@const fullPath = currentPath ? `${currentPath}/${entry.name}` : entry.name}
-							{@const isStructureDir = isDiscStructureDir(entry.name)}
+							{@const isStructureDir = entry.kind === 'dir' && isDiscStructureDir(entry.name)}
 							{@const badge = discBadgeFor(entry.name)}
+							{@const disabled = !entry.importable || isStructureDir}
 							<tr
-								class="transition-colors {isStructureDir
+								data-kind={entry.kind}
+								data-disabled={disabled ? '' : undefined}
+								aria-disabled={disabled ? 'true' : undefined}
+								class="transition-colors {disabled
 									? 'cursor-default opacity-50'
 									: `cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10 ${selectedPath === fullPath ? 'bg-primary/15 dark:bg-primary/15' : ''}`}"
-								onclick={() => { if (!isStructureDir) handleSelect(entry); }}
-								ondblclick={() => { if (!isStructureDir) handleOpen(entry); }}
+								onclick={() => { if (!disabled) handleSelect(entry); }}
+								ondblclick={() => { if (!disabled) handleOpen(entry); }}
 							>
 								<td class="px-4 py-2">
 									<div class="flex items-center gap-2 overflow-hidden">
-										<span class="shrink-0"><FileIcon category="directory" /></span>
-										<span class="truncate {isStructureDir ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}">{entry.name}</span>
+										<span class="shrink-0">
+											{#if entry.kind === 'iso'}
+												<Disc class="h-4 w-4 text-primary" />
+											{:else if entry.kind === 'dir' && entry.importable && !isStructureDir}
+												<FolderArchive class="h-4 w-4 text-primary" />
+											{:else if entry.kind === 'dir'}
+												<Folder class="h-4 w-4 text-gray-500" />
+											{:else}
+												<FileIcon class="h-4 w-4 text-gray-400" />
+											{/if}
+										</span>
+										<span class="truncate {disabled ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}">{entry.name}</span>
 										{#if badge}
 											<span class="shrink-0 rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
 												{badge}

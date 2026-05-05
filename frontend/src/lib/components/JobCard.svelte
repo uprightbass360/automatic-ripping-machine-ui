@@ -9,6 +9,7 @@
 	import DiscTypeIcon from './DiscTypeIcon.svelte';
 	import SkeletonCard from './SkeletonCard.svelte';
 	import JobLifecycle from './JobLifecycle.svelte';
+	import { Disc } from 'lucide-svelte';
 
 	interface Props {
 		job?: Job;
@@ -124,6 +125,11 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
 						</svg>
 						Folder Import
+					</span>
+				{:else if job.source_type === 'iso'}
+					<span class="inline-flex items-center gap-1 rounded-sm bg-violet-100 px-1.5 py-0.5 font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+						<Disc class="h-3 w-3" />
+						ISO
 					</span>
 				{/if}
 				{#if job.disc_number}

@@ -767,7 +767,7 @@
 		TRANSCODE_PATH: { label: 'Transcode Path', description: 'Staging directory for transcoding work' },
 		COMPLETED_PATH: { label: 'Completed Path', description: 'Final destination for finished media files' },
 		MUSIC_PATH: { label: 'Music Path', description: 'Output directory for music CD rips (used by abcde)' },
-		INGRESS_PATH: { label: 'Folder Import Path', description: 'Root directory for disc folder imports (BDMV/VIDEO_TS). The Import Folder wizard browses this path.' },
+		INGRESS_PATH: { label: 'Folder Import Path', description: 'Folder where the Import wizard looks for folders (BDMV/VIDEO_TS) and ISO files.' },
 		EXTRAS_SUB: { label: 'Extras Subdirectory', description: 'Subfolder name for bonus features and extras' },
 		INSTALLPATH: { label: 'Install Path', description: 'ARM installation directory' },
 		LOGPATH: { label: 'Log Path', description: 'Directory for ARM log files' },

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { scanFolder, createFolderJob } from '$lib/api/import-jobs';
+	import { scanFolder, createFolderJob, scanIso, createIsoJob } from '$lib/api/import-jobs';
+	import type { IsoScanResult } from '$lib/api/import-jobs';
 	import { searchMetadata, fetchMediaDetail } from '$lib/api/jobs';
 	import type { FolderScanResult, SearchResultSchema as SearchResult, MediaDetailSchema as MediaDetail, FolderCreateRequest } from '$lib/types/api.gen';
 	import IngressBrowser from '$lib/components/IngressBrowser.svelte';
@@ -17,9 +18,12 @@
 	// Wizard state
 	let step = $state(1);
 	let selectedPath = $state('');
+	let selectedKind = $state<'dir' | 'iso'>('dir');
 	let scanning = $state(false);
 	let scanError = $state<string | null>(null);
-	let scanResult = $state<FolderScanResult | null>(null);
+	// Unified scan result: holds either FolderScanResult or IsoScanResult.
+	// We keep it loose because callers branch on selectedKind to read fields.
+	let scanResult = $state<FolderScanResult | IsoScanResult | null>(null);
 
 	// Step 2 editable fields
 	let editTitle = $state('');
@@ -58,6 +62,7 @@
 	function reset() {
 		step = 1;
 		selectedPath = '';
+		selectedKind = 'dir';
 		scanning = false;
 		scanError = null;
 		scanResult = null;
@@ -81,8 +86,23 @@
 		onclose();
 	}
 
-	function handleFolderSelect(path: string) {
-		selectedPath = path;
+	function handleSelect(selection: { path: string; kind: 'dir' | 'iso' }) {
+		selectedPath = selection.path;
+		selectedKind = selection.kind;
+	}
+
+	// Convenience accessors for fields that differ between FolderScanResult and IsoScanResult.
+	function scanFolderSize(r: FolderScanResult | IsoScanResult | null): number {
+		if (!r) return 0;
+		if ('iso_size' in r && typeof r.iso_size === 'number') return r.iso_size;
+		if ('folder_size_bytes' in r && typeof r.folder_size_bytes === 'number') return r.folder_size_bytes;
+		return 0;
+	}
+
+	function scanVolumeId(r: FolderScanResult | IsoScanResult | null): string | null {
+		if (!r) return null;
+		if ('volume_id' in r) return (r as IsoScanResult).volume_id;
+		return null;
 	}
 
 	async function goToStep2() {
@@ -90,16 +110,26 @@
 		scanning = true;
 		scanError = null;
 		try {
-			const result = await scanFolder(selectedPath);
+			const result = selectedKind === 'iso'
+				? await scanIso(selectedPath)
+				: await scanFolder(selectedPath);
 			scanResult = result;
 			editTitle = result.title_suggestion ?? '';
 			editYear = result.year_suggestion || '';
 			editType = 'movie';
 			editImdbId = '';
 			editPosterUrl = '';
-			editSeason = result.season?.toString() || '';
-			editDiscNumber = result.disc_number?.toString() || '';
-			editDiscTotal = result.disc_total?.toString() || '';
+			// Folder-only fields (season/disc) only exist on FolderScanResult.
+			if (selectedKind === 'dir' && 'season' in result) {
+				const folderResult = result as FolderScanResult;
+				editSeason = folderResult.season?.toString() || '';
+				editDiscNumber = folderResult.disc_number?.toString() || '';
+				editDiscTotal = folderResult.disc_total?.toString() || '';
+			} else {
+				editSeason = '';
+				editDiscNumber = '';
+				editDiscTotal = '';
+			}
 			searchQuery = result.title_suggestion ?? '';
 			searchResults = [];
 			searchError = null;
@@ -177,7 +207,7 @@
 		importing = true;
 		importError = null;
 		try {
-			const data: FolderCreateRequest = {
+			const common = {
 				source_path: selectedPath,
 				title: editTitle.trim(),
 				year: editYear.trim() || null,
@@ -189,7 +219,11 @@
 				disc_number: editDiscNumber ? Number(editDiscNumber) : null,
 				disc_total: editDiscTotal ? Number(editDiscTotal) : null,
 			};
-			await createFolderJob(data);
+			if (selectedKind === 'iso') {
+				await createIsoJob(common);
+			} else {
+				await createFolderJob(common as FolderCreateRequest);
+			}
 			reset();
 			oncreated();
 		} catch (e) {
@@ -214,7 +248,7 @@
 		<div class="relative z-10 flex h-full w-full flex-col bg-surface shadow-xl dark:bg-surface-dark sm:h-[75vh] sm:max-w-2xl sm:rounded-lg">
 			<!-- Header -->
 			<div class="flex items-center justify-between border-b border-primary/20 px-6 py-3 dark:border-primary/20">
-				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Import Folder</h3>
+				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Import</h3>
 				<button
 					type="button"
 					onclick={handleClose}
@@ -230,26 +264,31 @@
 			<!-- Body -->
 			<div class="flex min-h-0 flex-1 flex-col px-6 py-4">
 				{#if step === 1}
-					<!-- Step 1: Pick Folder -->
+					<!-- Step 1: Pick Source -->
 					{#if scanError}
 						<div class="mb-2 shrink-0 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
 							{scanError}
 						</div>
 					{/if}
-					<IngressBrowser onselect={handleFolderSelect} />
+					<IngressBrowser onselect={handleSelect} />
 
 				{:else if step === 2}
 					<!-- Step 2: Verify metadata -->
 					{#if scanResult}
 						<div class="min-h-0 flex-1 overflow-y-auto">
+							<!-- Source block header -->
+							<h4 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Source</h4>
 							<!-- Scan info badges -->
 							<div class="mb-3 flex flex-wrap gap-3 text-sm">
 								<span class="rounded-sm bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
 									{(scanResult.disc_type ?? 'unknown').toUpperCase()}
 								</span>
-								<span class="text-gray-500 dark:text-gray-400">{formatSize(scanResult.folder_size_bytes ?? 0)}</span>
+								<span class="text-gray-500 dark:text-gray-400">{formatSize(scanFolderSize(scanResult))}</span>
 								<span class="text-gray-500 dark:text-gray-400">{scanResult.stream_count} streams</span>
 								<span class="text-gray-500 dark:text-gray-400">Label: {scanResult.label}</span>
+								{#if selectedKind === 'iso' && scanVolumeId(scanResult)}
+									<span class="w-full text-xs text-gray-500 dark:text-gray-400">Volume ID: <span class="font-mono">{scanVolumeId(scanResult)}</span></span>
+								{/if}
 							</div>
 
 							<!-- Poster preview + editable fields -->
@@ -289,14 +328,14 @@
 									</label>
 									<label>
 										<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Season</span>
-										<input type="number" bind:value={editSeason} min="1" placeholder="—" class="w-full {inputBase}" />
+										<input type="number" bind:value={editSeason} min="1" placeholder="-" class="w-full {inputBase}" />
 									</label>
 									<label>
 										<span class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Disc</span>
 										<div class="flex items-center gap-1">
-											<input type="number" bind:value={editDiscNumber} min="1" placeholder="—" class="w-full {inputBase}" />
+											<input type="number" bind:value={editDiscNumber} min="1" placeholder="-" class="w-full {inputBase}" />
 											<span class="text-xs text-gray-400">of</span>
-											<input type="number" bind:value={editDiscTotal} min="1" placeholder="—" class="w-full {inputBase}" />
+											<input type="number" bind:value={editDiscTotal} min="1" placeholder="-" class="w-full {inputBase}" />
 										</div>
 									</label>
 								</div>
@@ -372,7 +411,7 @@
 					</div>
 
 				{:else if step === 4}
-					<!-- Step 3: Confirm -->
+					<!-- Step 4: Confirm -->
 					<!-- Pinned: summary card -->
 					<div class="shrink-0 rounded-lg border border-primary/20 p-4 dark:border-primary/20">
 						<div class="flex gap-4">
