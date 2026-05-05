@@ -16,6 +16,7 @@ from backend.routers import (
     files,
     folder,
     images,
+    iso,
     jobs,
     logs,
     maintenance,
@@ -64,6 +65,7 @@ app.include_router(notifications.router)
 app.include_router(themes.router)
 app.include_router(files.router)
 app.include_router(folder.router)
+app.include_router(iso.router)
 app.include_router(setup.router)
 app.include_router(system.router)
 app.include_router(images.router)

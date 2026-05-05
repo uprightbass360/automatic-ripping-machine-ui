@@ -793,6 +793,130 @@ export type ImageCacheStats = {
 };
 
 /**
+ * IsoCreateRequest
+ */
+export type IsoCreateRequest = {
+    /**
+     * Source Path
+     */
+    source_path: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Year
+     */
+    year?: string | null;
+    /**
+     * Video Type
+     */
+    video_type: string;
+    /**
+     * Disctype
+     */
+    disctype: string;
+    /**
+     * Imdb Id
+     */
+    imdb_id?: string | null;
+    /**
+     * Poster Url
+     */
+    poster_url?: string | null;
+    /**
+     * Multi Title
+     */
+    multi_title?: boolean;
+    /**
+     * Season
+     */
+    season?: number | null;
+    /**
+     * Disc Number
+     */
+    disc_number?: number | null;
+    /**
+     * Disc Total
+     */
+    disc_total?: number | null;
+};
+
+/**
+ * IsoCreateResponse
+ */
+export type IsoCreateResponse = {
+    /**
+     * Success
+     */
+    success?: boolean;
+    /**
+     * Job Id
+     */
+    job_id?: number | null;
+    /**
+     * Status
+     */
+    status?: string | null;
+    /**
+     * Source Type
+     */
+    source_type?: string | null;
+    /**
+     * Source Path
+     */
+    source_path?: string | null;
+};
+
+/**
+ * IsoScanRequest
+ */
+export type IsoScanRequest = {
+    /**
+     * Path
+     */
+    path: string;
+};
+
+/**
+ * IsoScanResult
+ */
+export type IsoScanResult = {
+    /**
+     * Success
+     */
+    success?: boolean;
+    /**
+     * Disc Type
+     */
+    disc_type?: string | null;
+    /**
+     * Label
+     */
+    label?: string | null;
+    /**
+     * Title Suggestion
+     */
+    title_suggestion?: string | null;
+    /**
+     * Year Suggestion
+     */
+    year_suggestion?: string | null;
+    /**
+     * Iso Size
+     */
+    iso_size?: number;
+    /**
+     * Stream Count
+     */
+    stream_count?: number;
+    /**
+     * Volume Id
+     */
+    volume_id?: string | null;
+};
+
+/**
  * JobConfigSnapshot
  *
  * Per-job config snapshot returned in JobDetailSchema.config.
@@ -6262,6 +6386,56 @@ export type PosterProxyRedirectApiJobsFolderPosterProxyGetResponses = {
      */
     200: unknown;
 };
+
+export type ScanIsoApiJobsIsoScanPostData = {
+    body: IsoScanRequest;
+    path?: never;
+    query?: never;
+    url: '/api/jobs/iso/scan';
+};
+
+export type ScanIsoApiJobsIsoScanPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ScanIsoApiJobsIsoScanPostError = ScanIsoApiJobsIsoScanPostErrors[keyof ScanIsoApiJobsIsoScanPostErrors];
+
+export type ScanIsoApiJobsIsoScanPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: IsoScanResult;
+};
+
+export type ScanIsoApiJobsIsoScanPostResponse = ScanIsoApiJobsIsoScanPostResponses[keyof ScanIsoApiJobsIsoScanPostResponses];
+
+export type CreateIsoJobApiJobsIsoPostData = {
+    body: IsoCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/jobs/iso';
+};
+
+export type CreateIsoJobApiJobsIsoPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateIsoJobApiJobsIsoPostError = CreateIsoJobApiJobsIsoPostErrors[keyof CreateIsoJobApiJobsIsoPostErrors];
+
+export type CreateIsoJobApiJobsIsoPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: IsoCreateResponse;
+};
+
+export type CreateIsoJobApiJobsIsoPostResponse = CreateIsoJobApiJobsIsoPostResponses[keyof CreateIsoJobApiJobsIsoPostResponses];
 
 export type GetSetupStatusApiSetupStatusGetData = {
     body?: never;
