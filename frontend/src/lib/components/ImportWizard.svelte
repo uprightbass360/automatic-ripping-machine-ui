@@ -101,7 +101,7 @@
 
 	function scanVolumeId(r: FolderScanResult | IsoScanResult | null): string | null {
 		if (!r) return null;
-		if ('volume_id' in r) return (r as IsoScanResult).volume_id;
+		if ('volume_id' in r) return (r as IsoScanResult).volume_id ?? null;
 		return null;
 	}
 
