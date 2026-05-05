@@ -7,7 +7,7 @@ vi.mock('$lib/api/client', () => ({
 import { apiFetch } from '$lib/api/client';
 import {
 	scanFolder, createFolderJob, fetchIngressDirectory, fetchIngressRoot
-} from '../api/folder';
+} from '../api/import-jobs';
 
 const mockApiFetch = vi.mocked(apiFetch);
 

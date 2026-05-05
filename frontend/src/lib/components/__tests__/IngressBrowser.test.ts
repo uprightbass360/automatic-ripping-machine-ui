@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
-import FolderBrowser from '../FolderBrowser.svelte';
+import IngressBrowser from '../IngressBrowser.svelte';
 import { createFolderEntry } from '../__fixtures__/files';
 
-import { fetchIngressRoot, fetchIngressDirectory } from '$lib/api/folder';
+import { fetchIngressRoot, fetchIngressDirectory } from '$lib/api/import-jobs';
 
 const movieFolder = createFolderEntry('Movie_Folder');
 const tvShowFolder = createFolderEntry('TV_Show', '2025-06-14T10:00:00Z');
 const subFolder = createFolderEntry('Subfolder');
 
-vi.mock('$lib/api/folder', () => ({
+vi.mock('$lib/api/import-jobs', () => ({
 	fetchIngressRoot: vi.fn(() => Promise.resolve([
 		{ key: 'ingress', label: 'Ingress', path: '/home/arm/ingress' }
 	])),
@@ -32,7 +32,7 @@ const mockFetchIngressDirectory = vi.mocked(fetchIngressDirectory);
 HTMLElement.prototype.scrollTo = vi.fn();
 
 function renderBrowser() {
-	return renderComponent(FolderBrowser, { onselect: vi.fn() });
+	return renderComponent(IngressBrowser, { onselect: vi.fn() });
 }
 
 async function waitForEntries() {
@@ -60,7 +60,7 @@ async function navigateIntoSubfolder() {
 	});
 }
 
-describe('FolderBrowser', () => {
+describe('IngressBrowser', () => {
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();

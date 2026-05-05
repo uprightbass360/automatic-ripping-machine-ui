@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup, waitFor } from '$lib/test-utils';
-import FolderImportWizard from './FolderImportWizard.svelte';
+import ImportWizard from './ImportWizard.svelte';
 import type { FolderScanResult } from '$lib/types/api.gen';
 const mockScanFolder = vi.fn<() => Promise<FolderScanResult>>();
 const mockCreateFolderJob = vi.fn(() => Promise.resolve({ job_id: 99 }));
 
-vi.mock('$lib/api/folder', () => ({
+vi.mock('$lib/api/import-jobs', () => ({
 	scanFolder: (...args: unknown[]) => mockScanFolder(...args as []),
 	createFolderJob: (...args: unknown[]) => mockCreateFolderJob(...args as [])
 }));
@@ -19,8 +19,8 @@ vi.mock('$lib/utils/poster', () => ({
 	posterSrc: (url: string) => url
 }));
 
-// Mock FolderBrowser to avoid filesystem dependencies
-vi.mock('$lib/components/FolderBrowser.svelte', () => ({
+// Mock IngressBrowser to avoid filesystem dependencies
+vi.mock('$lib/components/IngressBrowser.svelte', () => ({
 	default: {}
 }));
 
@@ -39,14 +39,14 @@ function createScanResult(overrides: Partial<FolderScanResult> = {}): FolderScan
 	};
 }
 
-describe('FolderImportWizard', () => {
+describe('ImportWizard', () => {
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
 	});
 
 	it('does not render when open is false', () => {
-		const { container } = renderComponent(FolderImportWizard, {
+		const { container } = renderComponent(ImportWizard, {
 			props: { open: false, onclose: vi.fn(), oncreated: vi.fn() }
 		});
 		expect(container.querySelector('h3')).not.toBeInTheDocument();
