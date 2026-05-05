@@ -292,3 +292,70 @@ async def test_stream_log_download_handles_unreachable():
     with patch.object(arm_client, "get_client", return_value=mock_client):
         resp = await arm_client.stream_log_download("a.log")
     assert resp is None
+
+
+# --- scan_iso ---
+
+
+async def test_scan_iso_success():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({
+        "success": True,
+        "disc_type": "dvd",
+        "label": "MOVIE_DISC",
+        "title_suggestion": "Movie",
+        "year_suggestion": "2024",
+        "iso_size": 4700000000,
+        "stream_count": 1,
+    })
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.scan_iso("/ingress/movie.iso")
+    assert result["success"] is True
+    assert result["disc_type"] == "dvd"
+    mock_client.request.assert_awaited_once_with(
+        "POST", "/api/v1/jobs/iso/scan", json={"path": "/ingress/movie.iso"}
+    )
+
+
+async def test_scan_iso_connect_error():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.side_effect = httpx.ConnectError("refused")
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.scan_iso("/ingress/movie.iso")
+    assert result is None
+
+
+# --- create_iso_job ---
+
+
+async def test_create_iso_job_success():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.return_value = _mock_response({
+        "success": True,
+        "job_id": 42,
+        "status": "identifying",
+        "source_type": "iso",
+        "source_path": "/ingress/movie.iso",
+    })
+    payload = {
+        "source_path": "/ingress/movie.iso",
+        "title": "Movie",
+        "year": "2024",
+        "video_type": "movie",
+        "disctype": "dvd",
+    }
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.create_iso_job(payload)
+    assert result["job_id"] == 42
+    assert result["source_type"] == "iso"
+    mock_client.request.assert_awaited_once_with(
+        "POST", "/api/v1/jobs/iso", json=payload
+    )
+
+
+async def test_create_iso_job_connect_error():
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.request.side_effect = httpx.ConnectError("refused")
+    with patch.object(arm_client, "get_client", return_value=mock_client):
+        result = await arm_client.create_iso_job({"source_path": "/x.iso"})
+    assert result is None
