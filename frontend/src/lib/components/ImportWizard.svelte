@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { scanFolder, createFolderJob } from '$lib/api/folder';
+	import { scanFolder, createFolderJob } from '$lib/api/import-jobs';
 	import { searchMetadata, fetchMediaDetail } from '$lib/api/jobs';
 	import type { FolderScanResult, SearchResultSchema as SearchResult, MediaDetailSchema as MediaDetail, FolderCreateRequest } from '$lib/types/api.gen';
-	import FolderBrowser from '$lib/components/FolderBrowser.svelte';
+	import IngressBrowser from '$lib/components/IngressBrowser.svelte';
 
 	import PosterImage from './PosterImage.svelte';
 
@@ -236,7 +236,7 @@
 							{scanError}
 						</div>
 					{/if}
-					<FolderBrowser onselect={handleFolderSelect} />
+					<IngressBrowser onselect={handleFolderSelect} />
 
 				{:else if step === 2}
 					<!-- Step 2: Verify metadata -->

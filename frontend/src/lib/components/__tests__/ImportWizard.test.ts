@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, cleanup, fireEvent, waitFor } from '$lib/test-utils';
-import FolderImportWizard from '../FolderImportWizard.svelte';
-import FolderBrowserMock from './FolderBrowserMock.svelte';
+import ImportWizard from '../ImportWizard.svelte';
+import IngressBrowserMock from './IngressBrowserMock.svelte';
 
-vi.mock('$lib/components/FolderBrowser.svelte', async () => ({
-	default: (await import('./FolderBrowserMock.svelte')).default
+vi.mock('$lib/components/IngressBrowser.svelte', async () => ({
+	default: (await import('./IngressBrowserMock.svelte')).default
 }));
 
 const searchMetadataMock = vi.fn(() => Promise.resolve([]));
 
-vi.mock('$lib/api/folder', () => ({
+vi.mock('$lib/api/import-jobs', () => ({
 	scanFolder: vi.fn(() => Promise.resolve({
 		disc_type: 'bluray', folder_size_bytes: 25000000000, stream_count: 5,
 		label: 'TEST_DISC', title_suggestion: 'Test Movie', year_suggestion: '2025',
@@ -32,7 +32,7 @@ vi.mock('$lib/api/jobs', () => ({
 	fetchMediaDetail: vi.fn(() => Promise.resolve({}))
 }));
 
-void FolderBrowserMock; // ensure import isn't tree-shaken
+void IngressBrowserMock; // ensure import isn't tree-shaken
 
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
@@ -41,28 +41,28 @@ vi.mock('$lib/stores/importWizard', async () => {
 	return { showImportWizard: writable(false) };
 });
 
-describe('FolderImportWizard', () => {
+describe('ImportWizard', () => {
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
 	});
 
 	it('renders dialog when open', () => {
-		renderComponent(FolderImportWizard, {
+		renderComponent(ImportWizard, {
 			props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
 		});
 		expect(screen.getByText('Import Folder')).toBeInTheDocument();
 	});
 
 	it('shows X close button in header', () => {
-		renderComponent(FolderImportWizard, {
+		renderComponent(ImportWizard, {
 			props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
 		});
 		expect(screen.getByLabelText('Close', { selector: 'button' })).toBeInTheDocument();
 	});
 
 	it('shows progress dots in footer', () => {
-		const { container } = renderComponent(FolderImportWizard, {
+		const { container } = renderComponent(ImportWizard, {
 			props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
 		});
 		const dots = container.querySelectorAll('.h-2.w-2.rounded-full');
@@ -71,7 +71,7 @@ describe('FolderImportWizard', () => {
 	});
 
 	it('renders folder browser on step 1', () => {
-		renderComponent(FolderImportWizard, {
+		renderComponent(ImportWizard, {
 			props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
 		});
 		// The Next button is present on step 1
@@ -79,7 +79,7 @@ describe('FolderImportWizard', () => {
 	});
 
 	it('does not render when closed', () => {
-		renderComponent(FolderImportWizard, {
+		renderComponent(ImportWizard, {
 			props: { open: false, onclose: vi.fn(), oncreated: vi.fn() }
 		});
 		expect(screen.queryByText('Import Folder')).not.toBeInTheDocument();
@@ -87,10 +87,10 @@ describe('FolderImportWizard', () => {
 
 	describe('4-step flow (Pick -> Verify -> OMDB -> Confirm)', () => {
 		async function advanceToStep2() {
-			renderComponent(FolderImportWizard, {
+			renderComponent(ImportWizard, {
 				props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
 			});
-			// Step 1: pick a folder via the mocked FolderBrowser, then click Next.
+			// Step 1: pick a folder via the mocked IngressBrowser, then click Next.
 			await fireEvent.click(screen.getByTestId('folder-browser-mock-select'));
 			await fireEvent.click(screen.getByText('Next'));
 			// scanFolder resolves, wizard auto-advances to step 2.

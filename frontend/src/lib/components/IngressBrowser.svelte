@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { fetchIngressRoot, fetchIngressDirectory } from '$lib/api/folder';
+	import { fetchIngressRoot, fetchIngressDirectory } from '$lib/api/import-jobs';
 	import { showImportWizard } from '$lib/stores/importWizard';
 	import type { FileEntry } from '$lib/types/api.gen';
 	import FileIcon from '$lib/components/FileIcon.svelte';

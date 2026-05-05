@@ -10,7 +10,7 @@
 	import BottomStatsBar from '$lib/components/BottomStatsBar.svelte';
 	import { goto } from '$app/navigation';
 	import { showImportWizard } from '$lib/stores/importWizard';
-	import FolderImportWizard from '$lib/components/FolderImportWizard.svelte';
+	import ImportWizard from '$lib/components/ImportWizard.svelte';
 	import { onMount } from 'svelte';
 	let { children } = $props();
 
@@ -359,7 +359,7 @@
 {/if}
 
 <!-- Folder import wizard (global, triggered from gear menu) -->
-<FolderImportWizard
+<ImportWizard
 	open={$showImportWizard}
 	onclose={() => showImportWizard.set(false)}
 	oncreated={() => { showImportWizard.set(false); }}
