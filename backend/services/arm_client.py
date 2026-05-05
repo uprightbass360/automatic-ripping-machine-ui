@@ -131,6 +131,16 @@ async def create_folder_job(data: dict[str, Any]) -> dict[str, Any] | None:
     return await _request("POST", "/api/v1/jobs/folder", json=data)
 
 
+async def scan_iso(path: str) -> dict[str, Any] | None:
+    """Scan an ISO file for disc structure. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/jobs/iso/scan", json={"path": path})
+
+
+async def create_iso_job(data: dict[str, Any]) -> dict[str, Any] | None:
+    """Create an ISO import job. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/jobs/iso", json=data)
+
+
 async def update_title(job_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
     """Update a job's title metadata via ARM's REST API. Returns None if unreachable."""
     return await _request("PUT", f"/api/v1/jobs/{job_id}/title", json=data)
