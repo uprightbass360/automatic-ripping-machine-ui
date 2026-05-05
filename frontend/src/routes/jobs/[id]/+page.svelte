@@ -28,6 +28,7 @@
 	import { get } from 'svelte/store';
 	import LoadState from '$lib/components/LoadState.svelte';
 	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
+	import { Disc } from 'lucide-svelte';
 
 	let job = $state<JobDetail | null>(null);
 	let jobLoading = $state(true);
@@ -431,6 +432,19 @@
 					<span class="text-base text-gray-400 dark:text-gray-500">({job.year})</span>
 				{/if}
 				<StatusBadge status={isFolderImport && (job.status === 'video_ripping' || job.status === 'ripping') ? 'importing' : job.status} />
+				{#if job.source_type === 'folder'}
+					<span class="inline-flex items-center gap-1 rounded-sm bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+						<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+						</svg>
+						Folder Import
+					</span>
+				{:else if job.source_type === 'iso'}
+					<span class="inline-flex items-center gap-1 rounded-sm bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+						<Disc class="h-3 w-3" />
+						ISO
+					</span>
+				{/if}
 				{#if job.multi_title}
 					<span class="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Multi-Title</span>
 				{/if}

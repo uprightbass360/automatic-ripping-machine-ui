@@ -31,8 +31,8 @@ const mockFetchIngressDirectory = vi.mocked(fetchIngressDirectory);
 // jsdom does not implement scrollTo
 HTMLElement.prototype.scrollTo = vi.fn();
 
-function renderBrowser() {
-	return renderComponent(IngressBrowser, { onselect: vi.fn() });
+function renderBrowser(onselect: (sel: { path: string; kind: 'dir' | 'iso' }) => void = vi.fn()) {
+	return renderComponent(IngressBrowser, { onselect });
 }
 
 async function waitForEntries() {
@@ -98,7 +98,7 @@ describe('IngressBrowser', () => {
 	it('filter input is disabled when 5 or fewer directories', async () => {
 		renderBrowser();
 		await waitForEntries();
-		const filterInput = screen.getByPlaceholderText('Filter folders...');
+		const filterInput = screen.getByPlaceholderText('Filter entries...');
 		expect(filterInput).toBeDisabled();
 	});
 
@@ -118,7 +118,7 @@ describe('IngressBrowser', () => {
 
 		renderBrowser();
 		await waitFor(() => {
-			expect(screen.getByText('No subdirectories found.')).toBeInTheDocument();
+			expect(screen.getByText('No entries found.')).toBeInTheDocument();
 		});
 	});
 
@@ -129,6 +129,101 @@ describe('IngressBrowser', () => {
 
 		await waitFor(() => {
 			expect(screen.getByText('Loading...')).toBeInTheDocument();
+		});
+	});
+
+	describe('ISO support', () => {
+		it('renders ISO files alongside folders', async () => {
+			mockFetchIngressDirectory.mockResolvedValueOnce({
+				path: '/home/arm/ingress',
+				entries: [
+					movieFolder,
+					{ name: 'Movie.iso', type: 'file', size: 8_000_000_000, modified: '2025-06-15T12:00:00Z', extension: 'iso', category: 'archive', permissions: 'rw-r--r--', owner: 'arm', group: 'arm' }
+				]
+			} as any);
+
+			renderBrowser();
+
+			await waitFor(() => {
+				expect(screen.getByText('Movie.iso')).toBeInTheDocument();
+				expect(screen.getByText('Movie_Folder')).toBeInTheDocument();
+			});
+		});
+
+		it('greys out non-importable other files', async () => {
+			mockFetchIngressDirectory.mockResolvedValueOnce({
+				path: '/home/arm/ingress',
+				entries: [
+					{ name: 'notes.txt', type: 'file', size: 100, modified: '2025-06-15T12:00:00Z', extension: 'txt', category: 'text', permissions: 'rw-r--r--', owner: 'arm', group: 'arm' }
+				]
+			} as any);
+
+			const { container } = renderBrowser();
+
+			await waitFor(() => {
+				expect(screen.getByText('notes.txt')).toBeInTheDocument();
+			});
+
+			const otherRow = container.querySelector('tr[data-kind="other"]');
+			expect(otherRow).toBeTruthy();
+			expect(otherRow?.getAttribute('data-disabled')).toBe('');
+			expect(otherRow?.getAttribute('aria-disabled')).toBe('true');
+		});
+
+		it('selecting an ISO emits kind=iso', async () => {
+			mockFetchIngressDirectory.mockResolvedValueOnce({
+				path: '/home/arm/ingress',
+				entries: [
+					{ name: 'Movie.iso', type: 'file', size: 8_000_000_000, modified: '2025-06-15T12:00:00Z', extension: 'iso', category: 'archive', permissions: 'rw-r--r--', owner: 'arm', group: 'arm' }
+				]
+			} as any);
+
+			const onselect = vi.fn();
+			renderBrowser(onselect);
+
+			await waitFor(() => {
+				expect(screen.getByText('Movie.iso')).toBeInTheDocument();
+			});
+
+			await fireEvent.click(screen.getByText('Movie.iso'));
+			expect(onselect).toHaveBeenCalledWith({
+				path: '/home/arm/ingress/Movie.iso',
+				kind: 'iso'
+			});
+		});
+
+		it('selecting a folder emits kind=dir', async () => {
+			const onselect = vi.fn();
+			renderBrowser(onselect);
+
+			await waitFor(() => {
+				expect(screen.getByText('Movie_Folder')).toBeInTheDocument();
+			});
+
+			await fireEvent.click(screen.getByText('Movie_Folder'));
+			expect(onselect).toHaveBeenCalledWith({
+				path: '/home/arm/ingress/Movie_Folder',
+				kind: 'dir'
+			});
+		});
+
+		it('clicking on a non-importable other entry does not select', async () => {
+			mockFetchIngressDirectory.mockResolvedValueOnce({
+				path: '/home/arm/ingress',
+				entries: [
+					{ name: 'notes.txt', type: 'file', size: 100, modified: '2025-06-15T12:00:00Z', extension: 'txt', category: 'text', permissions: 'rw-r--r--', owner: 'arm', group: 'arm' }
+				]
+			} as any);
+
+			const onselect = vi.fn();
+			renderBrowser(onselect);
+
+			await waitFor(() => {
+				expect(screen.getByText('notes.txt')).toBeInTheDocument();
+			});
+
+			await fireEvent.click(screen.getByText('notes.txt'));
+			expect(onselect).not.toHaveBeenCalled();
 		});
 	});
 });

@@ -8,14 +8,24 @@ vi.mock('$lib/components/IngressBrowser.svelte', async () => ({
 }));
 
 const searchMetadataMock = vi.fn(() => Promise.resolve([]));
+const scanIsoMock = vi.fn<(path: string) => Promise<unknown>>(() => Promise.resolve({
+	disc_type: 'bluray', iso_size: 12345678, stream_count: 7,
+	label: 'MOVIE_ISO', title_suggestion: 'ISO Movie', year_suggestion: '2025',
+	volume_id: 'VOL_LABEL_HERE'
+}));
+const createIsoJobMock = vi.fn<(data: Record<string, unknown>) => Promise<unknown>>(() => Promise.resolve({ success: true, job_id: 2 }));
+const scanFolderMock = vi.fn<(path: string) => Promise<unknown>>(() => Promise.resolve({
+	disc_type: 'bluray', folder_size_bytes: 25000000000, stream_count: 5,
+	label: 'TEST_DISC', title_suggestion: 'Test Movie', year_suggestion: '2025',
+	season: null, disc_number: null, disc_total: null
+}));
+const createFolderJobMock = vi.fn<(data: Record<string, unknown>) => Promise<unknown>>(() => Promise.resolve({ job_id: 1 }));
 
 vi.mock('$lib/api/import-jobs', () => ({
-	scanFolder: vi.fn(() => Promise.resolve({
-		disc_type: 'bluray', folder_size_bytes: 25000000000, stream_count: 5,
-		label: 'TEST_DISC', title_suggestion: 'Test Movie', year_suggestion: '2025',
-		season: null, disc_number: null, disc_total: null
-	})),
-	createFolderJob: vi.fn(() => Promise.resolve({ job_id: 1 })),
+	scanFolder: (path: string) => scanFolderMock(path),
+	createFolderJob: (data: Record<string, unknown>) => createFolderJobMock(data),
+	scanIso: (path: string) => scanIsoMock(path),
+	createIsoJob: (data: Record<string, unknown>) => createIsoJobMock(data),
 	fetchIngressRoot: vi.fn(() => Promise.resolve([
 		{ key: 'ingress', label: 'Ingress', path: '/home/arm/ingress' }
 	])),
@@ -51,7 +61,8 @@ describe('ImportWizard', () => {
 		renderComponent(ImportWizard, {
 			props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
 		});
-		expect(screen.getByText('Import Folder')).toBeInTheDocument();
+		// h3 is the wizard title (and the only h3 in the dialog).
+		expect(screen.getByRole('heading', { level: 3, name: 'Import' })).toBeInTheDocument();
 	});
 
 	it('shows X close button in header', () => {
@@ -66,11 +77,11 @@ describe('ImportWizard', () => {
 			props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
 		});
 		const dots = container.querySelectorAll('.h-2.w-2.rounded-full');
-		// 4-step wizard: Pick Folder -> Verify metadata -> OMDB Match -> Confirm
+		// 4-step wizard: Pick -> Verify metadata -> OMDB Match -> Confirm
 		expect(dots.length).toBe(4);
 	});
 
-	it('renders folder browser on step 1', () => {
+	it('renders source browser on step 1', () => {
 		renderComponent(ImportWizard, {
 			props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
 		});
@@ -82,7 +93,7 @@ describe('ImportWizard', () => {
 		renderComponent(ImportWizard, {
 			props: { open: false, onclose: vi.fn(), oncreated: vi.fn() }
 		});
-		expect(screen.queryByText('Import Folder')).not.toBeInTheDocument();
+		expect(screen.queryByRole('heading', { level: 3, name: 'Import' })).not.toBeInTheDocument();
 	});
 
 	describe('4-step flow (Pick -> Verify -> OMDB -> Confirm)', () => {
@@ -106,8 +117,8 @@ describe('ImportWizard', () => {
 		it('"Looks good" on step 2 jumps directly to step 4 (Confirm), skipping OMDB', async () => {
 			await advanceToStep2();
 			await fireEvent.click(screen.getByText('Looks good'));
-			// Step 4 has the Import button
-			await waitFor(() => expect(screen.getByText('Import')).toBeInTheDocument());
+			// Step 4 has the Import button (look for button specifically; "Import" is also the wizard title)
+			await waitFor(() => expect(screen.getByRole('button', { name: 'Import' })).toBeInTheDocument());
 		});
 
 		it('"Search OMDB" on step 2 advances to step 3 and auto-fires the search', async () => {
@@ -120,6 +131,52 @@ describe('ImportWizard', () => {
 			});
 			// Auto-search fires with the seeded title.
 			await waitFor(() => expect(searchMetadataMock).toHaveBeenCalled());
+		});
+	});
+
+	describe('ISO branch', () => {
+		it('selecting ISO calls scanIso (not scanFolder) and shows volume id', async () => {
+			scanFolderMock.mockClear();
+			scanIsoMock.mockClear();
+			renderComponent(ImportWizard, {
+				props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
+			});
+			// Step 1: pick the ISO via the mocked IngressBrowser, then click Next.
+			await fireEvent.click(screen.getByTestId('folder-browser-mock-select-iso'));
+			await fireEvent.click(screen.getByText('Next'));
+
+			await waitFor(() => expect(scanIsoMock).toHaveBeenCalledWith('/home/arm/ingress/Movie.iso'));
+			expect(scanFolderMock).not.toHaveBeenCalled();
+
+			// Step 2 shows the ISO Volume ID surfaced from the scan result.
+			await waitFor(() => {
+				expect(screen.getByText('VOL_LABEL_HERE')).toBeInTheDocument();
+			});
+		});
+
+		it('Import on ISO flow calls createIsoJob (not createFolderJob)', async () => {
+			scanFolderMock.mockClear();
+			createIsoJobMock.mockClear();
+			createFolderJobMock.mockClear();
+			renderComponent(ImportWizard, {
+				props: { open: true, onclose: vi.fn(), oncreated: vi.fn() }
+			});
+			await fireEvent.click(screen.getByTestId('folder-browser-mock-select-iso'));
+			await fireEvent.click(screen.getByText('Next'));
+			await waitFor(() => expect(screen.getByText('Looks good')).toBeInTheDocument());
+			await fireEvent.click(screen.getByText('Looks good'));
+			await waitFor(() => expect(screen.getByRole('button', { name: 'Import' })).toBeInTheDocument());
+			await fireEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+			await waitFor(() => expect(createIsoJobMock).toHaveBeenCalled());
+			expect(createFolderJobMock).not.toHaveBeenCalled();
+			const payload = createIsoJobMock.mock.calls[0][0];
+			expect(payload).toMatchObject({
+				source_path: '/home/arm/ingress/Movie.iso',
+				title: 'ISO Movie',
+				year: '2025',
+				disctype: 'bluray',
+			});
 		});
 	});
 });

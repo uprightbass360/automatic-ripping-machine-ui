@@ -114,4 +114,37 @@ describe('JobCard', () => {
 			expect(skeletonShell).not.toBeNull();
 		});
 	});
+
+	describe('ISO source_type', () => {
+		it('renders ISO badge when source_type is iso', () => {
+			renderComponent(JobCard, { props: { job: createJob({ source_type: 'iso' }) } });
+			expect(screen.getByText('ISO')).toBeInTheDocument();
+		});
+
+		it('does not render Folder Import badge for ISO source', () => {
+			renderComponent(JobCard, { props: { job: createJob({ source_type: 'iso' }) } });
+			expect(screen.queryByText('Folder Import')).not.toBeInTheDocument();
+		});
+
+		it('shows truthful ripping status (not folder-import importing remap) for ISO', () => {
+			renderComponent(JobCard, {
+				props: { job: createJob({ source_type: 'iso', status: 'video_ripping' }) }
+			});
+			// Folder import remaps video_ripping -> 'importing'; ISO must NOT.
+			expect(screen.queryByText(/importing/i)).toBeNull();
+		});
+
+		it('shows per-track counts for ISO active jobs (unlike folder imports)', () => {
+			renderComponent(JobCard, {
+				props: {
+					job: createJob({
+						source_type: 'iso',
+						status: 'video_ripping',
+						track_counts: { total: 5, ripped: 1 }
+					})
+				}
+			});
+			expect(screen.getByText(/1 \/ 5 titles/)).toBeInTheDocument();
+		});
+	});
 });
