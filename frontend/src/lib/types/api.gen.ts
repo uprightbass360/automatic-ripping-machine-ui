@@ -6669,31 +6669,3 @@ export type ClearImageCacheApiMaintenanceClearImageCachePostResponses = {
 };
 
 export type ClearImageCacheApiMaintenanceClearImageCachePostResponse = ClearImageCacheApiMaintenanceClearImageCachePostResponses[keyof ClearImageCacheApiMaintenanceClearImageCachePostResponses];
-
-export type RootStaticOrSpaFilenameGetData = {
-    body?: never;
-    path: {
-        /**
-         * Filename
-         */
-        filename: string;
-    };
-    query?: never;
-    url: '/{filename}';
-};
-
-export type RootStaticOrSpaFilenameGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type RootStaticOrSpaFilenameGetError = RootStaticOrSpaFilenameGetErrors[keyof RootStaticOrSpaFilenameGetErrors];
-
-export type RootStaticOrSpaFilenameGetResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
