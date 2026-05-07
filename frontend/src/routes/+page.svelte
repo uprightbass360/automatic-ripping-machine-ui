@@ -73,6 +73,18 @@
 	}));
 
 	let progressMap = $state<Record<number, RipProgress>>({});
+	// Transcode progress keyed by ARM job_id, so the All Jobs grid can show a
+	// real percentage for "transcoding" cards (which the rip-side progressMap
+	// has no value for). Per the unified-ID schema, transcoder.id == arm.job_id
+	// for webhook-originated jobs.
+	let transcodeProgressMap = $derived<Record<number, number>>(
+		(dash.active_transcodes ?? []).reduce((acc, tc) => {
+			if (typeof tc.id === 'number' && typeof tc.progress === 'number') {
+				acc[tc.id] = tc.progress;
+			}
+			return acc;
+		}, {} as Record<number, number>)
+	);
 
 	function dismissJob(jobId: number) {
 		dismissedJobIds = new Set([...dismissedJobIds, jobId]);
@@ -592,7 +604,7 @@
 					{:else}
 						<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 							{#each jobs as job (job.job_id)}
-								<JobCard {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id])} progressStage={progressMap[job.job_id]?.stage} />
+								<JobCard {job} driveNames={dash.drive_names} progress={overallProgress(progressMap[job.job_id]) ?? transcodeProgressMap[job.job_id] ?? null} progressStage={progressMap[job.job_id]?.stage} />
 							{/each}
 						</div>
 					{/if}
