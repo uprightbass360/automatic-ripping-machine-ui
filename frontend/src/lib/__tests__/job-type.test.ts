@@ -23,6 +23,38 @@ describe('getVideoTypeConfig', () => {
 	it('returns fallback for unknown type', () => {
 		expect(getVideoTypeConfig('audiobook').label).toBe('Disc');
 	});
+
+	it('uses Video fallback when video_type is unknown but disctype is video', () => {
+		// ARM knows it's a video disc, classification still pending - the
+		// cyan "Video" pill signals "we know it's video, not what kind"
+		// instead of presuming "Movie" or showing generic "Disc".
+		const dvd = getVideoTypeConfig(null, 'dvd');
+		expect(dvd.label).toBe('Video');
+		expect(dvd.badgeClasses).toContain('cyan');
+		expect(getVideoTypeConfig('unknown', 'bluray').label).toBe('Video');
+		expect(getVideoTypeConfig(undefined, 'bluray4k').label).toBe('Video');
+		expect(getVideoTypeConfig(null, 'uhd').label).toBe('Video');
+	});
+
+	it('Video fallback is case-insensitive on disctype', () => {
+		expect(getVideoTypeConfig(null, 'DVD').label).toBe('Video');
+		expect(getVideoTypeConfig(null, 'BluRay').label).toBe('Video');
+	});
+
+	it('keeps Disc fallback for non-video disctypes', () => {
+		// Data discs and audio CDs that fail metadata lookup should
+		// stay on the generic "Disc" pill - not "Video".
+		expect(getVideoTypeConfig(null, 'data').label).toBe('Disc');
+		expect(getVideoTypeConfig(null, 'music').label).toBe('Disc');
+		expect(getVideoTypeConfig(null, '').label).toBe('Disc');
+	});
+
+	it('confirmed video_type wins over disctype Video fallback', () => {
+		// A movie that happens to be on a DVD still renders as "Movie",
+		// not "Video".
+		expect(getVideoTypeConfig('movie', 'dvd').label).toBe('Movie');
+		expect(getVideoTypeConfig('series', 'bluray').label).toBe('Series');
+	});
 });
 
 describe('discTypeLabel', () => {
