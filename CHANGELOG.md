@@ -1,5 +1,25 @@
 # Changelog
 
+## [18.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.5.0...v18.0.0) (2026-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* contracts has breaking commits in this bump. Review the commit list above and verify consumer code still compiles before merging. release-please will cut a major consumer release when this PR lands.
+
+### Features
+
+* bump components/contracts to 37d3fd4 ([23dd718](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/23dd718952e061a3b987bc7f0296e9fb82f0a73e))
+* **iso:** BFF proxy router for /api/jobs/iso endpoints ([a4f6b3e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a4f6b3e4170e41cdc52bce8e8c2654a7e44ec174))
+* **iso:** unified Import wizard with ISO file support ([cef9351](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/cef93515c568e7118516cdaeb361043a2c1e9e35))
+* **ui:** split fallback into Video and Disc pills ([2dffdcf](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2dffdcf2c5eb66bbdcca8f2758e7243b1706d86a))
+
+
+### Bug Fixes
+
+* **dashboard:** show transcode % on All Jobs card ([2c7cba1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2c7cba1281f8a33565428c42aeb1bd53994611f9))
+* **quality:** clear SonarCloud gate failures on main ([25ed68e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/25ed68e2e3f333e8b6027fbc73fd01a93efa1b0a))
+
 ## [17.5.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.4.0...v17.5.0) (2026-05-04)
 
 
