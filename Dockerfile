@@ -1,5 +1,5 @@
 # Stage 1: Build frontend (always runs on the build host — output is static)
-FROM --platform=$BUILDPLATFORM node:24-slim AS frontend-build
+FROM --platform=$BUILDPLATFORM node:26-slim AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
