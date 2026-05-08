@@ -43,6 +43,18 @@ const DATA_CONFIG: VideoTypeConfig = {
 	iconColor: 'text-amber-500 dark:text-amber-400',
 };
 
+// Unidentified video disc: ARM knows it's a DVD/Blu-ray/UHD but
+// hasn't classified it as movie/series yet. Cyan reads "informational"
+// without colliding with Movie (blue), Series (purple), or Data (amber).
+const VIDEO_FALLBACK_CONFIG: VideoTypeConfig = {
+	label: 'Video',
+	icon: 'disc',
+	badgeClasses: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+	placeholderClasses: 'bg-cyan-100 text-cyan-400 dark:bg-cyan-900/30 dark:text-cyan-500',
+	accentBorder: 'border-l-cyan-500',
+	iconColor: 'text-cyan-500 dark:text-cyan-400',
+};
+
 const FALLBACK_CONFIG: VideoTypeConfig = {
 	label: 'Disc',
 	icon: 'disc',
@@ -59,9 +71,18 @@ const TYPE_MAP: Record<string, VideoTypeConfig> = {
 	data: DATA_CONFIG,
 };
 
-export function getVideoTypeConfig(videoType: string | null | undefined): VideoTypeConfig {
-	if (!videoType) return FALLBACK_CONFIG;
-	return TYPE_MAP[videoType.toLowerCase()] ?? FALLBACK_CONFIG;
+const VIDEO_DISCTYPES = new Set(['dvd', 'bluray', 'bluray4k', 'uhd']);
+
+export function getVideoTypeConfig(
+	videoType: string | null | undefined,
+	disctype?: string | null,
+): VideoTypeConfig {
+	const known = videoType ? TYPE_MAP[videoType.toLowerCase()] : undefined;
+	if (known) return known;
+	if (disctype && VIDEO_DISCTYPES.has(disctype.toLowerCase())) {
+		return VIDEO_FALLBACK_CONFIG;
+	}
+	return FALLBACK_CONFIG;
 }
 
 // Source of truth: arm_contracts.JobState (see components/contracts).

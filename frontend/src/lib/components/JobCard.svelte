@@ -21,7 +21,7 @@
 	let { job, driveNames, progress = null, progressStage = null }: Props = $props();
 	let driveName = $derived(job?.devpath ? (driveNames?.[job.devpath] ?? null) : null);
 
-	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null));
+	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null, job?.disctype ?? null));
 	let active = $derived(isJobActive(job?.status ?? null));
 	let hasErrors = $derived(!!job?.errors && job.errors.trim().length > 0);
 	let isFolderImport = $derived(job?.source_type === 'folder');

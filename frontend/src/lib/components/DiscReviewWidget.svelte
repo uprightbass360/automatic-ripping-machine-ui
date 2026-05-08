@@ -234,7 +234,7 @@
 	}
 
 	let waitTime = $derived(Number(detail?.config?.MANUAL_WAIT_TIME) || 60);
-	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null));
+	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null, job?.disctype ?? null));
 	let isVideo = $derived(
 		job?.disctype === 'dvd' || job?.disctype === 'bluray' || job?.disctype === 'bluray4k' || job?.video_type === 'movie' || job?.video_type === 'series'
 	);

@@ -20,7 +20,7 @@
 	let { job, driveNames = {}, onaction, selected = false, onselect }: Props = $props();
 	let driveName = $derived(job?.devpath ? driveNames[job.devpath] : null);
 
-	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null));
+	let typeConfig = $derived(getVideoTypeConfig(job?.video_type ?? null, job?.disctype ?? null));
 	let active = $derived(isJobActive(job?.status ?? null));
 	let hasErrors = $derived(!!job?.errors && job.errors.trim().length > 0);
 	let discLabelDiffers = $derived(

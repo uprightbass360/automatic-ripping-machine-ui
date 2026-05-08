@@ -332,7 +332,7 @@
 				{@const jobList = jobsData.jobs ?? []}
 			<div class="space-y-3">
 				{#each jobList as job (job.id)}
-					{@const typeConfig = getVideoTypeConfig(job.video_type ?? null)}
+					{@const typeConfig = getVideoTypeConfig(job.video_type ?? null, job.disctype ?? null)}
 					<div in:fade|global={fadeIn} out:fade|global={fadeOut} class="rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 						<div class="flex gap-4">
 							<!-- Poster -->
