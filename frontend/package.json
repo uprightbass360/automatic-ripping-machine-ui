@@ -15,7 +15,7 @@
     "codegen": "cd .. && bash scripts/codegen.sh"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.97.0",
+    "@hey-api/openapi-ts": "^0.97.1",
     "@playwright/test": "^1.59.1",
     "@sveltejs/adapter-static": "^3",
     "@sveltejs/kit": "^2",
