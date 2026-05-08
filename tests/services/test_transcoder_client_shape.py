@@ -12,6 +12,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from backend.models.transcoder import (
     TranscoderJobListResponse,
     TranscoderStatsResponse,
@@ -32,7 +34,7 @@ def test_job_list_shape_matches_contract():
     job = parsed.jobs[0]
     assert job.id == 1
     assert job.status == "processing"
-    assert job.progress == 42.5
+    assert job.progress == pytest.approx(42.5)
 
 
 def test_stats_shape_matches_contract():
