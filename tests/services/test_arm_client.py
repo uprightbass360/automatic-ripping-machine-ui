@@ -353,7 +353,7 @@ async def test_metadata_key_uses_30s_timeout(mock_client):
     _set_get_response(mock_client, {"success": True, "message": "ok", "provider": "makemkv"})
     await arm_client.test_metadata_key(provider="makemkv")
     args, kwargs = mock_client.get.await_args
-    assert kwargs["timeout"] == 30.0
+    assert kwargs["timeout"] == pytest.approx(30.0)
 
 
 async def test_metadata_key_raises_on_error(mock_client):
