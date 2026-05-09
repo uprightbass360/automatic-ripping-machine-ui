@@ -22,6 +22,12 @@
 
 	let { job, driveNames, progress = null, progressStage = null, tracksRipped = null, tracksTotal = null }: Props = $props();
 
+	function formatStage(s: string): string {
+		if (s === 'scratch-to-media') return 'Copying to shared storage';
+		if (s === 'work-to-completed') return 'Moving to completed';
+		return s;
+	}
+
 	// Use progress-polled counts when available (real-time), fall back to DB counts
 	let displayRipped = $derived(tracksRipped ?? job?.track_counts?.ripped ?? 0);
 	let displayTotal = $derived(tracksTotal ?? job?.track_counts?.total ?? 0);
@@ -289,7 +295,7 @@
 									{#if !active && job.stop_time}
 										<TimeAgo date={job.stop_time} />
 									{:else if active && progressStage}
-										{progressStage}
+										{formatStage(progressStage)}
 									{:else}
 										—
 									{/if}

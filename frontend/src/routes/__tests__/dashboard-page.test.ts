@@ -362,4 +362,48 @@ describe('Dashboard Page', () => {
 		renderComponent(DashboardPage);
 		await waitFor(() => expect(screen.getByText('No jobs found.')).toBeInTheDocument());
 	});
+
+	it('polls progress for jobs in copying status and renders the copy bar', async () => {
+		// Repro: hifi job in JobState.COPYING shows just the "Copying" label
+		// with no bar today; this test asserts copy_progress is fetched and
+		// rendered. The mock fetchJobProgress returns copy_progress=47.0 and
+		// copy_stage='scratch-to-media'; the dashboard should display 47%.
+		const COPYING_JOB = {
+			job_id: 42, title: 'Annihilation', status: 'copying',
+			disctype: 'bluray4k', source_type: 'folder', video_type: 'movie',
+			year: '2018', label: 'ANNI', start_time: '2026-05-09T18:00:00Z',
+			stop_time: null, job_length: null, devpath: '/dev/sr0',
+			imdb_id: null, poster_url: null, errors: null, stage: null,
+			no_of_titles: 0, logfile: null, track_counts: null,
+			wait_start_time: null
+		};
+
+		const { fetchDashboard } = await import('$lib/api/dashboard');
+		(fetchDashboard as ReturnType<typeof vi.fn>).mockResolvedValue({
+			db_available: true, arm_online: true,
+			active_jobs: [COPYING_JOB],
+			system_info: null, drives_online: 1, drive_names: { '/dev/sr0': 'Main Drive' },
+			notification_count: 2, ripping_enabled: true,
+			transcoder_online: false, transcoder_stats: null, transcoder_system_stats: null,
+			active_transcodes: [], system_stats: null, transcoder_info: null
+		});
+
+		const { fetchJobProgress } = await import('$lib/api/jobs');
+		(fetchJobProgress as ReturnType<typeof vi.fn>).mockResolvedValue({
+			progress: null, stage: null,
+			tracks_total: 0, tracks_ripped: 0, no_of_titles: null,
+			copy_progress: 47.0, copy_stage: 'scratch-to-media',
+		});
+
+		renderComponent(DashboardPage);
+		await waitFor(() => {
+			expect(screen.getByText('Annihilation')).toBeInTheDocument();
+		});
+
+		// Wait for the progress poll to land - ProgressBar renders "47%"
+		await waitFor(() => {
+			const matches = screen.queryAllByText(/47/);
+			expect(matches.length).toBeGreaterThan(0);
+		}, { timeout: 5000 });
+	});
 });

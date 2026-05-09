@@ -102,7 +102,14 @@
 	}
 
 	function overallProgress(p: RipProgress | undefined): number | null {
-		if (!p || p.progress == null) return null;
+		if (!p) return null;
+		// Copy phases (scratch-to-media on the ripper side) are surfaced via
+		// copy_progress. The UI gate on stage means an old arm-neu reporting
+		// copy_progress=null still falls through to rip_progress correctly.
+		if (p.copy_stage && p.copy_progress != null) {
+			return p.copy_progress;
+		}
+		if (p.progress == null) return null;
 		const total = p.tracks_total > 0 ? p.tracks_total : (p.no_of_titles ?? 0);
 		if (total > 0 && p.tracks_ripped > 0) {
 			// Per-track progress: some tracks done, current track partially complete
@@ -118,17 +125,18 @@
 		// 'ripping' is the legacy pre-v2.0.0 wire string; arm-neu now emits
 		// 'video_ripping' (DVD/Blu-ray) and 'audio_ripping' (music). Match all
 		// three so progress polling stays accurate during the deploy and
-		// continues working post-deploy.
-		const rippingJobs = activeJobs.filter(j => {
+		// continues working post-deploy. 'copying' is also tracked so the
+		// FINISHING section can render rsync copy progress.
+		const trackedJobs = activeJobs.filter(j => {
 			const s = j.status?.toLowerCase();
-			return s === 'video_ripping' || s === 'audio_ripping' || s === 'ripping';
+			return s === 'video_ripping' || s === 'audio_ripping' || s === 'ripping' || s === 'copying';
 		});
-		if (rippingJobs.length === 0) {
+		if (trackedJobs.length === 0) {
 			progressMap = {};
 			return;
 		}
 		const entries = await Promise.allSettled(
-			rippingJobs.map(async (j) => {
+			trackedJobs.map(async (j) => {
 				const prog = await fetchJobProgress(j.job_id);
 				return [j.job_id, prog] as const;
 			})
@@ -436,7 +444,12 @@
 				<div class="space-y-2">
 					{#each finishingJobs as job (job.job_id)}
 						<div in:fade|local={fadeIn} out:fade|local={fadeOut}>
-							<ActiveJobRow {job} driveNames={dash.drive_names} />
+							<ActiveJobRow
+								{job}
+								driveNames={dash.drive_names}
+								progress={overallProgress(progressMap[job.job_id])}
+								progressStage={progressMap[job.job_id]?.copy_stage ?? progressMap[job.job_id]?.stage ?? null}
+							/>
 						</div>
 					{/each}
 				</div>
