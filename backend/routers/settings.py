@@ -63,6 +63,7 @@ async def get_settings():
         transcoder_config=transcoder_config,
         transcoder_gpu_support=transcoder_gpu_support,
         transcoder_auth_status=transcoder_auth_status,
+        arm_ui_webhook_secret_configured=bool(app_settings.transcoder_webhook_secret),
         gpu_support=transcoder_gpu_support,
     )
 
