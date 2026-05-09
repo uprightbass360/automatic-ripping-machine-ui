@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { onDestroy } from 'svelte';
+    import { onDestroy, onMount } from 'svelte';
     import type { Scheme, Preset, Overrides } from '$lib/types/api.gen';
     import type { PresetEditorState } from '$lib/types/presets';
+    import { listHandbrakePresets } from '$lib/api/transcoder';
     interface Props {
         scope: 'global' | 'job';
         initialState: PresetEditorState;
@@ -96,6 +97,20 @@
     let undoToast = $state<{ message: string; previous: { slug: string; overrides: Overrides } } | null>(null);
     let undoTimer: ReturnType<typeof setTimeout> | null = null;
     onDestroy(() => { if (undoTimer) clearTimeout(undoTimer); });
+
+    // HandBrake preset picker. The transcoder enumerates its built-in
+    // preset list via /api/v1/handbrake-presets; the BFF passes through.
+    // When the list is empty (transcoder offline, older version, parser
+    // failure) we fall back to free-text entry so the field is never
+    // un-editable.
+    let handbrakePresetGroups = $state<Record<string, string[]>>({});
+    const handbrakeKnown = $derived(
+        new Set(Object.values(handbrakePresetGroups).flat())
+    );
+    const handbrakeAvailable = $derived(handbrakeKnown.size > 0);
+    onMount(async () => {
+        handbrakePresetGroups = await listHandbrakePresets();
+    });
 
     function handleDropdownChange(newSlug: string) {
         const wasDirty = dirty;
@@ -307,14 +322,43 @@
                             <label class="space-y-1 lg:col-span-2">
                                 <span class="text-xs text-gray-600 dark:text-gray-400">HandBrake preset</span>
                                 <div class={isTierDirty(tier, 'handbrake_preset') ? dirtyRing : ''}>
-                                    <input
-                                        type="text"
-                                        value={effectiveTier(tier, 'handbrake_preset')}
-                                        oninput={(e) => setTier(tier, 'handbrake_preset', (e.target as HTMLInputElement).value)}
-                                        disabled={saving || isUnavailable}
-                                        class="{inputClass} w-full"
-                                    />
+                                    {#if handbrakeAvailable && handbrakeKnown.has(String(effectiveTier(tier, 'handbrake_preset')))}
+                                        <select
+                                            value={effectiveTier(tier, 'handbrake_preset')}
+                                            onchange={(e) => {
+                                                const v = (e.target as HTMLSelectElement).value;
+                                                setTier(tier, 'handbrake_preset', v === '__custom__' ? '' : v);
+                                            }}
+                                            disabled={saving || isUnavailable}
+                                            class="{inputClass} w-full"
+                                        >
+                                            {#each Object.entries(handbrakePresetGroups) as [category, names]}
+                                                <optgroup label={category}>
+                                                    {#each names as name}
+                                                        <option value={name}>{name}</option>
+                                                    {/each}
+                                                </optgroup>
+                                            {/each}
+                                            <option value="__custom__">Custom...</option>
+                                        </select>
+                                    {:else}
+                                        <input
+                                            type="text"
+                                            value={effectiveTier(tier, 'handbrake_preset')}
+                                            oninput={(e) => setTier(tier, 'handbrake_preset', (e.target as HTMLInputElement).value)}
+                                            disabled={saving || isUnavailable}
+                                            class="{inputClass} w-full"
+                                            placeholder={handbrakeAvailable ? 'Custom preset name' : 'HandBrake preset name'}
+                                        />
+                                    {/if}
                                 </div>
+                                {#if handbrakeAvailable && handbrakeKnown.has(String(effectiveTier(tier, 'handbrake_preset')))}
+                                    <button
+                                        type="button"
+                                        class="text-xs text-primary hover:underline"
+                                        onclick={() => setTier(tier, 'handbrake_preset', '')}
+                                    >Use a custom preset name</button>
+                                {/if}
                             </label>
                             {#each Object.entries(scheme.advanced_fields ?? {}) as [key, def]}
                                 <label class="space-y-1">

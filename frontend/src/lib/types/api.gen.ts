@@ -5033,6 +5033,26 @@ export type GetTranscoderJobForArmApiTranscoderJobForArmArmJobIdGetResponses = {
 
 export type GetTranscoderJobForArmApiTranscoderJobForArmArmJobIdGetResponse = GetTranscoderJobForArmApiTranscoderJobForArmArmJobIdGetResponses[keyof GetTranscoderJobForArmApiTranscoderJobForArmArmJobIdGetResponses];
 
+export type GetHandbrakePresetsApiTranscoderHandbrakePresetsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/transcoder/handbrake-presets';
+};
+
+export type GetHandbrakePresetsApiTranscoderHandbrakePresetsGetResponses = {
+    /**
+     * Response Get Handbrake Presets Api Transcoder Handbrake Presets Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: Array<string>;
+    };
+};
+
+export type GetHandbrakePresetsApiTranscoderHandbrakePresetsGetResponse = GetHandbrakePresetsApiTranscoderHandbrakePresetsGetResponses[keyof GetHandbrakePresetsApiTranscoderHandbrakePresetsGetResponses];
+
 export type ListDrivesApiDrivesGetData = {
     body?: never;
     path?: never;
@@ -6843,3 +6863,31 @@ export type ClearImageCacheApiMaintenanceClearImageCachePostResponses = {
 };
 
 export type ClearImageCacheApiMaintenanceClearImageCachePostResponse = ClearImageCacheApiMaintenanceClearImageCachePostResponses[keyof ClearImageCacheApiMaintenanceClearImageCachePostResponses];
+
+export type RootStaticOrSpaFilenameGetData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/{filename}';
+};
+
+export type RootStaticOrSpaFilenameGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RootStaticOrSpaFilenameGetError = RootStaticOrSpaFilenameGetErrors[keyof RootStaticOrSpaFilenameGetErrors];
+
+export type RootStaticOrSpaFilenameGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};

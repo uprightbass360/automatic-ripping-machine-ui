@@ -438,6 +438,36 @@ async def test_get_job_for_arm_filters_by_job_id_not_most_recent(app_client):
     assert "arm_job_id" not in kwargs
 
 
+# --- HandBrake presets ---
+
+
+async def test_handbrake_presets_passes_through(app_client):
+    """BFF returns the categorized list verbatim from transcoder_client."""
+    fake = {"General": ["Fast 1080p30", "HQ 1080p30"], "Web": ["Vimeo 1080p"]}
+    with patch(
+        "backend.routers.transcoder.transcoder_client.list_handbrake_presets",
+        new_callable=AsyncMock,
+        return_value=fake,
+    ):
+        resp = await app_client.get("/api/transcoder/handbrake-presets")
+    assert resp.status_code == 200
+    assert resp.json() == fake
+
+
+async def test_handbrake_presets_empty_when_offline(app_client):
+    """When transcoder_client returns None (offline / older version), the
+    BFF returns an empty dict so the UI falls through to free-text input
+    rather than 500ing."""
+    with patch(
+        "backend.routers.transcoder.transcoder_client.list_handbrake_presets",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        resp = await app_client.get("/api/transcoder/handbrake-presets")
+    assert resp.status_code == 200
+    assert resp.json() == {}
+
+
 # --- Ripper-only gating ---
 
 TRANSCODER_GATED_ENDPOINTS = [
@@ -451,6 +481,7 @@ TRANSCODER_GATED_ENDPOINTS = [
     ("GET", "/api/transcoder/logs/foo.log/structured"),
     ("POST", "/api/transcoder/jobs/1/retranscode"),
     ("GET", "/api/transcoder/job-for-arm/1"),
+    ("GET", "/api/transcoder/handbrake-presets"),
 ]
 
 

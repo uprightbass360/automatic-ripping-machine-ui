@@ -33,3 +33,14 @@ export function deleteTranscoderJob(id: number): Promise<unknown> {
 export function retranscodeTranscoderJob(id: number): Promise<{ status: string; message: string }> {
 	return apiFetch(`/api/transcoder/jobs/${id}/retranscode`, { method: 'POST' });
 }
+
+export async function listHandbrakePresets(): Promise<Record<string, string[]>> {
+	try {
+		return await apiFetch<Record<string, string[]>>('/api/transcoder/handbrake-presets');
+	} catch {
+		// Endpoint missing (older transcoder), transcoder offline, or
+		// network error. The PresetEditor falls back to free-text in
+		// either case; an empty list is the agreed sentinel.
+		return {};
+	}
+}

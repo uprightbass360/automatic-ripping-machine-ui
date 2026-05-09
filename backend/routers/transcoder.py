@@ -174,3 +174,15 @@ async def get_transcoder_job_for_arm(arm_job_id: int) -> dict[str, Any]:
         "progress": job.get("progress"),
         "current_fps": job.get("current_fps"),
     }
+
+
+@router.get("/handbrake-presets", response_model=dict[str, list[str]])
+async def get_handbrake_presets() -> dict[str, list[str]]:
+    """List HandBrakeCLI built-in preset names from the transcoder.
+
+    Empty dict when the transcoder is offline or running an older version
+    that doesn't expose the endpoint - the UI falls through to free-text
+    entry in that case.
+    """
+    result = await transcoder_client.list_handbrake_presets()
+    return result or {}
