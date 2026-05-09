@@ -1475,10 +1475,20 @@
 								</div>
 								<div class="flex items-center gap-2 text-sm">
 									<span class="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold {settings.transcoder_auth_status.webhook_secret_configured ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}">{settings.transcoder_auth_status.webhook_secret_configured ? '\u2713' : '\u2014'}</span>
-									<span class="text-gray-700 dark:text-gray-300">Webhook secret {settings.transcoder_auth_status.webhook_secret_configured ? 'configured' : 'not configured'}</span>
+									<span class="text-gray-700 dark:text-gray-300">Transcoder webhook secret {settings.transcoder_auth_status.webhook_secret_configured ? 'configured' : 'not configured'}</span>
 								</div>
+								<div class="flex items-center gap-2 text-sm" title="Loaded from ARM_UI_TRANSCODER_WEBHOOK_SECRET at startup; rotation needs a container restart.">
+									<span class="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold {settings.arm_ui_webhook_secret_configured ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}">{settings.arm_ui_webhook_secret_configured ? '\u2713' : '\u2014'}</span>
+									<span class="text-gray-700 dark:text-gray-300">arm-ui webhook secret {settings.arm_ui_webhook_secret_configured ? 'configured' : 'not configured'}</span>
+								</div>
+								{#if settings.transcoder_auth_status.webhook_secret_configured !== settings.arm_ui_webhook_secret_configured}
+									<div class="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 md:col-span-2">
+										<span class="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-900/40">!</span>
+										<span>Webhook secrets are asymmetric - outbound webhooks will fail authentication until both sides agree.</span>
+									</div>
+								{/if}
 							</div>
-							<p class="mt-3 text-xs text-gray-400">API authentication is configured via Docker environment variables (REQUIRE_API_AUTH, API_KEY) on the transcoder container. The webhook secret is set in Notifications &gt; Transcoder and must match WEBHOOK_SECRET on the transcoder.</p>
+							<p class="mt-3 text-xs text-gray-400">API authentication is configured via Docker environment variables (REQUIRE_API_AUTH, API_KEY) on the transcoder container. The webhook secret must be set on both sides: WEBHOOK_SECRET on the transcoder and ARM_UI_TRANSCODER_WEBHOOK_SECRET on arm-ui (rotation requires a restart).</p>
 						</div>
 					{/if}
 				</div>

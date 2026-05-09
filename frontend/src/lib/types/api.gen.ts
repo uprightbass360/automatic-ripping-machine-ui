@@ -2595,6 +2595,10 @@ export type SettingsResponse = {
     } | null;
     transcoder_auth_status?: TranscoderAuthStatus | null;
     /**
+     * Arm Ui Webhook Secret Configured
+     */
+    arm_ui_webhook_secret_configured?: boolean;
+    /**
      * Gpu Support
      */
     gpu_support?: {
@@ -6843,3 +6847,31 @@ export type ClearImageCacheApiMaintenanceClearImageCachePostResponses = {
 };
 
 export type ClearImageCacheApiMaintenanceClearImageCachePostResponse = ClearImageCacheApiMaintenanceClearImageCachePostResponses[keyof ClearImageCacheApiMaintenanceClearImageCachePostResponses];
+
+export type RootStaticOrSpaFilenameGetData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/{filename}';
+};
+
+export type RootStaticOrSpaFilenameGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RootStaticOrSpaFilenameGetError = RootStaticOrSpaFilenameGetErrors[keyof RootStaticOrSpaFilenameGetErrors];
+
+export type RootStaticOrSpaFilenameGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};

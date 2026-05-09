@@ -165,6 +165,37 @@ async def test_settings_includes_auth_status(app_client):
     assert auth["webhook_secret_configured"] is True
 
 
+async def test_settings_arm_ui_webhook_secret_configured_true(app_client):
+    """get_settings reflects bool(transcoder_webhook_secret) from app_settings.
+
+    Loaded once at startup per feedback_arm_ui_webhook_secret_load_once;
+    operators read the indicator alongside transcoder_auth_status to spot
+    asymmetric configurations.
+    """
+    with (
+        patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=None),
+        patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
+        patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=None),
+        patch("backend.routers.settings.app_settings.transcoder_webhook_secret", "test-secret-123"),
+    ):
+        resp = await app_client.get("/api/settings")
+    assert resp.status_code == 200
+    assert resp.json()["arm_ui_webhook_secret_configured"] is True
+
+
+async def test_settings_arm_ui_webhook_secret_configured_false(app_client):
+    """Empty string for transcoder_webhook_secret yields configured=False."""
+    with (
+        patch("backend.routers.settings.arm_client.get_config", new_callable=AsyncMock, return_value=None),
+        patch("backend.routers.settings.transcoder_client.get_config", new_callable=AsyncMock, return_value=None),
+        patch("backend.routers.settings.transcoder_client.health", new_callable=AsyncMock, return_value=None),
+        patch("backend.routers.settings.app_settings.transcoder_webhook_secret", ""),
+    ):
+        resp = await app_client.get("/api/settings")
+    assert resp.status_code == 200
+    assert resp.json()["arm_ui_webhook_secret_configured"] is False
+
+
 async def test_settings_drops_non_string_comments(app_client):
     """ARM may emit non-string entries in `comments` (e.g. ARM_CFG_GROUPS as a
     per-section banner dict). The BFF must filter those out so the response
