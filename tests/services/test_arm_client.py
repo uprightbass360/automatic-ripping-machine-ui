@@ -332,7 +332,7 @@ async def test_metadata_key_success(mock_client):
     _set_get_response(mock_client, {"success": True, "message": "OMDb key valid", "provider": "omdb"})
     result = await arm_client.test_metadata_key()
     assert result["success"] is True
-    mock_client.get.assert_awaited_once_with("/api/v1/metadata/test-key", params={})
+    mock_client.get.assert_awaited_once_with("/api/v1/metadata/test-key", params={}, timeout=30.0)
 
 
 async def test_metadata_key_with_key_and_provider(mock_client):
@@ -341,7 +341,19 @@ async def test_metadata_key_with_key_and_provider(mock_client):
     result = await arm_client.test_metadata_key(key="abc123", provider="tmdb")
     assert result["success"] is True
     mock_client.get.assert_awaited_once_with(
-        "/api/v1/metadata/test-key", params={"key": "abc123", "provider": "tmdb"})
+        "/api/v1/metadata/test-key",
+        params={"key": "abc123", "provider": "tmdb"},
+        timeout=30.0,
+    )
+
+
+async def test_metadata_key_uses_30s_timeout(mock_client):
+    """test_metadata_key uses 30s timeout: makemkv prep_mkv() can take 15-30s
+    on a cold check (fetches a fresh beta key from forum.makemkv.com)."""
+    _set_get_response(mock_client, {"success": True, "message": "ok", "provider": "makemkv"})
+    await arm_client.test_metadata_key(provider="makemkv")
+    args, kwargs = mock_client.get.await_args
+    assert kwargs["timeout"] == 30.0
 
 
 async def test_metadata_key_raises_on_error(mock_client):
