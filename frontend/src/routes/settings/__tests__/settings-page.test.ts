@@ -89,10 +89,6 @@ vi.mock('$lib/api/system', () => ({
 	restartTranscoder: vi.fn(() => Promise.resolve())
 }));
 
-vi.mock('$lib/api/dashboard', () => ({
-	checkMakemkvKey: vi.fn(() => Promise.resolve({ valid: true, message: 'OK' }))
-}));
-
 vi.mock('$lib/api/maintenance', () => ({
 	fetchImageCacheStats: vi.fn(() => Promise.resolve({ count: 5, size_bytes: 5242880, size_mb: '5.0' })),
 	clearImageCache: vi.fn(() => Promise.resolve({ success: true, cleared: 5, freed_bytes: 5242880 }))
