@@ -248,6 +248,8 @@ async def get_job_progress(job_id: int):
         "tracks_total": counts["tracks_total"],
         "tracks_ripped": max(realtime, db_ripped),
         "no_of_titles": state.get("no_of_titles"),
+        "copy_progress": state.get("copy_progress"),
+        "copy_stage": state.get("copy_stage"),
     }
 
 
