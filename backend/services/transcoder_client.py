@@ -265,6 +265,26 @@ async def get_presets() -> dict[str, Any] | None:
         return None
 
 
+async def list_handbrake_presets() -> dict[str, list[str]] | None:
+    """Fetch HandBrakeCLI built-in preset names from transcoder.
+
+    Result shape: ``{category_name: [preset_name, ...]}``. Returns None
+    if the transcoder is offline OR if the endpoint isn't available
+    (older transcoder versions); the caller is expected to fall back to
+    free-text in either case.
+    """
+    try:
+        resp = await get_client().get("/api/v1/handbrake-presets")
+        if resp.status_code == 404:
+            # Older transcoder without the endpoint - signal "no list"
+            # rather than 500ing the BFF.
+            return None
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, httpx.ConnectError, RuntimeError, OSError):
+        return None
+
+
 async def create_preset(body: dict[str, Any]) -> dict[str, Any] | None:
     """Create a custom preset. Returns None if transcoder offline. Raises HTTPStatusError on 4xx/5xx."""
     try:
