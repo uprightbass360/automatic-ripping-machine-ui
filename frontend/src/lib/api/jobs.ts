@@ -168,6 +168,8 @@ export interface RipProgress {
 	tracks_total: number;
 	tracks_ripped: number;
 	no_of_titles: number | null;
+	copy_progress: number | null;
+	copy_stage: string | null;
 }
 
 export function fetchJobProgress(id: number): Promise<RipProgress> {
