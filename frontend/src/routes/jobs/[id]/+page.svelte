@@ -552,7 +552,7 @@
 				{#if job.config}
 					<button onclick={() => (activePanel = activePanel === 'rip' ? null : 'rip')} class={panelTabClass('rip')}>Rip Settings</button>
 				{/if}
-				{#if isVideoDisc && (job.video_type === 'series' || job.imdb_id)}
+				{#if isVideoDisc && job.video_type === 'series' && job.imdb_id}
 					<button onclick={() => (activePanel = activePanel === 'tvdb' ? null : 'tvdb')} class={panelTabClass('tvdb')}>Episodes</button>
 				{/if}
 				{#if $transcoderEnabled && isVideoDisc}
