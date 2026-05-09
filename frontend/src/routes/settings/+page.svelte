@@ -14,7 +14,6 @@
 	import type { DiagnosticResult } from '$lib/api/drives';
 	import DriveCard from '$lib/components/DriveCard.svelte';
 	import { restartArm, restartTranscoder } from '$lib/api/system';
-	import { checkMakemkvKey } from '$lib/api/dashboard';
 	import { fetchImageCacheStats, clearImageCache, type ImageCacheStats } from '$lib/api/maintenance';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import SystemHealth from '$lib/components/settings/SystemHealth.svelte';
@@ -142,33 +141,6 @@
 			const fb = { type: 'error' as const, message: `Failed to restart ${label}` };
 			if (service === 'arm') { armRestartFeedback = fb; armRestarting = false; }
 			else { tcRestartFeedback = fb; tcRestarting = false; }
-		}
-	}
-
-	// --- Key check state ---
-	let checkingKey = $state(false);
-	let keyCheckResult = $state<{ type: 'success' | 'error'; message: string } | null>(null);
-	let keyCheckTimeout: ReturnType<typeof setTimeout> | null = null;
-
-	async function handleKeyCheck() {
-		if (checkingKey) return;
-		checkingKey = true;
-		keyCheckResult = null;
-		if (keyCheckTimeout) clearTimeout(keyCheckTimeout);
-		try {
-			const res = await checkMakemkvKey();
-			keyCheckResult = {
-				type: res.key_valid ? 'success' : 'error',
-				message: res.message
-			};
-		} catch (e) {
-			keyCheckResult = {
-				type: 'error',
-				message: e instanceof Error ? e.message : 'Failed to check key'
-			};
-		} finally {
-			checkingKey = false;
-			keyCheckTimeout = setTimeout(() => (keyCheckResult = null), 10000);
 		}
 	}
 
@@ -959,34 +931,48 @@
 		'MAKEMKV_PERMA_KEY',
 	]);
 
-	// Keys hidden based on metadata provider selection
-	const METADATA_API_KEYS = new Set(['OMDB_API_KEY', 'TMDB_API_KEY']);
+	// Map of API-key form fields to the provider name used by the unified
+	// /api/v1/metadata/test-key endpoint. OMDB/TMDB are mutually exclusive
+	// (METADATA_PROVIDER picks one); TVDB and MakeMKV are always shown.
+	const KEY_TEST_PROVIDERS: Record<string, string> = {
+		OMDB_API_KEY: 'omdb',
+		TMDB_API_KEY: 'tmdb',
+		TVDB_API_KEY: 'tvdb',
+		MAKEMKV_PERMA_KEY: 'makemkv',
+	};
+	const METADATA_PROVIDER_KEYS = new Set(['OMDB_API_KEY', 'TMDB_API_KEY']);
 
 	function isMetadataKeyHidden(key: string): boolean {
-		if (!METADATA_API_KEYS.has(key)) return false;
+		if (!METADATA_PROVIDER_KEYS.has(key)) return false;
 		const provider = (armForm['METADATA_PROVIDER'] ?? 'omdb').toString().toLowerCase();
 		if (key === 'OMDB_API_KEY') return provider !== 'omdb';
 		if (key === 'TMDB_API_KEY') return provider !== 'tmdb';
 		return false;
 	}
 
-	function isMetadataApiKey(key: string): boolean {
-		return METADATA_API_KEYS.has(key);
+	function keyTestProvider(key: string): string | null {
+		return KEY_TEST_PROVIDERS[key] ?? null;
 	}
 
-	async function handleTestMetadata() {
+	let metadataTestKey = $state<string | null>(null);
+
+	async function handleTestKey(key: string) {
+		const provider = keyTestProvider(key);
+		if (!provider) return;
 		metadataTesting = true;
+		metadataTestKey = key;
 		metadataTestResult = null;
 		try {
-			const provider = (armForm['METADATA_PROVIDER'] ?? 'omdb').toString().toLowerCase();
-			const keyField = provider === 'tmdb' ? 'TMDB_API_KEY' : 'OMDB_API_KEY';
-			const currentKey = armForm[keyField]?.toString().trim() || undefined;
+			const currentKey = armForm[key]?.toString().trim() || undefined;
 			metadataTestResult = await testMetadataKey(currentKey, provider);
 		} catch {
 			metadataTestResult = { success: false, message: 'Failed to reach test endpoint' };
 		} finally {
 			metadataTesting = false;
-			clearFeedback(() => (metadataTestResult = null));
+			clearFeedback(() => {
+				metadataTestResult = null;
+				metadataTestKey = null;
+			});
 		}
 	}
 
@@ -1218,35 +1204,20 @@
 					>
 						{armRevealedKeys.has(key) ? 'Hide' : 'Show'}
 					</button>
-					{#if isMetadataApiKey(key)}
+					{#if keyTestProvider(key)}
 						<button
 							type="button"
-							onclick={handleTestMetadata}
+							onclick={() => handleTestKey(key)}
 							disabled={metadataTesting}
 							class="rounded-md border border-primary/25 px-2 py-2 text-xs font-medium text-primary-text hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:text-primary-text-dark dark:hover:bg-primary/15"
 						>
-							{metadataTesting ? 'Testing...' : 'Test'}
-						</button>
-					{/if}
-					{#if key === 'MAKEMKV_PERMA_KEY'}
-						<button
-							type="button"
-							onclick={handleKeyCheck}
-							disabled={checkingKey}
-							class="rounded-md border border-primary/25 px-2 py-2 text-xs font-medium text-primary-text hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:text-primary-text-dark dark:hover:bg-primary/15"
-						>
-							{checkingKey ? 'Checking...' : 'Check Key'}
+							{metadataTesting && metadataTestKey === key ? 'Testing...' : 'Test'}
 						</button>
 					{/if}
 				</div>
-				{#if isMetadataApiKey(key) && metadataTestResult}
+				{#if metadataTestKey === key && metadataTestResult}
 					<p class="mt-1 text-xs font-medium {metadataTestResult.success ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
 						{metadataTestResult.message}
-					</p>
-				{/if}
-				{#if key === 'MAKEMKV_PERMA_KEY' && keyCheckResult}
-					<p class="mt-1 text-xs font-medium {keyCheckResult.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-						{keyCheckResult.message}
 					</p>
 				{/if}
 			{:else if isIntStr(val?.toString())}
