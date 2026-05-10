@@ -165,7 +165,10 @@
 	<!-- Progress row: own line below a divider, indented under content -->
 	{#if active}
 		<div class="mt-2 border-t border-primary/10 dark:border-primary/15 px-4 pl-[64px] pr-4 py-2.5">
-			{#if progress != null && progress > 0}
+			{#if progress != null}
+				<!-- Render the bar even at 0%. The MakeMKV prelude (libredrive
+				     init, key ingest) can sit at 0 for several seconds and
+				     "ripping 0%" is more honest than an indeterminate spinner. -->
 				<ProgressBar value={progress} colorVar={accentVar} />
 			{:else}
 				<div class="flex items-center gap-2">
