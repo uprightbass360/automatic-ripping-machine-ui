@@ -4,7 +4,7 @@ Generate new color themes for the ARM (Automatic Ripping Machine) dashboard UI. 
 
 ## How Themes Work
 
-Each theme is a **JSON file** in `backend/themes/builtin/` (built-in) or uploaded by users via the Settings page. Themes define 13 CSS custom properties applied to `:root` at runtime. Dark-only themes set `"mode": "dark"`. Themes may optionally include custom CSS rules in the `"css"` field using the `[data-scheme="<id>"]` selector prefix.
+Each theme is a **JSON file** in `backend/themes/builtin/` (built-in) or uploaded by users via the Settings page. Themes define 13 required CSS custom properties applied to `:root` at runtime, plus 7 optional status-color tokens. Dark-only themes set `"mode": "dark"`. Themes may optionally include custom CSS rules in the `"css"` field using the `[data-scheme="<id>"]` selector prefix.
 
 ## Theme JSON Format
 
@@ -49,7 +49,7 @@ Each theme is a single `.json` file named `<id>.json`:
 | `description` | No | Short description of the theme |
 | `swatch` | Yes | Hex color for the preview circle (e.g. `"#3b82f6"`) |
 | `mode` | No | Set to `"dark"` to lock dark mode on. Omit for dual light/dark themes |
-| `tokens` | Yes | Object with 13 CSS custom properties (see below) |
+| `tokens` | Yes | Object with 13 required CSS custom properties (plus 7 optional status colors - see below) |
 | `css` | No | Custom CSS string scoped under `[data-scheme="<id>"]` (default: `""`) |
 
 ### Token Reference
@@ -78,6 +78,29 @@ Page & surface backgrounds:
   --color-surface               Light mode: card/panel bg (slightly lighter than page)
   --color-surface-dark          Dark mode: card/panel bg (slightly lighter than page-dark)
 ```
+
+#### Optional status-color tokens
+
+The 7 status-color tokens below paint job-state badges, lifecycle nodes,
+progress bars, and dashboard chips. They default to a sensible palette in
+`frontend/src/app.css` and themes don't need to override them - omit the
+keys to inherit defaults. Set them only when the default palette clashes
+with your theme accent.
+
+```
+  --color-status-ripping      Active rip / "Ripping" lifecycle node (default: blue)
+  --color-status-transcoding  Active transcode / "Transcoding" lifecycle (default: violet)
+  --color-status-finishing    Copy/eject phase, "Finishing" badge (default: amber)
+  --color-status-waiting      Pre-rip "Waiting" lifecycle node (default: yellow)
+  --color-status-scanning     Disc scan / metadata fetch in progress (default: cyan)
+  --color-status-success      Completed jobs (default: green)
+  --color-status-error        Failed jobs (default: red)
+```
+
+Pick contrasting hues so users can distinguish "ripping" from "transcoding"
+at a glance, and keep `--color-status-finishing` distinct from
+`--color-status-waiting` (the dashboard's `.status-warning` class also uses
+the waiting token).
 
 ## Custom CSS
 
