@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 
 async def test_progress_endpoint_includes_copy_fields(app_client):
     """When arm-neu reports copy_progress / copy_stage, the BFF passes them
@@ -31,7 +33,7 @@ async def test_progress_endpoint_includes_copy_fields(app_client):
         response = await app_client.get("/api/jobs/42/progress")
     assert response.status_code == 200
     data = response.json()
-    assert data["copy_progress"] == 47.5
+    assert data["copy_progress"] == pytest.approx(47.5)
     assert data["copy_stage"] == "scratch-to-media"
 
 

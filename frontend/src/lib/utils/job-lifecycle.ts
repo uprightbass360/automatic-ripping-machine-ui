@@ -89,19 +89,21 @@ export function isFolderImport(sourceType: string | null | undefined): boolean {
  */
 export function deriveLifecycle(
 	status: string | null | undefined,
-	sourceType: string | null | undefined
+	_sourceType?: string | null
 ): LifecycleNode[] {
-	void sourceType;
 	const stages = ALL_STAGES;
 	const lower = (status ?? '').toLowerCase();
 
 	if (FAILURE_STATUSES.has(lower)) {
 		// Failure snapshot: paint the last non-complete stage red.
 		const failIndex = stages.length - 2; // index of stage before 'complete'
-		return stages.map((s, i) => ({
-			...s,
-			state: i < failIndex ? 'completed' : i === failIndex ? 'failed' : 'pending'
-		}));
+		return stages.map((s, i) => {
+			let state: LifecycleNodeState;
+			if (i < failIndex) state = 'completed';
+			else if (i === failIndex) state = 'failed';
+			else state = 'pending';
+			return { ...s, state };
+		});
 	}
 
 	const stageId = STATUS_TO_STAGE[lower];
