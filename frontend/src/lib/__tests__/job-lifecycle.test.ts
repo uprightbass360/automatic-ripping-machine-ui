@@ -90,11 +90,12 @@ describe('deriveLifecycle - failure', () => {
 
 	it('folder import failure paints last non-complete stage too', () => {
 		const nodes = deriveLifecycle('fail', 'folder');
-		// 4 stages: waiting, identifying, transcoding, complete
+		// folder imports share the disc 5-stage lifecycle (folder_ripper still
+		// runs a MakeMKV remux that drives VIDEO_RIPPING)
 		expect(nodes.map((n) => n.id)).toEqual([
-			'waiting', 'identifying', 'transcoding', 'complete'
+			'waiting', 'identifying', 'ripping', 'transcoding', 'complete'
 		]);
-		expect(nodes[2].state).toBe('failed'); // transcoding (index 2, before complete)
+		expect(nodes[3].state).toBe('failed'); // transcoding, the last reachable non-complete
 	});
 });
 
@@ -106,20 +107,27 @@ describe('deriveLifecycle - paused', () => {
 });
 
 describe('deriveLifecycle - folder imports', () => {
-	it('folder source skips the ripping stage', () => {
+	it('folder source uses the same 5-stage lifecycle as disc', () => {
 		const nodes = deriveLifecycle('transcoding', 'folder');
 		expect(nodes.map((n) => n.id)).toEqual([
-			'waiting', 'identifying', 'transcoding', 'complete'
+			'waiting', 'identifying', 'ripping', 'transcoding', 'complete'
 		]);
+		expect(nodes[3].state).toBe('active');
+	});
+
+	it('video_ripping on folder source paints ripping active', () => {
+		// Repro: hifi job 224 (Annihilation folder import) reported
+		// status=video_ripping but earlier 4-stage FOLDER_STAGES had no
+		// ripping node, so deriveLifecycle returned all-pending.
+		const nodes = deriveLifecycle('video_ripping', 'folder');
+		expect(nodes[2].id).toBe('ripping');
 		expect(nodes[2].state).toBe('active');
 	});
 
-	it('importing wire string on folder source has no ripping node so falls through to pending', () => {
-		// Importing maps to the ripping stage but the folder-import lifecycle
-		// excludes that node; we render fully pending rather than misplace.
+	it('importing on folder source maps to ripping stage', () => {
 		const nodes = deriveLifecycle('importing', 'folder');
-		expect(nodes.length).toBe(4);
-		expect(nodes.every((n) => n.state === 'pending')).toBe(true);
+		expect(nodes[2].id).toBe('ripping');
+		expect(nodes[2].state).toBe('active');
 	});
 });
 

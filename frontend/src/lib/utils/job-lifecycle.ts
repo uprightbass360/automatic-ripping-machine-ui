@@ -2,7 +2,10 @@
  * Coarse 5-step lifecycle for visual progress display:
  * Waiting -> Identifying -> Ripping -> Transcoding -> Complete
  *
- * Folder imports skip the Ripping node (4 nodes total).
+ * Folder imports use the same 5 stages: folder_ripper still drives a
+ * MakeMKV remux pass (job.status = VIDEO_RIPPING) before handing off to
+ * the transcoder. An earlier 4-stage variant that omitted "Ripping"
+ * left video_ripping/audio_ripping unmapped, painting all nodes pending.
  *
  * Maps the disambiguated v2.0.0 JobState wire strings (and legacy pre-v2
  * strings, defensive) to lifecycle stages. Failures paint the active
@@ -38,12 +41,6 @@ const ALL_STAGES: { id: LifecycleStageId; label: string }[] = [
 	{ id: 'complete',     label: 'Complete' }
 ];
 
-const FOLDER_STAGES: { id: LifecycleStageId; label: string }[] = [
-	{ id: 'waiting',      label: 'Waiting' },
-	{ id: 'identifying',  label: 'Identifying' },
-	{ id: 'transcoding',  label: 'Transcoding' },
-	{ id: 'complete',     label: 'Complete' }
-];
 
 const STATUS_TO_STAGE: Record<string, LifecycleStageId> = {
 	// Waiting
@@ -94,7 +91,8 @@ export function deriveLifecycle(
 	status: string | null | undefined,
 	sourceType: string | null | undefined
 ): LifecycleNode[] {
-	const stages = isFolderImport(sourceType) ? FOLDER_STAGES : ALL_STAGES;
+	void sourceType;
+	const stages = ALL_STAGES;
 	const lower = (status ?? '').toLowerCase();
 
 	if (FAILURE_STATUSES.has(lower)) {
