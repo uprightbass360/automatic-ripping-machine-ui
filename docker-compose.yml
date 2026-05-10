@@ -3,8 +3,9 @@
 # for themes and image cache. Zero filesystem coupling to the ripper.
 #
 # Set WEBHOOK_SECRET in .env to authenticate outbound transcoder webhook
-# calls. Must match WEBHOOK_SECRET on the transcoder host (same operator-
-# facing variable name used by the arm-neu compose stacks).
+# calls. The compose file translates that bare name into the
+# ARM_UI_-prefixed var the BFF reads, matching the same convention used
+# by the arm-neu and transcoder stacks (one secret, three translations).
 
 services:
   arm-ui:
@@ -15,6 +16,8 @@ services:
       - ARM_UI_TRANSCODER_URL=${ARM_UI_TRANSCODER_URL:-http://localhost:5000}
       - ARM_UI_TRANSCODER_ENABLED=${ARM_UI_TRANSCODER_ENABLED:-true}
       - ARM_UI_TRANSCODER_API_KEY=${ARM_UI_TRANSCODER_API_KEY:-}
+      # Translates bare WEBHOOK_SECRET (same name used by arm-neu and the
+      # transcoder) into the ARM_UI_-prefixed var the BFF reads.
       - ARM_UI_TRANSCODER_WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
       - ARM_UI_THEMES_PATH=/data/themes
       - ARM_UI_IMAGE_CACHE_PATH=/data/cache/images
