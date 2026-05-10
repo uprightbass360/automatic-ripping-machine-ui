@@ -1,5 +1,23 @@
 # Changelog
 
+## [18.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v18.0.0...v18.1.0) (2026-05-10)
+
+
+### Features
+
+* **presets:** HandBrake preset picker fed from transcoder endpoint ([260264e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/260264e0544d72f1e432dc83ccb9f75badcf12cc))
+* **progress:** BFF surfaces copy_progress and copy_stage ([3a21d32](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/3a21d3250b3a945bdb752b51b456cbc89a65bdf8))
+* **progress:** render copy progress on dashboard for copying jobs ([e19178f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e19178f3ff67c04e20d697b1a3ca136d6a891536))
+* **settings:** show arm-ui webhook secret status alongside transcoder ([96a6833](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/96a68332b71828de60598cc1c27c51a943858086))
+
+
+### Bug Fixes
+
+* **arm-client:** raise test-metadata-key timeout to 30s for makemkv provider ([56137eb](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/56137eb3134ccd25ee66e3c1f0efc0484557ee15))
+* **jobs:** drop void operator in deriveLifecycle, prefix unused param ([df91801](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/df91801208d647ed5af306d9e9cc8a2302380fdf))
+* **jobs:** folder imports use the disc 5-stage lifecycle ([83a94a0](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/83a94a0c4056dcf346c436df585b0d8235a1622e))
+* **jobs:** hide Episodes tab on movie jobs (gate is series AND imdb_id) ([b2d22e6](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b2d22e69982c2d44140dc9038175931c096dd109))
+
 ## [18.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v17.5.0...v18.0.0) (2026-05-08)
 
 
