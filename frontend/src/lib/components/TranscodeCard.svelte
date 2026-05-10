@@ -118,7 +118,11 @@
 	<!-- Progress row: own line below a divider, indented under content -->
 	{#if isActive}
 		<div class="mt-2 border-t border-primary/10 dark:border-primary/15 px-4 pl-[64px] pr-4 py-2.5">
-			{#if typeof job.progress === 'number' && job.progress > 0}
+			{#if typeof job.progress === 'number'}
+				<!-- Render the bar even at 0%. Encoding can sit at 0 for the first
+				     pass (HandBrake/ffmpeg analyze + indexing) and the user wants
+				     to see "encoding 0%" not an indeterminate spinner with no
+				     percentage. -->
 				<ProgressBar value={job.progress} colorVar={accentVar} />
 			{:else}
 				<div class="flex items-center gap-2">
