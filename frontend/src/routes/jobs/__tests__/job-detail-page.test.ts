@@ -11,8 +11,8 @@ vi.mock('$app/navigation', () => ({
 	goto: vi.fn()
 }));
 
-vi.mock('$lib/api/jobs', () => ({
-	fetchJob: vi.fn(() => Promise.resolve({
+const { buildJob } = vi.hoisted(() => {
+	const baseMovieJob = {
 		job_id: 1, title: 'Test Movie', status: 'success', video_type: 'movie',
 		year: '2024', disctype: 'bluray', label: 'TEST_MOVIE', start_time: '2025-06-15T10:00:00Z',
 		stop_time: '2025-06-15T11:00:00Z', job_length: '1h 0m', devpath: '/dev/sr0',
@@ -25,7 +25,12 @@ vi.mock('$lib/api/jobs', () => ({
 			{ track_id: 1, job_id: 1, track_number: '1', length: 7200, aspect_ratio: '16:9', fps: 24, enabled: true, basename: 'title_01', filename: 'title_01.mkv', orig_filename: 'title_01.mkv', new_filename: null, ripped: true, status: 'success', error: null, source: null, title: null, year: null, imdb_id: null, poster_url: null, video_type: null, episode_number: null, episode_name: null }
 		],
 		config: {}
-	})),
+	};
+	return { buildJob: (overrides: Record<string, unknown> = {}) => ({ ...baseMovieJob, ...overrides }) };
+});
+
+vi.mock('$lib/api/jobs', () => ({
+	fetchJob: vi.fn(() => Promise.resolve(buildJob())),
 	retranscodeJob: vi.fn(() => Promise.resolve({ status: 'ok', message: 'Queued' })),
 	fetchMusicDetail: vi.fn(),
 	toggleMultiTitle: vi.fn(() => Promise.resolve()),
@@ -119,18 +124,9 @@ describe('Job Detail Page', () => {
 	describe('series jobs', () => {
 		it('shows Episodes tab for series jobs with imdb_id', async () => {
 			const { fetchJob } = await import('$lib/api/jobs');
-			vi.mocked(fetchJob).mockResolvedValueOnce({
-				job_id: 2, title: 'Test Series', status: 'success', video_type: 'series',
-				year: '2024', disctype: 'bluray', label: 'TEST_SERIES', start_time: '2025-06-15T10:00:00Z',
-				stop_time: '2025-06-15T11:00:00Z', job_length: '1h 0m', devpath: '/dev/sr0',
-				imdb_id: 'tt9999999', poster_url: null, errors: null, stage: null,
-				no_of_titles: 3, logfile: 'job_2.log', crc_id: null, multi_title: false,
-				source_type: 'disc', source_path: null, path: null, raw_path: null, transcode_path: null,
-				disc_number: null, disc_total: null, season: null, season_auto: null, tvdb_id: null,
-				artist: null, artist_auto: null, album: null, album_auto: null,
-				tracks: [],
-				config: {}
-			} as never);
+			vi.mocked(fetchJob).mockResolvedValueOnce(buildJob({
+				job_id: 2, title: 'Test Series', video_type: 'series', imdb_id: 'tt9999999', tracks: []
+			}) as never);
 
 			renderComponent(JobDetailPage);
 			await waitFor(() => {
@@ -139,20 +135,10 @@ describe('Job Detail Page', () => {
 		});
 
 		it('hides Episodes tab for series jobs without imdb_id', async () => {
-			// Without IMDb the matcher has no driver; the empty tab is noise.
 			const { fetchJob } = await import('$lib/api/jobs');
-			vi.mocked(fetchJob).mockResolvedValueOnce({
-				job_id: 3, title: 'Unidentified Series', status: 'success', video_type: 'series',
-				year: null, disctype: 'bluray', label: 'UNKNOWN', start_time: '2025-06-15T10:00:00Z',
-				stop_time: '2025-06-15T11:00:00Z', job_length: '1h 0m', devpath: '/dev/sr0',
-				imdb_id: null, poster_url: null, errors: null, stage: null,
-				no_of_titles: 3, logfile: 'job_3.log', crc_id: null, multi_title: false,
-				source_type: 'disc', source_path: null, path: null, raw_path: null, transcode_path: null,
-				disc_number: null, disc_total: null, season: null, season_auto: null, tvdb_id: null,
-				artist: null, artist_auto: null, album: null, album_auto: null,
-				tracks: [],
-				config: {}
-			} as never);
+			vi.mocked(fetchJob).mockResolvedValueOnce(buildJob({
+				job_id: 3, title: 'Unidentified Series', video_type: 'series', imdb_id: null, tracks: []
+			}) as never);
 
 			renderComponent(JobDetailPage);
 			await waitFor(() => {
