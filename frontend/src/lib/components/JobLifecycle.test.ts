@@ -17,13 +17,16 @@ describe('JobLifecycle', () => {
 			expect(screen.getByText('Complete')).toBeInTheDocument();
 		});
 
-		it('renders 4 stages for folder import (no Ripping node)', () => {
+		it('renders the same 5 stages for folder imports', () => {
+			// folder_ripper still drives a MakeMKV remux pass, so folder imports
+			// share the disc 5-stage lifecycle. An earlier 4-stage variant left
+			// video_ripping on folder jobs unmapped.
 			renderComponent(JobLifecycle, {
-				props: { status: 'transcoding', sourceType: 'folder' }
+				props: { status: 'video_ripping', sourceType: 'folder' }
 			});
 			expect(screen.getByText('Waiting')).toBeInTheDocument();
 			expect(screen.getByText('Identifying')).toBeInTheDocument();
-			expect(screen.queryByText('Ripping')).toBeNull();
+			expect(screen.getByText('Ripping')).toBeInTheDocument();
 			expect(screen.getByText('Transcoding')).toBeInTheDocument();
 			expect(screen.getByText('Complete')).toBeInTheDocument();
 		});
