@@ -300,6 +300,22 @@ async def get_media_detail(imdb_id: str) -> dict[str, Any] | None:
     return resp.json()
 
 
+async def get_job_metadata(job_id: int) -> dict[str, Any] | None:
+    """Fetch merged MediaMetadata for a job via ARM.
+
+    Returns None on 404 (caller raises 404 to its own client) or on
+    transport failure (caller raises 502).
+    """
+    try:
+        resp = await get_client().get(f"/api/v1/jobs/{job_id}/metadata")
+    except (httpx.ConnectError, httpx.HTTPError):
+        return None
+    if resp.status_code == 404:
+        return {"detail": "Job not found"}
+    resp.raise_for_status()
+    return resp.json()
+
+
 async def search_music_metadata(
     query: str, **kwargs: Any
 ) -> dict[str, Any]:

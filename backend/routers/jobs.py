@@ -253,6 +253,17 @@ async def get_job_progress(job_id: int):
     }
 
 
+@router.get("/jobs/{job_id}/metadata", responses=_404_502_ARM)
+async def get_job_metadata(job_id: int):
+    """Pass-through to ARM's merged MediaMetadata for a job."""
+    data = await arm_client.get_job_metadata(job_id)
+    if data is None:
+        raise HTTPException(status_code=502, detail=_ARM_UNREACHABLE)
+    if isinstance(data, dict) and data.get("detail") == "Job not found":
+        raise HTTPException(status_code=404, detail=_JOB_NOT_FOUND)
+    return data
+
+
 @router.get("/jobs/{job_id}/crc-lookup", responses=_404_502_ARM)
 async def crc_lookup_endpoint(job_id: int):
     """Look up a job's CRC64 hash in the community database."""

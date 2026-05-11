@@ -318,3 +318,62 @@ class TestSettingsTestMetadata:
         data = resp.json()
         assert data["success"] is False
         assert "unreachable" in data["message"].lower()
+
+
+# ---------------------------------------------------------------------------
+# GET /api/jobs/{job_id}/metadata - MediaMetadata pass-through
+# ---------------------------------------------------------------------------
+
+
+class TestJobMediaMetadata:
+    async def test_passthrough(self, app_client):
+        """ARM returns a merged MediaMetadata dict; BFF passes it through."""
+        fake_metadata = {
+            "title": "Annihilation",
+            "year": "2018",
+            "directors": ["Alex Garland"],
+            "genres": ["Sci-Fi"],
+        }
+        with patch("backend.routers.jobs.arm_client.get_job_metadata",
+                   new_callable=AsyncMock, return_value=fake_metadata):
+            resp = await app_client.get("/api/jobs/42/metadata")
+        assert resp.status_code == 200
+        assert resp.json()["directors"] == ["Alex Garland"]
+
+    async def test_job_not_found(self, app_client):
+        with patch("backend.routers.jobs.arm_client.get_job_metadata",
+                   new_callable=AsyncMock,
+                   return_value={"detail": "Job not found"}):
+            resp = await app_client.get("/api/jobs/999/metadata")
+        assert resp.status_code == 404
+
+    async def test_arm_unreachable(self, app_client):
+        with patch("backend.routers.jobs.arm_client.get_job_metadata",
+                   new_callable=AsyncMock, return_value=None):
+            resp = await app_client.get("/api/jobs/42/metadata")
+        assert resp.status_code == 502
+
+
+# ---------------------------------------------------------------------------
+# GET /api/patterns/tokens - PATTERN_TOKENS vocabulary
+# ---------------------------------------------------------------------------
+
+
+class TestPatternTokens:
+    async def test_returns_full_vocabulary(self, app_client):
+        """Lists every PATTERN_TOKENS alias with field_name + description."""
+        resp = await app_client.get("/api/patterns/tokens")
+        assert resp.status_code == 200
+        data = resp.json()
+        # Spot-check a few aliases the contract guarantees.
+        for alias in ("title", "year", "director", "genre", "video_type"):
+            assert alias in data, f"missing token: {alias}"
+            assert data[alias]["description"]
+        assert data["director"]["field_name"] == "directors"
+        assert data["genre"]["field_name"] == "genres"
+
+    async def test_returns_17_tokens(self, app_client):
+        """v3.2.0 ships exactly 17 tokens; this guards regressions."""
+        resp = await app_client.get("/api/patterns/tokens")
+        assert resp.status_code == 200
+        assert len(resp.json()) == 17
