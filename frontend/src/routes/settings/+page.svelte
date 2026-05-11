@@ -1245,11 +1245,7 @@
 			{/if}
 
 			{#if key.endsWith('_PATTERN') && settings?.naming_variables}
-				{@const patternVars = Object.entries(settings.naming_variables).filter(([v]) => {
-					if (key.startsWith('MUSIC_')) return ['title', 'year', 'artist', 'album', 'label'].includes(v);
-					if (key.startsWith('TV_')) return ['show', 'title', 'year', 'season', 'episode', 'episode_name', 'label', 'video_type', 'disc_number', 'disc_total'].includes(v);
-					return ['title', 'year', 'label', 'video_type', 'disc_number', 'disc_total'].includes(v);
-				})}
+				{@const patternVars = Object.entries(settings.naming_variables).sort(([a], [b]) => a.localeCompare(b))}
 				<div class="mt-1.5 flex flex-wrap gap-1">
 					{#each patternVars as [varName, varDesc]}
 						<span
