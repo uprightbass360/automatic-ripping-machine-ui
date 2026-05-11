@@ -21,6 +21,7 @@ from backend.routers import (
     logs,
     maintenance,
     notifications,
+    patterns,
     settings,
     setup,
     system,
@@ -70,6 +71,7 @@ app.include_router(setup.router)
 app.include_router(system.router)
 app.include_router(images.router)
 app.include_router(maintenance.router)
+app.include_router(patterns.router)
 
 # Serve static frontend build if it exists
 static_dir = Path(__file__).parent.parent / "frontend" / "build"

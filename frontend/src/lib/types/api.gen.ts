@@ -2291,6 +2291,20 @@ export type PathRequest = {
 };
 
 /**
+ * PatternTokenInfo
+ */
+export type PatternTokenInfo = {
+    /**
+     * Field Name
+     */
+    field_name: string;
+    /**
+     * Description
+     */
+    description: string;
+};
+
+/**
  * PreflightFixResult
  */
 export type PreflightFixResult = {
@@ -3562,6 +3576,42 @@ export type GetJobProgressApiJobsJobIdProgressGetErrors = {
 export type GetJobProgressApiJobsJobIdProgressGetError = GetJobProgressApiJobsJobIdProgressGetErrors[keyof GetJobProgressApiJobsJobIdProgressGetErrors];
 
 export type GetJobProgressApiJobsJobIdProgressGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetJobMetadataApiJobsJobIdMetadataGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: number;
+    };
+    query?: never;
+    url: '/api/jobs/{job_id}/metadata';
+};
+
+export type GetJobMetadataApiJobsJobIdMetadataGetErrors = {
+    /**
+     * Job not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * ARM service unreachable
+     */
+    502: unknown;
+};
+
+export type GetJobMetadataApiJobsJobIdMetadataGetError = GetJobMetadataApiJobsJobIdMetadataGetErrors[keyof GetJobMetadataApiJobsJobIdMetadataGetErrors];
+
+export type GetJobMetadataApiJobsJobIdMetadataGetResponses = {
     /**
      * Successful Response
      */
@@ -6867,3 +6917,51 @@ export type ClearImageCacheApiMaintenanceClearImageCachePostResponses = {
 };
 
 export type ClearImageCacheApiMaintenanceClearImageCachePostResponse = ClearImageCacheApiMaintenanceClearImageCachePostResponses[keyof ClearImageCacheApiMaintenanceClearImageCachePostResponses];
+
+export type GetPatternTokensApiPatternsTokensGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/patterns/tokens';
+};
+
+export type GetPatternTokensApiPatternsTokensGetResponses = {
+    /**
+     * Response Get Pattern Tokens Api Patterns Tokens Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: PatternTokenInfo;
+    };
+};
+
+export type GetPatternTokensApiPatternsTokensGetResponse = GetPatternTokensApiPatternsTokensGetResponses[keyof GetPatternTokensApiPatternsTokensGetResponses];
+
+export type RootStaticOrSpaFilenameGetData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/{filename}';
+};
+
+export type RootStaticOrSpaFilenameGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RootStaticOrSpaFilenameGetError = RootStaticOrSpaFilenameGetErrors[keyof RootStaticOrSpaFilenameGetErrors];
+
+export type RootStaticOrSpaFilenameGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
