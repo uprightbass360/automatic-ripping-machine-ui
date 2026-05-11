@@ -1,5 +1,18 @@
 # Changelog
 
+## [18.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v18.1.0...v18.2.0) (2026-05-11)
+
+
+### Features
+
+* **bff:** /api/jobs/{id}/metadata + /api/patterns/tokens endpoints ([82039c4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/82039c445ce68c1076f269636d0116fc93050e57))
+* **ui:** pattern editor shows all PATTERN_TOKENS, sorted alphabetically ([18cd3fd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/18cd3fd9d55491ae8193b558cd6b091fcea1ad14))
+
+
+### Bug Fixes
+
+* **dashboard:** render 0% progress bar instead of indeterminate spinner ([be1af65](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/be1af65e3345c1bb3114a540e03e8ec7fd4217e0))
+
 ## [18.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v18.0.0...v18.1.0) (2026-05-10)
 
 
