@@ -737,6 +737,65 @@ async def purge_cleared_notifications() -> dict[str, Any] | None:
     return await _request("POST", "/api/v1/notifications/purge")
 
 
+# --- Notification channels (v4 channels system) ---
+
+
+async def list_channels() -> Any:
+    """List notification channels. Returns None if ARM is unreachable."""
+    return await _request("GET", "/api/v1/notifications/channels")
+
+
+async def get_channel(channel_id: int) -> dict[str, Any] | None:
+    """Fetch one channel. Returns None if ARM is unreachable."""
+    return await _request("GET", f"/api/v1/notifications/channels/{channel_id}")
+
+
+async def create_channel(body: dict[str, Any]) -> dict[str, Any] | None:
+    """Create a channel. Returns None if ARM is unreachable."""
+    return await _request("POST", "/api/v1/notifications/channels", json=body)
+
+
+async def update_channel(channel_id: int, body: dict[str, Any]) -> dict[str, Any] | None:
+    """Patch a channel. Returns None if ARM is unreachable."""
+    return await _request("PATCH", f"/api/v1/notifications/channels/{channel_id}", json=body)
+
+
+async def delete_channel(channel_id: int) -> dict[str, Any] | None:
+    """Delete a channel. Returns None if ARM is unreachable."""
+    return await _request("DELETE", f"/api/v1/notifications/channels/{channel_id}")
+
+
+async def test_send_channel(channel_id: int, body: dict[str, Any]) -> dict[str, Any] | None:
+    """Trigger a test send. Returns None if ARM is unreachable."""
+    return await _request("POST", f"/api/v1/notifications/channels/{channel_id}/test", json=body)
+
+
+async def get_dispatch(dispatch_id: int) -> dict[str, Any] | None:
+    """Fetch one dispatch (outbox row) status. Returns None if unreachable."""
+    return await _request("GET", f"/api/v1/notifications/dispatch/{dispatch_id}")
+
+
+async def list_dispatches(channel_id: int | None = None, status: str | None = None,
+                          limit: int = 50) -> Any:
+    """List dispatches with optional filters. Returns None if unreachable."""
+    params: dict[str, Any] = {"limit": limit}
+    if channel_id is not None:
+        params["channel_id"] = channel_id
+    if status is not None:
+        params["status"] = status
+    return await _request("GET", "/api/v1/notifications/dispatches", params=params)
+
+
+async def get_services() -> dict[str, Any] | None:
+    """Fetch the apprise service catalog. Returns None if unreachable."""
+    return await _request("GET", "/api/v1/notifications/services")
+
+
+async def compose_channel_url(service_id: str, body: dict[str, Any]) -> dict[str, Any] | None:
+    """Compose an apprise URL from form values. Returns None if unreachable."""
+    return await _request("POST", f"/api/v1/notifications/services/{service_id}/compose-url", json=body)
+
+
 # --- Health ---
 
 
