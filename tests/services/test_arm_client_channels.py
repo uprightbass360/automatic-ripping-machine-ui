@@ -88,3 +88,12 @@ async def test_compose_url_proxies_body():
         out = await arm_client.compose_channel_url("discord", body)
     req.assert_awaited_once_with("POST", "/api/v1/notifications/services/discord/compose-url", json=body)
     assert out["url"] == "discord://1"
+
+
+async def test_compose_url_encodes_service_id():
+    body = {"required": {}, "advanced": {}}
+    with patch.object(arm_client, "_request", new_callable=AsyncMock,
+                      return_value={"url": "x"}) as req:
+        await arm_client.compose_channel_url("weird/id", body)
+    req.assert_awaited_once_with(
+        "POST", "/api/v1/notifications/services/weird%2Fid/compose-url", json=body)

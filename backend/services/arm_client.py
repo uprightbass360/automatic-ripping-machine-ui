@@ -793,7 +793,11 @@ async def get_services() -> dict[str, Any] | None:
 
 async def compose_channel_url(service_id: str, body: dict[str, Any]) -> dict[str, Any] | None:
     """Compose an apprise URL from form values. Returns None if unreachable."""
-    return await _request("POST", f"/api/v1/notifications/services/{service_id}/compose-url", json=body)
+    return await _request(
+        "POST",
+        f"/api/v1/notifications/services/{quote(service_id, safe='')}/compose-url",
+        json=body,
+    )
 
 
 # --- Health ---
