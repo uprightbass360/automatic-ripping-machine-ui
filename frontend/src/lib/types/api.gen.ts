@@ -5982,6 +5982,301 @@ export type DismissNotificationApiNotificationsNotifyIdPatchResponses = {
 
 export type DismissNotificationApiNotificationsNotifyIdPatchResponse = DismissNotificationApiNotificationsNotifyIdPatchResponses[keyof DismissNotificationApiNotificationsNotifyIdPatchResponses];
 
+export type ListChannelsApiNotificationsChannelsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/notifications/channels';
+};
+
+export type ListChannelsApiNotificationsChannelsGetResponses = {
+    /**
+     * Response List Channels Api Notifications Channels Get
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type CreateChannelApiNotificationsChannelsPostData = {
+    /**
+     * Body
+     */
+    body: {
+        [key: string]: unknown;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/notifications/channels';
+};
+
+export type CreateChannelApiNotificationsChannelsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateChannelApiNotificationsChannelsPostError = CreateChannelApiNotificationsChannelsPostErrors[keyof CreateChannelApiNotificationsChannelsPostErrors];
+
+export type CreateChannelApiNotificationsChannelsPostResponses = {
+    /**
+     * Response Create Channel Api Notifications Channels Post
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type DeleteChannelApiNotificationsChannelsChannelIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Channel Id
+         */
+        channel_id: number;
+    };
+    query?: never;
+    url: '/api/notifications/channels/{channel_id}';
+};
+
+export type DeleteChannelApiNotificationsChannelsChannelIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteChannelApiNotificationsChannelsChannelIdDeleteError = DeleteChannelApiNotificationsChannelsChannelIdDeleteErrors[keyof DeleteChannelApiNotificationsChannelsChannelIdDeleteErrors];
+
+export type DeleteChannelApiNotificationsChannelsChannelIdDeleteResponses = {
+    /**
+     * Response Delete Channel Api Notifications Channels  Channel Id  Delete
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetChannelApiNotificationsChannelsChannelIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Channel Id
+         */
+        channel_id: number;
+    };
+    query?: never;
+    url: '/api/notifications/channels/{channel_id}';
+};
+
+export type GetChannelApiNotificationsChannelsChannelIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetChannelApiNotificationsChannelsChannelIdGetError = GetChannelApiNotificationsChannelsChannelIdGetErrors[keyof GetChannelApiNotificationsChannelsChannelIdGetErrors];
+
+export type GetChannelApiNotificationsChannelsChannelIdGetResponses = {
+    /**
+     * Response Get Channel Api Notifications Channels  Channel Id  Get
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type UpdateChannelApiNotificationsChannelsChannelIdPatchData = {
+    /**
+     * Body
+     */
+    body: {
+        [key: string]: unknown;
+    };
+    path: {
+        /**
+         * Channel Id
+         */
+        channel_id: number;
+    };
+    query?: never;
+    url: '/api/notifications/channels/{channel_id}';
+};
+
+export type UpdateChannelApiNotificationsChannelsChannelIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateChannelApiNotificationsChannelsChannelIdPatchError = UpdateChannelApiNotificationsChannelsChannelIdPatchErrors[keyof UpdateChannelApiNotificationsChannelsChannelIdPatchErrors];
+
+export type UpdateChannelApiNotificationsChannelsChannelIdPatchResponses = {
+    /**
+     * Response Update Channel Api Notifications Channels  Channel Id  Patch
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type TestSendChannelApiNotificationsChannelsChannelIdTestPostData = {
+    /**
+     * Body
+     */
+    body?: {
+        [key: string]: unknown;
+    } | null;
+    path: {
+        /**
+         * Channel Id
+         */
+        channel_id: number;
+    };
+    query?: never;
+    url: '/api/notifications/channels/{channel_id}/test';
+};
+
+export type TestSendChannelApiNotificationsChannelsChannelIdTestPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type TestSendChannelApiNotificationsChannelsChannelIdTestPostError = TestSendChannelApiNotificationsChannelsChannelIdTestPostErrors[keyof TestSendChannelApiNotificationsChannelsChannelIdTestPostErrors];
+
+export type TestSendChannelApiNotificationsChannelsChannelIdTestPostResponses = {
+    /**
+     * Response Test Send Channel Api Notifications Channels  Channel Id  Test Post
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetDispatchApiNotificationsDispatchDispatchIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Dispatch Id
+         */
+        dispatch_id: number;
+    };
+    query?: never;
+    url: '/api/notifications/dispatch/{dispatch_id}';
+};
+
+export type GetDispatchApiNotificationsDispatchDispatchIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetDispatchApiNotificationsDispatchDispatchIdGetError = GetDispatchApiNotificationsDispatchDispatchIdGetErrors[keyof GetDispatchApiNotificationsDispatchDispatchIdGetErrors];
+
+export type GetDispatchApiNotificationsDispatchDispatchIdGetResponses = {
+    /**
+     * Response Get Dispatch Api Notifications Dispatch  Dispatch Id  Get
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ListDispatchesApiNotificationsDispatchesGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Channel Id
+         */
+        channel_id?: number | null;
+        /**
+         * Status
+         */
+        status?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/notifications/dispatches';
+};
+
+export type ListDispatchesApiNotificationsDispatchesGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListDispatchesApiNotificationsDispatchesGetError = ListDispatchesApiNotificationsDispatchesGetErrors[keyof ListDispatchesApiNotificationsDispatchesGetErrors];
+
+export type ListDispatchesApiNotificationsDispatchesGetResponses = {
+    /**
+     * Response List Dispatches Api Notifications Dispatches Get
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetServicesApiNotificationsServicesGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/notifications/services';
+};
+
+export type GetServicesApiNotificationsServicesGetResponses = {
+    /**
+     * Response Get Services Api Notifications Services Get
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ComposeChannelUrlApiNotificationsServicesServiceIdComposeUrlPostData = {
+    /**
+     * Body
+     */
+    body: {
+        [key: string]: unknown;
+    };
+    path: {
+        /**
+         * Service Id
+         */
+        service_id: string;
+    };
+    query?: never;
+    url: '/api/notifications/services/{service_id}/compose-url';
+};
+
+export type ComposeChannelUrlApiNotificationsServicesServiceIdComposeUrlPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ComposeChannelUrlApiNotificationsServicesServiceIdComposeUrlPostError = ComposeChannelUrlApiNotificationsServicesServiceIdComposeUrlPostErrors[keyof ComposeChannelUrlApiNotificationsServicesServiceIdComposeUrlPostErrors];
+
+export type ComposeChannelUrlApiNotificationsServicesServiceIdComposeUrlPostResponses = {
+    /**
+     * Response Compose Channel Url Api Notifications Services  Service Id  Compose Url Post
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
 export type ListThemesApiThemesGetData = {
     body?: never;
     path?: never;
@@ -6937,3 +7232,31 @@ export type GetPatternTokensApiPatternsTokensGetResponses = {
 };
 
 export type GetPatternTokensApiPatternsTokensGetResponse = GetPatternTokensApiPatternsTokensGetResponses[keyof GetPatternTokensApiPatternsTokensGetResponses];
+
+export type RootStaticOrSpaFilenameGetData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/{filename}';
+};
+
+export type RootStaticOrSpaFilenameGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RootStaticOrSpaFilenameGetError = RootStaticOrSpaFilenameGetErrors[keyof RootStaticOrSpaFilenameGetErrors];
+
+export type RootStaticOrSpaFilenameGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
