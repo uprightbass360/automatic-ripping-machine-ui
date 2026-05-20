@@ -16,9 +16,7 @@ const mockArmConfig: Record<string, string | null> = {
 	TV_TITLE_PATTERN: '{title} S{season}E{episode}', TV_FOLDER_PATTERN: '{title}/Season {season}',
 	MUSIC_TITLE_PATTERN: '{artist} - {album}', MUSIC_FOLDER_PATTERN: '{artist}/{album}',
 	GET_AUDIO_TITLE: 'true', AUDIO_FORMAT: 'flac', ABCDE_CONFIG_FILE: '/etc/abcde.conf',
-	NOTIFY_RIP: 'true', NOTIFY_TRANSCODE: 'true', NOTIFY_JOBID: 'true',
-	TRANSCODER_URL: 'http://localhost:8080', JSON_URL: '', APPRISE: '',
-	PB_KEY: '', IFTTT_KEY: '', PO_USER_KEY: '', PO_APP_KEY: '',
+	TRANSCODER_URL: 'http://localhost:8080',
 	USE_DISC_LABEL_FOR_TV: 'false', GROUP_TV_DISCS_UNDER_SERIES: 'false',
 	MAKEMKV_PERMA_KEY: '', ARM_CHILDREN: '1', EXTRAS_SUB: 'extras',
 	TRANSCODER_WEBHOOK_SECRET: '', LOCAL_RAW_PATH: '', SHARED_RAW_PATH: '',
@@ -284,6 +282,26 @@ describe('Settings Page', () => {
 				expect(screen.getByText('Locked by theme')).toBeInTheDocument();
 			});
 			expect(screen.queryByLabelText('Dark mode')).not.toBeInTheDocument();
+		});
+
+		it('notifications tab points to the new Notifications page and drops legacy fields', async () => {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			// Switch to the notifications tab
+			const notificationsTab = screen.getAllByText('Notifications');
+			await fireEvent.click(notificationsTab[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Notifications page')).toBeTruthy();
+			});
+			// Legacy notification-channel fields are gone
+			expect(screen.queryByText('Pushbullet Key')).toBeNull();
+			expect(screen.queryByText('IFTTT Key')).toBeNull();
+			expect(screen.queryByText('Apprise Config')).toBeNull();
+			expect(screen.queryByText('Notify After Rip')).toBeNull();
+			// Pointer link present
+			expect(screen.getByText('Notifications page')).toBeTruthy();
 		});
 
 		it('renders drives tab with collapsible diagnostics toggle', async () => {

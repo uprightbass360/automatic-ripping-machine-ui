@@ -763,18 +763,6 @@
 		EMBY_USERID: { label: 'Emby User ID', description: 'Emby internal user ID' },
 		EMBY_PASSWORD: { label: 'Emby Password', description: 'Emby account password' },
 		EMBY_API_KEY: { label: 'Emby API Key', description: 'API key for Emby server access' },
-		// Notifications
-		NOTIFY_RIP: { label: 'Notify After Rip', description: 'Send a notification when ripping completes' },
-		NOTIFY_TRANSCODE: { label: 'Notify After Transcode', description: 'Send a notification when transcoding completes' },
-		NOTIFY_JOBID: { label: 'Include Job ID', description: 'Append the job ID to notification titles' },
-		PB_KEY: { label: 'Pushbullet Key', description: 'API key for Pushbullet notifications' },
-		IFTTT_KEY: { label: 'IFTTT Key', description: 'Webhook key for IFTTT notifications' },
-		IFTTT_EVENT: { label: 'IFTTT Event', description: 'IFTTT webhook event name' },
-		PO_USER_KEY: { label: 'Pushover User Key', description: 'User key for Pushover notifications' },
-		PO_APP_KEY: { label: 'Pushover App Key', description: 'Application key for Pushover notifications' },
-		BASH_SCRIPT: { label: 'Notification Script', description: 'Path to a custom bash script run on notifications' },
-		JSON_URL: { label: 'Apprise JSON URL', description: 'Apprise webhook URL for notifications' },
-		APPRISE: { label: 'Apprise Config', description: 'Apprise notification service configuration string' },
 		// TVDB
 		TVDB_API_KEY: { label: 'TVDB API Key', description: 'API key for TheTVDB v4 — get one free at thetvdb.com/dashboard' },
 		TVDB_MATCH_TOLERANCE: { label: 'Match Tolerance (sec)', description: 'Max runtime difference in seconds for a track-to-episode match (default 300)' },
@@ -865,29 +853,9 @@
 			]},
 		],
 		notifications: [
-			{ label: 'Triggers', subpanels: [
-				{ keys: $transcoderEnabled
-					? ['NOTIFY_RIP', 'NOTIFY_TRANSCODE', 'NOTIFY_JOBID']
-					: ['NOTIFY_RIP', 'NOTIFY_JOBID'] },
-			]},
 			...($transcoderEnabled ? [{ label: 'Transcoder', subpanels: [
 				{ keys: ['TRANSCODER_URL', 'TRANSCODER_WEBHOOK_SECRET', 'LOCAL_RAW_PATH', 'SHARED_RAW_PATH'] },
 			]}] : []),
-			{ label: 'Apprise', subpanels: [
-				{ keys: ['JSON_URL', 'APPRISE'] },
-			]},
-			{ label: 'Pushbullet', subpanels: [
-				{ keys: ['PB_KEY'] },
-			]},
-			{ label: 'Pushover', subpanels: [
-				{ keys: ['PO_USER_KEY', 'PO_APP_KEY'] },
-			]},
-			{ label: 'IFTTT', subpanels: [
-				{ keys: ['IFTTT_KEY', 'IFTTT_EVENT'] },
-			]},
-			{ label: 'Custom Script', subpanels: [
-				{ keys: ['BASH_SCRIPT'] },
-			]},
 			{ label: 'Emby Integration', subpanels: [
 				{ label: 'Connection', keys: ['EMBY_REFRESH', 'EMBY_SERVER', 'EMBY_PORT'] },
 				{ label: 'Authentication', keys: ['EMBY_USERNAME', 'EMBY_USERID', 'EMBY_PASSWORD', 'EMBY_API_KEY'] },
@@ -919,11 +887,6 @@
 		'EMBY_USERID',
 		'EMBY_PASSWORD',
 		'EMBY_API_KEY',
-		'PB_KEY',
-		'IFTTT_KEY',
-		'PO_KEY',
-		'PO_USER_KEY',
-		'PO_APP_KEY',
 		'ARM_API_KEY',
 		'TMDB_API_KEY',
 		'TVDB_API_KEY',
@@ -1947,6 +1910,10 @@
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
 					{@render armSearchBar()}
 				</div>
+				<p class="mb-4 rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
+					Notification channels (Discord, Slack, webhooks, scripts, and more) are now managed on the
+					<a href="/settings/notifications" class="underline text-primary hover:text-primary-hover">Notifications page</a>.
+				</p>
 				{@render armSettingsSection('notifications')}
 			</section>
 		{/if}
