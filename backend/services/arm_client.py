@@ -740,7 +740,7 @@ async def purge_cleared_notifications() -> dict[str, Any] | None:
 # --- Notification channels (v4 channels system) ---
 
 
-async def list_channels() -> Any:
+async def list_channels() -> list[dict[str, Any]] | None:
     """List notification channels. Returns None if ARM is unreachable."""
     return await _request("GET", "/api/v1/notifications/channels")
 
@@ -776,7 +776,7 @@ async def get_dispatch(dispatch_id: int) -> dict[str, Any] | None:
 
 
 async def list_dispatches(channel_id: int | None = None, status: str | None = None,
-                          limit: int = 50) -> Any:
+                          limit: int = 50) -> list[dict[str, Any]] | None:
     """List dispatches with optional filters. Returns None if unreachable."""
     params: dict[str, Any] = {"limit": limit}
     if channel_id is not None:
