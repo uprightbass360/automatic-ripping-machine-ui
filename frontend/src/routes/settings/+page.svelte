@@ -24,6 +24,19 @@
 	import { transcoderEnabled } from '$lib/stores/config';
 	import { dashboard } from '$lib/stores/dashboard';
 	import { get } from 'svelte/store';
+	// --- Notification channels ---
+	import ServicePicker from '$lib/components/notifications/ServicePicker.svelte';
+	import SchemaField from '$lib/components/notifications/SchemaField.svelte';
+	import EventSubscriptions from '$lib/components/notifications/EventSubscriptions.svelte';
+	import TemplateEditor from '$lib/components/notifications/TemplateEditor.svelte';
+	import DispatchHistory from '$lib/components/notifications/DispatchHistory.svelte';
+	import {
+		fetchChannels, fetchServices, createChannel, updateChannel,
+		deleteChannel, testSendChannel, fetchDispatch, fetchDispatches, composeUrl
+	} from '$lib/api/channels';
+	import type {
+		Channel, Catalog, CatalogService, ChannelTemplate, ChannelConfig, DispatchRow
+	} from '$lib/types/notifications';
 
 	let settings = $state<SettingsData | null>(null);
 	let settingsLoading = $state(true);
@@ -424,6 +437,267 @@
 		}
 	}
 
+	// ====================================================================
+	// Notification channels (inline in the Notifications tab)
+	// ====================================================================
+	type EditEntry = {
+		name: string;
+		enabled: boolean;
+		subscribedEvents: string[];
+		templates: Record<string, ChannelTemplate>;
+		dispatches: DispatchRow[];
+		dispatchesLoaded: boolean;
+		toast: string | null;
+		saving: boolean;
+		testing: boolean;
+	};
+
+	let channels = $state<Channel[]>([]);
+	let catalog = $state<Catalog>({ featured: [], services: [] });
+	let channelsLoaded = $state(false);
+	let channelsLoading = $state(false);
+	let channelsError = $state<string | null>(null);
+
+	// Per-channel panel open state + edit state (seeded on expand).
+	let channelPanelOpen = $state<Record<number, boolean>>({});
+	let editState = $state<Record<number, EditEntry>>({});
+
+	// Add-channel panel state.
+	let addPanelOpen = $state(false);
+	let addType = $state<'apprise' | 'webhook' | 'bash'>('apprise');
+	let addService = $state<CatalogService | null>(null);
+	let addRequired = $state<Record<string, unknown>>({});
+	let addAdvanced = $state<Record<string, unknown>>({});
+	let addRawUrl = $state('');
+	let addName = $state('');
+	let addEnabled = $state(true);
+	let addSubscribedEvents = $state<string[]>([]);
+	let addTemplates = $state<Record<string, ChannelTemplate>>({});
+	let addWebhookUrl = $state('');
+	let addSharedSecret = $state('');
+	let addHeadersText = $state('');
+	let addScriptPath = $state('');
+	let addSaving = $state(false);
+	let addError = $state<string | null>(null);
+
+	async function loadNotifications() {
+		if (channelsLoaded || channelsLoading) return;
+		channelsLoading = true;
+		channelsError = null;
+		try {
+			const [chans, cat] = await Promise.all([fetchChannels(), fetchServices()]);
+			channels = chans;
+			catalog = cat;
+			channelsLoaded = true;
+		} catch (e) {
+			channelsError = e instanceof Error ? e.message : 'Failed to load notification channels';
+		} finally {
+			channelsLoading = false;
+		}
+	}
+
+	async function refetchChannels() {
+		try {
+			channels = await fetchChannels();
+		} catch (e) {
+			channelsError = e instanceof Error ? e.message : 'Failed to reload channels';
+		}
+	}
+
+	// Seed a fresh, deeply-reactive edit entry for a channel. Building the
+	// nested objects here (rather than spreading at the bind: site) keeps the
+	// templates/subscribedEvents proxies reactive so child-component edits
+	// propagate back through bind:.
+	function seedEditEntry(ch: Channel): EditEntry {
+		const templates: Record<string, ChannelTemplate> = {};
+		for (const [k, v] of Object.entries(ch.templates ?? {})) {
+			templates[k] = { title: v?.title ?? null, body: v?.body ?? null };
+		}
+		return {
+			name: ch.name,
+			enabled: ch.enabled,
+			subscribedEvents: [...ch.subscribed_events],
+			templates,
+			dispatches: [],
+			dispatchesLoaded: false,
+			toast: null,
+			saving: false,
+			testing: false
+		};
+	}
+
+	function toggleChannelPanel(ch: Channel) {
+		const open = !channelPanelOpen[ch.id];
+		channelPanelOpen[ch.id] = open;
+		if (open) {
+			// (Re)seed edit state from the latest channel data on expand.
+			editState[ch.id] = seedEditEntry(ch);
+			loadChannelDispatches(ch.id);
+		}
+	}
+
+	async function loadChannelDispatches(id: number) {
+		const entry = editState[id];
+		if (!entry || entry.dispatchesLoaded) return;
+		try {
+			entry.dispatches = await fetchDispatches({ channelId: id, limit: 20 });
+		} catch {
+			entry.dispatches = [];
+		} finally {
+			entry.dispatchesLoaded = true;
+		}
+	}
+
+	function channelStatusClass(ch: Channel): string {
+		if (!ch.enabled) return 'bg-gray-400 dark:bg-gray-500';
+		if (ch.last_error) return 'bg-amber-500';
+		return 'bg-green-500';
+	}
+
+	async function saveChannel(id: number) {
+		const entry = editState[id];
+		if (!entry) return;
+		entry.saving = true;
+		entry.toast = null;
+		try {
+			await updateChannel(id, {
+				name: entry.name,
+				enabled: entry.enabled,
+				subscribed_events: $state.snapshot(entry.subscribedEvents),
+				templates: $state.snapshot(entry.templates)
+			});
+			entry.toast = 'Saved.';
+			await refetchChannels();
+		} catch (e) {
+			entry.toast = e instanceof Error ? e.message : 'Save failed';
+		} finally {
+			entry.saving = false;
+		}
+	}
+
+	async function removeChannel(ch: Channel) {
+		if (!confirm(`Delete channel "${ch.name}"? This cannot be undone.`)) return;
+		try {
+			await deleteChannel(ch.id);
+			delete channelPanelOpen[ch.id];
+			delete editState[ch.id];
+			await refetchChannels();
+		} catch (e) {
+			channelsError = e instanceof Error ? e.message : 'Delete failed';
+		}
+	}
+
+	// Test-send + poll the dispatch up to ~5s for a terminal status.
+	async function testChannel(id: number) {
+		const entry = editState[id];
+		if (!entry) return;
+		entry.testing = true;
+		entry.toast = null;
+		try {
+			const { dispatch_id } = await testSendChannel(id, 'job.started');
+			for (let i = 0; i < 10; i++) {
+				await new Promise((r) => setTimeout(r, 500));
+				const d = await fetchDispatch(dispatch_id);
+				if (d.status === 'success') {
+					entry.toast = 'Test sent successfully.';
+					return;
+				}
+				if (d.status === 'failed') {
+					entry.toast = `Test failed: ${d.last_error ?? 'unknown'}`;
+					return;
+				}
+			}
+			entry.toast = 'Send is still pending — check Recent sends.';
+		} catch (e) {
+			entry.toast = e instanceof Error ? e.message : 'Test failed';
+		} finally {
+			entry.testing = false;
+		}
+	}
+
+	// --- Add-channel flow ---
+	function pickAddService(serviceId: string) {
+		addService = catalog.services.find((s) => s.id === serviceId) ?? null;
+		addRequired = {};
+		addAdvanced = {};
+	}
+
+	function parseHeaders(text: string): Record<string, string> {
+		const out: Record<string, string> = {};
+		for (const line of text.split('\n')) {
+			const idx = line.indexOf(':');
+			if (idx > 0) {
+				const k = line.slice(0, idx).trim();
+				const v = line.slice(idx + 1).trim();
+				if (k) out[k] = v;
+			}
+		}
+		return out;
+	}
+
+	function resetAddForm() {
+		addType = 'apprise';
+		addService = null;
+		addRequired = {};
+		addAdvanced = {};
+		addRawUrl = '';
+		addName = '';
+		addEnabled = true;
+		addSubscribedEvents = [];
+		addTemplates = {};
+		addWebhookUrl = '';
+		addSharedSecret = '';
+		addHeadersText = '';
+		addScriptPath = '';
+		addError = null;
+	}
+
+	async function saveNewChannel() {
+		addError = null;
+		addSaving = true;
+		try {
+			let config: ChannelConfig;
+			if (addType === 'apprise') {
+				let url = addRawUrl.trim();
+				if (!url && addService) {
+					const composed = await composeUrl(
+						addService.id,
+						$state.snapshot(addRequired),
+						$state.snapshot(addAdvanced)
+					);
+					url = composed.url;
+				}
+				if (!url) throw new Error('Pick a service or paste a raw Apprise URL.');
+				config = { type: 'apprise', url };
+			} else if (addType === 'webhook') {
+				config = {
+					type: 'webhook',
+					url: addWebhookUrl,
+					shared_secret: addSharedSecret || null,
+					headers: addHeadersText.trim() ? parseHeaders(addHeadersText) : null
+				};
+			} else {
+				config = { type: 'bash', script_path: addScriptPath };
+			}
+
+			await createChannel({
+				type: addType,
+				name: addName,
+				enabled: addEnabled,
+				config,
+				subscribed_events: $state.snapshot(addSubscribedEvents),
+				templates: $state.snapshot(addTemplates)
+			});
+			resetAddForm();
+			addPanelOpen = false;
+			await refetchChannels();
+		} catch (e) {
+			addError = e instanceof Error ? e.message : 'Save failed';
+		} finally {
+			addSaving = false;
+		}
+	}
+
 	function setTab(tab: Tab) {
 		activeTab = tab;
 		pendingPanel = null;
@@ -431,6 +705,7 @@
 		if (tab === 'music') loadAbcdeConfig();
 		if (tab === 'system') loadSystemInfo();
 		if (tab === 'appearance') loadCacheStats();
+		if (tab === 'notifications') loadNotifications();
 		// Reset scroll to top when switching tabs
 		document.querySelector('main')?.scrollTo(0, 0);
 	}
@@ -472,12 +747,14 @@
 		if (activeTab === 'music') loadAbcdeConfig();
 		if (activeTab === 'system') loadSystemInfo();
 		if (activeTab === 'appearance') loadCacheStats();
+		if (activeTab === 'notifications') loadNotifications();
 		function onHashChange() {
 			const { tab, panel } = parseHash();
 			activeTab = tab;
 			if (tab === 'music') loadAbcdeConfig();
 			if (tab === 'system') loadSystemInfo();
 			if (tab === 'appearance') loadCacheStats();
+			if (tab === 'notifications') loadNotifications();
 			if (panel) {
 				const groups = TAB_ARM_GROUPS[tab] ?? [];
 				const match = groups.find((g) => g.label.toLowerCase().replace(/[^a-z0-9]+/g, '-') === panel.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
@@ -852,15 +1129,11 @@
 				{ keys: ['MUSIC_MULTI_DISC_SUBFOLDERS', 'MUSIC_DISC_FOLDER_PATTERN'] },
 			]},
 		],
-		notifications: [
-			...($transcoderEnabled ? [{ label: 'Transcoder', subpanels: [
+		notifications: [],
+		transcoding: [
+			...($transcoderEnabled ? [{ label: 'Transcoder Connection', subpanels: [
 				{ keys: ['TRANSCODER_URL', 'TRANSCODER_WEBHOOK_SECRET', 'LOCAL_RAW_PATH', 'SHARED_RAW_PATH'] },
 			]}] : []),
-			{ label: 'Emby Integration', subpanels: [
-				{ label: 'Connection', keys: ['EMBY_REFRESH', 'EMBY_SERVER', 'EMBY_PORT'] },
-				{ label: 'Authentication', keys: ['EMBY_USERNAME', 'EMBY_USERID', 'EMBY_PASSWORD', 'EMBY_API_KEY'] },
-				{ label: 'Client Identity', keys: ['EMBY_CLIENT', 'EMBY_DEVICE', 'EMBY_DEVICEID'] },
-			]},
 		],
 		system: [
 			{ label: 'Identity', subpanels: [
@@ -871,6 +1144,11 @@
 			]},
 			{ label: 'System Paths & Logging', subpanels: [
 				{ keys: ['INSTALLPATH', 'LOGPATH', 'DBFILE', 'LOGLEVEL', 'LOGLIFE'] },
+			]},
+			{ label: 'Emby Integration', subpanels: [
+				{ label: 'Connection', keys: ['EMBY_REFRESH', 'EMBY_SERVER', 'EMBY_PORT'] },
+				{ label: 'Authentication', keys: ['EMBY_USERNAME', 'EMBY_USERID', 'EMBY_PASSWORD', 'EMBY_API_KEY'] },
+				{ label: 'Client Identity', keys: ['EMBY_CLIENT', 'EMBY_DEVICE', 'EMBY_DEVICEID'] },
 			]},
 		],
 	};
@@ -1668,6 +1946,15 @@
 			{:else}
 				<p class="text-sm text-gray-400">Transcoder offline or not configured.</p>
 			{/if}
+
+			<!-- Transcoder connection config (relocated from Notifications) -->
+			<section>
+				<div class="mb-4 flex items-center justify-between gap-3">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Connection Settings</h2>
+					{@render armSearchBar()}
+				</div>
+				{@render armSettingsSection('transcoding')}
+			</section>
 		</div>
 		{/if}
 
@@ -1906,15 +2193,254 @@
 		<!-- Notifications Tab -->
 		{#if activeTab === 'notifications'}
 			<section>
-				<div class="mb-4 flex items-center justify-between gap-3">
+				<div class="mb-2">
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
-					{@render armSearchBar()}
 				</div>
-				<p class="mb-4 rounded-lg border border-primary/30 bg-primary-light-bg px-4 py-3 text-sm text-primary-dark dark:border-primary/30 dark:bg-primary-light-bg-dark/20 dark:text-primary-text-dark">
-					Notification channels (Discord, Slack, webhooks, scripts, and more) are now managed on the
-					<a href="/settings/notifications" class="underline text-primary hover:text-primary-hover">Notifications page</a>.
+				<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+					Manage notification channels — Discord, Slack, webhooks, scripts, and more.
 				</p>
-				{@render armSettingsSection('notifications')}
+
+				{#if channelsLoading && !channelsLoaded}
+					<div class="py-8 text-center text-gray-400">Loading channels...</div>
+				{:else}
+					{#if channelsError}
+						<p class="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-300">
+							{channelsError}
+						</p>
+					{/if}
+
+					<div class="space-y-2">
+						<!-- Per-channel collapsible panels -->
+						{#each channels as ch (ch.id)}
+							{@const open = channelPanelOpen[ch.id]}
+							{@const entry = editState[ch.id]}
+							<div class="rounded-lg border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
+								<div class="flex w-full items-center gap-3 px-4 py-3">
+									<button
+										type="button"
+										onclick={() => toggleChannelPanel(ch)}
+										class="flex flex-1 items-center gap-3 text-left text-sm font-semibold text-gray-900 dark:text-white"
+										aria-expanded={open}
+									>
+										<span class="h-2.5 w-2.5 shrink-0 rounded-full {channelStatusClass(ch)}"
+											title={!ch.enabled ? 'Disabled' : ch.last_error ? 'Last send errored' : 'Healthy'}></span>
+										<span class="flex-1">{ch.name}</span>
+										<span class="rounded-sm bg-primary/10 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-primary/15 dark:text-gray-300">{ch.type}</span>
+										<svg
+											class="h-4 w-4 transform transition-transform {open ? 'rotate-180' : ''}"
+											fill="none" stroke="currentColor" viewBox="0 0 24 24"
+										>
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+										</svg>
+									</button>
+									<button
+										type="button"
+										onclick={() => { if (!entry) { editState[ch.id] = seedEditEntry(ch); } testChannel(ch.id); }}
+										disabled={entry?.testing}
+										class="shrink-0 rounded-md border border-primary/25 px-3 py-1.5 text-xs font-medium text-primary-text hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:text-primary-text-dark dark:hover:bg-primary/15"
+									>{entry?.testing ? 'Testing…' : 'Test'}</button>
+								</div>
+
+								{#if open && entry}
+									<div class="space-y-4 border-t border-primary/20 px-4 py-4 dark:border-primary/20">
+										{#if entry.toast}
+											<p class="rounded-md bg-primary/10 px-3 py-2 text-sm text-gray-700 dark:bg-primary/15 dark:text-gray-200">{entry.toast}</p>
+										{/if}
+
+										<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+											<label class="block">
+												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel name</span>
+												<input class={inputClass} aria-label="Channel name" bind:value={entry.name} />
+											</label>
+											<label class="flex items-end gap-2 pb-2">
+												<input type="checkbox" bind:checked={entry.enabled} />
+												<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Enabled</span>
+											</label>
+										</div>
+
+										<EventSubscriptions bind:selected={entry.subscribedEvents} />
+
+										<details class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5">
+											<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Templates</summary>
+											<div class="mt-3">
+												<TemplateEditor subscribedEvents={entry.subscribedEvents} bind:templates={entry.templates} />
+											</div>
+										</details>
+
+										<div class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5">
+											<h3 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Recent sends</h3>
+											{#if entry.dispatchesLoaded}
+												<DispatchHistory rows={entry.dispatches} />
+											{:else}
+												<p class="text-sm text-gray-400">Loading…</p>
+											{/if}
+										</div>
+
+										<div class="flex flex-wrap items-center gap-2">
+											<button
+												type="button"
+												disabled={entry.saving}
+												onclick={() => saveChannel(ch.id)}
+												class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+											>{entry.saving ? 'Saving…' : 'Save'}</button>
+											<button
+												type="button"
+												disabled={entry.testing}
+												onclick={() => testChannel(ch.id)}
+												class="rounded-md border border-primary/25 px-4 py-2 text-sm font-medium text-primary-text hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:text-primary-text-dark dark:hover:bg-primary/15"
+											>{entry.testing ? 'Testing…' : 'Test'}</button>
+											<button
+												type="button"
+												onclick={() => removeChannel(ch)}
+												class="ml-auto rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-500/40 dark:text-red-400 dark:hover:bg-red-900/20"
+											>Delete</button>
+										</div>
+									</div>
+								{/if}
+							</div>
+						{/each}
+
+						{#if channelsLoaded && channels.length === 0}
+							<p class="rounded-lg border border-primary/15 bg-page px-4 py-6 text-center text-sm text-gray-500 dark:border-primary/20 dark:bg-primary/5 dark:text-gray-400">
+								No notification channels yet. Add one below.
+							</p>
+						{/if}
+
+						<!-- Add channel panel -->
+						<div class="rounded-lg border border-dashed border-primary/40 bg-surface dark:border-primary/40 dark:bg-surface-dark">
+							<button
+								type="button"
+								onclick={() => (addPanelOpen = !addPanelOpen)}
+								class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-primary-text hover:bg-page dark:text-primary-text-dark dark:hover:bg-primary/10"
+								aria-expanded={addPanelOpen}
+							>
+								<span>+ Add channel</span>
+								<svg
+									class="h-4 w-4 transform transition-transform {addPanelOpen ? 'rotate-180' : ''}"
+									fill="none" stroke="currentColor" viewBox="0 0 24 24"
+								>
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								</svg>
+							</button>
+
+							{#if addPanelOpen}
+								<div class="space-y-4 border-t border-primary/20 px-4 py-4 dark:border-primary/20">
+									{#if addError}
+										<p class="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-300">{addError}</p>
+									{/if}
+
+									<fieldset class="space-y-2">
+										<legend class="text-sm font-medium text-gray-700 dark:text-gray-300">Channel type</legend>
+										<div class="flex flex-wrap gap-4">
+											<label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+												<input type="radio" aria-label="Service (Apprise)" bind:group={addType} value="apprise" /> Service (Apprise)
+											</label>
+											<label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+												<input type="radio" aria-label="Webhook" bind:group={addType} value="webhook" /> Webhook
+											</label>
+											<label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+												<input type="radio" aria-label="Bash script" bind:group={addType} value="bash" /> Bash script
+											</label>
+										</div>
+									</fieldset>
+
+									<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+										<label class="block">
+											<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel name</span>
+											<input class={inputClass} aria-label="New channel name" bind:value={addName} />
+										</label>
+										<label class="flex items-end gap-2 pb-2">
+											<input type="checkbox" bind:checked={addEnabled} />
+											<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Enabled</span>
+										</label>
+									</div>
+
+									{#if addType === 'apprise'}
+										{#if !addService}
+											<ServicePicker {catalog} onpick={pickAddService} />
+										{:else}
+											<div class="space-y-3 rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5">
+												<div class="flex items-center justify-between">
+													<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+														{addService.name}
+														{#if addService.docs_url}<a href={addService.docs_url} target="_blank" rel="noreferrer" class="ml-2 text-xs text-primary hover:text-primary-hover">docs ↗</a>{/if}
+													</h3>
+													<button type="button" onclick={() => (addService = null)} class="text-xs text-gray-500 underline hover:text-gray-700 dark:text-gray-400">Change service</button>
+												</div>
+												{#if addService.required_fields.length}
+													<h4 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Required</h4>
+													{#each addService.required_fields as f (f.key)}
+														<SchemaField field={f} bind:value={addRequired[f.key]} />
+													{/each}
+												{/if}
+												{#if addService.advanced_fields.length}
+													<details>
+														<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Advanced</summary>
+														<div class="mt-2 space-y-3">
+															{#each addService.advanced_fields as f (f.key)}
+																<SchemaField field={f} bind:value={addAdvanced[f.key]} />
+															{/each}
+														</div>
+													</details>
+												{/if}
+												<details>
+													<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Or paste a raw Apprise URL</summary>
+													<input class="{inputClass} mt-2" aria-label="Raw Apprise URL" bind:value={addRawUrl} placeholder="discord://..." />
+												</details>
+											</div>
+										{/if}
+									{:else if addType === 'webhook'}
+										<div class="space-y-3">
+											<label class="block">
+												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook URL</span>
+												<input class={inputClass} aria-label="Webhook URL" bind:value={addWebhookUrl} />
+											</label>
+											<label class="block">
+												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Shared secret (optional, enables HMAC)</span>
+												<input class={inputClass} type="password" aria-label="Shared secret" bind:value={addSharedSecret} />
+											</label>
+											<label class="block">
+												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Custom headers (one per line, Key: value)</span>
+												<textarea class="{inputClass} font-mono" rows="3" aria-label="Custom headers" bind:value={addHeadersText}></textarea>
+											</label>
+										</div>
+									{:else}
+										<div class="space-y-2">
+											<label class="block">
+												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Script path</span>
+												<input class={inputClass} aria-label="Script path" bind:value={addScriptPath} />
+											</label>
+											<p class="text-xs text-gray-500 dark:text-gray-400">Job context is passed as ARM_* environment variables.</p>
+										</div>
+									{/if}
+
+									<EventSubscriptions bind:selected={addSubscribedEvents} />
+
+									<details class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5">
+										<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Templates</summary>
+										<div class="mt-3">
+											<TemplateEditor subscribedEvents={addSubscribedEvents} bind:templates={addTemplates} />
+										</div>
+									</details>
+
+									<div class="flex flex-wrap items-center gap-2">
+										<button
+											type="button"
+											disabled={addSaving}
+											onclick={saveNewChannel}
+											class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+										>{addSaving ? 'Saving…' : 'Save'}</button>
+										<button
+											type="button"
+											onclick={() => { resetAddForm(); addPanelOpen = false; }}
+											class="rounded-md border border-primary/25 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-primary/10 dark:border-primary/30 dark:text-gray-400 dark:hover:bg-primary/15"
+										>Cancel</button>
+									</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
 			</section>
 		{/if}
 
