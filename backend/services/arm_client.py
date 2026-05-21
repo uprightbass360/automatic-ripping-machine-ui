@@ -64,6 +64,12 @@ async def _request(
     try:
         resp = await get_client().request(method, url, **kwargs)
         if resp.is_success:
+            # 204 No Content (e.g. channel DELETE) or any empty success body
+            # has no JSON to parse. Return {} — a truthy-enough success marker
+            # that is NOT None, so callers that treat None as "ARM unreachable"
+            # do not misfire a 503.
+            if resp.status_code == 204 or not resp.content:
+                return {}
             return resp.json()
         return _parse_error_response(resp)
     except (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError, httpx.ReadError, RuntimeError, OSError) as exc:
