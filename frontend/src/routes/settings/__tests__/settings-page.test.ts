@@ -92,6 +92,25 @@ vi.mock('$lib/api/maintenance', () => ({
 	clearImageCache: vi.fn(() => Promise.resolve({ success: true, cleared: 5, freed_bytes: 5242880 }))
 }));
 
+vi.mock('$lib/api/channels', () => ({
+	fetchChannels: vi.fn(() => Promise.resolve([
+		{ id: 1, type: 'apprise', name: 'Family Discord', enabled: true,
+		  config: { type: 'apprise', url: 'discord://a/b' },
+		  subscribed_events: ['job.started'], templates: {},
+		  last_fired_at: null, last_success_at: null, last_error: null }
+	])),
+	fetchServices: vi.fn(() => Promise.resolve({ featured: ['discord'], services: [
+		{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord', required_fields: [], advanced_fields: [] }
+	] })),
+	fetchDispatches: vi.fn(() => Promise.resolve([])),
+	fetchDispatch: vi.fn(() => Promise.resolve({ id: 1, status: 'success', attempts: 1, last_error: null, completed_at: 'now' })),
+	createChannel: vi.fn(() => Promise.resolve({ id: 2 })),
+	updateChannel: vi.fn(() => Promise.resolve({ id: 1 })),
+	deleteChannel: vi.fn(() => Promise.resolve({})),
+	testSendChannel: vi.fn(() => Promise.resolve({ sent_at: 'now', dispatch_id: 1 })),
+	composeUrl: vi.fn(() => Promise.resolve({ url: 'discord://a/b' }))
+}));
+
 vi.mock('$lib/stores/polling', async () => {
 	const { writable } = await import('svelte/store');
 	return {
@@ -284,7 +303,7 @@ describe('Settings Page', () => {
 			expect(screen.queryByLabelText('Dark mode')).not.toBeInTheDocument();
 		});
 
-		it('notifications tab points to the new Notifications page and drops legacy fields', async () => {
+		it('notifications tab renders inline channel panels and drops legacy fields', async () => {
 			renderComponent(SettingsPage);
 			await waitFor(() => {
 				expect(screen.getByText('Music')).toBeInTheDocument();
@@ -292,16 +311,19 @@ describe('Settings Page', () => {
 			// Switch to the notifications tab
 			const notificationsTab = screen.getAllByText('Notifications');
 			await fireEvent.click(notificationsTab[0]);
+			// The inline channel panel for the mocked channel loads
 			await waitFor(() => {
-				expect(screen.getByText('Notifications page')).toBeTruthy();
+				expect(screen.getByText('Family Discord')).toBeTruthy();
 			});
+			// Add-channel affordance is present
+			expect(screen.getByText(/Add channel/i)).toBeTruthy();
 			// Legacy notification-channel fields are gone
 			expect(screen.queryByText('Pushbullet Key')).toBeNull();
 			expect(screen.queryByText('IFTTT Key')).toBeNull();
 			expect(screen.queryByText('Apprise Config')).toBeNull();
 			expect(screen.queryByText('Notify After Rip')).toBeNull();
-			// Pointer link present
-			expect(screen.getByText('Notifications page')).toBeTruthy();
+			// The old redirect pointer is gone
+			expect(screen.queryByText('Notifications page')).toBeNull();
 		});
 
 		it('renders drives tab with collapsible diagnostics toggle', async () => {
