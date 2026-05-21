@@ -468,6 +468,30 @@ describe('Settings Page', () => {
 			return card;
 		}
 
+		// Open the "+ Add channel" panel and return its card element for
+		// scoped queries. Optionally set the new channel's name.
+		async function openAddPanel(name?: string): Promise<HTMLElement> {
+			await fireEvent.click(screen.getByText('+ Add channel'));
+			const addName = await waitFor(() => screen.getByLabelText('New channel name'));
+			if (name !== undefined) {
+				await fireEvent.input(addName, { target: { value: name } });
+			}
+			return (
+				(addName.closest('div.border-dashed') as HTMLElement) ??
+				(addName.closest('div.rounded-lg') as HTMLElement)
+			);
+		}
+
+		// Save the add panel and assert the given error message is shown and
+		// createChannel was not called.
+		async function expectAddBlocked(card: HTMLElement, message: RegExp) {
+			await fireEvent.click(within(card).getByText('Save'));
+			await waitFor(() => {
+				expect(within(card).getByText(message)).toBeInTheDocument();
+			});
+			expect(vi.mocked(channelsApi.createChannel)).not.toHaveBeenCalled();
+		}
+
 		it('saves a channel via updateChannel when Save is clicked', async () => {
 			await gotoNotifications();
 			const card = await expandFamilyDiscord();
@@ -527,18 +551,12 @@ describe('Settings Page', () => {
 
 		it('creates an apprise channel via composeUrl + createChannel', async () => {
 			await gotoNotifications();
-			// Open the add-channel panel.
-			await fireEvent.click(screen.getByText('+ Add channel'));
 			// Type defaults to apprise → ServicePicker offers the featured Discord.
+			const addCard = await openAddPanel('New Discord');
 			const discordBtn = await waitFor(() => screen.getByRole('button', { name: 'Discord' }));
 			await fireEvent.click(discordBtn);
 			// Discord has no required_fields in the mock catalog, so we can save
 			// directly — composeUrl resolves the apprise URL from the service.
-			const addName = screen.getByLabelText('New channel name');
-			await fireEvent.input(addName, { target: { value: 'New Discord' } });
-			// The add-panel Save lives in the dashed add card.
-			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
-				(addName.closest('div.rounded-lg') as HTMLElement);
 			await fireEvent.click(within(addCard).getByText('Save'));
 			await waitFor(() => {
 				expect(vi.mocked(channelsApi.composeUrl)).toHaveBeenCalledWith('discord', {}, {});
@@ -556,15 +574,10 @@ describe('Settings Page', () => {
 
 		it('creates a webhook channel via createChannel without composeUrl', async () => {
 			await gotoNotifications();
-			await fireEvent.click(screen.getByText('+ Add channel'));
-			// Switch type to Webhook.
+			const addCard = await openAddPanel('My Webhook');
 			await fireEvent.click(screen.getByLabelText('Webhook'));
 			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
 			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
-			const addName = screen.getByLabelText('New channel name');
-			await fireEvent.input(addName, { target: { value: 'My Webhook' } });
-			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
-				(addName.closest('div.rounded-lg') as HTMLElement);
 			await fireEvent.click(within(addCard).getByText('Save'));
 			await waitFor(() => {
 				expect(vi.mocked(channelsApi.createChannel)).toHaveBeenCalledWith(
@@ -581,51 +594,26 @@ describe('Settings Page', () => {
 
 		it('blocks add with a blank channel name and does not call createChannel', async () => {
 			await gotoNotifications();
-			await fireEvent.click(screen.getByText('+ Add channel'));
-			// Leave name blank; switch to webhook + fill URL so only the name is missing.
+			// Name left blank; webhook + URL filled so only the name is missing.
+			const card = await openAddPanel();
 			await fireEvent.click(screen.getByLabelText('Webhook'));
 			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
 			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
-			const addName = screen.getByLabelText('New channel name');
-			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
-				(addName.closest('div.rounded-lg') as HTMLElement);
-			await fireEvent.click(within(addCard).getByText('Save'));
-			await waitFor(() => {
-				expect(within(addCard).getByText(/Channel name is required/i)).toBeInTheDocument();
-			});
-			expect(vi.mocked(channelsApi.createChannel)).not.toHaveBeenCalled();
+			await expectAddBlocked(card, /Channel name is required/i);
 		});
 
 		it('blocks add of a webhook channel with a blank URL', async () => {
 			await gotoNotifications();
-			await fireEvent.click(screen.getByText('+ Add channel'));
-			const addName = screen.getByLabelText('New channel name');
-			await fireEvent.input(addName, { target: { value: 'No URL Hook' } });
-			await fireEvent.click(screen.getByLabelText('Webhook'));
-			// Leave the Webhook URL blank.
-			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
-				(addName.closest('div.rounded-lg') as HTMLElement);
-			await fireEvent.click(within(addCard).getByText('Save'));
-			await waitFor(() => {
-				expect(within(addCard).getByText(/Webhook URL is required/i)).toBeInTheDocument();
-			});
-			expect(vi.mocked(channelsApi.createChannel)).not.toHaveBeenCalled();
+			const card = await openAddPanel('No URL Hook');
+			await fireEvent.click(screen.getByLabelText('Webhook')); // URL left blank
+			await expectAddBlocked(card, /Webhook URL is required/i);
 		});
 
 		it('blocks add of a bash channel with a blank script path', async () => {
 			await gotoNotifications();
-			await fireEvent.click(screen.getByText('+ Add channel'));
-			const addName = screen.getByLabelText('New channel name');
-			await fireEvent.input(addName, { target: { value: 'No Path Script' } });
-			await fireEvent.click(screen.getByLabelText('Bash script'));
-			// Leave the Script path blank.
-			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
-				(addName.closest('div.rounded-lg') as HTMLElement);
-			await fireEvent.click(within(addCard).getByText('Save'));
-			await waitFor(() => {
-				expect(within(addCard).getByText(/Script path is required/i)).toBeInTheDocument();
-			});
-			expect(vi.mocked(channelsApi.createChannel)).not.toHaveBeenCalled();
+			const card = await openAddPanel('No Path Script');
+			await fireEvent.click(screen.getByLabelText('Bash script')); // path left blank
+			await expectAddBlocked(card, /Script path is required/i);
 		});
 
 		it('blocks edit save when the channel name is cleared', async () => {
