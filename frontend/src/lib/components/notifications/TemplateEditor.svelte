@@ -17,30 +17,36 @@
 	}
 </script>
 
-<div class="template-editor">
+<div class="space-y-4">
+	{#if subscribedEvents.length === 0}
+		<p class="text-sm text-gray-500 dark:text-gray-400">Subscribe to an event to customize its template.</p>
+	{/if}
 	{#each subscribedEvents as key}
-		<div class="template-editor__event">
-			<h4>{EVENT_LABELS[key as EventKey] ?? key}</h4>
-			<label>
-				Title
+		<div class="space-y-2 rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5">
+			<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{EVENT_LABELS[key as EventKey] ?? key}</h4>
+			<label class="flex flex-col gap-1">
+				<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Title</span>
 				<input
 					aria-label={`${key} title`}
 					value={templates[key]?.title ?? ''}
 					oninput={(e) => (ensure(key).title = (e.currentTarget as HTMLInputElement).value || null)}
+					class="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 				/>
 			</label>
-			<label>
-				Body
+			<label class="flex flex-col gap-1">
+				<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Body</span>
 				<textarea
 					aria-label={`${key} body`}
+					rows="2"
 					value={templates[key]?.body ?? ''}
 					oninput={(e) => (ensure(key).body = (e.currentTarget as HTMLTextAreaElement).value || null)}
+					class="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
 				></textarea>
 			</label>
-			<p class="template-editor__vars">
+			<p class="text-xs text-gray-500 dark:text-gray-400">
 				Available variables:
 				{#each varsFor(key) as v}
-					<code>{`{${v}}`}</code>
+					<code class="mr-1 rounded bg-primary/10 px-1 py-0.5 text-primary dark:bg-primary/15">{`{${v}}`}</code>
 				{/each}
 			</p>
 		</div>

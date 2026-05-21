@@ -576,5 +576,68 @@ describe('Settings Page', () => {
 				);
 			});
 		});
+
+		// --- Required-field validation ---
+
+		it('blocks add with a blank channel name and does not call createChannel', async () => {
+			await gotoNotifications();
+			await fireEvent.click(screen.getByText('+ Add channel'));
+			// Leave name blank; switch to webhook + fill URL so only the name is missing.
+			await fireEvent.click(screen.getByLabelText('Webhook'));
+			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
+			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
+			const addName = screen.getByLabelText('New channel name');
+			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
+				(addName.closest('div.rounded-lg') as HTMLElement);
+			await fireEvent.click(within(addCard).getByText('Save'));
+			await waitFor(() => {
+				expect(within(addCard).getByText(/Channel name is required/i)).toBeInTheDocument();
+			});
+			expect(vi.mocked(channelsApi.createChannel)).not.toHaveBeenCalled();
+		});
+
+		it('blocks add of a webhook channel with a blank URL', async () => {
+			await gotoNotifications();
+			await fireEvent.click(screen.getByText('+ Add channel'));
+			const addName = screen.getByLabelText('New channel name');
+			await fireEvent.input(addName, { target: { value: 'No URL Hook' } });
+			await fireEvent.click(screen.getByLabelText('Webhook'));
+			// Leave the Webhook URL blank.
+			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
+				(addName.closest('div.rounded-lg') as HTMLElement);
+			await fireEvent.click(within(addCard).getByText('Save'));
+			await waitFor(() => {
+				expect(within(addCard).getByText(/Webhook URL is required/i)).toBeInTheDocument();
+			});
+			expect(vi.mocked(channelsApi.createChannel)).not.toHaveBeenCalled();
+		});
+
+		it('blocks add of a bash channel with a blank script path', async () => {
+			await gotoNotifications();
+			await fireEvent.click(screen.getByText('+ Add channel'));
+			const addName = screen.getByLabelText('New channel name');
+			await fireEvent.input(addName, { target: { value: 'No Path Script' } });
+			await fireEvent.click(screen.getByLabelText('Bash script'));
+			// Leave the Script path blank.
+			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
+				(addName.closest('div.rounded-lg') as HTMLElement);
+			await fireEvent.click(within(addCard).getByText('Save'));
+			await waitFor(() => {
+				expect(within(addCard).getByText(/Script path is required/i)).toBeInTheDocument();
+			});
+			expect(vi.mocked(channelsApi.createChannel)).not.toHaveBeenCalled();
+		});
+
+		it('blocks edit save when the channel name is cleared', async () => {
+			await gotoNotifications();
+			const panel = await expandFamilyDiscord();
+			const nameInput = within(panel).getByLabelText('Channel name') as HTMLInputElement;
+			await fireEvent.input(nameInput, { target: { value: '' } });
+			await fireEvent.click(within(panel).getByText('Save'));
+			await waitFor(() => {
+				expect(within(panel).getByText(/Channel name is required/i)).toBeInTheDocument();
+			});
+			expect(vi.mocked(channelsApi.updateChannel)).not.toHaveBeenCalled();
+		});
 	});
 });

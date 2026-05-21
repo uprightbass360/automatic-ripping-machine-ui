@@ -12,17 +12,20 @@
 	}
 </script>
 
-<fieldset class="event-subs">
-	<legend>Events</legend>
-	{#each EVENT_KEYS as key}
-		<label>
-			<input
-				type="checkbox"
-				aria-label={EVENT_LABELS[key]}
-				checked={selected.includes(key)}
-				onchange={(e) => toggle(key, (e.currentTarget as HTMLInputElement).checked)}
-			/>
-			{EVENT_LABELS[key]}
-		</label>
-	{/each}
+<fieldset class="space-y-2">
+	<legend class="text-sm font-medium text-gray-700 dark:text-gray-300">Events</legend>
+	<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+		{#each EVENT_KEYS as key}
+			<label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+				<input
+					type="checkbox"
+					aria-label={EVENT_LABELS[key]}
+					checked={selected.includes(key)}
+					onchange={(e) => toggle(key, (e.currentTarget as HTMLInputElement).checked)}
+					class="rounded border-primary/40 text-primary focus:ring-primary"
+				/>
+				<span>{EVENT_LABELS[key]}</span>
+			</label>
+		{/each}
+	</div>
 </fieldset>

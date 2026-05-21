@@ -10,22 +10,23 @@
 	}
 </script>
 
-<div class="dispatch-history">
-	<h4>Recent sends</h4>
-	{#if rows.length === 0}
-		<p class="dispatch-history__empty">No sends yet.</p>
-	{:else}
-		<ul>
-			{#each rows as row (row.id)}
-				<li>
-					<span class="dispatch-history__icon">{statusIcon(row.status)}</span>
-					<span class="dispatch-history__event">{row.event_key}</span>
-					<span class="dispatch-history__time">{row.created_at ?? ''}</span>
-					{#if row.last_error}
-						<span class="dispatch-history__error">· {row.last_error}</span>
-					{/if}
-				</li>
-			{/each}
-		</ul>
-	{/if}
-</div>
+{#if rows.length === 0}
+	<p class="text-sm text-gray-500 dark:text-gray-400">No sends yet.</p>
+{:else}
+	<ul class="space-y-1">
+		{#each rows as row (row.id)}
+			<li class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+				<span
+					class:text-status-success={row.status === 'success'}
+					class:text-status-error={row.status === 'failed'}
+					class:text-gray-400={row.status !== 'success' && row.status !== 'failed'}
+				>{statusIcon(row.status)}</span>
+				<span class="font-medium">{row.event_key}</span>
+				<span class="text-gray-400">{row.created_at ?? ''}</span>
+				{#if row.last_error}
+					<span class="text-status-error">· {row.last_error}</span>
+				{/if}
+			</li>
+		{/each}
+	</ul>
+{/if}

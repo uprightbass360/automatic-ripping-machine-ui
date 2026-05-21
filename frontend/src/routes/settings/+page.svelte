@@ -557,11 +557,15 @@
 	async function saveChannel(id: number) {
 		const entry = editState[id];
 		if (!entry) return;
+		if (!entry.name.trim()) {
+			entry.toast = 'Channel name is required.';
+			return;
+		}
 		entry.saving = true;
 		entry.toast = null;
 		try {
 			await updateChannel(id, {
-				name: entry.name,
+				name: entry.name.trim(),
 				enabled: entry.enabled,
 				subscribed_events: $state.snapshot(entry.subscribedEvents),
 				templates: $state.snapshot(entry.templates)
@@ -654,12 +658,28 @@
 
 	async function saveNewChannel() {
 		addError = null;
+		// Required-field validation (inputs aren't in a <form>, so the
+		// browser's required attribute never fires — validate explicitly).
+		if (!addName.trim()) {
+			addError = 'Channel name is required.';
+			return;
+		}
 		addSaving = true;
 		try {
 			let config: ChannelConfig;
 			if (addType === 'apprise') {
 				let url = addRawUrl.trim();
 				if (!url && addService) {
+					// Every required service field must be filled before composing.
+					const missing = addService.required_fields
+						.filter((f) => {
+							const v = addRequired[f.key];
+							return v === undefined || v === null || String(v).trim() === '';
+						})
+						.map((f) => f.label);
+					if (missing.length > 0) {
+						throw new Error(`Required field${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}.`);
+					}
 					const composed = await composeUrl(
 						addService.id,
 						$state.snapshot(addRequired),
@@ -670,14 +690,20 @@
 				if (!url) throw new Error('Pick a service or paste a raw Apprise URL.');
 				config = { type: 'apprise', url };
 			} else if (addType === 'webhook') {
+				if (!addWebhookUrl.trim()) {
+					throw new Error('Webhook URL is required.');
+				}
 				config = {
 					type: 'webhook',
-					url: addWebhookUrl,
+					url: addWebhookUrl.trim(),
 					shared_secret: addSharedSecret || null,
 					headers: addHeadersText.trim() ? parseHeaders(addHeadersText) : null
 				};
 			} else {
-				config = { type: 'bash', script_path: addScriptPath };
+				if (!addScriptPath.trim()) {
+					throw new Error('Script path is required.');
+				}
+				config = { type: 'bash', script_path: addScriptPath.trim() };
 			}
 
 			await createChannel({
@@ -2249,8 +2275,8 @@
 
 										<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 											<label class="block">
-												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel name</span>
-												<input class={inputClass} aria-label="Channel name" bind:value={entry.name} />
+												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel name *</span>
+												<input class={inputClass} aria-label="Channel name" aria-required="true" required bind:value={entry.name} />
 											</label>
 											<label class="flex items-end gap-2 pb-2">
 												<input type="checkbox" bind:checked={entry.enabled} />
@@ -2346,8 +2372,8 @@
 
 									<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 										<label class="block">
-											<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel name</span>
-											<input class={inputClass} aria-label="New channel name" bind:value={addName} />
+											<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel name *</span>
+											<input class={inputClass} aria-label="New channel name" aria-required="true" required bind:value={addName} />
 										</label>
 										<label class="flex items-end gap-2 pb-2">
 											<input type="checkbox" bind:checked={addEnabled} />
@@ -2392,8 +2418,8 @@
 									{:else if addType === 'webhook'}
 										<div class="space-y-3">
 											<label class="block">
-												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook URL</span>
-												<input class={inputClass} aria-label="Webhook URL" bind:value={addWebhookUrl} />
+												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook URL *</span>
+												<input class={inputClass} type="url" aria-label="Webhook URL" aria-required="true" required bind:value={addWebhookUrl} />
 											</label>
 											<label class="block">
 												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Shared secret (optional, enables HMAC)</span>
@@ -2407,8 +2433,8 @@
 									{:else}
 										<div class="space-y-2">
 											<label class="block">
-												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Script path</span>
-												<input class={inputClass} aria-label="Script path" bind:value={addScriptPath} />
+												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Script path *</span>
+												<input class={inputClass} aria-label="Script path" aria-required="true" required bind:value={addScriptPath} />
 											</label>
 											<p class="text-xs text-gray-500 dark:text-gray-400">Job context is passed as ARM_* environment variables.</p>
 										</div>

@@ -121,13 +121,17 @@ export interface TestSendResult {
 
 // Per-event template variable hints, keyed off event_key. Mirrors the
 // contracts event schema fields available to str.format_map on the backend.
+// Per-event template variables exposed to str.format_map on the backend.
+// occurred_at is available on every event (the renderer dumps the full
+// event); event_id / event_key are also accepted but omitted here as
+// envelope plumbing not useful in a human-facing notification.
 export const EVENT_VARIABLES: Record<EventKey, string[]> = {
-	'job.started': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'drive_mount'],
-	'job.rip_complete': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'rip_duration_seconds', 'track_count'],
-	'job.transcode_complete': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'transcode_duration_seconds', 'output_path'],
-	'job.failed': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'phase', 'error_message', 'error_code'],
-	'job.manual_wait_required': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'wait_minutes_remaining', 'reason'],
-	'job.duplicate_detected': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'existing_job_id', 'existing_output_path']
+	'job.started': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'occurred_at', 'drive_mount'],
+	'job.rip_complete': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'occurred_at', 'rip_duration_seconds', 'track_count'],
+	'job.transcode_complete': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'occurred_at', 'transcode_duration_seconds', 'output_path'],
+	'job.failed': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'occurred_at', 'phase', 'error_message', 'error_code'],
+	'job.manual_wait_required': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'occurred_at', 'wait_minutes_remaining', 'reason'],
+	'job.duplicate_detected': ['job_id', 'job_title', 'job_disc_type', 'job_imdb_id', 'occurred_at', 'existing_job_id', 'existing_output_path']
 };
 
 export const EVENT_LABELS: Record<EventKey, string> = {
