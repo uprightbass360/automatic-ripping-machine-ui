@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { renderComponent, screen, cleanup, waitFor, fireEvent } from '$lib/test-utils';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { renderComponent, screen, cleanup, waitFor, fireEvent, within } from '$lib/test-utils';
+import * as channelsApi from '$lib/api/channels';
 import SettingsPage from '../+page.svelte';
 
 const mockArmConfig: Record<string, string | null> = {
@@ -425,6 +426,155 @@ describe('Settings Page', () => {
 			// Default mock has 3 versions: arm, transcoder, ui
 			const grid = screen.getByText('Versions').parentElement?.querySelector('div.grid');
 			expect(grid?.className).toContain('md:grid-cols-3');
+		});
+	});
+
+	describe('notification channel handlers', () => {
+		// Channel API mocks are module-level and accumulate calls across tests;
+		// reset call history (keeping the resolved-value implementations) so each
+		// test's call-count assertions stand alone.
+		beforeEach(() => {
+			vi.mocked(channelsApi.updateChannel).mockClear();
+			vi.mocked(channelsApi.deleteChannel).mockClear();
+			vi.mocked(channelsApi.testSendChannel).mockClear();
+			vi.mocked(channelsApi.fetchDispatch).mockClear();
+			vi.mocked(channelsApi.createChannel).mockClear();
+			vi.mocked(channelsApi.composeUrl).mockClear();
+		});
+
+		// Open the Notifications tab and wait for the mocked "Family Discord"
+		// channel panel to render.
+		async function gotoNotifications() {
+			renderComponent(SettingsPage);
+			await waitFor(() => {
+				expect(screen.getByText('Music')).toBeInTheDocument();
+			});
+			await fireEvent.click(screen.getAllByText('Notifications')[0]);
+			await waitFor(() => {
+				expect(screen.getByText('Family Discord')).toBeInTheDocument();
+			});
+		}
+
+		// Expand the "Family Discord" panel by clicking its name header, then
+		// return the expanded panel container for scoped queries.
+		async function expandFamilyDiscord(): Promise<HTMLElement> {
+			await fireEvent.click(screen.getByText('Family Discord'));
+			await waitFor(() => {
+				expect(screen.getByText('Enabled')).toBeInTheDocument();
+			});
+			// The expanded panel is the card containing the channel name.
+			const card = screen.getByText('Family Discord').closest('div.rounded-lg') as HTMLElement;
+			expect(card).toBeTruthy();
+			return card;
+		}
+
+		it('saves a channel via updateChannel when Save is clicked', async () => {
+			await gotoNotifications();
+			const card = await expandFamilyDiscord();
+			await fireEvent.click(within(card).getByText('Save'));
+			await waitFor(() => {
+				expect(vi.mocked(channelsApi.updateChannel)).toHaveBeenCalledWith(
+					1,
+					expect.objectContaining({ name: 'Family Discord', enabled: true })
+				);
+			});
+		});
+
+		it('test-sends a channel and polls dispatch status', async () => {
+			await gotoNotifications();
+			const card = await expandFamilyDiscord();
+			// Click the in-panel Test button (the footer one alongside Save/Delete).
+			await fireEvent.click(within(card).getAllByText('Test')[0]);
+			await waitFor(() => {
+				expect(vi.mocked(channelsApi.testSendChannel)).toHaveBeenCalledWith(1, 'job.started');
+			});
+			// The poll resolves to 'success' on the first fetchDispatch call.
+			await waitFor(
+				() => {
+					expect(vi.mocked(channelsApi.fetchDispatch)).toHaveBeenCalledWith(1);
+				},
+				{ timeout: 3000 }
+			);
+		});
+
+		it('deletes a channel after confirm via deleteChannel', async () => {
+			const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+			try {
+				await gotoNotifications();
+				const card = await expandFamilyDiscord();
+				await fireEvent.click(within(card).getByText('Delete'));
+				await waitFor(() => {
+					expect(vi.mocked(channelsApi.deleteChannel)).toHaveBeenCalledWith(1);
+				});
+				expect(confirmSpy).toHaveBeenCalled();
+			} finally {
+				confirmSpy.mockRestore();
+			}
+		});
+
+		it('does not delete when confirm is dismissed', async () => {
+			const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+			try {
+				await gotoNotifications();
+				const card = await expandFamilyDiscord();
+				await fireEvent.click(within(card).getByText('Delete'));
+				expect(confirmSpy).toHaveBeenCalled();
+				expect(vi.mocked(channelsApi.deleteChannel)).not.toHaveBeenCalled();
+			} finally {
+				confirmSpy.mockRestore();
+			}
+		});
+
+		it('creates an apprise channel via composeUrl + createChannel', async () => {
+			await gotoNotifications();
+			// Open the add-channel panel.
+			await fireEvent.click(screen.getByText('+ Add channel'));
+			// Type defaults to apprise → ServicePicker offers the featured Discord.
+			const discordBtn = await waitFor(() => screen.getByRole('button', { name: 'Discord' }));
+			await fireEvent.click(discordBtn);
+			// Discord has no required_fields in the mock catalog, so we can save
+			// directly — composeUrl resolves the apprise URL from the service.
+			const addName = screen.getByLabelText('New channel name');
+			await fireEvent.input(addName, { target: { value: 'New Discord' } });
+			// The add-panel Save lives in the dashed add card.
+			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
+				(addName.closest('div.rounded-lg') as HTMLElement);
+			await fireEvent.click(within(addCard).getByText('Save'));
+			await waitFor(() => {
+				expect(vi.mocked(channelsApi.composeUrl)).toHaveBeenCalledWith('discord', {}, {});
+			});
+			await waitFor(() => {
+				expect(vi.mocked(channelsApi.createChannel)).toHaveBeenCalledWith(
+					expect.objectContaining({
+						type: 'apprise',
+						name: 'New Discord',
+						config: expect.objectContaining({ type: 'apprise', url: 'discord://a/b' })
+					})
+				);
+			});
+		});
+
+		it('creates a webhook channel via createChannel without composeUrl', async () => {
+			await gotoNotifications();
+			await fireEvent.click(screen.getByText('+ Add channel'));
+			// Switch type to Webhook.
+			await fireEvent.click(screen.getByLabelText('Webhook'));
+			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
+			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
+			const addName = screen.getByLabelText('New channel name');
+			await fireEvent.input(addName, { target: { value: 'My Webhook' } });
+			const addCard = (addName.closest('div.border-dashed') as HTMLElement) ??
+				(addName.closest('div.rounded-lg') as HTMLElement);
+			await fireEvent.click(within(addCard).getByText('Save'));
+			await waitFor(() => {
+				expect(vi.mocked(channelsApi.createChannel)).toHaveBeenCalledWith(
+					expect.objectContaining({
+						type: 'webhook',
+						name: 'My Webhook',
+						config: expect.objectContaining({ type: 'webhook', url: 'https://hooks.example/x' })
+					})
+				);
+			});
 		});
 	});
 });
