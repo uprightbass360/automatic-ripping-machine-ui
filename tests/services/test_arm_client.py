@@ -69,6 +69,44 @@ async def test_abandon_job_connect_error(mock_client):
     assert await arm_client.abandon_job(42) is None
 
 
+# --- _request empty-body handling (204 No Content) ---
+
+
+async def test_request_handles_204_empty_body():
+    """A 204 with an empty body returns {} (not None, no JSONDecodeError).
+
+    arm-neu's DELETE /notifications/channels/{id} returns 204 No Content.
+    Calling resp.json() on the empty body would raise JSONDecodeError and
+    crash the BFF with HTTP 500. Returning {} keeps the None=unreachable
+    sentinel intact while signalling success.
+    """
+    resp = MagicMock()
+    resp.is_success = True
+    resp.status_code = 204
+    resp.content = b""
+    fake_client = MagicMock()
+    fake_client.request = AsyncMock(return_value=resp)
+    with patch.object(arm_client, "get_client", return_value=fake_client):
+        out = await arm_client._request(
+            "DELETE", "/api/v1/notifications/channels/1"
+        )
+    assert out == {}
+
+
+async def test_request_parses_json_on_200():
+    """A normal 200 with a JSON body is still parsed and returned."""
+    resp = MagicMock()
+    resp.is_success = True
+    resp.status_code = 200
+    resp.content = b'{"ok": true}'
+    resp.json = MagicMock(return_value={"ok": True})
+    fake_client = MagicMock()
+    fake_client.request = AsyncMock(return_value=resp)
+    with patch.object(arm_client, "get_client", return_value=fake_client):
+        out = await arm_client._request("GET", "/x")
+    assert out == {"ok": True}
+
+
 # --- skip_and_finalize ---
 
 
