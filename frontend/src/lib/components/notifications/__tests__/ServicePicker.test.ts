@@ -24,13 +24,14 @@ describe('ServicePicker', () => {
 		expect(screen.queryByText('Discord')).toBeNull();
 	});
 
-	it('reveals featured services when opened', async () => {
+	it('reveals all services when opened, featured first', async () => {
 		renderComponent(ServicePicker, { props: { catalog, onpick: () => {} } });
 		await fireEvent.click(screen.getByRole('button', { name: /select a service/i }));
+		// Featured services...
 		expect(screen.getByText('Discord')).toBeTruthy();
 		expect(screen.getByText('Slack')).toBeTruthy();
-		// Non-featured services are hidden until searched.
-		expect(screen.queryByText('Telegram')).toBeNull();
+		// ...and non-featured services are all shown by default now.
+		expect(screen.getByText('Telegram')).toBeTruthy();
 	});
 
 	it('filters across all services by search substring', async () => {

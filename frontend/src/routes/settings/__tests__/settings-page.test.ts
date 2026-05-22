@@ -472,7 +472,7 @@ describe('Settings Page', () => {
 		// scoped queries. Optionally set the new channel's name.
 		async function openAddPanel(name?: string): Promise<HTMLElement> {
 			await fireEvent.click(screen.getByText('+ Add channel'));
-			const addName = await waitFor(() => screen.getByLabelText('New channel name'));
+			const addName = await waitFor(() => screen.getByLabelText('New channel label'));
 			if (name !== undefined) {
 				await fireEvent.input(addName, { target: { value: name } });
 			}
@@ -601,7 +601,7 @@ describe('Settings Page', () => {
 			await fireEvent.click(screen.getByLabelText('Webhook'));
 			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
 			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
-			await expectAddBlocked(card, /Channel name is required/i);
+			await expectAddBlocked(card, /Channel label is required/i);
 		});
 
 		it('blocks add of a webhook channel with a blank URL', async () => {
@@ -621,11 +621,11 @@ describe('Settings Page', () => {
 		it('blocks edit save when the channel name is cleared', async () => {
 			await gotoNotifications();
 			const panel = await expandFamilyDiscord();
-			const nameInput = within(panel).getByLabelText('Channel name') as HTMLInputElement;
+			const nameInput = within(panel).getByLabelText('Channel Label') as HTMLInputElement;
 			await fireEvent.input(nameInput, { target: { value: '' } });
 			await fireEvent.click(within(panel).getByText('Save'));
 			await waitFor(() => {
-				expect(within(panel).getByText(/Channel name is required/i)).toBeInTheDocument();
+				expect(within(panel).getByText(/Channel label is required/i)).toBeInTheDocument();
 			});
 			expect(vi.mocked(channelsApi.updateChannel)).not.toHaveBeenCalled();
 		});

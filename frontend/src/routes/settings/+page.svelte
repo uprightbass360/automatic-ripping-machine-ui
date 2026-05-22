@@ -558,7 +558,7 @@
 		const entry = editState[id];
 		if (!entry) return;
 		if (!entry.name.trim()) {
-			entry.toast = 'Channel name is required.';
+			entry.toast = 'Channel label is required.';
 			return;
 		}
 		entry.saving = true;
@@ -661,7 +661,7 @@
 		// Required-field validation (inputs aren't in a <form>, so the
 		// browser's required attribute never fires — validate explicitly).
 		if (!addName.trim()) {
-			addError = 'Channel name is required.';
+			addError = 'Channel label is required.';
 			return;
 		}
 		addSaving = true;
@@ -2275,8 +2275,8 @@
 
 										<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 											<label class="block">
-												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel name *</span>
-												<input class={inputClass} aria-label="Channel name" aria-required="true" required bind:value={entry.name} />
+												<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel Label *</span>
+												<input class={inputClass} aria-label="Channel Label" aria-required="true" required bind:value={entry.name} />
 											</label>
 											<label class="flex items-end gap-2 pb-2">
 												<input type="checkbox" bind:checked={entry.enabled} />
@@ -2286,12 +2286,15 @@
 
 										<EventSubscriptions bind:selected={entry.subscribedEvents} />
 
-										<details class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5">
-											<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Templates</summary>
-											<div class="mt-3">
-												<TemplateEditor subscribedEvents={entry.subscribedEvents} bind:templates={entry.templates} />
-											</div>
-										</details>
+										{#if entry.subscribedEvents.length > 0}
+											<details class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5" open>
+												<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Message templates (optional)</summary>
+												<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Customize the title and body sent for each subscribed event. Leave blank to use the built-in defaults.</p>
+												<div class="mt-3">
+													<TemplateEditor subscribedEvents={entry.subscribedEvents} bind:templates={entry.templates} />
+												</div>
+											</details>
+										{/if}
 
 										<div class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5">
 											<h3 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Recent sends</h3>
@@ -2355,6 +2358,17 @@
 										<p class="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-300">{addError}</p>
 									{/if}
 
+									<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+										<label class="block">
+											<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel Label *</span>
+											<input class={inputClass} aria-label="New channel label" aria-required="true" required bind:value={addName} />
+										</label>
+										<label class="flex items-end gap-2 pb-2">
+											<input type="checkbox" bind:checked={addEnabled} />
+											<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Enabled</span>
+										</label>
+									</div>
+
 									<fieldset class="space-y-2">
 										<legend class="text-sm font-medium text-gray-700 dark:text-gray-300">Channel type</legend>
 										<div class="flex flex-wrap gap-4">
@@ -2369,17 +2383,6 @@
 											</label>
 										</div>
 									</fieldset>
-
-									<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-										<label class="block">
-											<span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Channel name *</span>
-											<input class={inputClass} aria-label="New channel name" aria-required="true" required bind:value={addName} />
-										</label>
-										<label class="flex items-end gap-2 pb-2">
-											<input type="checkbox" bind:checked={addEnabled} />
-											<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Enabled</span>
-										</label>
-									</div>
 
 									{#if addType === 'apprise'}
 										{#if !addService}
@@ -2442,12 +2445,15 @@
 
 									<EventSubscriptions bind:selected={addSubscribedEvents} />
 
-									<details class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5">
-										<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Templates</summary>
-										<div class="mt-3">
-											<TemplateEditor subscribedEvents={addSubscribedEvents} bind:templates={addTemplates} />
-										</div>
-									</details>
+									{#if addSubscribedEvents.length > 0}
+										<details class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5" open>
+											<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Message templates (optional)</summary>
+											<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Customize the title and body sent for each subscribed event. Leave blank to use the built-in defaults.</p>
+											<div class="mt-3">
+												<TemplateEditor subscribedEvents={addSubscribedEvents} bind:templates={addTemplates} />
+											</div>
+										</details>
+									{/if}
 
 									<div class="flex flex-wrap items-center gap-2">
 										<button
