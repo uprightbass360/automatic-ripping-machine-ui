@@ -551,8 +551,10 @@ describe('Settings Page', () => {
 
 		it('creates an apprise channel via composeUrl + createChannel', async () => {
 			await gotoNotifications();
-			// Type defaults to apprise → ServicePicker offers the featured Discord.
+			// Type defaults to apprise → ServicePicker dropdown offers featured Discord.
 			const addCard = await openAddPanel('New Discord');
+			// Open the service dropdown, then pick Discord from the list.
+			await fireEvent.click(await waitFor(() => screen.getByRole('button', { name: /select a service/i })));
 			const discordBtn = await waitFor(() => screen.getByRole('button', { name: 'Discord' }));
 			await fireEvent.click(discordBtn);
 			// Discord has no required_fields in the mock catalog, so we can save

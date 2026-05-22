@@ -15,23 +15,46 @@ const catalog: Catalog = {
 describe('ServicePicker', () => {
 	afterEach(() => cleanup());
 
-	it('renders featured services', () => {
+	it('shows a closed dropdown trigger by default', () => {
 		renderComponent(ServicePicker, { props: { catalog, onpick: () => {} } });
-		expect(screen.getByText('Discord')).toBeTruthy();
-		expect(screen.getByText('Slack')).toBeTruthy();
+		const trigger = screen.getByRole('button', { name: /select a service/i });
+		expect(trigger).toBeTruthy();
+		expect(trigger.getAttribute('aria-expanded')).toBe('false');
+		// Options are not rendered until opened.
+		expect(screen.queryByText('Discord')).toBeNull();
 	});
 
-	it('filters by search substring', async () => {
+	it('reveals featured services when opened', async () => {
 		renderComponent(ServicePicker, { props: { catalog, onpick: () => {} } });
+		await fireEvent.click(screen.getByRole('button', { name: /select a service/i }));
+		expect(screen.getByText('Discord')).toBeTruthy();
+		expect(screen.getByText('Slack')).toBeTruthy();
+		// Non-featured services are hidden until searched.
+		expect(screen.queryByText('Telegram')).toBeNull();
+	});
+
+	it('filters across all services by search substring', async () => {
+		renderComponent(ServicePicker, { props: { catalog, onpick: () => {} } });
+		await fireEvent.click(screen.getByRole('button', { name: /select a service/i }));
 		await fireEvent.input(screen.getByPlaceholderText('Search services'), { target: { value: 'tele' } });
 		expect(screen.queryByText('Telegram')).toBeTruthy();
 		expect(screen.queryByText('Discord')).toBeNull();
 	});
 
-	it('calls onpick with the service id', async () => {
+	it('calls onpick with the service id and closes', async () => {
 		let picked = '';
 		renderComponent(ServicePicker, { props: { catalog, onpick: (id: string) => (picked = id) } });
+		await fireEvent.click(screen.getByRole('button', { name: /select a service/i }));
 		await fireEvent.click(screen.getByText('Discord'));
 		expect(picked).toBe('discord');
+		// Dropdown closed after selection.
+		expect(screen.queryByText('Slack')).toBeNull();
+	});
+
+	it('shows an empty state when nothing matches', async () => {
+		renderComponent(ServicePicker, { props: { catalog, onpick: () => {} } });
+		await fireEvent.click(screen.getByRole('button', { name: /select a service/i }));
+		await fireEvent.input(screen.getByPlaceholderText('Search services'), { target: { value: 'zzz' } });
+		expect(screen.getByText(/No services match/i)).toBeTruthy();
 	});
 });
