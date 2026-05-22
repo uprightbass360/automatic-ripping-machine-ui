@@ -218,3 +218,23 @@ async def test_compose_url_route(app_client):
         resp = await app_client.post("/api/notifications/services/discord/compose-url", json=body)
     assert resp.status_code == 200
     assert resp.json()["url"] == "discord://1"
+
+
+async def test_test_config_route(app_client):
+    body = {"type": "apprise", "config": {"type": "apprise", "url": "discord://a/b"}}
+    with patch(
+        "backend.routers.notifications.arm_client.test_channel_config",
+        new_callable=AsyncMock, return_value={"ok": True, "error": None},
+    ):
+        resp = await app_client.post("/api/notifications/test", json=body)
+    assert resp.status_code == 200
+    assert resp.json() == {"ok": True, "error": None}
+
+
+async def test_test_config_route_unreachable(app_client):
+    with patch(
+        "backend.routers.notifications.arm_client.test_channel_config",
+        new_callable=AsyncMock, return_value=None,
+    ):
+        resp = await app_client.post("/api/notifications/test", json={"type": "apprise", "config": {}})
+    assert resp.status_code == 503

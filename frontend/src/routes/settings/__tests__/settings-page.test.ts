@@ -109,7 +109,8 @@ vi.mock('$lib/api/channels', () => ({
 	updateChannel: vi.fn(() => Promise.resolve({ id: 1 })),
 	deleteChannel: vi.fn(() => Promise.resolve({})),
 	testSendChannel: vi.fn(() => Promise.resolve({ sent_at: 'now', dispatch_id: 1 })),
-	composeUrl: vi.fn(() => Promise.resolve({ url: 'discord://a/b' }))
+	composeUrl: vi.fn(() => Promise.resolve({ url: 'discord://a/b' })),
+	testConfig: vi.fn(() => Promise.resolve({ ok: true, error: null }))
 }));
 
 vi.mock('$lib/stores/polling', async () => {
@@ -589,6 +590,44 @@ describe('Settings Page', () => {
 						config: expect.objectContaining({ type: 'webhook', url: 'https://hooks.example/x' })
 					})
 				);
+			});
+		});
+
+		// --- Test (unsaved config) ---
+
+		it('test-sends the in-progress webhook config without saving', async () => {
+			await gotoNotifications();
+			const addCard = await openAddPanel('Hook To Test');
+			await fireEvent.click(screen.getByLabelText('Webhook'));
+			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
+			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
+			await fireEvent.click(within(addCard).getByText('Test'));
+			await waitFor(() => {
+				expect(vi.mocked(channelsApi.testConfig)).toHaveBeenCalledWith(
+					expect.objectContaining({
+						type: 'webhook',
+						config: expect.objectContaining({ type: 'webhook', url: 'https://hooks.example/x' })
+					})
+				);
+			});
+			// Did not save.
+			expect(vi.mocked(channelsApi.createChannel)).not.toHaveBeenCalled();
+			// Success message shown.
+			await waitFor(() => {
+				expect(within(addCard).getByText(/Test sent successfully/i)).toBeInTheDocument();
+			});
+		});
+
+		it('shows the failure message when a test config send fails', async () => {
+			vi.mocked(channelsApi.testConfig).mockResolvedValueOnce({ ok: false, error: 'http 500' });
+			await gotoNotifications();
+			const addCard = await openAddPanel('Bad Hook');
+			await fireEvent.click(screen.getByLabelText('Webhook'));
+			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
+			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
+			await fireEvent.click(within(addCard).getByText('Test'));
+			await waitFor(() => {
+				expect(within(addCard).getByText(/Test failed: http 500/i)).toBeInTheDocument();
 			});
 		});
 

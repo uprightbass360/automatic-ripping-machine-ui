@@ -32,7 +32,7 @@
 	import DispatchHistory from '$lib/components/notifications/DispatchHistory.svelte';
 	import {
 		fetchChannels, fetchServices, createChannel, updateChannel,
-		deleteChannel, testSendChannel, fetchDispatch, fetchDispatches, composeUrl
+		deleteChannel, testSendChannel, fetchDispatch, fetchDispatches, composeUrl, testConfig
 	} from '$lib/api/channels';
 	import type {
 		Channel, Catalog, CatalogService, ChannelTemplate, ChannelConfig, DispatchRow
@@ -479,6 +479,8 @@
 	let addScriptPath = $state('');
 	let addSaving = $state(false);
 	let addError = $state<string | null>(null);
+	let addTesting = $state(false);
+	let addTestResult = $state<{ ok: boolean; msg: string } | null>(null);
 
 	async function loadNotifications() {
 		if (channelsLoaded || channelsLoading) return;
@@ -654,58 +656,59 @@
 		addHeadersText = '';
 		addScriptPath = '';
 		addError = null;
+		addTestResult = null;
+	}
+
+	// Validate the add-form fields and assemble the ChannelConfig. Throws
+	// an Error with a user-facing message on any validation failure.
+	// Shared by saveNewChannel and testNewChannel so the rules stay in one
+	// place. (Inputs aren't in a <form>, so the browser's required
+	// attribute never fires — validate explicitly.)
+	async function buildAddConfig(): Promise<ChannelConfig> {
+		if (addType === 'apprise') {
+			let url = addRawUrl.trim();
+			if (!url && addService) {
+				const missing = addService.required_fields
+					.filter((f) => {
+						const v = addRequired[f.key];
+						return v === undefined || v === null || String(v).trim() === '';
+					})
+					.map((f) => f.label);
+				if (missing.length > 0) {
+					throw new Error(`Required field${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}.`);
+				}
+				const composed = await composeUrl(
+					addService.id,
+					$state.snapshot(addRequired),
+					$state.snapshot(addAdvanced)
+				);
+				url = composed.url;
+			}
+			if (!url) throw new Error('Pick a service or paste a raw Apprise URL.');
+			return { type: 'apprise', url };
+		}
+		if (addType === 'webhook') {
+			if (!addWebhookUrl.trim()) throw new Error('Webhook URL is required.');
+			return {
+				type: 'webhook',
+				url: addWebhookUrl.trim(),
+				shared_secret: addSharedSecret || null,
+				headers: addHeadersText.trim() ? parseHeaders(addHeadersText) : null
+			};
+		}
+		if (!addScriptPath.trim()) throw new Error('Script path is required.');
+		return { type: 'bash', script_path: addScriptPath.trim() };
 	}
 
 	async function saveNewChannel() {
 		addError = null;
-		// Required-field validation (inputs aren't in a <form>, so the
-		// browser's required attribute never fires — validate explicitly).
 		if (!addName.trim()) {
 			addError = 'Channel label is required.';
 			return;
 		}
 		addSaving = true;
 		try {
-			let config: ChannelConfig;
-			if (addType === 'apprise') {
-				let url = addRawUrl.trim();
-				if (!url && addService) {
-					// Every required service field must be filled before composing.
-					const missing = addService.required_fields
-						.filter((f) => {
-							const v = addRequired[f.key];
-							return v === undefined || v === null || String(v).trim() === '';
-						})
-						.map((f) => f.label);
-					if (missing.length > 0) {
-						throw new Error(`Required field${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}.`);
-					}
-					const composed = await composeUrl(
-						addService.id,
-						$state.snapshot(addRequired),
-						$state.snapshot(addAdvanced)
-					);
-					url = composed.url;
-				}
-				if (!url) throw new Error('Pick a service or paste a raw Apprise URL.');
-				config = { type: 'apprise', url };
-			} else if (addType === 'webhook') {
-				if (!addWebhookUrl.trim()) {
-					throw new Error('Webhook URL is required.');
-				}
-				config = {
-					type: 'webhook',
-					url: addWebhookUrl.trim(),
-					shared_secret: addSharedSecret || null,
-					headers: addHeadersText.trim() ? parseHeaders(addHeadersText) : null
-				};
-			} else {
-				if (!addScriptPath.trim()) {
-					throw new Error('Script path is required.');
-				}
-				config = { type: 'bash', script_path: addScriptPath.trim() };
-			}
-
+			const config = await buildAddConfig();
 			await createChannel({
 				type: addType,
 				name: addName,
@@ -721,6 +724,29 @@
 			addError = e instanceof Error ? e.message : 'Save failed';
 		} finally {
 			addSaving = false;
+		}
+	}
+
+	// Test-send the in-progress add-form config without saving the channel.
+	async function testNewChannel() {
+		addError = null;
+		addTestResult = null;
+		addTesting = true;
+		try {
+			const config = await buildAddConfig();
+			const evt = addSubscribedEvents[0] ?? 'job.started';
+			const result = await testConfig({
+				type: addType,
+				config: config as unknown as Record<string, unknown>,
+				event_key: evt
+			});
+			addTestResult = result.ok
+				? { ok: true, msg: 'Test sent successfully.' }
+				: { ok: false, msg: `Test failed: ${result.error ?? 'unknown error'}` };
+		} catch (e) {
+			addTestResult = { ok: false, msg: e instanceof Error ? e.message : 'Test failed' };
+		} finally {
+			addTesting = false;
 		}
 	}
 
@@ -2464,10 +2490,19 @@
 										>{addSaving ? 'Saving…' : 'Save'}</button>
 										<button
 											type="button"
+											disabled={addTesting}
+											onclick={testNewChannel}
+											class="rounded-md border border-primary/25 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:hover:bg-primary/15"
+										>{addTesting ? 'Testing…' : 'Test'}</button>
+										<button
+											type="button"
 											onclick={() => { resetAddForm(); addPanelOpen = false; }}
 											class="rounded-md border border-primary/25 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-primary/10 dark:border-primary/30 dark:text-gray-400 dark:hover:bg-primary/15"
 										>Cancel</button>
 									</div>
+									{#if addTestResult}
+										<p class="text-sm {addTestResult.ok ? 'text-status-success' : 'text-status-error'}">{addTestResult.msg}</p>
+									{/if}
 								</div>
 							{/if}
 						</div>

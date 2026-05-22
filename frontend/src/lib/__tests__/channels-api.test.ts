@@ -3,7 +3,7 @@ import * as client from '$lib/api/client';
 import {
 	fetchChannels, fetchChannel, createChannel, updateChannel,
 	deleteChannel, testSendChannel, fetchDispatch, fetchDispatches,
-	fetchServices, composeUrl
+	fetchServices, composeUrl, testConfig
 } from '$lib/api/channels';
 
 describe('channels api', () => {
@@ -76,6 +76,15 @@ describe('channels api', () => {
 		await composeUrl('discord', { webhook_id: '1' }, { tts: true });
 		expect(spy).toHaveBeenCalledWith('/api/notifications/services/discord/compose-url', {
 			method: 'POST', body: JSON.stringify({ required: { webhook_id: '1' }, advanced: { tts: true } })
+		});
+	});
+
+	it('testConfig POSTs the config to /test', async () => {
+		const spy = vi.spyOn(client, 'apiFetch').mockResolvedValue({ ok: true, error: null } as never);
+		const body = { type: 'apprise', config: { type: 'apprise', url: 'discord://a/b' }, event_key: 'job.started' };
+		await testConfig(body);
+		expect(spy).toHaveBeenCalledWith('/api/notifications/test', {
+			method: 'POST', body: JSON.stringify(body)
 		});
 	});
 });

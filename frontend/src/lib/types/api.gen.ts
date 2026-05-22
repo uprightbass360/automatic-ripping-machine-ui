@@ -6277,6 +6277,36 @@ export type ComposeChannelUrlApiNotificationsServicesServiceIdComposeUrlPostResp
     200: unknown;
 };
 
+export type TestChannelConfigApiNotificationsTestPostData = {
+    /**
+     * Body
+     */
+    body: {
+        [key: string]: unknown;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/notifications/test';
+};
+
+export type TestChannelConfigApiNotificationsTestPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type TestChannelConfigApiNotificationsTestPostError = TestChannelConfigApiNotificationsTestPostErrors[keyof TestChannelConfigApiNotificationsTestPostErrors];
+
+export type TestChannelConfigApiNotificationsTestPostResponses = {
+    /**
+     * Response Test Channel Config Api Notifications Test Post
+     *
+     * Successful Response
+     */
+    200: unknown;
+};
+
 export type ListThemesApiThemesGetData = {
     body?: never;
     path?: never;
@@ -7232,3 +7262,31 @@ export type GetPatternTokensApiPatternsTokensGetResponses = {
 };
 
 export type GetPatternTokensApiPatternsTokensGetResponse = GetPatternTokensApiPatternsTokensGetResponses[keyof GetPatternTokensApiPatternsTokensGetResponses];
+
+export type RootStaticOrSpaFilenameGetData = {
+    body?: never;
+    path: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    query?: never;
+    url: '/{filename}';
+};
+
+export type RootStaticOrSpaFilenameGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RootStaticOrSpaFilenameGetError = RootStaticOrSpaFilenameGetErrors[keyof RootStaticOrSpaFilenameGetErrors];
+
+export type RootStaticOrSpaFilenameGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
