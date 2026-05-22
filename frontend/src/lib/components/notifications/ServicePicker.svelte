@@ -14,13 +14,22 @@
 		catalog.featured.map((id) => byId.get(id)).filter((s): s is CatalogService => !!s)
 	);
 
-	// When searching, match across all services; otherwise show featured first.
+	// All services, featured first (for discoverability) then the rest A→Z.
+	const allOrdered = $derived.by(() => {
+		const featuredIds = new Set(catalog.featured);
+		const rest = catalog.services
+			.filter((s) => !featuredIds.has(s.id))
+			.sort((a, b) => a.name.localeCompare(b.name));
+		return [...featuredServices, ...rest];
+	});
+
+	// Show every service by default; filter across all when searching.
 	const options = $derived(
 		search.trim()
 			? catalog.services.filter((s) =>
 					s.name.toLowerCase().includes(search.trim().toLowerCase())
 				)
-			: featuredServices
+			: allOrdered
 	);
 
 	function choose(id: string) {
@@ -128,7 +137,7 @@
 			</ul>
 			{#if !search.trim()}
 				<p class="border-t border-primary/15 px-3 py-1.5 text-xs text-gray-500 dark:border-primary/20 dark:text-gray-400">
-					Showing {featuredServices.length} featured — type to search all {catalog.services.length}.
+					{catalog.services.length} services — type to filter.
 				</p>
 			{/if}
 		</div>
