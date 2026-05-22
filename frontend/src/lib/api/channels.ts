@@ -68,3 +68,14 @@ export function composeUrl(
 		body: JSON.stringify({ required, advanced })
 	});
 }
+
+export function testConfig(body: {
+	type: string;
+	config: Record<string, unknown>;
+	event_key?: string;
+}): Promise<{ ok: boolean; error: string | null }> {
+	return apiFetch<{ ok: boolean; error: string | null }>('/api/notifications/test', {
+		method: 'POST',
+		body: JSON.stringify(body)
+	});
+}

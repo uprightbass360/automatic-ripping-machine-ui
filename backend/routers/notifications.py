@@ -113,3 +113,11 @@ async def compose_channel_url(service_id: str, body: dict[str, Any]) -> Any:
     if resp is None:
         raise HTTPException(status_code=503, detail=_UNREACHABLE)
     return resp
+
+
+@router.post("/notifications/test")
+async def test_channel_config(body: dict[str, Any]) -> Any:
+    resp = await arm_client.test_channel_config(body)
+    if resp is None:
+        raise HTTPException(status_code=503, detail=_UNREACHABLE)
+    return resp

@@ -806,6 +806,11 @@ async def compose_channel_url(service_id: str, body: dict[str, Any]) -> dict[str
     )
 
 
+async def test_channel_config(body: dict[str, Any]) -> dict[str, Any] | None:
+    """Test-send to an unsaved channel config. Returns None if unreachable."""
+    return await _request("POST", "/api/v1/notifications/test", json=body)
+
+
 # --- Health ---
 
 
