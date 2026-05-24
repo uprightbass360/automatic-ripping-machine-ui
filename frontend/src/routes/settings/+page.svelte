@@ -2361,25 +2361,20 @@
 							</p>
 						{/if}
 
-						<!-- Add channel panel -->
-						<div class="rounded-lg border border-dashed border-primary/40 bg-surface dark:border-primary/40 dark:bg-surface-dark">
+						<!-- Add channel: a button that stays below the list; the form
+						     is hidden until the button is clicked, then shown inline. -->
+						{#if !addPanelOpen}
 							<button
 								type="button"
-								onclick={() => (addPanelOpen = !addPanelOpen)}
-								class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-primary-text hover:bg-page dark:text-primary-text-dark dark:hover:bg-primary/10"
-								aria-expanded={addPanelOpen}
+								onclick={() => (addPanelOpen = true)}
+								class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover dark:bg-primary dark:hover:bg-primary-hover"
 							>
-								<span>+ Add channel</span>
-								<svg
-									class="h-4 w-4 transform transition-transform {addPanelOpen ? 'rotate-180' : ''}"
-									fill="none" stroke="currentColor" viewBox="0 0 24 24"
-								>
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-								</svg>
+								+ Add channel
 							</button>
-
-							{#if addPanelOpen}
-								<div class="space-y-4 border-t border-primary/20 px-4 py-4 dark:border-primary/20">
+						{:else}
+							<div class="rounded-lg border border-dashed border-primary/40 bg-surface dark:border-primary/40 dark:bg-surface-dark">
+								<div class="space-y-4 px-4 py-4">
+									<h3 class="text-sm font-semibold text-primary-text dark:text-primary-text-dark">Add channel</h3>
 									{#if addError}
 										<p class="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-300">{addError}</p>
 									{/if}
@@ -2504,8 +2499,8 @@
 										<p class="text-sm {addTestResult.ok ? 'text-status-success' : 'text-status-error'}">{addTestResult.msg}</p>
 									{/if}
 								</div>
-							{/if}
-						</div>
+							</div>
+						{/if}
 					</div>
 				{/if}
 			</section>
