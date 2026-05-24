@@ -1554,6 +1554,35 @@
 	</div>
 {/snippet}
 
+<!-- Message-templates section, shared by the edit and add channel forms.
+     The TemplateEditor is passed as children so each call site keeps its
+     own bind:templates. -->
+{#snippet templatesSection(subscribedEvents: string[], children: import('svelte').Snippet)}
+	{#if subscribedEvents.length > 0}
+		<details class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5" open>
+			<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Message templates (optional)</summary>
+			<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Customize the title and body sent for each subscribed event. Leave blank to use the built-in defaults.</p>
+			<div class="mt-3">{@render children()}</div>
+		</details>
+	{/if}
+{/snippet}
+
+<!-- Save + Test button pair, shared by the edit and add channel forms. -->
+{#snippet channelActionButtons(saving: boolean, onSave: () => void, testing: boolean, onTest: () => void)}
+	<button
+		type="button"
+		disabled={saving}
+		onclick={onSave}
+		class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
+	>{saving ? 'Saving…' : 'Save'}</button>
+	<button
+		type="button"
+		disabled={testing}
+		onclick={onTest}
+		class="rounded-md border border-primary/25 px-4 py-2 text-sm font-medium text-primary-text hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:text-primary-text-dark dark:hover:bg-primary/15"
+	>{testing ? 'Testing…' : 'Test'}</button>
+{/snippet}
+
 <!-- Reusable snippet for GPU support cards.
      Filters to the detected vendor's group(s); falls back to showing all
      groups when nothing is detected so the user can see what's missing. -->
@@ -2312,15 +2341,10 @@
 
 										<EventSubscriptions bind:selected={entry.subscribedEvents} />
 
-										{#if entry.subscribedEvents.length > 0}
-											<details class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5" open>
-												<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Message templates (optional)</summary>
-												<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Customize the title and body sent for each subscribed event. Leave blank to use the built-in defaults.</p>
-												<div class="mt-3">
-													<TemplateEditor subscribedEvents={entry.subscribedEvents} bind:templates={entry.templates} />
-												</div>
-											</details>
-										{/if}
+										{#snippet editTemplateEditor()}
+											<TemplateEditor subscribedEvents={entry.subscribedEvents} bind:templates={entry.templates} />
+										{/snippet}
+										{@render templatesSection(entry.subscribedEvents, editTemplateEditor)}
 
 										<div class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5">
 											<h3 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Recent sends</h3>
@@ -2332,18 +2356,7 @@
 										</div>
 
 										<div class="flex flex-wrap items-center gap-2">
-											<button
-												type="button"
-												disabled={entry.saving}
-												onclick={() => saveChannel(ch.id)}
-												class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
-											>{entry.saving ? 'Saving…' : 'Save'}</button>
-											<button
-												type="button"
-												disabled={entry.testing}
-												onclick={() => testChannel(ch.id)}
-												class="rounded-md border border-primary/25 px-4 py-2 text-sm font-medium text-primary-text hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:text-primary-text-dark dark:hover:bg-primary/15"
-											>{entry.testing ? 'Testing…' : 'Test'}</button>
+											{@render channelActionButtons(entry.saving, () => saveChannel(ch.id), entry.testing, () => testChannel(ch.id))}
 											<button
 												type="button"
 												onclick={() => removeChannel(ch)}
@@ -2466,29 +2479,13 @@
 
 									<EventSubscriptions bind:selected={addSubscribedEvents} />
 
-									{#if addSubscribedEvents.length > 0}
-										<details class="rounded-md border border-primary/15 bg-page p-3 dark:border-primary/20 dark:bg-primary/5" open>
-											<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">Message templates (optional)</summary>
-											<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Customize the title and body sent for each subscribed event. Leave blank to use the built-in defaults.</p>
-											<div class="mt-3">
-												<TemplateEditor subscribedEvents={addSubscribedEvents} bind:templates={addTemplates} />
-											</div>
-										</details>
-									{/if}
+									{#snippet addTemplateEditor()}
+										<TemplateEditor subscribedEvents={addSubscribedEvents} bind:templates={addTemplates} />
+									{/snippet}
+									{@render templatesSection(addSubscribedEvents, addTemplateEditor)}
 
 									<div class="flex flex-wrap items-center gap-2">
-										<button
-											type="button"
-											disabled={addSaving}
-											onclick={saveNewChannel}
-											class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 dark:bg-primary dark:hover:bg-primary-hover"
-										>{addSaving ? 'Saving…' : 'Save'}</button>
-										<button
-											type="button"
-											disabled={addTesting}
-											onclick={testNewChannel}
-											class="rounded-md border border-primary/25 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-50 dark:border-primary/30 dark:hover:bg-primary/15"
-										>{addTesting ? 'Testing…' : 'Test'}</button>
+										{@render channelActionButtons(addSaving, saveNewChannel, addTesting, testNewChannel)}
 										<button
 											type="button"
 											onclick={() => { resetAddForm(); addPanelOpen = false; }}
