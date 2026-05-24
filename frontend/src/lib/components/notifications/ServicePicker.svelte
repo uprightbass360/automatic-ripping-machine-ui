@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Catalog, CatalogService } from '$lib/types/notifications';
+	import { FIELD_INPUT_CLASS } from '$lib/types/notifications';
 
 	let { catalog, onpick }: { catalog: Catalog; onpick: (id: string) => void } = $props();
 
@@ -114,7 +115,7 @@
 					bind:value={search}
 					onkeydown={onKeydown}
 					autofocus
-					class="w-full rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class="w-full {FIELD_INPUT_CLASS}"
 				/>
 			</div>
 			<ul role="listbox" class="max-h-60 overflow-y-auto py-1">

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { CatalogField } from '$lib/types/notifications';
+	import { FIELD_INPUT_CLASS } from '$lib/types/notifications';
 
 	let { field, value = $bindable() }: { field: CatalogField; value: unknown } = $props();
 
@@ -27,7 +28,7 @@
 				aria-label={field.label}
 				bind:value
 				required={field.required}
-				class="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+				class={FIELD_INPUT_CLASS}
 			>
 				{#each field.values ?? [] as opt}
 					<option value={opt}>{opt}</option>
@@ -40,7 +41,7 @@
 				step={field.type === 'float' ? 'any' : '1'}
 				bind:value
 				required={field.required}
-				class="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+				class={FIELD_INPUT_CLASS}
 			/>
 		{:else}
 			<input
@@ -48,7 +49,7 @@
 				aria-label={field.label}
 				bind:value
 				required={field.required}
-				class="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+				class={FIELD_INPUT_CLASS}
 			/>
 		{/if}
 	</label>

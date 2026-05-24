@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { EVENT_VARIABLES, EVENT_LABELS, type EventKey } from '$lib/types/notifications';
+	import { EVENT_VARIABLES, EVENT_LABELS, type EventKey, FIELD_INPUT_CLASS } from '$lib/types/notifications';
 	import type { ChannelTemplate } from '$lib/types/notifications';
 
 	let {
@@ -30,7 +30,7 @@
 					aria-label={`${key} title`}
 					value={templates[key]?.title ?? ''}
 					oninput={(e) => (ensure(key).title = (e.currentTarget as HTMLInputElement).value || null)}
-					class="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class={FIELD_INPUT_CLASS}
 				/>
 			</label>
 			<label class="flex flex-col gap-1">
@@ -40,7 +40,7 @@
 					rows="2"
 					value={templates[key]?.body ?? ''}
 					oninput={(e) => (ensure(key).body = (e.currentTarget as HTMLTextAreaElement).value || null)}
-					class="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary dark:border-primary/30 dark:bg-primary/10 dark:text-white"
+					class={FIELD_INPUT_CLASS}
 				></textarea>
 			</label>
 			<p class="text-xs text-gray-500 dark:text-gray-400">
