@@ -1,0 +1,208 @@
+<script lang="ts">
+	import type { Channel, Catalog, ChannelCreate } from '$lib/types/notifications';
+	import {
+		fetchChannels, fetchServices, createChannel, updateChannel,
+		deleteChannel, testSendChannel, fetchDispatch, composeUrl, testConfig
+	} from '$lib/api/channels';
+	import { addToast } from '$lib/stores/toast.svelte';
+	import StatStrip from './StatStrip.svelte';
+	import FilterPills, { type ChannelFilter } from './FilterPills.svelte';
+	import ChannelList from './ChannelList.svelte';
+	import AddChannelForm, { type AddChannelBody } from './AddChannelForm.svelte';
+	import type { EditorBody } from './ChannelEditor.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+
+	let channels = $state<Channel[]>([]);
+	let catalog = $state<Catalog>({ featured: [], services: [] });
+	let loaded = $state(false);
+	let loadError = $state<string | null>(null);
+	let addOpen = $state(false);
+	let expandedId = $state<number | null>(null);
+	let filter = $state<ChannelFilter>('all');
+	let deleteTarget = $state<Channel | null>(null);
+
+	$effect(() => { load(); });
+
+	async function load() {
+		try {
+			const [chans, cat] = await Promise.all([fetchChannels(), fetchServices()]);
+			channels = chans;
+			catalog = cat;
+			loaded = true;
+		} catch (e) {
+			loadError = e instanceof Error ? e.message : 'Failed to load channels';
+		}
+	}
+
+	const counts = $derived({
+		total: channels.length,
+		issues: channels.filter((c) => c.last_error).length,
+		subscribedEvents: new Set(channels.flatMap((c) => c.subscribed_events)).size
+	});
+	const filterCounts = $derived({
+		all: channels.length,
+		enabled: channels.filter((c) => c.enabled).length,
+		paused: channels.filter((c) => !c.enabled).length,
+		issues: channels.filter((c) => c.last_error).length
+	});
+	const visible = $derived(channels.filter((c) =>
+		filter === 'all' ? true :
+		filter === 'enabled' ? c.enabled :
+		filter === 'paused' ? !c.enabled :
+		!!c.last_error
+	));
+
+	function serviceNameFor(c: Channel): string {
+		return c.type === 'apprise' ? 'Service' : c.type;
+	}
+
+	async function toConfig(body: { type: string; config: Record<string, unknown>; serviceId: string | null }) {
+		if (body.type === 'apprise' && body.serviceId) {
+			const { url } = await composeUrl(body.serviceId, body.config, {});
+			return { type: 'apprise', url };
+		}
+		return { type: body.type, ...body.config };
+	}
+
+	async function handleAdd(body: AddChannelBody) {
+		try {
+			const config = await toConfig(body);
+			const payload: ChannelCreate = {
+				type: body.type, name: body.name, enabled: body.enabled,
+				config: config as ChannelCreate['config'],
+				subscribed_events: body.subscribed_events,
+				templates: body.templates
+			};
+			const created = await createChannel(payload);
+			channels = [created, ...channels];
+			addOpen = false;
+			addToast({ tone: 'success', title: 'Channel added', body: `${created.name} is now listening for events.` });
+		} catch (e) {
+			addToast({ tone: 'error', title: 'Add failed', body: e instanceof Error ? e.message : 'Unknown error' });
+		}
+	}
+
+	async function handleToggle(c: Channel) {
+		const next = !c.enabled;
+		channels = channels.map((x) => (x.id === c.id ? { ...x, enabled: next } : x));
+		try {
+			await updateChannel(c.id, { enabled: next });
+			addToast({ tone: 'info', title: next ? `Enabled ${c.name}` : `Paused ${c.name}` });
+		} catch {
+			channels = channels.map((x) => (x.id === c.id ? { ...x, enabled: c.enabled } : x));
+			addToast({ tone: 'error', title: 'Update failed', body: c.name });
+		}
+	}
+
+	async function handleEditorSave(c: Channel, body: EditorBody) {
+		try {
+			const updated = await updateChannel(c.id, {
+				name: body.name, enabled: body.enabled,
+				config: body.config as unknown as Channel['config'],
+				subscribed_events: body.subscribed_events, templates: body.templates
+			});
+			channels = channels.map((x) => (x.id === c.id ? updated : x));
+			addToast({ tone: 'success', title: 'Saved.' });
+		} catch (e) {
+			addToast({ tone: 'error', title: 'Save failed', body: e instanceof Error ? e.message : '' });
+		}
+	}
+
+	async function handleTestSaved(c: Channel) {
+		addToast({ tone: 'info', title: `Sending test to ${c.name}…` });
+		try {
+			const { dispatch_id } = await testSendChannel(c.id, c.subscribed_events[0] ?? 'job.started');
+			const status = await fetchDispatch(dispatch_id);
+			if (status.status === 'failed') addToast({ tone: 'error', title: 'Test failed', body: status.last_error ?? '' });
+			else addToast({ tone: 'success', title: 'Test delivered' });
+		} catch (e) {
+			addToast({ tone: 'error', title: 'Test failed', body: e instanceof Error ? e.message : '' });
+		}
+	}
+
+	async function handleTestUnsaved(body: AddChannelBody) {
+		try {
+			const config = await toConfig(body);
+			const res = await testConfig({ type: body.type, config, event_key: body.subscribed_events[0] ?? 'job.started' });
+			if (res.ok) addToast({ tone: 'success', title: 'Test delivered' });
+			else addToast({ tone: 'error', title: 'Test failed', body: res.error ?? '' });
+		} catch (e) {
+			addToast({ tone: 'error', title: 'Test failed', body: e instanceof Error ? e.message : '' });
+		}
+	}
+
+	async function confirmDelete() {
+		const c = deleteTarget;
+		if (!c) return;
+		deleteTarget = null;
+		try {
+			await deleteChannel(c.id);
+			channels = channels.filter((x) => x.id !== c.id);
+			if (expandedId === c.id) expandedId = null;
+			addToast({ tone: 'info', title: `Deleted ${c.name}` });
+		} catch (e) {
+			addToast({ tone: 'error', title: 'Delete failed', body: e instanceof Error ? e.message : '' });
+		}
+	}
+
+	function toggleExpand(c: Channel) { expandedId = expandedId === c.id ? null : c.id; }
+</script>
+
+<div class="space-y-5">
+	<div class="flex items-start justify-between">
+		<div>
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
+			<p class="text-sm text-gray-500 dark:text-gray-400">Manage notification channels — Discord, Slack, webhooks, scripts, and more.</p>
+		</div>
+		{#if !addOpen}
+			<button type="button" onclick={() => (addOpen = true)} class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover">+ Add channel</button>
+		{/if}
+	</div>
+
+	{#if loadError}
+		<p class="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-300">{loadError}</p>
+	{:else if !loaded}
+		<div class="py-8 text-center text-gray-400">Loading channels…</div>
+	{:else}
+		<StatStrip total={counts.total} issues={counts.issues} subscribedEvents={counts.subscribedEvents} />
+
+		{#if addOpen}
+			<AddChannelForm {catalog} onsave={handleAdd} oncancel={() => (addOpen = false)} ontest={handleTestUnsaved} />
+		{/if}
+
+		{#if channels.length > 0}
+			<div class="flex items-center justify-between">
+				<FilterPills active={filter} counts={filterCounts} onselect={(f) => (filter = f)} />
+				<span class="text-xs text-gray-500 dark:text-gray-400">Click a row to edit</span>
+			</div>
+			<ChannelList
+				channels={visible}
+				{catalog}
+				{expandedId}
+				{serviceNameFor}
+				ontoggle={handleToggle}
+				ontest={handleTestSaved}
+				onexpand={toggleExpand}
+				oneditorsave={handleEditorSave}
+				oneditortest={(c) => handleTestSaved(c)}
+				ondelete={(c) => (deleteTarget = c)}
+			/>
+		{:else}
+			<div class="rounded-xl border border-dashed border-primary/40 bg-page/40 px-6 py-12 text-center">
+				<p class="text-sm font-medium text-gray-700 dark:text-gray-200">No notification channels yet</p>
+				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Add one to start receiving alerts for rip and transcode events.</p>
+				<button type="button" onclick={() => (addOpen = true)} class="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover">Add your first channel</button>
+			</div>
+		{/if}
+	{/if}
+</div>
+
+<ConfirmDialog
+	open={deleteTarget !== null}
+	title="Delete channel?"
+	message={deleteTarget ? `${deleteTarget.name} will be removed and stop receiving events. This cannot be undone.` : ''}
+	confirmLabel="Delete"
+	variant="danger"
+	onconfirm={confirmDelete}
+	oncancel={() => (deleteTarget = null)}
+/>
