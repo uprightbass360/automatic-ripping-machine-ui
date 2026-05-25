@@ -10,7 +10,8 @@
 		enabled = $bindable(),
 		config = $bindable(),
 		service,
-		showLabelRow = true
+		showLabelRow = true,
+		preserveExisting = false
 	}: {
 		type: ChannelType;
 		name: string;
@@ -18,6 +19,7 @@
 		config: Record<string, unknown>;
 		service: CatalogService | null;
 		showLabelRow?: boolean;
+		preserveExisting?: boolean;
 	} = $props();
 
 	const webhookFields: CatalogField[] = [
@@ -28,12 +30,15 @@
 		{ key: 'script_path', label: 'Script Path', type: 'string', private: false, required: true }
 	];
 
-	const fields = $derived(
+	const rawFields = $derived(
 		type === 'apprise'
 			? [...(service?.required_fields ?? []), ...(service?.advanced_fields ?? [])]
 			: type === 'webhook'
 				? webhookFields
 				: bashFields
+	);
+	const fields = $derived(
+		preserveExisting ? rawFields.map((f) => ({ ...f, required: false })) : rawFields
 	);
 </script>
 
@@ -51,6 +56,9 @@
 					<span class="ml-1 font-mono text-[11px] normal-case tracking-normal text-gray-500">{service.url_scheme}://…</span>
 				{:else if type === 'webhook'}Webhook configuration{:else}Bash script configuration{/if}
 			</div>
+			{#if preserveExisting}
+				<p class="mb-3 text-xs text-gray-500 dark:text-gray-400">Re-enter credentials to change the destination. Leave blank to keep the current settings.</p>
+			{/if}
 			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 				{#each fields as f (f.key)}
 					<div class={f.key === 'url' || f.key === 'script_path' ? 'sm:col-span-2' : ''}>

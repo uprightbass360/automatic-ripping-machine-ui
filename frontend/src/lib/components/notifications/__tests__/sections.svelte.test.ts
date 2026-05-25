@@ -37,4 +37,25 @@ describe('ConfigureSection', () => {
 		renderComponent(ConfigureSection, { props });
 		expect(screen.getByLabelText(/webhook url/i)).toBeInTheDocument();
 	});
+
+	it('preserveExisting makes config fields optional and shows the keep-current hint', () => {
+		const props = $state({
+			type: 'webhook' as const, name: 'x', enabled: true,
+			config: {} as Record<string, unknown>, service: null, preserveExisting: true
+		});
+		renderComponent(ConfigureSection, { props });
+		const url = screen.getByLabelText(/webhook url/i) as HTMLInputElement;
+		expect(url.required).toBe(false);
+		expect(screen.getByText(/leave blank to keep/i)).toBeInTheDocument();
+	});
+
+	it('without preserveExisting, required fields stay required', () => {
+		const props = $state({
+			type: 'webhook' as const, name: 'x', enabled: true,
+			config: {} as Record<string, unknown>, service: null
+		});
+		renderComponent(ConfigureSection, { props });
+		const url = screen.getByLabelText(/webhook url/i) as HTMLInputElement;
+		expect(url.required).toBe(true);
+	});
 });
