@@ -382,6 +382,14 @@ describe('Settings Page', () => {
 			vi.mocked(channelsApi.composeUrl).mockClear();
 		});
 
+		// window.confirm is spied per-test by clickDeleteWithConfirm; restore
+		// the global afterwards so other suites see the real implementation.
+		let confirmSpy: ReturnType<typeof vi.spyOn> | null = null;
+		afterEach(() => {
+			confirmSpy?.mockRestore();
+			confirmSpy = null;
+		});
+
 		// Open the Notifications tab and wait for the mocked "Family Discord"
 		// channel panel to render.
 		async function gotoNotifications() {
@@ -475,32 +483,28 @@ describe('Settings Page', () => {
 			);
 		});
 
+		// Expand Family Discord and click its Delete button with window.confirm
+		// stubbed to the given response. The spy stays active (restored in
+		// afterEach) so the caller can await the delete outcome and assert.
+		async function clickDeleteWithConfirm(confirmReturns: boolean) {
+			confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(confirmReturns);
+			await gotoNotifications();
+			const card = await expandFamilyDiscord();
+			await fireEvent.click(within(card).getByText('Delete'));
+		}
+
 		it('deletes a channel after confirm via deleteChannel', async () => {
-			const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-			try {
-				await gotoNotifications();
-				const card = await expandFamilyDiscord();
-				await fireEvent.click(within(card).getByText('Delete'));
-				await waitFor(() => {
-					expect(vi.mocked(channelsApi.deleteChannel)).toHaveBeenCalledWith(1);
-				});
-				expect(confirmSpy).toHaveBeenCalled();
-			} finally {
-				confirmSpy.mockRestore();
-			}
+			await clickDeleteWithConfirm(true);
+			await waitFor(() => {
+				expect(vi.mocked(channelsApi.deleteChannel)).toHaveBeenCalledWith(1);
+			});
+			expect(confirmSpy).toHaveBeenCalled();
 		});
 
 		it('does not delete when confirm is dismissed', async () => {
-			const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-			try {
-				await gotoNotifications();
-				const card = await expandFamilyDiscord();
-				await fireEvent.click(within(card).getByText('Delete'));
-				expect(confirmSpy).toHaveBeenCalled();
-				expect(vi.mocked(channelsApi.deleteChannel)).not.toHaveBeenCalled();
-			} finally {
-				confirmSpy.mockRestore();
-			}
+			await clickDeleteWithConfirm(false);
+			expect(confirmSpy).toHaveBeenCalled();
+			expect(vi.mocked(channelsApi.deleteChannel)).not.toHaveBeenCalled();
 		});
 
 		it('creates an apprise channel via composeUrl + createChannel', async () => {
