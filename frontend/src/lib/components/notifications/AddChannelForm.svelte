@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Catalog, CatalogService, ChannelType, ChannelTemplate } from '$lib/types/notifications';
 	import ConfigureSection from './sections/ConfigureSection.svelte';
+	import LabelEnabledRow from './sections/LabelEnabledRow.svelte';
 	import EventsSection from './sections/EventsSection.svelte';
 	import TemplatesSection from './sections/TemplatesSection.svelte';
 	import ServiceDropdown from './ServiceDropdown.svelte';
@@ -81,13 +82,15 @@
 			{/each}
 		</fieldset>
 
+		<LabelEnabledRow bind:name bind:enabled />
+
 		{#if type === 'apprise'}
 			<div class="rounded-lg border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
 				<ServiceDropdown {catalog} selectedId={serviceId} onpick={pickService} />
 			</div>
 		{/if}
 
-		<ConfigureSection {type} bind:name bind:enabled bind:config {service} />
+		<ConfigureSection {type} bind:name bind:enabled bind:config {service} showLabelRow={false} />
 		<EventsSection bind:selected={events} />
 		<TemplatesSection subscribedEvents={events} bind:templates />
 	</div>
