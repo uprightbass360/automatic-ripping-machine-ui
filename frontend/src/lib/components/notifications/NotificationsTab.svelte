@@ -59,7 +59,7 @@
 	async function toConfig(body: { type: string; config: Record<string, unknown>; serviceId: string | null }) {
 		if (body.type === 'apprise' && body.serviceId) {
 			const { url } = await composeUrl(body.serviceId, body.config, {});
-			return { type: 'apprise', url };
+			return { type: 'apprise', url, service_id: body.serviceId };
 		}
 		return { type: body.type, ...body.config };
 	}
