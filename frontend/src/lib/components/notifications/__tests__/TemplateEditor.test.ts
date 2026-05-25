@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { renderComponent, screen, cleanup } from '$lib/test-utils';
+import { renderComponent, screen, cleanup, fireEvent, waitFor } from '$lib/test-utils';
 import TemplateEditor from '../TemplateEditor.svelte';
 
 describe('TemplateEditor', () => {
@@ -35,5 +35,32 @@ describe('TemplateEditor', () => {
 		expect((screen.getByLabelText('job.started body') as HTMLTextAreaElement).placeholder)
 			.toBe('Job {job_id} started ripping {job_title} ({job_disc_type}).');
 		expect(screen.getByText(/Leave blank to send the default/i)).toBeTruthy();
+	});
+
+	it('inserts a variable token at the caret of the focused field', async () => {
+		renderComponent(TemplateEditor, { props: { subscribedEvents: ['job.started'], templates: {} } });
+		const title = screen.getByLabelText('job.started title') as HTMLInputElement;
+
+		// Type some text, place the caret in the middle, then click a chip.
+		await fireEvent.input(title, { target: { value: 'hi  there' } });
+		title.focus();
+		title.setSelectionRange(3, 3); // after "hi "
+		await fireEvent.click(title); // captures caret position
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Insert {job_title}' }));
+
+		await waitFor(() => {
+			expect((screen.getByLabelText('job.started title') as HTMLInputElement).value)
+				.toBe('hi {job_title} there');
+		});
+	});
+
+	it('appends a variable to the title when no field is focused', async () => {
+		renderComponent(TemplateEditor, { props: { subscribedEvents: ['job.started'], templates: {} } });
+		await fireEvent.click(screen.getByRole('button', { name: 'Insert {job_id}' }));
+		await waitFor(() => {
+			expect((screen.getByLabelText('job.started title') as HTMLInputElement).value)
+				.toBe('{job_id}');
+		});
 	});
 });
