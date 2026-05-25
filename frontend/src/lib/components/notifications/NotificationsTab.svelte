@@ -96,11 +96,25 @@
 
 	async function handleEditorSave(c: Channel, body: EditorBody) {
 		try {
-			const updated = await updateChannel(c.id, {
-				name: body.name, enabled: body.enabled,
-				config: body.config as unknown as Channel['config'],
-				subscribed_events: body.subscribed_events, templates: body.templates
-			});
+			const patch: Record<string, unknown> = {
+				name: body.name,
+				enabled: body.enabled,
+				subscribed_events: body.subscribed_events,
+				templates: body.templates
+			};
+			if (c.type === 'apprise') {
+				const filled = Object.values(body.appriseFields).some(
+					(v) => v !== undefined && v !== null && String(v).trim() !== ''
+				);
+				if (filled && body.serviceId) {
+					const { url } = await composeUrl(body.serviceId, body.appriseFields, {});
+					patch.config = { type: 'apprise', url, service_id: body.serviceId };
+				}
+				// blank -> leave patch.config unset -> backend keeps current url
+			} else {
+				patch.config = body.config as unknown as Channel['config'];
+			}
+			const updated = await updateChannel(c.id, patch as Parameters<typeof updateChannel>[1]);
 			channels = channels.map((x) => (x.id === c.id ? updated : x));
 			addToast({ tone: 'success', title: 'Saved.' });
 		} catch (e) {

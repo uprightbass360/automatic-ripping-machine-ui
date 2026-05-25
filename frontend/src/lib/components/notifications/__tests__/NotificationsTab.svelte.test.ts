@@ -118,4 +118,49 @@ describe('NotificationsTab', () => {
 			})
 		));
 	});
+
+	it('editor save with apprise fields recomposes url and patches config', async () => {
+		const ch = { id: 1, type: 'apprise' as const, name: 'D', enabled: true,
+			config: { type: 'apprise' as const, url: 'discord://1/2', service_id: 'discord' },
+			subscribed_events: ['job.started'], templates: {},
+			last_fired_at: null, last_success_at: null, last_error: null };
+		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
+		vi.spyOn(api, 'fetchServices').mockResolvedValue({ featured: [], services: [
+			{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
+			  required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
+			  advanced_fields: [] } ] });
+		const compose = vi.spyOn(api, 'composeUrl').mockResolvedValue({ url: 'discord://9/9' });
+		const update = vi.spyOn(api, 'updateChannel').mockResolvedValue({ ...ch, config: { type: 'apprise', url: 'discord://9/9', service_id: 'discord' } });
+		renderComponent(NotificationsTab);
+		await screen.findByText('D');
+		await fireEvent.click(screen.getByText('D'));  // expand the row
+		await fireEvent.input(await screen.findByLabelText(/Webhook ID/i), { target: { value: '9' } });
+		await fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+		await waitFor(() => expect(compose).toHaveBeenCalledWith('discord', expect.objectContaining({ webhook_id: '9' }), expect.any(Object)));
+		await waitFor(() => expect(update).toHaveBeenCalledWith(1, expect.objectContaining({
+			config: expect.objectContaining({ type: 'apprise', url: 'discord://9/9', service_id: 'discord' })
+		})));
+	});
+
+	it('editor save with blank apprise fields omits config', async () => {
+		const ch = { id: 1, type: 'apprise' as const, name: 'D', enabled: true,
+			config: { type: 'apprise' as const, url: 'discord://1/2', service_id: 'discord' },
+			subscribed_events: ['job.started'], templates: {},
+			last_fired_at: null, last_success_at: null, last_error: null };
+		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
+		vi.spyOn(api, 'fetchServices').mockResolvedValue({ featured: [], services: [
+			{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
+			  required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
+			  advanced_fields: [] } ] });
+		const compose = vi.spyOn(api, 'composeUrl');
+		const update = vi.spyOn(api, 'updateChannel').mockResolvedValue({ ...ch, name: 'D2' });
+		renderComponent(NotificationsTab);
+		await screen.findByText('D');
+		await fireEvent.click(screen.getByText('D'));
+		await fireEvent.input(screen.getByLabelText('Channel Label'), { target: { value: 'D2' } });
+		await fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+		await waitFor(() => expect(update).toHaveBeenCalled());
+		expect(compose).not.toHaveBeenCalled();
+		expect(update.mock.calls[0][1]).not.toHaveProperty('config');
+	});
 });
