@@ -87,4 +87,16 @@ describe('ChannelEditor', () => {
 		await fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
 		expect(onsave.mock.calls[0][0].appriseFields).toEqual(expect.objectContaining({ webhook_id: '99' }));
 	});
+
+	it('shows a notice when service_id is not in the catalog', async () => {
+		const catalog = { featured: [], services: [] };  // discord absent
+		const ch = {
+			id: 7, type: 'apprise' as const, name: 'D', enabled: true,
+			config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord' },
+			subscribed_events: ['job.started'], templates: {},
+			last_fired_at: null, last_success_at: null, last_error: null
+		};
+		renderComponent(ChannelEditor, { props: { channel: ch, catalog, onsave: () => {}, ontest: () => {}, onclose: () => {}, ondelete: () => {} } });
+		expect(await screen.findByText(/Unknown service 'discord'/i)).toBeInTheDocument();
+	});
 });
