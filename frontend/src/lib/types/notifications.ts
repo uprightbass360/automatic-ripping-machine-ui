@@ -18,6 +18,7 @@ export type ChannelType = 'apprise' | 'webhook' | 'bash';
 export interface AppriseConfig {
 	type: 'apprise';
 	url: string;
+	service_id?: string | null;
 }
 
 export interface WebhookConfig {
