@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Channel, Catalog, CatalogService, ChannelTemplate } from '$lib/types/notifications';
+	import type { Channel, Catalog, CatalogService, ChannelTemplate, AppriseConfig } from '$lib/types/notifications';
 	import ConfigureSection from './sections/ConfigureSection.svelte';
 	import EventsSection from './sections/EventsSection.svelte';
 	import TemplatesSection from './sections/TemplatesSection.svelte';
@@ -10,6 +10,8 @@
 		config: Record<string, unknown>;
 		subscribed_events: string[];
 		templates: Record<string, ChannelTemplate>;
+		appriseFields: Record<string, unknown>;
+		serviceId: string | null;
 	}
 
 	let {
@@ -34,25 +36,44 @@
 	let events = $state<string[]>([...channel.subscribed_events]);
 	let templates = $state<Record<string, ChannelTemplate>>({ ...channel.templates });
 
-	// Apprise service lookup is best-effort (config carries a composed url, not an id);
-	// fall back to null so ConfigureSection renders generic fields.
-	const service = $derived<CatalogService | null>(null);
+	// Apprise channels store config.service_id, so resolve the service from the
+	// loaded catalog to render the per-service re-entry fields.
+	const serviceId = $derived(
+		channel.type === 'apprise'
+			? ((channel.config as AppriseConfig).service_id ?? null)
+			: null
+	);
+	const service = $derived<CatalogService | null>(
+		serviceId ? catalog.services.find((s) => s.id === serviceId) ?? null : null
+	);
+
+	// Apprise re-entry values live in a separate state from config (which holds the
+	// composed url + service_id). Empty appriseFields = keep current destination.
+	let appriseFields = $state<Record<string, unknown>>({});
+	const appriseTouched = $derived(
+		Object.values(appriseFields).some((v) => v !== undefined && v !== null && String(v).trim() !== '')
+	);
 
 	const dirty = $derived(
 		name !== channel.name ||
 		enabled !== channel.enabled ||
-		JSON.stringify(config) !== JSON.stringify(channel.config) ||
+		(channel.type !== 'apprise' && JSON.stringify(config) !== JSON.stringify(channel.config)) ||
 		JSON.stringify(events) !== JSON.stringify(channel.subscribed_events) ||
-		JSON.stringify(templates) !== JSON.stringify(channel.templates)
+		JSON.stringify(templates) !== JSON.stringify(channel.templates) ||
+		appriseTouched
 	);
 
 	function body(): EditorBody {
-		return { name, enabled, config, subscribed_events: events, templates };
+		return { name, enabled, config, subscribed_events: events, templates, appriseFields, serviceId };
 	}
 </script>
 
 <div class="space-y-4 border-t border-primary/20 px-4 py-4 dark:border-primary/20">
-	<ConfigureSection type={channel.type} bind:name bind:enabled bind:config {service} />
+	{#if channel.type === 'apprise'}
+		<ConfigureSection type="apprise" bind:name bind:enabled bind:config={appriseFields} {service} preserveExisting />
+	{:else}
+		<ConfigureSection type={channel.type} bind:name bind:enabled bind:config {service} />
+	{/if}
 	<EventsSection bind:selected={events} />
 	<TemplatesSection subscribedEvents={events} bind:templates />
 
