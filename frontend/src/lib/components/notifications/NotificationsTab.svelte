@@ -142,6 +142,24 @@
 		}
 	}
 
+	async function handleEditorTest(c: Channel, body: EditorBody) {
+		try {
+			// The editor's config is already in the channel's stored shape
+			// (no apprise URL composition needed — it carries the saved/edited
+			// config directly). Test it via the unsaved-config endpoint so the
+			// user tests their current edits, not the last-saved state.
+			const res = await testConfig({
+				type: c.type,
+				config: body.config,
+				event_key: body.subscribed_events[0] ?? 'job.started'
+			});
+			if (res.ok) addToast({ tone: 'success', title: 'Test delivered' });
+			else addToast({ tone: 'error', title: 'Test failed', body: res.error ?? '' });
+		} catch (e) {
+			addToast({ tone: 'error', title: 'Test failed', body: e instanceof Error ? e.message : '' });
+		}
+	}
+
 	async function confirmDelete() {
 		const c = deleteTarget;
 		if (!c) return;
@@ -195,7 +213,7 @@
 				ontest={handleTestSaved}
 				onexpand={toggleExpand}
 				oneditorsave={handleEditorSave}
-				oneditortest={(c) => handleTestSaved(c)}
+				oneditortest={handleEditorTest}
 				ondelete={(c) => (deleteTarget = c)}
 			/>
 		{:else}

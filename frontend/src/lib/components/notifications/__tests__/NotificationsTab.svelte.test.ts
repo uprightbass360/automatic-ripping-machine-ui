@@ -66,4 +66,23 @@ describe('NotificationsTab', () => {
 		expect(toasts.value.some((t) => t.title === 'Test failed')).toBe(false);
 		vi.useRealTimers();
 	});
+
+	it('editor Send test uses testConfig with the edited body, not testSendChannel', async () => {
+		const testConfig = vi.spyOn(api, 'testConfig').mockResolvedValue({ ok: true, error: null });
+		const testSend = vi.spyOn(api, 'testSendChannel');
+		renderComponent(NotificationsTab);
+		await screen.findByText('Hook');
+		// Expand the row (click the channel name / row, not the toggle or actions)
+		await fireEvent.click(screen.getByText('Hook'));
+		// The collapsed row's test button uses an icon with aria-label "Send test";
+		// the editor's uses visible text "Send test". Filter by visible textContent
+		// to reliably target the editor's button.
+		const sendTestButtons = await screen.findAllByRole('button', { name: /send test/i });
+		const editorBtn = sendTestButtons.find((b) => b.textContent?.toLowerCase().includes('send test'));
+		await fireEvent.click(editorBtn!);
+		await waitFor(() => expect(testConfig).toHaveBeenCalledWith(
+			expect.objectContaining({ type: 'webhook', config: expect.objectContaining({ url: 'https://x' }) })
+		));
+		expect(testSend).not.toHaveBeenCalled();
+	});
 });
