@@ -62,6 +62,6 @@
 		<button type="button" aria-label="Send test" onclick={() => ontest?.()} class="rounded p-1.5 text-gray-500 hover:bg-primary/10 hover:text-primary">
 			<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
 		</button>
-		<svg class="h-4 w-4 transform text-gray-500 transition-transform {expanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+		<svg class="h-3 w-3 transform text-gray-500 transition-transform {expanded ? 'rotate-90' : ''}" fill="currentColor" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l5 4-5 4z" /></svg>
 	</div>
 </div>
