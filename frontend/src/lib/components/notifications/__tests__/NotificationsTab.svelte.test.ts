@@ -45,4 +45,25 @@ describe('NotificationsTab', () => {
 		await waitFor(() => expect(api.updateChannel).toHaveBeenCalledWith(1, { enabled: false }));
 		await waitFor(() => expect(screen.getByRole('switch', { name: /enabled/i }).getAttribute('aria-checked')).toBe('true'));
 	});
+
+	it('test-send polls until the dispatch reaches a terminal status', async () => {
+		vi.useFakeTimers();
+		vi.spyOn(api, 'testSendChannel').mockResolvedValue({ sent_at: 'now', dispatch_id: 9 });
+		const fetchDispatch = vi.spyOn(api, 'fetchDispatch')
+			.mockResolvedValueOnce({ id: 9, status: 'in_flight', attempts: 1, last_error: null, completed_at: null })
+			.mockResolvedValueOnce({ id: 9, status: 'success', attempts: 1, last_error: null, completed_at: 'now' });
+
+		renderComponent(NotificationsTab);
+		// loaded state — advance microtasks; channels resolve
+		await vi.advanceTimersByTimeAsync(0);
+		// Click the row's Send test button (aria-label "Send test")
+		await fireEvent.click(screen.getByRole('button', { name: /send test/i }));
+		// Advance through two 500ms poll iterations
+		await vi.advanceTimersByTimeAsync(1100);
+
+		expect(fetchDispatch).toHaveBeenCalledTimes(2);
+		expect(toasts.value.some((t) => t.title === 'Test delivered')).toBe(true);
+		expect(toasts.value.some((t) => t.title === 'Test failed')).toBe(false);
+		vi.useRealTimers();
+	});
 });

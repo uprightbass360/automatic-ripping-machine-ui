@@ -112,9 +112,20 @@
 		addToast({ tone: 'info', title: `Sending test to ${c.name}…` });
 		try {
 			const { dispatch_id } = await testSendChannel(c.id, c.subscribed_events[0] ?? 'job.started');
-			const status = await fetchDispatch(dispatch_id);
-			if (status.status === 'failed') addToast({ tone: 'error', title: 'Test failed', body: status.last_error ?? '' });
-			else addToast({ tone: 'success', title: 'Test delivered' });
+			// Poll up to ~5s for a terminal status.
+			for (let i = 0; i < 10; i++) {
+				await new Promise((r) => setTimeout(r, 500));
+				const status = await fetchDispatch(dispatch_id);
+				if (status.status === 'success') {
+					addToast({ tone: 'success', title: 'Test delivered' });
+					return;
+				}
+				if (status.status === 'failed') {
+					addToast({ tone: 'error', title: 'Test failed', body: status.last_error ?? '' });
+					return;
+				}
+			}
+			addToast({ tone: 'info', title: 'Test still pending', body: 'Check delivery status shortly.' });
 		} catch (e) {
 			addToast({ tone: 'error', title: 'Test failed', body: e instanceof Error ? e.message : '' });
 		}
