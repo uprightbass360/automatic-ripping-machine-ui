@@ -27,4 +27,13 @@ describe('TemplateEditor', () => {
 		});
 		expect((screen.getByLabelText('job.started title') as HTMLInputElement).value).toBe('Hi {job_title}');
 	});
+
+	it('shows the built-in default as a placeholder when a field is blank', () => {
+		renderComponent(TemplateEditor, { props: { subscribedEvents: ['job.started'], templates: {} } });
+		expect((screen.getByLabelText('job.started title') as HTMLInputElement).placeholder)
+			.toBe('ARM started: {job_title}');
+		expect((screen.getByLabelText('job.started body') as HTMLTextAreaElement).placeholder)
+			.toBe('Job {job_id} started ripping {job_title} ({job_disc_type}).');
+		expect(screen.getByText(/Leave blank to send the default/i)).toBeTruthy();
+	});
 });

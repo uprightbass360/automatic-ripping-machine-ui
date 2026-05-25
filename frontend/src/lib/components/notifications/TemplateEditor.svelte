@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { EVENT_VARIABLES, EVENT_LABELS, type EventKey, FIELD_INPUT_CLASS } from '$lib/types/notifications';
+	import { EVENT_VARIABLES, EVENT_LABELS, EVENT_DEFAULT_TEMPLATES, type EventKey, FIELD_INPUT_CLASS } from '$lib/types/notifications';
 	import type { ChannelTemplate } from '$lib/types/notifications';
 
 	let {
@@ -15,6 +15,10 @@
 	function varsFor(key: string): string[] {
 		return EVENT_VARIABLES[key as EventKey] ?? [];
 	}
+
+	function defaultsFor(key: string): { title: string; body: string } {
+		return EVENT_DEFAULT_TEMPLATES[key as EventKey] ?? { title: '', body: '' };
+	}
 </script>
 
 <div class="space-y-4">
@@ -28,6 +32,7 @@
 				<span class="text-xs font-medium text-gray-600 dark:text-gray-400">Title</span>
 				<input
 					aria-label={`${key} title`}
+					placeholder={defaultsFor(key).title}
 					value={templates[key]?.title ?? ''}
 					oninput={(e) => (ensure(key).title = (e.currentTarget as HTMLInputElement).value || null)}
 					class={FIELD_INPUT_CLASS}
@@ -38,11 +43,15 @@
 				<textarea
 					aria-label={`${key} body`}
 					rows="2"
+					placeholder={defaultsFor(key).body}
 					value={templates[key]?.body ?? ''}
 					oninput={(e) => (ensure(key).body = (e.currentTarget as HTMLTextAreaElement).value || null)}
 					class={FIELD_INPUT_CLASS}
 				></textarea>
 			</label>
+			<p class="text-xs text-gray-500 dark:text-gray-400">
+				Leave blank to send the default shown above.
+			</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">
 				Available variables:
 				{#each varsFor(key) as v}

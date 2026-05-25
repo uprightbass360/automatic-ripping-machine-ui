@@ -143,6 +143,36 @@ export const EVENT_LABELS: Record<EventKey, string> = {
 	'job.duplicate_detected': 'Duplicate detected'
 };
 
+// Built-in title/body used when a channel leaves a template field blank.
+// Mirror of arm-neu arm/notifications/templates.py _DEFAULTS — surfaced as
+// placeholders so "optional" templates show what will be sent by default.
+export const EVENT_DEFAULT_TEMPLATES: Record<EventKey, { title: string; body: string }> = {
+	'job.started': {
+		title: 'ARM started: {job_title}',
+		body: 'Job {job_id} started ripping {job_title} ({job_disc_type}).'
+	},
+	'job.rip_complete': {
+		title: 'Rip complete: {job_title}',
+		body: 'Job {job_id} rip finished in {rip_duration_seconds}s, {track_count} tracks.'
+	},
+	'job.transcode_complete': {
+		title: 'Transcode complete: {job_title}',
+		body: 'Job {job_id} transcode finished in {transcode_duration_seconds}s. Output: {output_path}'
+	},
+	'job.failed': {
+		title: 'ARM job failed: {job_title}',
+		body: 'Job {job_id} failed during {phase}: {error_message}'
+	},
+	'job.manual_wait_required': {
+		title: 'ARM waiting: {job_title}',
+		body: 'Job {job_id} is waiting for manual input ({reason}). {wait_minutes_remaining} minutes remaining.'
+	},
+	'job.duplicate_detected': {
+		title: 'Duplicate detected: {job_title}',
+		body: 'Job {job_id} duplicates existing job {existing_job_id}.'
+	}
+};
+
 export function isCatalogField(v: unknown): v is CatalogField {
 	if (typeof v !== 'object' || v === null) return false;
 	const f = v as Record<string, unknown>;
