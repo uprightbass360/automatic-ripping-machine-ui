@@ -419,6 +419,23 @@ describe('Settings Page', () => {
 			);
 		}
 
+		// Open the add panel, switch it to the Webhook type, and fill the
+		// Webhook URL. Returns the add card for scoped queries. Pass url=null
+		// to leave the URL blank (for validation tests).
+		async function setupWebhookAdd(
+			name?: string,
+			url: string | null = 'https://hooks.example/x'
+		): Promise<HTMLElement> {
+			await gotoNotifications();
+			const card = await openAddPanel(name);
+			await fireEvent.click(screen.getByLabelText('Webhook'));
+			if (url !== null) {
+				const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
+				await fireEvent.input(webhookUrl, { target: { value: url } });
+			}
+			return card;
+		}
+
 		// Save the add panel and assert the given error message is shown and
 		// createChannel was not called.
 		async function expectAddBlocked(card: HTMLElement, message: RegExp) {
@@ -512,11 +529,7 @@ describe('Settings Page', () => {
 		});
 
 		it('creates a webhook channel via createChannel without composeUrl', async () => {
-			await gotoNotifications();
-			const addCard = await openAddPanel('My Webhook');
-			await fireEvent.click(screen.getByLabelText('Webhook'));
-			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
-			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
+			const addCard = await setupWebhookAdd('My Webhook');
 			await fireEvent.click(within(addCard).getByText('Save'));
 			await waitFor(() => {
 				expect(vi.mocked(channelsApi.createChannel)).toHaveBeenCalledWith(
@@ -532,11 +545,7 @@ describe('Settings Page', () => {
 		// --- Test (unsaved config) ---
 
 		it('test-sends the in-progress webhook config without saving', async () => {
-			await gotoNotifications();
-			const addCard = await openAddPanel('Hook To Test');
-			await fireEvent.click(screen.getByLabelText('Webhook'));
-			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
-			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
+			const addCard = await setupWebhookAdd('Hook To Test');
 			await fireEvent.click(within(addCard).getByText('Test'));
 			await waitFor(() => {
 				expect(vi.mocked(channelsApi.testConfig)).toHaveBeenCalledWith(
@@ -556,11 +565,7 @@ describe('Settings Page', () => {
 
 		it('shows the failure message when a test config send fails', async () => {
 			vi.mocked(channelsApi.testConfig).mockResolvedValueOnce({ ok: false, error: 'http 500' });
-			await gotoNotifications();
-			const addCard = await openAddPanel('Bad Hook');
-			await fireEvent.click(screen.getByLabelText('Webhook'));
-			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
-			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
+			const addCard = await setupWebhookAdd('Bad Hook');
 			await fireEvent.click(within(addCard).getByText('Test'));
 			await waitFor(() => {
 				expect(within(addCard).getByText(/Test failed: http 500/i)).toBeInTheDocument();
@@ -570,19 +575,13 @@ describe('Settings Page', () => {
 		// --- Required-field validation ---
 
 		it('blocks add with a blank channel name and does not call createChannel', async () => {
-			await gotoNotifications();
 			// Name left blank; webhook + URL filled so only the name is missing.
-			const card = await openAddPanel();
-			await fireEvent.click(screen.getByLabelText('Webhook'));
-			const webhookUrl = await waitFor(() => screen.getByLabelText('Webhook URL'));
-			await fireEvent.input(webhookUrl, { target: { value: 'https://hooks.example/x' } });
+			const card = await setupWebhookAdd();
 			await expectAddBlocked(card, /Channel label is required/i);
 		});
 
 		it('blocks add of a webhook channel with a blank URL', async () => {
-			await gotoNotifications();
-			const card = await openAddPanel('No URL Hook');
-			await fireEvent.click(screen.getByLabelText('Webhook')); // URL left blank
+			const card = await setupWebhookAdd('No URL Hook', null);
 			await expectAddBlocked(card, /Webhook URL is required/i);
 		});
 
