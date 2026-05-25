@@ -1,4 +1,4 @@
-import type { Channel, ChannelType } from '$lib/types/notifications';
+import type { Channel, ChannelType, CatalogService } from '$lib/types/notifications';
 
 export type ChannelStatus = 'ok' | 'warn' | 'error' | 'off';
 
@@ -29,4 +29,37 @@ const TYPE_LABELS: Record<ChannelType, string> = {
 
 export function typeLabel(type: ChannelType): string {
 	return TYPE_LABELS[type] ?? type;
+}
+
+export interface FormState {
+	type: ChannelType;
+	name: string;
+	config: Record<string, unknown>;
+	events: string[];
+	service: CatalogService | null;
+}
+
+function requiredKeys(state: FormState): string[] {
+	if (state.type === 'apprise') {
+		return (state.service?.required_fields ?? []).map((f) => f.key);
+	}
+	if (state.type === 'webhook') return ['url'];
+	return ['script_path'];
+}
+
+export function missingRequirements(state: FormState): string[] {
+	const missing: string[] = [];
+	if (!state.name.trim()) missing.push('channel label');
+	const keys = requiredKeys(state);
+	const allFilled = keys.every((k) => {
+		const v = state.config[k];
+		return v !== undefined && v !== null && String(v).trim() !== '';
+	});
+	if (!allFilled) missing.push('required fields');
+	if (state.events.length === 0) missing.push('at least one event');
+	return missing;
+}
+
+export function isReady(state: FormState): boolean {
+	return missingRequirements(state).length === 0;
 }
