@@ -427,12 +427,14 @@ describe('Settings Page', () => {
 			);
 		}
 
+		const WEBHOOK_URL = 'https://hooks.example/x';
+
 		// Open the add panel, switch it to the Webhook type, and fill the
 		// Webhook URL. Returns the add card for scoped queries. Pass url=null
 		// to leave the URL blank (for validation tests).
 		async function setupWebhookAdd(
 			name?: string,
-			url: string | null = 'https://hooks.example/x'
+			url: string | null = WEBHOOK_URL
 		): Promise<HTMLElement> {
 			await gotoNotifications();
 			const card = await openAddPanel(name);
@@ -442,6 +444,17 @@ describe('Settings Page', () => {
 				await fireEvent.input(webhookUrl, { target: { value: url } });
 			}
 			return card;
+		}
+
+		// Matcher for a webhook create/test payload (optionally asserting the
+		// channel name). Shared by the create + test webhook expectations.
+		function webhookPayloadMatching(name?: string) {
+			const shape: Record<string, unknown> = {
+				type: 'webhook',
+				config: expect.objectContaining({ type: 'webhook', url: WEBHOOK_URL })
+			};
+			if (name !== undefined) shape.name = name;
+			return expect.objectContaining(shape);
 		}
 
 		// Save the add panel and assert the given error message is shown and
@@ -537,11 +550,7 @@ describe('Settings Page', () => {
 			await fireEvent.click(within(addCard).getByText('Save'));
 			await waitFor(() => {
 				expect(vi.mocked(channelsApi.createChannel)).toHaveBeenCalledWith(
-					expect.objectContaining({
-						type: 'webhook',
-						name: 'My Webhook',
-						config: expect.objectContaining({ type: 'webhook', url: 'https://hooks.example/x' })
-					})
+					webhookPayloadMatching('My Webhook')
 				);
 			});
 		});
@@ -553,10 +562,7 @@ describe('Settings Page', () => {
 			await fireEvent.click(within(addCard).getByText('Test'));
 			await waitFor(() => {
 				expect(vi.mocked(channelsApi.testConfig)).toHaveBeenCalledWith(
-					expect.objectContaining({
-						type: 'webhook',
-						config: expect.objectContaining({ type: 'webhook', url: 'https://hooks.example/x' })
-					})
+					webhookPayloadMatching()
 				);
 			});
 			// Did not save.
