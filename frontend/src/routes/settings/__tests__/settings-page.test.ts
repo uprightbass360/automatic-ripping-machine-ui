@@ -143,6 +143,29 @@ vi.mock('$lib/stores/dashboard', () => ({ dashboard: mockDashboard }));
 describe('Settings Page', () => {
 	afterEach(() => cleanup());
 
+	// Render the page and wait for the tab bar to settle (the 'Music' tab is
+	// the readiness signal used throughout these tests).
+	async function renderAndWait() {
+		renderComponent(SettingsPage);
+		await waitFor(() => {
+			expect(screen.getByText('Music')).toBeInTheDocument();
+		});
+	}
+
+	// Render, then switch to a top-level tab by its label.
+	async function renderAndOpenTab(tab: string) {
+		await renderAndWait();
+		await fireEvent.click(screen.getAllByText(tab)[0]);
+	}
+
+	// Open the System tab and wait for its Versions card to render.
+	async function openSystemVersions() {
+		await renderAndOpenTab('System');
+		await waitFor(() => {
+			expect(screen.getByText('Versions')).toBeInTheDocument();
+		});
+	}
+
 	describe('rendering', () => {
 		it('renders page title', () => {
 			renderComponent(SettingsPage);
@@ -150,10 +173,7 @@ describe('Settings Page', () => {
 		});
 
 		it('renders all tab buttons after settings load', async () => {
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
+			await renderAndWait();
 			const allTabs = ['Ripping', 'Music', 'Transcoding', 'Notifications', 'Drives', 'Appearance'];
 			for (const tab of allTabs) {
 				const matches = screen.getAllByText(tab);
@@ -206,22 +226,13 @@ describe('Settings Page', () => {
 		});
 
 		it('shows Appearance tab', async () => {
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
+			await renderAndWait();
 			const matches = screen.getAllByText('Appearance');
 			expect(matches.length).toBeGreaterThanOrEqual(1);
 		});
 
 		it('image cache section loads when Appearance tab active', async () => {
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			// Click Appearance tab
-			const appearanceTab = screen.getAllByText('Appearance');
-			await fireEvent.click(appearanceTab[0]);
+			await renderAndOpenTab('Appearance');
 			await waitFor(() => {
 				expect(screen.getByText('Image Cache')).toBeInTheDocument();
 			});
@@ -235,12 +246,7 @@ describe('Settings Page', () => {
 		});
 
 		it('shows cache feedback after clearing image cache', async () => {
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			const appearanceTab = screen.getAllByText('Appearance');
-			await fireEvent.click(appearanceTab[0]);
+			await renderAndOpenTab('Appearance');
 			await waitFor(() => {
 				expect(screen.getByText('Clear Cache')).toBeInTheDocument();
 			});
@@ -259,12 +265,7 @@ describe('Settings Page', () => {
 		});
 
 		it('shows dark mode toggle when scheme does not lock mode', async () => {
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			const appearanceTab = screen.getAllByText('Appearance');
-			await fireEvent.click(appearanceTab[0]);
+			await renderAndOpenTab('Appearance');
 			await waitFor(() => {
 				expect(screen.getByText('Dark Mode')).toBeInTheDocument();
 			});
@@ -274,12 +275,7 @@ describe('Settings Page', () => {
 
 		it('calls toggleTheme when dark mode switch is clicked', async () => {
 			const { toggleTheme } = await import('$lib/stores/theme');
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			const appearanceTab = screen.getAllByText('Appearance');
-			await fireEvent.click(appearanceTab[0]);
+			await renderAndOpenTab('Appearance');
 			await waitFor(() => {
 				expect(screen.getByLabelText('Dark mode')).toBeInTheDocument();
 			});
@@ -293,12 +289,7 @@ describe('Settings Page', () => {
 			const locked = writable(true);
 			Object.assign(schemeLocksMode, { set: locked.set, subscribe: locked.subscribe, update: locked.update });
 
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			const appearanceTab = screen.getAllByText('Appearance');
-			await fireEvent.click(appearanceTab[0]);
+			await renderAndOpenTab('Appearance');
 			await waitFor(() => {
 				expect(screen.getByText('Locked by theme')).toBeInTheDocument();
 			});
@@ -306,13 +297,7 @@ describe('Settings Page', () => {
 		});
 
 		it('notifications tab renders inline channel panels and drops legacy fields', async () => {
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			// Switch to the notifications tab
-			const notificationsTab = screen.getAllByText('Notifications');
-			await fireEvent.click(notificationsTab[0]);
+			await renderAndOpenTab('Notifications');
 			// The inline channel panel for the mocked channel loads
 			await waitFor(() => {
 				expect(screen.getByText('Family Discord')).toBeTruthy();
@@ -329,13 +314,7 @@ describe('Settings Page', () => {
 		});
 
 		it('renders drives tab with collapsible diagnostics toggle', async () => {
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			// Switch to drives tab
-			const drivesTab = screen.getAllByText('Drives');
-			await fireEvent.click(drivesTab[0]);
+			await renderAndOpenTab('Drives');
 			await waitFor(() => {
 				expect(screen.getByText('Udev & Drive Diagnostics')).toBeInTheDocument();
 			});
@@ -347,15 +326,7 @@ describe('Settings Page', () => {
 			mockDashboard.set({
 				transcoder_system_stats: { gpu: { vendor: 'nvidia' } }
 			});
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			const systemTab = screen.getAllByText('System');
-			await fireEvent.click(systemTab[0]);
-			await waitFor(() => {
-				expect(screen.getByText('Versions')).toBeInTheDocument();
-			});
+			await openSystemVersions();
 			// Vendor subtitle renders as visible text alongside the version
 			expect(screen.getByText('nvidia')).toBeInTheDocument();
 		});
@@ -364,15 +335,7 @@ describe('Settings Page', () => {
 			mockDashboard.set({
 				transcoder_system_stats: { gpu: null }
 			});
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			const systemTab = screen.getAllByText('System');
-			await fireEvent.click(systemTab[0]);
-			await waitFor(() => {
-				expect(screen.getByText('Versions')).toBeInTheDocument();
-			});
+			await openSystemVersions();
 			expect(screen.queryByText('nvidia')).not.toBeInTheDocument();
 			expect(screen.queryByText('intel')).not.toBeInTheDocument();
 			expect(screen.queryByText('amd')).not.toBeInTheDocument();
@@ -380,15 +343,7 @@ describe('Settings Page', () => {
 
 		it('omits GPU vendor subtitle when transcoder is offline (no stats)', async () => {
 			mockDashboard.set({ transcoder_system_stats: null });
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			const systemTab = screen.getAllByText('System');
-			await fireEvent.click(systemTab[0]);
-			await waitFor(() => {
-				expect(screen.getByText('Versions')).toBeInTheDocument();
-			});
+			await openSystemVersions();
 			expect(screen.queryByText('nvidia')).not.toBeInTheDocument();
 		});
 
@@ -401,29 +356,13 @@ describe('Settings Page', () => {
 				database: { path: '/db/arm.db', size_bytes: 0, available: true, migration_current: 'a', migration_head: 'a', up_to_date: true },
 				drives: []
 			});
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			const systemTab = screen.getAllByText('System');
-			await fireEvent.click(systemTab[0]);
-			await waitFor(() => {
-				expect(screen.getByText('Versions')).toBeInTheDocument();
-			});
+			await openSystemVersions();
 			const grid = screen.getByText('Versions').parentElement?.querySelector('div.grid');
 			expect(grid?.className).toContain('md:grid-cols-4');
 		});
 
 		it('uses md:grid-cols-3 when Versions card has 3 entries (e.g. transcoder disabled)', async () => {
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
-			const systemTab = screen.getAllByText('System');
-			await fireEvent.click(systemTab[0]);
-			await waitFor(() => {
-				expect(screen.getByText('Versions')).toBeInTheDocument();
-			});
+			await openSystemVersions();
 			// Default mock has 3 versions: arm, transcoder, ui
 			const grid = screen.getByText('Versions').parentElement?.querySelector('div.grid');
 			expect(grid?.className).toContain('md:grid-cols-3');
@@ -446,10 +385,7 @@ describe('Settings Page', () => {
 		// Open the Notifications tab and wait for the mocked "Family Discord"
 		// channel panel to render.
 		async function gotoNotifications() {
-			renderComponent(SettingsPage);
-			await waitFor(() => {
-				expect(screen.getByText('Music')).toBeInTheDocument();
-			});
+			await renderAndWait();
 			await fireEvent.click(screen.getAllByText('Notifications')[0]);
 			await waitFor(() => {
 				expect(screen.getByText('Family Discord')).toBeInTheDocument();
