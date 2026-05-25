@@ -46,6 +46,9 @@
 	const service = $derived<CatalogService | null>(
 		serviceId ? catalog.services.find((s) => s.id === serviceId) ?? null : null
 	);
+	const unknownService = $derived(
+		channel.type === 'apprise' && serviceId !== null && service === null
+	);
 
 	// Apprise re-entry values live in a separate state from config (which holds the
 	// composed url + service_id). Empty appriseFields = keep current destination.
@@ -70,6 +73,11 @@
 
 <div class="space-y-4 border-t border-primary/20 px-4 py-4 dark:border-primary/20">
 	{#if channel.type === 'apprise'}
+		{#if unknownService}
+			<p class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
+				Unknown service '{serviceId}' — recreate this channel to edit its destination.
+			</p>
+		{/if}
 		<ConfigureSection type="apprise" bind:name bind:enabled bind:config={appriseFields} {service} preserveExisting />
 	{:else}
 		<ConfigureSection type={channel.type} bind:name bind:enabled bind:config {service} />

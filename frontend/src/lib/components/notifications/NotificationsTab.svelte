@@ -145,30 +145,44 @@
 		}
 	}
 
+	// Test an unsaved/edited config and toast the result. Shared by the add-form
+	// and the inline editor so the success/error toast handling lives in one place.
+	async function testConfigAndToast(type: string, config: Record<string, unknown>, eventKey: string) {
+		const res = await testConfig({ type, config, event_key: eventKey });
+		if (res.ok) addToast({ tone: 'success', title: 'Test delivered' });
+		else addToast({ tone: 'error', title: 'Test failed', body: res.error ?? '' });
+	}
+
 	async function handleTestUnsaved(body: AddChannelBody) {
 		try {
 			const config = await toConfig(body);
-			const res = await testConfig({ type: body.type, config, event_key: body.subscribed_events[0] ?? 'job.started' });
-			if (res.ok) addToast({ tone: 'success', title: 'Test delivered' });
-			else addToast({ tone: 'error', title: 'Test failed', body: res.error ?? '' });
+			await testConfigAndToast(body.type, config, body.subscribed_events[0] ?? 'job.started');
 		} catch (e) {
 			addToast({ tone: 'error', title: 'Test failed', body: e instanceof Error ? e.message : '' });
 		}
 	}
 
 	async function handleEditorTest(c: Channel, body: EditorBody) {
+		const eventKey = body.subscribed_events[0] ?? 'job.started';
 		try {
-			// The editor's config is already in the channel's stored shape
-			// (no apprise URL composition needed — it carries the saved/edited
-			// config directly). Test it via the unsaved-config endpoint so the
-			// user tests their current edits, not the last-saved state.
-			const res = await testConfig({
-				type: c.type,
-				config: body.config,
-				event_key: body.subscribed_events[0] ?? 'job.started'
-			});
-			if (res.ok) addToast({ tone: 'success', title: 'Test delivered' });
-			else addToast({ tone: 'error', title: 'Test failed', body: res.error ?? '' });
+			if (c.type === 'apprise') {
+				const filled = Object.values(body.appriseFields).some(
+					(v) => v !== undefined && v !== null && String(v).trim() !== ''
+				);
+				if (filled && body.serviceId) {
+					// User re-entered fields: compose the new url and test that.
+					const { url } = await composeUrl(body.serviceId, body.appriseFields, {});
+					await testConfigAndToast('apprise', { type: 'apprise', url }, eventKey);
+					return;
+				}
+				// Untouched apprise: fields are blank (config holds only the composed
+				// url + service_id), so test the SAVED channel instead.
+				await handleTestSaved(c);
+				return;
+			}
+			// Webhook/bash: test the edited config directly via the unsaved-config
+			// endpoint so the user tests their current edits, not the last-saved state.
+			await testConfigAndToast(c.type, body.config, eventKey);
 		} catch (e) {
 			addToast({ tone: 'error', title: 'Test failed', body: e instanceof Error ? e.message : '' });
 		}
