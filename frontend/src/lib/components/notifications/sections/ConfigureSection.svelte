@@ -1,22 +1,23 @@
 <script lang="ts">
 	import type { CatalogService, ChannelType, CatalogField } from '$lib/types/notifications';
-	import { FIELD_INPUT_CLASS } from '$lib/types/notifications';
 	import SchemaField from '../SchemaField.svelte';
 	import ServiceGlyph from '../ServiceGlyph.svelte';
-	import Toggle from '../Toggle.svelte';
+	import LabelEnabledRow from './LabelEnabledRow.svelte';
 
 	let {
 		type,
 		name = $bindable(),
 		enabled = $bindable(),
 		config = $bindable(),
-		service
+		service,
+		showLabelRow = true
 	}: {
 		type: ChannelType;
 		name: string;
 		enabled: boolean;
 		config: Record<string, unknown>;
 		service: CatalogService | null;
+		showLabelRow?: boolean;
 	} = $props();
 
 	const webhookFields: CatalogField[] = [
@@ -37,16 +38,9 @@
 </script>
 
 <div class="space-y-4">
-	<div class="grid grid-cols-[1fr_auto] items-end gap-4">
-		<label class="flex flex-col gap-1">
-			<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Channel Label *</span>
-			<input class={FIELD_INPUT_CLASS} aria-label="Channel Label" bind:value={name} required />
-		</label>
-		<div class="flex items-center gap-2 pb-2">
-			<Toggle checked={enabled} label="Enabled" onchange={(v) => (enabled = v)} />
-			<span class="text-sm text-gray-700 dark:text-gray-300">Enabled</span>
-		</div>
-	</div>
+	{#if showLabelRow}
+		<LabelEnabledRow bind:name bind:enabled />
+	{/if}
 
 	{#if fields.length}
 		<div class="rounded-lg border border-primary/15 bg-page p-4 dark:border-primary/20 dark:bg-primary/5">
