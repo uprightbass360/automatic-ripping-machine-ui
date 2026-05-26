@@ -58,8 +58,8 @@
 
 	async function toConfig(body: { type: string; config: Record<string, unknown>; serviceId: string | null }) {
 		if (body.type === 'apprise' && body.serviceId) {
-			const { url } = await composeUrl(body.serviceId, body.config, {});
-			return { type: 'apprise', url, service_id: body.serviceId };
+			// neu composes the url server-side from {service_id, fields}.
+			return { type: 'apprise', url: '', service_id: body.serviceId, fields: body.config };
 		}
 		return { type: body.type, ...body.config };
 	}
