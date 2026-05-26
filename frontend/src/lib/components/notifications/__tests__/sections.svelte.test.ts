@@ -2,6 +2,15 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, cleanup } from '$lib/test-utils';
 import EventsSection from '../sections/EventsSection.svelte';
 import ConfigureSection from '../sections/ConfigureSection.svelte';
+import type { CatalogField, CatalogService } from '$lib/types/notifications';
+
+function appriseService(over: { required_fields?: CatalogField[]; advanced_fields?: CatalogField[] } = {}): CatalogService {
+	return {
+		id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
+		required_fields: over.required_fields ?? [],
+		advanced_fields: over.advanced_fields ?? []
+	};
+}
 
 describe('EventsSection', () => {
 	afterEach(() => cleanup());
@@ -60,44 +69,35 @@ describe('ConfigureSection', () => {
 	});
 
 	it('apprise layout: required fields visible at top; advanced inside a closed <details>', () => {
-		const service = { id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
+		const service = appriseService({
 			required_fields: [
-				{ key: 'webhook_id', label: 'Webhook ID', type: 'string' as const, private: true, required: true },
-				{ key: 'webhook_token', label: 'Webhook Token', type: 'string' as const, private: true, required: true }
+				{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: true, required: true },
+				{ key: 'webhook_token', label: 'Webhook Token', type: 'string', private: true, required: true }
 			],
 			advanced_fields: [
-				{ key: 'thread', label: 'Thread ID', type: 'string' as const, private: false, required: false },
-				{ key: 'tts', label: 'Text To Speech', type: 'bool' as const, private: false, required: false }
+				{ key: 'thread', label: 'Thread ID', type: 'string', private: false, required: false },
+				{ key: 'tts', label: 'Text To Speech', type: 'bool', private: false, required: false }
 			]
-		};
-		renderComponent(ConfigureSection, {
-			props: {
-				type: 'apprise' as const, name: '', enabled: true,
-				config: {} as Record<string, unknown>, service
-			}
 		});
-		// required fields visible
+		renderComponent(ConfigureSection, {
+			props: { type: 'apprise' as const, name: '', enabled: true, config: {}, service }
+		});
 		expect(screen.getByLabelText('Webhook ID')).toBeInTheDocument();
 		expect(screen.getByLabelText('Webhook Token')).toBeInTheDocument();
-		// advanced details exists, closed by default
 		const details = screen.getByText(/Advanced \(2\)/i).closest('details') as HTMLDetailsElement;
 		expect(details).toBeInTheDocument();
 		expect(details.open).toBe(false);
 	});
 
 	it('apprise advanced expanded: bool fields render separately from text inputs', async () => {
-		const service = { id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
-			required_fields: [],
+		const service = appriseService({
 			advanced_fields: [
-				{ key: 'thread', label: 'Thread ID', type: 'string' as const, private: false, required: false },
-				{ key: 'tts', label: 'Text To Speech', type: 'bool' as const, private: false, required: false }
+				{ key: 'thread', label: 'Thread ID', type: 'string', private: false, required: false },
+				{ key: 'tts', label: 'Text To Speech', type: 'bool', private: false, required: false }
 			]
-		};
+		});
 		renderComponent(ConfigureSection, {
-			props: {
-				type: 'apprise' as const, name: '', enabled: true,
-				config: {} as Record<string, unknown>, service
-			}
+			props: { type: 'apprise' as const, name: '', enabled: true, config: {}, service }
 		});
 		const details = screen.getByText(/Advanced \(2\)/i).closest('details') as HTMLDetailsElement;
 		details.open = true;
