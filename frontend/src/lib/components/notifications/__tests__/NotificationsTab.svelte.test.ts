@@ -4,13 +4,9 @@ import NotificationsTab from '../NotificationsTab.svelte';
 import * as api from '$lib/api/channels';
 import { toasts, dismissToast } from '$lib/stores/toast.svelte';
 import type { Channel } from '$lib/types/notifications';
+import { discordCatalog, appriseChannel, webhookChannel } from './apprise-fixtures';
 
-const ch: Channel = {
-	id: 1, type: 'webhook', name: 'Hook', enabled: true,
-	config: { type: 'webhook', url: 'https://x' },
-	subscribed_events: ['job.started'], templates: {},
-	last_fired_at: null, last_success_at: null, last_error: null
-};
+const ch: Channel = webhookChannel();
 
 describe('NotificationsTab', () => {
 	beforeEach(() => {
@@ -87,12 +83,7 @@ describe('NotificationsTab', () => {
 	});
 
 	it('add: includes service_id in the apprise config it creates', async () => {
-		vi.spyOn(api, 'fetchServices').mockResolvedValue({
-			featured: ['discord'],
-			services: [{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
-				required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
-				advanced_fields: [] }]
-		});
+		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
 		const compose = vi.spyOn(api, 'composeUrl').mockResolvedValue({ url: 'discord://x/y' });
 		const create = vi.spyOn(api, 'createChannel').mockResolvedValue({
 			id: 5, type: 'apprise', name: 'New', enabled: true,
@@ -120,15 +111,9 @@ describe('NotificationsTab', () => {
 	});
 
 	it('editor save with apprise fields recomposes url and patches config', async () => {
-		const ch = { id: 1, type: 'apprise' as const, name: 'D', enabled: true,
-			config: { type: 'apprise' as const, url: 'discord://1/2', service_id: 'discord' },
-			subscribed_events: ['job.started'], templates: {},
-			last_fired_at: null, last_success_at: null, last_error: null };
+		const ch = appriseChannel();
 		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
-		vi.spyOn(api, 'fetchServices').mockResolvedValue({ featured: [], services: [
-			{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
-			  required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
-			  advanced_fields: [] } ] });
+		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
 		const compose = vi.spyOn(api, 'composeUrl').mockResolvedValue({ url: 'discord://9/9' });
 		const update = vi.spyOn(api, 'updateChannel').mockResolvedValue({ ...ch, config: { type: 'apprise', url: 'discord://9/9', service_id: 'discord' } });
 		renderComponent(NotificationsTab);
@@ -143,15 +128,9 @@ describe('NotificationsTab', () => {
 	});
 
 	it('editor save with blank apprise fields omits config', async () => {
-		const ch = { id: 1, type: 'apprise' as const, name: 'D', enabled: true,
-			config: { type: 'apprise' as const, url: 'discord://1/2', service_id: 'discord' },
-			subscribed_events: ['job.started'], templates: {},
-			last_fired_at: null, last_success_at: null, last_error: null };
+		const ch = appriseChannel();
 		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
-		vi.spyOn(api, 'fetchServices').mockResolvedValue({ featured: [], services: [
-			{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
-			  required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
-			  advanced_fields: [] } ] });
+		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
 		const compose = vi.spyOn(api, 'composeUrl');
 		const update = vi.spyOn(api, 'updateChannel').mockResolvedValue({ ...ch, name: 'D2' });
 		renderComponent(NotificationsTab);
@@ -165,15 +144,9 @@ describe('NotificationsTab', () => {
 	});
 
 	it('editor test with blank apprise fields tests the saved channel', async () => {
-		const ch = { id: 1, type: 'apprise' as const, name: 'D', enabled: true,
-			config: { type: 'apprise' as const, url: 'discord://1/2', service_id: 'discord' },
-			subscribed_events: ['job.started'], templates: {},
-			last_fired_at: null, last_success_at: null, last_error: null };
+		const ch = appriseChannel();
 		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
-		vi.spyOn(api, 'fetchServices').mockResolvedValue({ featured: [], services: [
-			{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
-			  required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
-			  advanced_fields: [] } ] });
+		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
 		const testSend = vi.spyOn(api, 'testSendChannel').mockResolvedValue({ sent_at: 'now', dispatch_id: 1 });
 		vi.spyOn(api, 'fetchDispatch').mockResolvedValue({ id: 1, status: 'success', attempts: 1, last_error: null, completed_at: 'now' });
 		const testCfg = vi.spyOn(api, 'testConfig');
@@ -189,15 +162,9 @@ describe('NotificationsTab', () => {
 	});
 
 	it('editor test with filled apprise fields composes + tests the new url', async () => {
-		const ch = { id: 1, type: 'apprise' as const, name: 'D', enabled: true,
-			config: { type: 'apprise' as const, url: 'discord://1/2', service_id: 'discord' },
-			subscribed_events: ['job.started'], templates: {},
-			last_fired_at: null, last_success_at: null, last_error: null };
+		const ch = appriseChannel();
 		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
-		vi.spyOn(api, 'fetchServices').mockResolvedValue({ featured: [], services: [
-			{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
-			  required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
-			  advanced_fields: [] } ] });
+		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
 		const compose = vi.spyOn(api, 'composeUrl').mockResolvedValue({ url: 'discord://9/9' });
 		const testCfg = vi.spyOn(api, 'testConfig').mockResolvedValue({ ok: true, error: null });
 		const testSend = vi.spyOn(api, 'testSendChannel');
