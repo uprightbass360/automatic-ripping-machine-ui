@@ -216,14 +216,9 @@
 </script>
 
 <div class="space-y-5">
-	<div class="flex items-start justify-between">
-		<div>
-			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
-			<p class="text-sm text-gray-500 dark:text-gray-400">Manage notification channels — Discord, Slack, webhooks, scripts, and more.</p>
-		</div>
-		{#if !addOpen}
-			<button type="button" onclick={() => (addOpen = true)} class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover">+ Add channel</button>
-		{/if}
+	<div>
+		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
+		<p class="text-sm text-gray-500 dark:text-gray-400">Manage notification channels — Discord, Slack, webhooks, scripts, and more.</p>
 	</div>
 
 	{#if loadError}
@@ -238,9 +233,11 @@
 		{/if}
 
 		{#if channels.length > 0}
-			<div class="flex items-center justify-between">
+			<div class="flex items-center justify-between gap-3 rounded-lg border border-primary/15 bg-page px-4 py-3 dark:border-primary/20 dark:bg-primary/5">
 				<FilterPills active={filter} counts={filterCounts} onselect={(f) => (filter = f)} />
-				<span class="text-xs text-gray-500 dark:text-gray-400">Click a row to edit</span>
+				{#if !addOpen}
+					<button type="button" onclick={() => (addOpen = true)} class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-on-primary hover:bg-primary-hover">+ Add channel</button>
+				{/if}
 			</div>
 			<ChannelList
 				channels={visible}
@@ -254,10 +251,10 @@
 				oneditortest={handleEditorTest}
 				ondelete={(c) => (deleteTarget = c)}
 			/>
-		{:else}
-			<div class="rounded-xl border border-dashed border-primary/40 bg-page/40 px-6 py-12 text-center">
-				<p class="text-sm font-medium text-gray-700 dark:text-gray-200">No notification channels yet</p>
-				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Add one to start receiving alerts for rip and transcode events.</p>
+		{:else if !addOpen}
+			<div class="rounded-lg border border-primary/15 bg-page p-8 text-center dark:border-primary/20 dark:bg-primary/5">
+				<p class="text-sm font-semibold text-primary">No notification channels yet</p>
+				<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Add one to start receiving alerts for rip and transcode events.</p>
 				<button type="button" onclick={() => (addOpen = true)} class="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover">Add your first channel</button>
 			</div>
 		{/if}
