@@ -426,9 +426,15 @@
 		}
 	}
 
+	// Set to true while we are mutating window.location.hash ourselves,
+	// so the hashchange listener can skip the work setTab already did
+	// (otherwise tab clicks scroll twice — once here, once in the listener).
+	let programmaticHashChange = false;
+
 	function setTab(tab: Tab) {
 		activeTab = tab;
 		pendingPanel = null;
+		programmaticHashChange = true;
 		window.location.hash = tab;
 		if (tab === 'music') loadAbcdeConfig();
 		if (tab === 'system') loadSystemInfo();
@@ -475,6 +481,10 @@
 		if (activeTab === 'system') loadSystemInfo();
 		if (activeTab === 'appearance') loadCacheStats();
 		function onHashChange() {
+			if (programmaticHashChange) {
+				programmaticHashChange = false;
+				return;
+			}
 			const { tab, panel } = parseHash();
 			activeTab = tab;
 			if (tab === 'music') loadAbcdeConfig();
