@@ -51,8 +51,15 @@
 	);
 
 	// Apprise re-entry values live in a separate state from config (which holds the
-	// composed url + service_id). Empty appriseFields = keep current destination.
-	let appriseFields = $state<Record<string, unknown>>({});
+	// composed url + service_id). Seed from stored fields so private values show as
+	// <hidden> (SchemaField renders that as empty + placeholder), and non-private
+	// values are pre-filled. Empty appriseFields = keep current destination.
+	let appriseFields = $state<Record<string, unknown>>({
+		...((channel.config as AppriseConfig).fields ?? {})
+	});
+	const noFields = $derived(
+		channel.type === 'apprise' && !(channel.config as AppriseConfig).fields
+	);
 	const appriseTouched = $derived(
 		Object.values(appriseFields).some((v) => v !== undefined && v !== null && String(v).trim() !== '')
 	);
@@ -77,8 +84,13 @@
 			<p class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
 				Unknown service '{serviceId}' — recreate this channel to edit its destination.
 			</p>
+		{:else if noFields}
+			<p class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
+				This channel was added via a raw URL. Delete and re-add it to edit its destination.
+			</p>
+		{:else}
+			<ConfigureSection type="apprise" bind:name bind:enabled bind:config={appriseFields} {service} preserveExisting />
 		{/if}
-		<ConfigureSection type="apprise" bind:name bind:enabled bind:config={appriseFields} {service} preserveExisting />
 	{:else}
 		<ConfigureSection type={channel.type} bind:name bind:enabled bind:config {service} />
 	{/if}

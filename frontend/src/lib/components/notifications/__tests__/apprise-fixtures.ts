@@ -11,9 +11,12 @@ export const discordCatalog: Catalog = {
 			docs_url: '',
 			url_scheme: 'discord',
 			required_fields: [
-				{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }
+				{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: true, required: true },
+				{ key: 'webhook_token', label: 'Webhook Token', type: 'string', private: true, required: true }
 			],
-			advanced_fields: []
+			advanced_fields: [
+				{ key: 'thread', label: 'Thread', type: 'string', private: false, required: false }
+			]
 		}
 	]
 };
@@ -40,7 +43,7 @@ export function appriseChannel(overrides: Partial<Channel> = {}): Channel {
 		type: 'apprise',
 		name: 'D',
 		enabled: true,
-		config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord' },
+		config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord', fields: {} },
 		subscribed_events: ['job.started'],
 		templates: {},
 		last_fired_at: null,
