@@ -86,14 +86,54 @@ describe('dashboard store sticky merge', () => {
 		expect(get(dashboard).notification_count).toBe(0);
 	});
 
-	it('does not stick non-sticky fields like transcoder_online', async () => {
+	it('debounces a single transcoder_online=false blip (two-strike)', async () => {
+		// First poll online; second blips to false (transient backend timeout);
+		// store masks it as still true to absorb the blip. Third poll still
+		// false → store flips to false (real outage).
 		fetchDashboardMock
 			.mockResolvedValueOnce(fullPayload({ transcoder_online: true }))
+			.mockResolvedValueOnce(fullPayload({ transcoder_online: false }))
 			.mockResolvedValueOnce(fullPayload({ transcoder_online: false }));
 
 		const { dashboard } = await import('../dashboard');
 		await dashboard.refresh();
 		await dashboard.refresh();
-		expect(get(dashboard).transcoder_online).toBe(false);
+		expect(get(dashboard).transcoder_online).toBe(true);  // blip absorbed
+		await dashboard.refresh();
+		expect(get(dashboard).transcoder_online).toBe(false); // real outage
+	});
+
+	it('debounces a single arm_online=false blip (two-strike)', async () => {
+		fetchDashboardMock
+			.mockResolvedValueOnce(fullPayload({ arm_online: true }))
+			.mockResolvedValueOnce(fullPayload({ arm_online: false }))
+			.mockResolvedValueOnce(fullPayload({ arm_online: false }));
+
+		const { dashboard } = await import('../dashboard');
+		await dashboard.refresh();
+		await dashboard.refresh();
+		expect(get(dashboard).arm_online).toBe(true);
+		await dashboard.refresh();
+		expect(get(dashboard).arm_online).toBe(false);
+	});
+
+	it('two-strike counter resets when a true poll lands between false polls', async () => {
+		fetchDashboardMock
+			.mockResolvedValueOnce(fullPayload({ arm_online: true }))
+			.mockResolvedValueOnce(fullPayload({ arm_online: false }))
+			.mockResolvedValueOnce(fullPayload({ arm_online: true }))
+			.mockResolvedValueOnce(fullPayload({ arm_online: false }))
+			.mockResolvedValueOnce(fullPayload({ arm_online: false }));
+
+		const { dashboard } = await import('../dashboard');
+		await dashboard.refresh();
+		await dashboard.refresh();
+		expect(get(dashboard).arm_online).toBe(true);
+		await dashboard.refresh();
+		expect(get(dashboard).arm_online).toBe(true);
+		await dashboard.refresh();
+		expect(get(dashboard).arm_online).toBe(true);
+		await dashboard.refresh();
+		expect(get(dashboard).arm_online).toBe(false);
 	});
 });

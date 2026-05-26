@@ -31,7 +31,17 @@ const STICKY_FIELDS = [
 	'ripping_enabled'
 ] as const satisfies readonly (keyof DashboardData)[];
 
+// Booleans that flip to `false` on a single backend blip (RemoteProtocolError,
+// timeout, etc). Don't pop the sidebar to "Cannot reach …" until we've seen
+// two consecutive `false` polls — one stale reading absorbs transient blips
+// while real outages still surface within ~10s.
+const TWO_STRIKE_FIELDS = ['arm_online', 'transcoder_online'] as const satisfies readonly (keyof DashboardData)[];
+
 let lastGood: DashboardData = emptyDashboard;
+const consecutiveFalse: Record<(typeof TWO_STRIKE_FIELDS)[number], number> = {
+	arm_online: 0,
+	transcoder_online: 0
+};
 
 async function fetchDashboardSticky(): Promise<DashboardData> {
 	const fresh = (await fetchDashboard()) as DashboardData & Partial<Record<(typeof STICKY_FIELDS)[number], unknown>>;
@@ -39,6 +49,19 @@ async function fetchDashboardSticky(): Promise<DashboardData> {
 	for (const key of STICKY_FIELDS) {
 		if (fresh[key] === null || fresh[key] === undefined) {
 			(merged[key] as unknown) = lastGood[key];
+		}
+	}
+	for (const key of TWO_STRIKE_FIELDS) {
+		if (fresh[key] === false) {
+			consecutiveFalse[key]++;
+			// First `false` after a `true` — keep showing online (debounce
+			// a single-poll blip). A second consecutive `false` surfaces
+			// the real outage on the next poll, ~5s later.
+			if (consecutiveFalse[key] < 2) {
+				(merged[key] as unknown) = true;
+			}
+		} else {
+			consecutiveFalse[key] = 0;
 		}
 	}
 	lastGood = merged;
