@@ -7,6 +7,15 @@
 	const inputType = $derived(field.private ? 'password' : 'text');
 
 	let boolValue = $derived(Boolean(value));
+
+	const HIDDEN = '<hidden>';
+	const isPrivateHidden = $derived(field.private && value === HIDDEN);
+	const displayValue = $derived(isPrivateHidden ? '' : (value ?? ''));
+	const placeholder = $derived(isPrivateHidden ? '•••••••• (set, leave blank to keep)' : '');
+
+	function onInput(e: Event) {
+		value = (e.currentTarget as HTMLInputElement).value;
+	}
 </script>
 
 {#if field.type === 'bool'}
@@ -47,7 +56,9 @@
 			<input
 				type={inputType}
 				aria-label={field.label}
-				bind:value
+				value={displayValue}
+				{placeholder}
+				oninput={onInput}
 				required={field.required}
 				class={FIELD_INPUT_CLASS}
 			/>

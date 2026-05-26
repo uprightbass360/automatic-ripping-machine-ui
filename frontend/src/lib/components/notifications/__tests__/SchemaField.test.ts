@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { renderComponent, screen, cleanup } from '$lib/test-utils';
+import { renderComponent, screen, fireEvent, cleanup } from '$lib/test-utils';
 import SchemaField from '../SchemaField.svelte';
 import type { CatalogField } from '$lib/types/notifications';
 
@@ -41,5 +41,54 @@ describe('SchemaField', () => {
 	it('marks required fields', () => {
 		renderComponent(SchemaField, { props: { field: field({ required: true }), value: '' } });
 		expect((screen.getByLabelText('Label') as HTMLInputElement).required).toBe(true);
+	});
+
+	it('private field with <hidden> value renders empty + keep-current placeholder', () => {
+		renderComponent(SchemaField, {
+			props: {
+				field: { key: 'tok', label: 'Token', type: 'string' as const, private: true, required: true },
+				value: '<hidden>'
+			}
+		});
+		const input = screen.getByLabelText('Token') as HTMLInputElement;
+		expect(input.type).toBe('password');
+		expect(input.value).toBe('');
+		expect(input.placeholder).toMatch(/leave blank to keep/i);
+	});
+
+	it('private field clears <hidden> sentinel on first input', async () => {
+		renderComponent(SchemaField, {
+			props: {
+				field: { key: 'tok', label: 'Token', type: 'string' as const, private: true, required: true },
+				value: '<hidden>'
+			}
+		});
+		const input = screen.getByLabelText('Token') as HTMLInputElement;
+		await fireEvent.input(input, { target: { value: 'newval' } });
+		// After typing, the input should show the new value (sentinel replaced)
+		expect(input.value).toBe('newval');
+	});
+
+	it('non-private field with <hidden> value renders the literal as-is', () => {
+		renderComponent(SchemaField, {
+			props: {
+				field: { key: 'thread', label: 'Thread', type: 'string' as const, private: false, required: false },
+				value: '<hidden>'
+			}
+		});
+		const input = screen.getByLabelText('Thread') as HTMLInputElement;
+		expect(input.value).toBe('<hidden>');
+	});
+
+	it('private field with normal value renders as password with that value', () => {
+		renderComponent(SchemaField, {
+			props: {
+				field: { key: 'tok', label: 'Token', type: 'string' as const, private: true, required: false },
+				value: 'normal-secret'
+			}
+		});
+		const input = screen.getByLabelText('Token') as HTMLInputElement;
+		expect(input.type).toBe('password');
+		expect(input.value).toBe('normal-secret');
 	});
 });
