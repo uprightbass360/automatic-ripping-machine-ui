@@ -15,10 +15,13 @@ export type EventKey = (typeof EVENT_KEYS)[number];
 
 export type ChannelType = 'apprise' | 'webhook' | 'bash';
 
+export type AppriseFieldValue = string | number | boolean;
+
 export interface AppriseConfig {
 	type: 'apprise';
 	url: string;
 	service_id?: string | null;
+	fields?: Record<string, AppriseFieldValue>;
 }
 
 export interface WebhookConfig {
