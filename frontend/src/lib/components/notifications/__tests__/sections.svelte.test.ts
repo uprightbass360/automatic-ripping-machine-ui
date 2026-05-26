@@ -58,4 +58,61 @@ describe('ConfigureSection', () => {
 		const url = screen.getByLabelText(/webhook url/i) as HTMLInputElement;
 		expect(url.required).toBe(true);
 	});
+
+	it('apprise layout: required fields visible at top; advanced inside a closed <details>', () => {
+		const service = { id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
+			required_fields: [
+				{ key: 'webhook_id', label: 'Webhook ID', type: 'string' as const, private: true, required: true },
+				{ key: 'webhook_token', label: 'Webhook Token', type: 'string' as const, private: true, required: true }
+			],
+			advanced_fields: [
+				{ key: 'thread', label: 'Thread ID', type: 'string' as const, private: false, required: false },
+				{ key: 'tts', label: 'Text To Speech', type: 'bool' as const, private: false, required: false }
+			]
+		};
+		renderComponent(ConfigureSection, {
+			props: {
+				type: 'apprise' as const, name: '', enabled: true,
+				config: {} as Record<string, unknown>, service
+			}
+		});
+		// required fields visible
+		expect(screen.getByLabelText('Webhook ID')).toBeInTheDocument();
+		expect(screen.getByLabelText('Webhook Token')).toBeInTheDocument();
+		// advanced details exists, closed by default
+		const details = screen.getByText(/Advanced \(2\)/i).closest('details') as HTMLDetailsElement;
+		expect(details).toBeInTheDocument();
+		expect(details.open).toBe(false);
+	});
+
+	it('apprise advanced expanded: bool fields render separately from text inputs', async () => {
+		const service = { id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
+			required_fields: [],
+			advanced_fields: [
+				{ key: 'thread', label: 'Thread ID', type: 'string' as const, private: false, required: false },
+				{ key: 'tts', label: 'Text To Speech', type: 'bool' as const, private: false, required: false }
+			]
+		};
+		renderComponent(ConfigureSection, {
+			props: {
+				type: 'apprise' as const, name: '', enabled: true,
+				config: {} as Record<string, unknown>, service
+			}
+		});
+		const details = screen.getByText(/Advanced \(2\)/i).closest('details') as HTMLDetailsElement;
+		details.open = true;
+		expect(screen.getByLabelText('Thread ID')).toBeInTheDocument();
+		expect(screen.getByLabelText('Text To Speech')).toBeInTheDocument();
+	});
+
+	it('webhook layout unchanged: single grid, no <details>', () => {
+		renderComponent(ConfigureSection, {
+			props: {
+				type: 'webhook' as const, name: '', enabled: true,
+				config: {} as Record<string, unknown>, service: null
+			}
+		});
+		expect(screen.getByLabelText(/webhook url/i)).toBeInTheDocument();
+		expect(screen.queryByText(/Advanced \(/)).toBeNull();
+	});
 });
