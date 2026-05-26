@@ -108,21 +108,24 @@ describe('NotificationsTab', () => {
 		expect(compose).not.toHaveBeenCalled();
 	});
 
-	it('editor save with apprise fields recomposes url and patches config', async () => {
+	it('editor save with apprise fields sends {service_id, fields} and omits composeUrl', async () => {
 		const ch = appriseChannel();
 		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
 		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
-		const compose = vi.spyOn(api, 'composeUrl').mockResolvedValue({ url: 'discord://9/9' });
-		const update = vi.spyOn(api, 'updateChannel').mockResolvedValue({ ...ch, config: { type: 'apprise', url: 'discord://9/9', service_id: 'discord' } });
+		const compose = vi.spyOn(api, 'composeUrl');
+		const update = vi.spyOn(api, 'updateChannel').mockResolvedValue({ ...ch });
 		renderComponent(NotificationsTab);
 		await screen.findByText('D');
 		await fireEvent.click(screen.getByText('D'));  // expand the row
 		await fireEvent.input(await screen.findByLabelText(/Webhook ID/i), { target: { value: '9' } });
 		await fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
-		await waitFor(() => expect(compose).toHaveBeenCalledWith('discord', expect.objectContaining({ webhook_id: '9' }), expect.any(Object)));
 		await waitFor(() => expect(update).toHaveBeenCalledWith(1, expect.objectContaining({
-			config: expect.objectContaining({ type: 'apprise', url: 'discord://9/9', service_id: 'discord' })
+			config: expect.objectContaining({
+				type: 'apprise', url: '', service_id: 'discord',
+				fields: expect.objectContaining({ webhook_id: '9' })
+			})
 		})));
+		expect(compose).not.toHaveBeenCalled();  // server-side recompose
 	});
 
 	it('editor save with blank apprise fields omits config', async () => {
@@ -176,6 +179,51 @@ describe('NotificationsTab', () => {
 		await waitFor(() => expect(compose).toHaveBeenCalledWith('discord', expect.objectContaining({ webhook_id: '9' }), expect.any(Object)));
 		await waitFor(() => expect(testCfg).toHaveBeenCalledWith(expect.objectContaining({ type: 'apprise', config: expect.objectContaining({ url: 'discord://9/9' }) })));
 		expect(testSend).not.toHaveBeenCalled();
+	});
+
+	it('editor save with apprise dirty: PATCH config {service_id, fields}', async () => {
+		const ch = appriseChannel({
+			id: 1,
+			config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord',
+			          fields: { webhook_id: '<hidden>', webhook_token: '<hidden>', thread: '5' } }
+		});
+		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
+		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
+		const compose = vi.spyOn(api, 'composeUrl');
+		const update = vi.spyOn(api, 'updateChannel').mockResolvedValue(ch);
+		renderComponent(NotificationsTab);
+		await screen.findByText('D');
+		await fireEvent.click(screen.getByText('D'));
+		// expand advanced + edit a non-private field
+		const adv = (await screen.findByText(/Advanced \(/)).closest('details') as HTMLDetailsElement;
+		adv.open = true;
+		await fireEvent.input(await screen.findByLabelText(/Thread/i), { target: { value: '9' } });
+		await fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+		await waitFor(() => expect(update).toHaveBeenCalledWith(1, expect.objectContaining({
+			config: expect.objectContaining({
+				type: 'apprise', service_id: 'discord',
+				fields: expect.objectContaining({ thread: '9', webhook_id: '<hidden>' })
+			})
+		})));
+		expect(compose).not.toHaveBeenCalled();  // server-side recompose
+	});
+
+	it('editor save with no apprise edits: omits config', async () => {
+		const ch = appriseChannel({
+			id: 1,
+			config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord',
+			          fields: { webhook_id: '<hidden>', webhook_token: '<hidden>', thread: '5' } }
+		});
+		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
+		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
+		const update = vi.spyOn(api, 'updateChannel').mockResolvedValue({ ...ch, name: 'D2' });
+		renderComponent(NotificationsTab);
+		await screen.findByText('D');
+		await fireEvent.click(screen.getByText('D'));
+		await fireEvent.input(screen.getByLabelText('Channel Label'), { target: { value: 'D2' } });
+		await fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+		await waitFor(() => expect(update).toHaveBeenCalled());
+		expect(update.mock.calls[0][1]).not.toHaveProperty('config');
 	});
 
 	it('add: sends {service_id, fields} (no client composeUrl) for apprise', async () => {

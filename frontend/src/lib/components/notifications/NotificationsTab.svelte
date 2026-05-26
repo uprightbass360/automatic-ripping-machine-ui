@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Channel, Catalog, ChannelCreate } from '$lib/types/notifications';
+	import type { Channel, Catalog, ChannelCreate, AppriseConfig } from '$lib/types/notifications';
 	import {
 		fetchChannels, fetchServices, createChannel, updateChannel,
 		deleteChannel, testSendChannel, fetchDispatch, composeUrl, testConfig
@@ -103,14 +103,17 @@
 				templates: body.templates
 			};
 			if (c.type === 'apprise') {
-				const filled = Object.values(body.appriseFields).some(
-					(v) => v !== undefined && v !== null && String(v).trim() !== ''
-				);
-				if (filled && body.serviceId) {
-					const { url } = await composeUrl(body.serviceId, body.appriseFields, {});
-					patch.config = { type: 'apprise', url, service_id: body.serviceId };
+				const storedFields = ((c.config as AppriseConfig).fields ?? {}) as Record<string, unknown>;
+				const dirty = JSON.stringify(body.appriseFields) !== JSON.stringify(storedFields);
+				if (dirty && body.serviceId) {
+					patch.config = {
+						type: 'apprise',
+						url: '',
+						service_id: body.serviceId,
+						fields: body.appriseFields
+					};
 				}
-				// blank -> leave patch.config unset -> backend keeps current url
+				// not dirty -> omit config -> neu keeps stored url + fields
 			} else {
 				patch.config = body.config as unknown as Channel['config'];
 			}
