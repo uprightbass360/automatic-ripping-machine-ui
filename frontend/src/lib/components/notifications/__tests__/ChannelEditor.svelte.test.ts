@@ -2,14 +2,10 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderComponent, screen, fireEvent, waitFor, cleanup } from '$lib/test-utils';
 import ChannelEditor from '../ChannelEditor.svelte';
 import type { Channel, Catalog } from '$lib/types/notifications';
+import { discordCatalog, appriseChannel, webhookChannel } from './apprise-fixtures';
 
 const catalog: Catalog = { featured: [], services: [] };
-const ch: Channel = {
-	id: 3, type: 'webhook', name: 'Hook', enabled: true,
-	config: { type: 'webhook', url: 'https://x' },
-	subscribed_events: ['job.started'], templates: {},
-	last_fired_at: null, last_success_at: null, last_error: null
-};
+const ch: Channel = webhookChannel({ id: 3 });
 
 describe('ChannelEditor', () => {
 	afterEach(() => cleanup());
@@ -29,17 +25,8 @@ describe('ChannelEditor', () => {
 	});
 
 	it('apprise editor renders the service fields resolved from service_id', async () => {
-		const catalog = { featured: ['discord'], services: [
-			{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
-			  required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
-			  advanced_fields: [] }
-		] };
-		const ch = {
-			id: 7, type: 'apprise' as const, name: 'D', enabled: true,
-			config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord' },
-			subscribed_events: ['job.started'], templates: {},
-			last_fired_at: null, last_success_at: null, last_error: null
-		};
+		const catalog = discordCatalog;
+		const ch = appriseChannel({ id: 7 });
 		renderComponent(ChannelEditor, { props: { channel: ch, catalog, onsave: () => {}, ontest: () => {}, onclose: () => {}, ondelete: () => {} } });
 		const wid = await screen.findByLabelText(/Webhook ID/i) as HTMLInputElement;
 		expect(wid).toBeInTheDocument();
@@ -48,17 +35,8 @@ describe('ChannelEditor', () => {
 
 	it('apprise editor save with blank fields reports empty appriseFields (keep current)', async () => {
 		const onsave = vi.fn();
-		const catalog = { featured: [], services: [
-			{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
-			  required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
-			  advanced_fields: [] }
-		] };
-		const ch = {
-			id: 7, type: 'apprise' as const, name: 'D', enabled: true,
-			config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord' },
-			subscribed_events: ['job.started'], templates: {},
-			last_fired_at: null, last_success_at: null, last_error: null
-		};
+		const catalog = discordCatalog;
+		const ch = appriseChannel({ id: 7 });
 		renderComponent(ChannelEditor, { props: { channel: ch, catalog, onsave, ontest: () => {}, onclose: () => {}, ondelete: () => {} } });
 		await fireEvent.input(screen.getByLabelText('Channel Label'), { target: { value: 'D2' } });
 		await waitFor(() => expect(screen.getByRole('button', { name: /save changes/i })).toBeEnabled());
@@ -70,17 +48,8 @@ describe('ChannelEditor', () => {
 
 	it('apprise editor save with filled fields reports them in appriseFields', async () => {
 		const onsave = vi.fn();
-		const catalog = { featured: [], services: [
-			{ id: 'discord', name: 'Discord', docs_url: '', url_scheme: 'discord',
-			  required_fields: [{ key: 'webhook_id', label: 'Webhook ID', type: 'string', private: false, required: true }],
-			  advanced_fields: [] }
-		] };
-		const ch = {
-			id: 7, type: 'apprise' as const, name: 'D', enabled: true,
-			config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord' },
-			subscribed_events: ['job.started'], templates: {},
-			last_fired_at: null, last_success_at: null, last_error: null
-		};
+		const catalog = discordCatalog;
+		const ch = appriseChannel({ id: 7 });
 		renderComponent(ChannelEditor, { props: { channel: ch, catalog, onsave, ontest: () => {}, onclose: () => {}, ondelete: () => {} } });
 		await fireEvent.input(await screen.findByLabelText(/Webhook ID/i), { target: { value: '99' } });
 		await waitFor(() => expect(screen.getByRole('button', { name: /save changes/i })).toBeEnabled());
@@ -90,12 +59,7 @@ describe('ChannelEditor', () => {
 
 	it('shows a notice when service_id is not in the catalog', async () => {
 		const catalog = { featured: [], services: [] };  // discord absent
-		const ch = {
-			id: 7, type: 'apprise' as const, name: 'D', enabled: true,
-			config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord' },
-			subscribed_events: ['job.started'], templates: {},
-			last_fired_at: null, last_success_at: null, last_error: null
-		};
+		const ch = appriseChannel({ id: 7 });
 		renderComponent(ChannelEditor, { props: { channel: ch, catalog, onsave: () => {}, ontest: () => {}, onclose: () => {}, ondelete: () => {} } });
 		expect(await screen.findByText(/Unknown service 'discord'/i)).toBeInTheDocument();
 	});
