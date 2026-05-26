@@ -69,11 +69,10 @@ export function composeUrl(
 	});
 }
 
-export function testConfig(body: {
-	type: string;
-	config: Record<string, unknown>;
-	event_key?: string;
-}): Promise<{ ok: boolean; error: string | null }> {
+export function testConfig(body:
+	| { type: string; config: Record<string, unknown>; event_key?: string }
+	| { channel_id: number; fields: Record<string, unknown>; event_key?: string }
+): Promise<{ ok: boolean; error: string | null }> {
 	return apiFetch<{ ok: boolean; error: string | null }>('/api/notifications/test', {
 		method: 'POST',
 		body: JSON.stringify(body)
