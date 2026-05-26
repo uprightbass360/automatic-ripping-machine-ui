@@ -94,6 +94,15 @@
 		}
 	}
 
+	// Has the editor changed the apprise field map vs what's stored? When
+	// false the editor handlers omit `config` from the PATCH (save) or
+	// fall through to the saved-channel test path so neu keeps the
+	// stored url + recompose state intact.
+	function appriseFieldsDirty(c: Channel, body: EditorBody): boolean {
+		const stored = ((c.config as AppriseConfig).fields ?? {}) as Record<string, unknown>;
+		return JSON.stringify(body.appriseFields) !== JSON.stringify(stored);
+	}
+
 	async function handleEditorSave(c: Channel, body: EditorBody) {
 		try {
 			const patch: Record<string, unknown> = {
@@ -103,9 +112,7 @@
 				templates: body.templates
 			};
 			if (c.type === 'apprise') {
-				const storedFields = ((c.config as AppriseConfig).fields ?? {}) as Record<string, unknown>;
-				const dirty = JSON.stringify(body.appriseFields) !== JSON.stringify(storedFields);
-				if (dirty && body.serviceId) {
+				if (appriseFieldsDirty(c, body) && body.serviceId) {
 					patch.config = {
 						type: 'apprise',
 						url: '',
@@ -169,9 +176,7 @@
 		const eventKey = body.subscribed_events[0] ?? 'job.started';
 		try {
 			if (c.type === 'apprise') {
-				const storedFields = ((c.config as AppriseConfig).fields ?? {}) as Record<string, unknown>;
-				const dirty = JSON.stringify(body.appriseFields) !== JSON.stringify(storedFields);
-				if (dirty) {
+				if (appriseFieldsDirty(c, body)) {
 					const res = await testConfig({
 						channel_id: c.id,
 						fields: body.appriseFields,
