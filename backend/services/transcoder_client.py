@@ -55,10 +55,13 @@ def get_client() -> httpx.AsyncClient:
         headers = {}
         if settings.transcoder_api_key:
             headers["X-API-Key"] = settings.transcoder_api_key
+        # keepalive_expiry > dashboard poll cadence (5s); see arm_client.get_client
+        # for the same rationale (avoids RemoteProtocolError flicker).
         _client = httpx.AsyncClient(
             base_url=settings.transcoder_url,
             headers=headers,
             timeout=httpx.Timeout(15.0, connect=5.0),
+            limits=httpx.Limits(keepalive_expiry=30.0),
         )
     return _client
 

@@ -18,9 +18,15 @@ _client: httpx.AsyncClient | None = None
 def get_client() -> httpx.AsyncClient:
     global _client
     if _client is None or _client.is_closed:
+        # keepalive_expiry > dashboard poll cadence (5s) so connections
+        # don't sit at the keepalive boundary where one side may close
+        # the socket while the other still considers it alive — that
+        # race surfaces as RemoteProtocolError and flips the sidebar
+        # to "Cannot reach the ARM ripping service" for a poll cycle.
         _client = httpx.AsyncClient(
             base_url=settings.arm_url,
             timeout=10.0,
+            limits=httpx.Limits(keepalive_expiry=30.0),
         )
     return _client
 
