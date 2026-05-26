@@ -162,11 +162,11 @@ describe('NotificationsTab', () => {
 		expect(testCfg).not.toHaveBeenCalled();
 	});
 
-	it('editor test with filled apprise fields composes + tests the new url', async () => {
+	it('editor test with dirty apprise fields calls testConfig with {channel_id, fields}', async () => {
 		const ch = appriseChannel();
 		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
 		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
-		const compose = vi.spyOn(api, 'composeUrl').mockResolvedValue({ url: 'discord://9/9' });
+		const compose = vi.spyOn(api, 'composeUrl');
 		const testCfg = vi.spyOn(api, 'testConfig').mockResolvedValue({ ok: true, error: null });
 		const testSend = vi.spyOn(api, 'testSendChannel');
 		renderComponent(NotificationsTab);
@@ -176,8 +176,12 @@ describe('NotificationsTab', () => {
 		const sendTestBtns = await screen.findAllByRole('button', { name: /send test/i });
 		const editorBtn = sendTestBtns.find((b) => b.textContent?.toLowerCase().includes('send test'));
 		await fireEvent.click(editorBtn!);
-		await waitFor(() => expect(compose).toHaveBeenCalledWith('discord', expect.objectContaining({ webhook_id: '9' }), expect.any(Object)));
-		await waitFor(() => expect(testCfg).toHaveBeenCalledWith(expect.objectContaining({ type: 'apprise', config: expect.objectContaining({ url: 'discord://9/9' }) })));
+		await waitFor(() => expect(testCfg).toHaveBeenCalledWith(expect.objectContaining({
+			channel_id: 1,
+			fields: expect.objectContaining({ webhook_id: '9' }),
+			event_key: 'job.started'
+		})));
+		expect(compose).not.toHaveBeenCalled();
 		expect(testSend).not.toHaveBeenCalled();
 	});
 
@@ -224,6 +228,55 @@ describe('NotificationsTab', () => {
 		await fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
 		await waitFor(() => expect(update).toHaveBeenCalled());
 		expect(update.mock.calls[0][1]).not.toHaveProperty('config');
+	});
+
+	it('editor Send test with dirty apprise: calls testConfig with {channel_id, fields}', async () => {
+		const ch = appriseChannel({
+			id: 1,
+			config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord',
+			          fields: { webhook_id: '<hidden>', webhook_token: '<hidden>', thread: '5' } }
+		});
+		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
+		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
+		const testCfg = vi.spyOn(api, 'testConfig').mockResolvedValue({ ok: true, error: null });
+		const testSend = vi.spyOn(api, 'testSendChannel');
+		renderComponent(NotificationsTab);
+		await screen.findByText('D');
+		await fireEvent.click(screen.getByText('D'));
+		const adv = (await screen.findByText(/Advanced \(/)).closest('details') as HTMLDetailsElement;
+		adv.open = true;
+		await fireEvent.input(await screen.findByLabelText(/Thread/i), { target: { value: '9' } });
+		// editor "Send test" button (text), not the row's icon button
+		const sendTestBtns = await screen.findAllByRole('button', { name: /send test/i });
+		const editorBtn = sendTestBtns.find((b) => b.textContent?.toLowerCase().includes('send test'));
+		await fireEvent.click(editorBtn!);
+		await waitFor(() => expect(testCfg).toHaveBeenCalledWith(expect.objectContaining({
+			channel_id: 1,
+			fields: expect.objectContaining({ thread: '9' }),
+			event_key: 'job.started'
+		})));
+		expect(testSend).not.toHaveBeenCalled();
+	});
+
+	it('editor Send test with NO apprise edits: tests the saved channel (testSendChannel)', async () => {
+		const ch = appriseChannel({
+			id: 1,
+			config: { type: 'apprise', url: 'discord://1/2', service_id: 'discord',
+			          fields: { webhook_id: '<hidden>', webhook_token: '<hidden>', thread: '5' } }
+		});
+		vi.spyOn(api, 'fetchChannels').mockResolvedValue([ch]);
+		vi.spyOn(api, 'fetchServices').mockResolvedValue(discordCatalog);
+		const testSend = vi.spyOn(api, 'testSendChannel').mockResolvedValue({ sent_at: 'now', dispatch_id: 1 });
+		vi.spyOn(api, 'fetchDispatch').mockResolvedValue({ id: 1, status: 'success', attempts: 1, last_error: null, completed_at: 'now' });
+		const testCfg = vi.spyOn(api, 'testConfig');
+		renderComponent(NotificationsTab);
+		await screen.findByText('D');
+		await fireEvent.click(screen.getByText('D'));
+		const sendTestBtns = await screen.findAllByRole('button', { name: /send test/i });
+		const editorBtn = sendTestBtns.find((b) => b.textContent?.toLowerCase().includes('send test'));
+		await fireEvent.click(editorBtn!);
+		await waitFor(() => expect(testSend).toHaveBeenCalledWith(1, 'job.started'));
+		expect(testCfg).not.toHaveBeenCalled();
 	});
 
 	it('add: sends {service_id, fields} (no client composeUrl) for apprise', async () => {

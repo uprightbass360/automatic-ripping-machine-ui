@@ -169,17 +169,19 @@
 		const eventKey = body.subscribed_events[0] ?? 'job.started';
 		try {
 			if (c.type === 'apprise') {
-				const filled = Object.values(body.appriseFields).some(
-					(v) => v !== undefined && v !== null && String(v).trim() !== ''
-				);
-				if (filled && body.serviceId) {
-					// User re-entered fields: compose the new url and test that.
-					const { url } = await composeUrl(body.serviceId, body.appriseFields, {});
-					await testConfigAndToast('apprise', { type: 'apprise', url }, eventKey);
+				const storedFields = ((c.config as AppriseConfig).fields ?? {}) as Record<string, unknown>;
+				const dirty = JSON.stringify(body.appriseFields) !== JSON.stringify(storedFields);
+				if (dirty) {
+					const res = await testConfig({
+						channel_id: c.id,
+						fields: body.appriseFields,
+						event_key: eventKey
+					});
+					if (res.ok) addToast({ tone: 'success', title: 'Test delivered' });
+					else addToast({ tone: 'error', title: 'Test failed', body: res.error ?? '' });
 					return;
 				}
-				// Untouched apprise: fields are blank (config holds only the composed
-				// url + service_id), so test the SAVED channel instead.
+				// Fields unchanged: test the saved channel instead.
 				await handleTestSaved(c);
 				return;
 			}
