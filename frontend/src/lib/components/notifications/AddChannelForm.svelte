@@ -71,7 +71,7 @@
 	</div>
 
 	<div class="space-y-5 p-5">
-		<fieldset class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+		<fieldset class="relative grid grid-cols-1 gap-3 sm:grid-cols-3">
 			<legend class="sr-only">Delivery type</legend>
 			{#each types as t}
 				<label class="relative flex cursor-pointer flex-col gap-1 rounded-lg border p-4 {type === t.key ? 'border-primary bg-primary/10' : 'border-primary/20 bg-page dark:bg-primary/5'}">
