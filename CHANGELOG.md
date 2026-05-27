@@ -1,5 +1,81 @@
 # Changelog
 
+## [19.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v18.2.0...v19.0.0) (2026-05-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **notifications:** remove legacy flat-config notification fields from settings
+* contracts has breaking commits in this bump. Review the commit list above and verify consumer code still compiles before merging. release-please will cut a major consumer release when this PR lands.
+
+### Features
+
+* bump components/contracts to 5e9a6c2 ([742af1e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/742af1e4ffcb6dbe38443b0b491cbd1b56368b4a))
+* **notifications:** add channel status/time/label helpers ([277a561](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/277a5612f4034ef59b665c67419aa847069dc8f5))
+* **notifications:** add ChannelList container ([823b2dc](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/823b2dcd7d891d86592a2c354e2361fe8cfcfa9f))
+* **notifications:** add compact ChannelRow ([932f6c3](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/932f6c3996083963fd57fea2ae2722fb8f7ea7a4))
+* **notifications:** add FilterPills ([bdb542a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bdb542a273e0f900d635db2cdd6ebb43bf6722fd))
+* **notifications:** add form readiness helpers ([942ae6e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/942ae6e392f0d8e7b3fb5ef3ec3d1a4382b35ee1))
+* **notifications:** add global toast store ([e0b314a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e0b314af1f024f1435c6e1046a7e7cd458212db6))
+* **notifications:** add inline ChannelEditor ([f962470](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f962470348ab7f138243c7b78db38e5210cf9ef8))
+* **notifications:** add NotificationsTab orchestrator ([4004f42](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4004f42af29e03167c5fe522e81575f2db49ff6f))
+* **notifications:** add preserveExisting flag to ConfigureSection ([dfced7a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/dfced7aa6a88d3f5c7e3dd5c056dfe250859bf64))
+* **notifications:** add ServiceDropdown with featured + search ([302f0e1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/302f0e14f161cdf2eb57cd7c793280234bc9a49e))
+* **notifications:** add ServiceGlyph monogram ([025f45d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/025f45d0f136e0223a799be0c1c4e40eb218a2f9))
+* **notifications:** add shared Configure/Events/Templates sections ([94f4d3f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/94f4d3f053e00a48081377b9061d4e1ed7bdd674))
+* **notifications:** add StatStrip ([e6dbb30](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e6dbb3088d780f1313fcb8d9fdc67de775a8a974))
+* **notifications:** add StatusDot primitive ([c2df0cd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c2df0cda8ca964a5b15437df447af36bf60bc21e))
+* **notifications:** add ToastHost renderer ([6512cee](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6512ceeca33a6e22f02454b5d137c2d7ddb5f80c))
+* **notifications:** add Toggle primitive ([a499fe8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a499fe846c8fa9cc907ff6414e1485b7d2efcbc5))
+* **notifications:** add unified AddChannelForm ([425eb9a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/425eb9a17edb3857da931e8dfc623bb93a330f15))
+* **notifications:** Add-channel as a button below the list, form hidden until clicked ([de9889b](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/de9889b106c9ce6ec7268cd600960c80f8612afb))
+* **notifications:** arm_client proxies for channel/catalog/dispatch endpoints ([ceac74f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/ceac74f63418d457464d1d4d60420415e088ca25))
+* **notifications:** BFF passthrough routes for channels/catalog/dispatch ([d48c50c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d48c50c0c16b85a954c3b1b2f868f61e9a27855d))
+* **notifications:** channel edit view with test-send polling ([6092270](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/60922708e8506293015fe018ca5ebfd83fdfce14))
+* **notifications:** ChannelCard list row ([2c30adc](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2c30adc7db730f19ad527bccaa412ac8aff8bbf1))
+* **notifications:** channels list view ([2c617a9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2c617a9feefdb1d8361690942b7e259ca1188fa5))
+* **notifications:** click a variable chip to insert it at the caret ([a1cd0b2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a1cd0b2dcbbaa6a6ee077a0f4e2aa55a0ef6890d))
+* **notifications:** create-channel flow (apprise/webhook/bash) ([88cbaaa](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/88cbaaa52368b510442e21070823f9b27790856b))
+* **notifications:** DispatchHistory pane ([1837a7d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1837a7d366b615b8fc2accd8490d271d2e05304a))
+* **notifications:** editor renders apprise fields via service_id ([9faaf77](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9faaf77d82c1d02343423a41e5bd310fd83edb39))
+* **notifications:** editor save sends {service_id, fields} for apprise ([1f5641a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/1f5641a3385a54b7356ff23bf3252b198ac2b664))
+* **notifications:** editor seeds appriseFields + raw-URL guard ([e8677f4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e8677f4158d208ea044dd1f48c07afa8894661e4))
+* **notifications:** editor test-send via channel_id+fields when dirty ([8ec51ff](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/8ec51ff3917fc8921a3fe1f00a6b8b4576ca0cd4))
+* **notifications:** editor unknown-service guard + apprise test-send branch ([bcea653](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bcea65355785d62e7763be79b17c2d2860339b3d))
+* **notifications:** EventSubscriptions checkbox group ([a3c27e8](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a3c27e8caaf4f24737563112cc60b1d19666b986))
+* **notifications:** frontend channels API client ([a0f5df9](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a0f5df9eb1daef6413f8346968ed996a83c658c7))
+* **notifications:** hand-written frontend types for channels + catalog ([064caee](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/064caee39564344dd3d88ebd7f6bcb67d7e0ea40))
+* **notifications:** inline channel panels in settings Notifications tab ([50949d1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/50949d1191d07284cdcd5c0972fbf316b3c4c719))
+* **notifications:** make service selection a searchable dropdown ([37a6300](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/37a6300b4e952bb63b756f3b1b74b6ab26d87d97))
+* **notifications:** move Channel Label/Enabled above the service picker ([12d134f](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/12d134faa20e6bc11f82db9f5db5ec3ae6f6ff32))
+* **notifications:** per-event TemplateEditor ([9caeb89](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/9caeb899c084f057eda87083e3abec90cd243650))
+* **notifications:** persist service_id in created apprise config ([28afd88](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/28afd88e4f8e607e823b2d57832334cb2a925674))
+* **notifications:** recompose apprise url from editor fields on save ([6265d09](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/6265d09cab08a1f39076fb85f4c564624f0b408c))
+* **notifications:** remove legacy flat-config notification fields from settings ([351fb14](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/351fb14be1a28a0d7d5ec41ff1e7e11e944d6394))
+* **notifications:** reorg apprise card — required + collapsible advanced ([487e6e7](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/487e6e759060d1b4cab7420a9dcde2d13b6abac5))
+* **notifications:** schema-driven SchemaField component ([4c4833a](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4c4833a94acb9b3150d9a2cf001cb7a5901b96c0))
+* **notifications:** SchemaField treats &lt;hidden&gt; as keep-current placeholder ([d6f75df](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d6f75df8a7aed48a0f54c5f0a46b1b6a31b325c3))
+* **notifications:** searchable service dropdown + form polish ([00f788d](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/00f788d968da46bcaab2964a2ef534e9e5c94976))
+* **notifications:** ServicePicker with featured + search ([08ba10e](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/08ba10e60b3e19c4fae9d8f76e5c4505797074ac))
+* **notifications:** surface default templates as placeholders ([bfb2d85](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/bfb2d85b5e0ecf1b5ad8db0837612c73ee823284))
+* **notifications:** Test button on the Add-channel form ([e1ac316](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e1ac3169b08ba8924f2873d24bc5ac8977399b03))
+* **notifications:** toConfig sends {service_id, fields} for apprise ([2586e75](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/2586e7527084ea6138bec8720e4dfe836b715a57))
+* **notifications:** wire redesigned NotificationsTab into settings page ([e3c99e1](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/e3c99e122b6a827d078bca551b60bcbfaf94c107))
+
+
+### Bug Fixes
+
+* **bff:** handle empty 204 response body in _request (channel delete returned 500) ([c9afd83](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/c9afd83c94dbbe7100e2d1a0ba4c14b650572a81))
+* **notifications:** align channel-list column headers + style Close button ([65868f4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/65868f4c4e5febee0311f9115af711062a3982d6))
+* **notifications:** editor Send test uses the edited config ([d09ad74](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/d09ad74dcbf80a9443589ea682778023b24183d5))
+* **notifications:** hide redundant Events legend in shared section ([12d4541](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/12d454173b06315364e101bee04ee9b8cb459a7b))
+* **notifications:** percent-encode service_id in compose-url path (SonarCloud SSRF) ([4d802cd](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/4d802cdb87dca2d33c3191af494f63f386f06a51))
+* **notifications:** poll dispatch status on test-send ([a13cebe](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/a13cebe5c4f7582fa11e877c8c7492441deb4bab))
+* **notifications:** stop double scrollbar when channel editor is expanded ([f4c2f53](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/f4c2f539b2a7aa33a53f7ff9ff41e08b402676a9))
+* **notifications:** theme inline UI, add occurred_at var, validate required inputs ([464bdc4](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/464bdc4a03b5ac87ac75febffc8291b99fb2313c))
+* **sidebar+settings:** debounce arm/transcoder offline flag; stop double-scroll on tab click ([901e42c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/901e42c4950b38ad6f46c0ba0cad9dff67c4322d))
+* **sidebar:** raise httpx keepalive_expiry past poll cadence to stop flicker ([88191e5](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/88191e52b7c27e134a83b87a4999bcd841c6070e))
+
 ## [18.2.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v18.1.0...v18.2.0) (2026-05-18)
 
 
