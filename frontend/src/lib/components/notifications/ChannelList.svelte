@@ -30,8 +30,8 @@
 </script>
 
 <div class="overflow-hidden rounded-xl border border-primary/20 bg-surface dark:border-primary/20 dark:bg-surface-dark">
-	<div class="grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 border-b border-primary/20 bg-page px-4 py-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:bg-primary/5 dark:text-gray-400">
-		<span></span><span>Channel</span><span class="hidden text-right md:block">Last delivery</span><span>Enabled</span><span>Actions</span>
+	<div class="grid grid-cols-[44px_1fr_110px_64px_64px] gap-4 border-b border-primary/20 bg-page px-4 py-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:bg-primary/5 dark:text-gray-400">
+		<span></span><span>Channel</span><span class="hidden whitespace-nowrap text-right md:block">Last delivery</span><span class="text-center">Enabled</span><span class="text-center">Actions</span>
 	</div>
 	{#each channels as c (c.id)}
 		<div class="border-b border-primary/15 last:border-0 dark:border-primary/20">

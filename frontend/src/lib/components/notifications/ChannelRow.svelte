@@ -29,7 +29,7 @@
 </script>
 
 <div
-	class="grid cursor-pointer grid-cols-[auto_1fr_auto_auto_auto] items-center gap-4 px-4 py-3 hover:bg-primary/5"
+	class="grid cursor-pointer grid-cols-[44px_1fr_110px_64px_64px] items-center gap-4 px-4 py-3 hover:bg-primary/5"
 	role="button"
 	tabindex="0"
 	onclick={() => onexpand?.()}
@@ -55,11 +55,11 @@
 		<p class="font-mono text-xs text-gray-600 dark:text-gray-300">{relativeTime(channel.last_fired_at)}</p>
 	</div>
 
-	<div onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="presentation">
+	<div class="flex justify-center" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="presentation">
 		<Toggle checked={channel.enabled} label="Enabled" onchange={() => ontoggle?.()} />
 	</div>
 
-	<div class="flex items-center gap-1">
+	<div class="flex items-center justify-center gap-1">
 		<button
 			type="button"
 			aria-label="Send test"
