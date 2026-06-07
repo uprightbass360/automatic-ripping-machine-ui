@@ -9,7 +9,10 @@
 
 services:
   arm-ui:
-    build: .
+    build:
+      context: .
+      additional_contexts:
+        contracts: ./components/contracts
     network_mode: host
     environment:
       - ARM_UI_ARM_URL=http://localhost:8080

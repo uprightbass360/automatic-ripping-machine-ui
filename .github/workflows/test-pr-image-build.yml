@@ -27,5 +27,7 @@ jobs:
         with:
           push: false
           context: .
+          build-contexts: |
+            contracts=components/contracts
           platforms: linux/amd64,linux/arm64
           tags: arm-ui:pr${{ github.event.number }}

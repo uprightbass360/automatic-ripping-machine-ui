@@ -50,6 +50,8 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          build-contexts: |
+            contracts=components/contracts
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
