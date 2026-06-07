@@ -1,5 +1,12 @@
 # Changelog
 
+## [19.1.1](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v19.1.0...v19.1.1) (2026-06-07)
+
+
+### Bug Fixes
+
+* **ui:** stop transcoder/dashboard elements popping in on load ([dea14e2](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/dea14e26e84af0135475cb3d11e23101a981ddf1))
+
 ## [19.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v19.0.0...v19.1.0) (2026-06-07)
 
 
