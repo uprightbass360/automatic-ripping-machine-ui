@@ -74,7 +74,7 @@ def test_arm_routes_serve_jobs():
     from backend.demo.data import build_demo_store
     store = build_demo_store()
     fn, params = _match(ROUTES, "GET", "/api/v1/jobs/paginated")
-    req = _httpx.Request("GET", "http://arm/api/v1/jobs/paginated")
+    req = _httpx.Request("GET", "https://arm/api/v1/jobs/paginated")
     resp = fn(req, store, **params)
     assert resp.status_code == 200
     assert len(resp.json()["jobs"]) == len(store.jobs)
@@ -85,7 +85,7 @@ def test_arm_routes_job_detail_by_id():
     from backend.demo.data import build_demo_store
     store = build_demo_store()
     fn, params = _match(ROUTES, "GET", "/api/v1/jobs/1/detail")
-    req = _httpx.Request("GET", "http://arm/api/v1/jobs/1/detail")
+    req = _httpx.Request("GET", "https://arm/api/v1/jobs/1/detail")
     resp = fn(req, store, **params)
     assert resp.json()["job"]["job_id"] == 1
     assert "tracks" in resp.json()
@@ -96,10 +96,10 @@ def test_transcoder_routes_serve_jobs_and_health():
     from backend.demo.data import build_demo_store
     store = build_demo_store()
     fn, params = _match(ROUTES, "GET", "/health")
-    req = _httpx.Request("GET", "http://t/health")
+    req = _httpx.Request("GET", "https://t/health")
     assert fn(req, store, **params).json()["status"] == "online"
     fn, params = _match(ROUTES, "GET", "/jobs")
-    req = _httpx.Request("GET", "http://t/jobs?status=processing")
+    req = _httpx.Request("GET", "https://t/jobs?status=processing")
     body = fn(req, store, **params).json()
     assert all(j["status"] == "processing" for j in body["jobs"])
 
@@ -109,7 +109,7 @@ def test_transcoder_jobs_filter_by_job_id():
     from backend.demo.data import build_demo_store
     store = build_demo_store()
     fn, params = _match(ROUTES, "GET", "/jobs")
-    req = _httpx.Request("GET", "http://t/jobs?job_id=2&limit=1")
+    req = _httpx.Request("GET", "https://t/jobs?job_id=2&limit=1")
     body = fn(req, store, **params).json()
     assert len(body["jobs"]) == 1
     assert body["jobs"][0]["id"] == 2
@@ -117,7 +117,7 @@ def test_transcoder_jobs_filter_by_job_id():
 
 async def test_demo_transport_serves_mapped_route():
     from backend.demo.transport import make_demo_client
-    client = make_demo_client("arm", base_url="http://arm-test:8080", timeout=10.0)
+    client = make_demo_client("arm", base_url="https://arm-test:8080", timeout=10.0)
     try:
         resp = await client.get("/api/v1/jobs/active")
         assert resp.status_code == 200
@@ -129,7 +129,7 @@ async def test_demo_transport_serves_mapped_route():
 async def test_demo_transport_unmapped_falls_through_to_real():
     """Unmapped path must hit the real transport (production), not demo data."""
     from backend.demo.transport import make_demo_client
-    client = make_demo_client("arm", base_url="http://127.0.0.1:1/nope", timeout=0.5)
+    client = make_demo_client("arm", base_url="https://127.0.0.1:1/nope", timeout=0.5)
     try:
         with pytest.raises(_httpx.HTTPError):
             await client.get("/api/v1/this/path/is/not/mapped")
@@ -243,7 +243,7 @@ def test_demo_mutation_dismiss_all_marks_seen():
     store = build_demo_store()
     assert any(not n["seen"] for n in store.notifications)
     fn, params = _match(ROUTES, "POST", "/api/v1/notifications/dismiss-all")
-    req = _httpx.Request("POST", "http://arm/api/v1/notifications/dismiss-all")
+    req = _httpx.Request("POST", "https://arm/api/v1/notifications/dismiss-all")
     resp = fn(req, store, **params)
     assert resp.status_code == 200
     assert all(n["seen"] for n in store.notifications)
@@ -254,11 +254,11 @@ def test_demo_mutation_pause_and_start_job():
     from backend.demo.data import build_demo_store
     store = build_demo_store()
     fn, params = _match(ROUTES, "POST", "/api/v1/jobs/1/pause")
-    req = _httpx.Request("POST", "http://arm/api/v1/jobs/1/pause")
+    req = _httpx.Request("POST", "https://arm/api/v1/jobs/1/pause")
     assert fn(req, store, **params).json()["success"] is True
     assert store.job(1)["status"] == "waiting"
     fn, params = _match(ROUTES, "POST", "/api/v1/jobs/1/start")
-    req = _httpx.Request("POST", "http://arm/api/v1/jobs/1/start")
+    req = _httpx.Request("POST", "https://arm/api/v1/jobs/1/start")
     assert fn(req, store, **params).json()["success"] is True
     assert store.job(1)["status"] == "active"
 
@@ -268,7 +268,7 @@ def test_demo_mutation_set_ripping_enabled_honors_body():
     from backend.demo.data import build_demo_store
     store = build_demo_store()
     fn, params = _match(ROUTES, "POST", "/api/v1/system/ripping-enabled")
-    req = _httpx.Request("POST", "http://arm/api/v1/system/ripping-enabled",
+    req = _httpx.Request("POST", "https://arm/api/v1/system/ripping-enabled",
                          json={"enabled": False})
     resp = fn(req, store, **params)
     assert resp.json()["enabled"] is False
@@ -280,13 +280,13 @@ def test_demo_log_routes_structured_and_content():
     from backend.demo.data import build_demo_store
     store = build_demo_store()
     fn, params = _match(ROUTES, "GET", "/api/v1/logs/job_1.log/structured")
-    req = _httpx.Request("GET", "http://arm/api/v1/logs/job_1.log/structured")
+    req = _httpx.Request("GET", "https://arm/api/v1/logs/job_1.log/structured")
     body = fn(req, store, **params).json()
     assert body["filename"] == "job_1.log"
     assert len(body["entries"]) >= 1
     assert {"timestamp", "level", "event", "raw"} <= set(body["entries"][0])
     fn, params = _match(ROUTES, "GET", "/api/v1/logs/job_1.log")
-    req = _httpx.Request("GET", "http://arm/api/v1/logs/job_1.log")
+    req = _httpx.Request("GET", "https://arm/api/v1/logs/job_1.log")
     c = fn(req, store, **params).json()
     assert c["filename"] == "job_1.log" and c["lines"] >= 1
     fn, params = _match(ROUTES, "GET", "/api/v1/logs")
