@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from backend.common.path_safety import safe_join
 from backend.config import settings
 
 # Built-in themes ship with the package
@@ -39,11 +40,12 @@ def _safe_theme_id(theme_id: str) -> str:
 
 
 def _safe_path(directory: Path, filename: str) -> Path:
-    """Build a path inside *directory* and verify it resolves within it."""
-    target = (directory / filename).resolve()
-    if not str(target).startswith(str(directory.resolve())):
-        raise ValueError(f"Path traversal detected: {filename!r}")
-    return target
+    """Build a path inside *directory* and verify it resolves within it.
+
+    Delegates to safe_join so the realpath+containment pattern is consistent
+    across the codebase and recognised by static analysis tools.
+    """
+    return Path(safe_join(directory, filename))
 
 
 def _validate_theme(data: Any) -> bool:
@@ -111,11 +113,8 @@ def save_user_theme(data: dict[str, Any], css: str = "") -> dict[str, Any]:
     data.setdefault("swatch", "#888888")
 
     user_dir = _user_themes_dir()
-    resolved_dir = user_dir.resolve()
-    json_path = (user_dir / f"{theme_id}.json").resolve()
-    css_path = (user_dir / f"{theme_id}.css").resolve()
-    if not str(json_path).startswith(str(resolved_dir)) or not str(css_path).startswith(str(resolved_dir)):
-        raise ValueError(f"Path traversal detected: {theme_id!r}")
+    json_path = Path(safe_join(user_dir, f"{theme_id}.json"))
+    css_path = Path(safe_join(user_dir, f"{theme_id}.css"))
 
     # Save JSON without css or builtin fields
     save_data = {k: v for k, v in data.items() if k not in ("builtin", "css")}
@@ -136,18 +135,13 @@ def save_user_theme(data: dict[str, Any], css: str = "") -> dict[str, Any]:
 def delete_user_theme(theme_id: str) -> bool:
     """Delete a user theme. Returns False if it's a built-in or doesn't exist."""
     theme_id = _safe_theme_id(theme_id)
-    builtin_path = (_BUILTIN_DIR / f"{theme_id}.json").resolve()
-    if not str(builtin_path).startswith(str(_BUILTIN_DIR.resolve())):
-        raise ValueError(f"Path traversal detected: {theme_id!r}")
+    builtin_path = Path(safe_join(_BUILTIN_DIR, f"{theme_id}.json"))
     if builtin_path.exists():
         return False
 
     user_dir = _user_themes_dir()
-    resolved_dir = user_dir.resolve()
-    json_path = (user_dir / f"{theme_id}.json").resolve()
-    css_path = (user_dir / f"{theme_id}.css").resolve()
-    if not str(json_path).startswith(str(resolved_dir)) or not str(css_path).startswith(str(resolved_dir)):
-        raise ValueError(f"Path traversal detected: {theme_id!r}")
+    json_path = Path(safe_join(user_dir, f"{theme_id}.json"))
+    css_path = Path(safe_join(user_dir, f"{theme_id}.css"))
     if not json_path.exists():
         return False
 
