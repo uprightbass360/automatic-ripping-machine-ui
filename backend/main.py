@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from backend.common.path_safety import safe_join
+
 from backend.routers import (
     arm_actions,
     config,
@@ -85,14 +87,17 @@ if static_dir.is_dir():
         app.mount("/img", StaticFiles(directory=str(img_dir)), name="images")
 
     # Serve root-level static files (favicon, apple-touch-icon, etc.)
-    resolved_static = static_dir.resolve()
 
     @app.get("/{filename:path}")
     async def root_static_or_spa(request: Request, filename: str):
         if filename:
-            file_path = (static_dir / filename).resolve()
-            if file_path.is_relative_to(resolved_static) and file_path.is_file():
-                return FileResponse(file_path)
+            try:
+                file_path = safe_join(static_dir, filename)
+            except ValueError:
+                pass
+            else:
+                if Path(file_path).is_file():
+                    return FileResponse(file_path)
         return FileResponse(
             static_dir / "index.html",
             headers={"Cache-Control": "no-cache"},
