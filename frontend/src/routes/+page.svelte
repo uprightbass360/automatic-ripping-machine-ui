@@ -19,27 +19,17 @@
 	import { fadeIn, fadeOut } from '$lib/transitions';
 	import { fade } from 'svelte/transition';
 	import { transcoderEnabled } from '$lib/stores/config';
+	import { dashboard } from '$lib/stores/dashboard';
+	import { get } from 'svelte/store';
 
-	// --- Dashboard state (simple $state, no store) ---
-	let dash = $state<DashboardData>({
-		db_available: true,
-		arm_online: false,
-		active_jobs: [],
-		system_info: null,
-		drives_online: 0,
-		drive_names: {},
-		notification_count: 0,
-		ripping_enabled: true,
-		makemkv_key_valid: null,
-		makemkv_key_checked_at: null,
-		transcoder_online: false,
-		transcoder_stats: null,
-		transcoder_system_stats: null,
-		active_transcodes: [],
-		system_stats: null,
-		transcoder_info: null
-	});
-	let dashLoading = $state(true);
+	// --- Dashboard state ---
+	// Seed from the persistent singleton store the layout already polls, so
+	// navigating back to the dashboard paints the last-known data (transcoder
+	// section, drives, etc.) immediately instead of flashing empty and popping
+	// in once our own poll resolves. In tests the layout isn't mounted, so the
+	// store is still its empty default — same starting point as before.
+	let dash = $state<DashboardData>(get(dashboard));
+	let dashLoading = $state(!get(dashboard.initialized));
 	let dashError = $state<Error | null>(null);
 
 	let dismissedJobIds = $state(new Set<number>());
