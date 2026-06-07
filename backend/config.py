@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     transcoder_enabled: bool = True
     transcoder_webhook_secret: str = ""
     port: int = 8888
+    demo_mode: bool = False
 
     model_config = {"env_prefix": "ARM_UI_"}
 
