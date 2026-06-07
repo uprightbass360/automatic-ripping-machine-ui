@@ -13,6 +13,9 @@ services:
     network_mode: host
     environment:
       - ARM_UI_ARM_URL=http://localhost:8080
+      # Set to "true" to serve built-in demo data with NO ARM/Transcoder
+      # present (frontend review/handoff). Default false: normal proxying.
+      - ARM_UI_DEMO_MODE=${ARM_UI_DEMO_MODE:-false}
       - ARM_UI_TRANSCODER_URL=${ARM_UI_TRANSCODER_URL:-http://localhost:5000}
       - ARM_UI_TRANSCODER_ENABLED=${ARM_UI_TRANSCODER_ENABLED:-true}
       - ARM_UI_TRANSCODER_API_KEY=${ARM_UI_TRANSCODER_API_KEY:-}

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any
 
@@ -45,6 +46,8 @@ def _append_z(val: str) -> str:
         return val + "Z"
     return val
 
+log = logging.getLogger(__name__)
+
 _CONFIG_ENDPOINT = "/config"
 _client: httpx.AsyncClient | None = None
 
@@ -55,6 +58,19 @@ def get_client() -> httpx.AsyncClient:
         headers = {}
         if settings.transcoder_api_key:
             headers["X-API-Key"] = settings.transcoder_api_key
+        if settings.demo_mode:
+            try:
+                from backend.demo.transport import make_demo_client
+                _client = make_demo_client(
+                    "transcoder", base_url=settings.transcoder_url,
+                    headers=headers,
+                    timeout=httpx.Timeout(15.0, connect=5.0),
+                    limits=httpx.Limits(keepalive_expiry=30.0),
+                )
+                return _client
+            except Exception:
+                log.exception(
+                    "demo client unavailable; using real transcoder client")
         # keepalive_expiry > dashboard poll cadence (5s); see arm_client.get_client
         # for the same rationale (avoids RemoteProtocolError flicker).
         _client = httpx.AsyncClient(

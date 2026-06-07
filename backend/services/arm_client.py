@@ -18,6 +18,16 @@ _client: httpx.AsyncClient | None = None
 def get_client() -> httpx.AsyncClient:
     global _client
     if _client is None or _client.is_closed:
+        if settings.demo_mode:
+            try:
+                from backend.demo.transport import make_demo_client
+                _client = make_demo_client(
+                    "arm", base_url=settings.arm_url, timeout=10.0,
+                    limits=httpx.Limits(keepalive_expiry=30.0),
+                )
+                return _client
+            except Exception:  # never serve demo on error — use real client
+                log.exception("demo client unavailable; using real ARM client")
         # keepalive_expiry > dashboard poll cadence (5s) so connections
         # don't sit at the keepalive boundary where one side may close
         # the socket while the other still considers it alive — that
