@@ -1,5 +1,12 @@
 # Changelog
 
+## [19.1.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v19.0.0...v19.1.0) (2026-06-07)
+
+
+### Features
+
+* **demo:** add ARM_UI_DEMO_MODE for isolated UI with seed data ([b5c998c](https://github.com/uprightbass360/automatic-ripping-machine-ui/commit/b5c998cf33afca32414aaa02428ddc0337019c18))
+
 ## [19.0.0](https://github.com/uprightbass360/automatic-ripping-machine-ui/compare/v18.2.0...v19.0.0) (2026-05-27)
 
 
