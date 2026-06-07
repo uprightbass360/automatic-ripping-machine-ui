@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import { createPollingStore } from '$lib/stores/polling';
-	import { fetchTranscoderStats, fetchTranscoderJobs, fetchTranscoderWorkers, retryTranscoderJob, deleteTranscoderJob, retranscodeTranscoderJob } from '$lib/api/transcoder';
+	import { fetchTranscoderJobs, retryTranscoderJob, deleteTranscoderJob, retranscodeTranscoderJob } from '$lib/api/transcoder';
 	import { fetchStructuredTranscoderLogContent } from '$lib/api/logs';
 	import { posterSrc, posterFallback } from '$lib/utils/poster';
-	import type { TranscoderStatsResponse as TranscoderStats, TranscoderJobListResponse, WorkersResponse } from '$lib/types/api.gen';
+	import type { TranscoderJobListResponse } from '$lib/types/api.gen';
 	import { getVideoTypeConfig, discTypeLabel } from '$lib/utils/job-type';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import DiscTypeIcon from '$lib/components/DiscTypeIcon.svelte';
@@ -16,17 +15,21 @@
 	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
 	import { fadeIn, fadeOut } from '$lib/transitions';
 	import { dashboard } from '$lib/stores/dashboard';
+	import { transcoderStats, transcoderWorkers, getJobsCache, setJobsCache } from '$lib/stores/transcoder';
 
-	const emptyStats: TranscoderStats = { online: false, stats: null };
 	const emptyJobs: TranscoderJobListResponse = { jobs: [], total: 0 };
-	const emptyWorkers: WorkersResponse = { max_concurrent: 0, active_count: 0, workers: [] };
 
-	const stats = createPollingStore(fetchTranscoderStats, emptyStats, 5000);
+	// Singleton stores (see $lib/stores/transcoder) so stats/workers survive
+	// navigation and don't flash the offline/empty state on every visit.
+	const stats = transcoderStats;
 	const statsError = stats.error;
-	const workers = createPollingStore(fetchTranscoderWorkers, emptyWorkers, 5000);
+	const statsInitialized = stats.initialized;
+	const workers = transcoderWorkers;
 	let activeTab = $state('all');
-	let jobs = $state<TranscoderJobListResponse>(emptyJobs);
-	let loadingJobs = $state(true);
+	// Seed jobs from the per-tab cache so a revisit paints the last cards
+	// immediately instead of dropping to a skeleton.
+	let jobs = $state<TranscoderJobListResponse>(getJobsCache('all') ?? emptyJobs);
+	let loadingJobs = $state(getJobsCache('all') == null);
 	let jobsError = $state<Error | null>(null);
 
 	function formatDuration(startISO: string | null, endISO?: string | null): string | null {
@@ -56,6 +59,7 @@
 		try {
 			const statusParam = activeTab === 'all' ? undefined : activeTab;
 			jobs = await fetchTranscoderJobs({ status: statusParam });
+			setJobsCache(activeTab, jobs);
 		} catch (e) {
 			jobsError = e instanceof Error ? e : new Error('Failed to load jobs');
 			jobs = emptyJobs;
@@ -66,7 +70,9 @@
 
 	function switchTab(tab: string) {
 		activeTab = tab;
-		loadJobs();
+		// Show cached cards instantly for a previously-viewed tab; only the
+		// first view of a tab shows the loading skeleton.
+		loadJobs(getJobsCache(tab) == null);
 	}
 
 	async function handleRetry(id: number) {
@@ -118,7 +124,8 @@
 	onMount(() => {
 		stats.start();
 		workers.start();
-		loadJobs();
+		// Skeleton only when we have nothing cached for the current tab.
+		loadJobs(getJobsCache(activeTab) == null);
 		return () => { stats.stop(); workers.stop(); stopJobsPolling(); };
 	});
 
@@ -148,8 +155,26 @@
 		</div>
 	{/if}
 
-	<!-- Offline banner -->
-	{#if !$stats.online}
+	<!-- Stats / worker pool. On the very first load (nothing cached yet) show a
+	     skeleton sized to match the real cards so it fills in place without a
+	     layout shift; only show the "offline" banner once a poll has actually
+	     confirmed the service is down, never while still loading. -->
+	{#if !$statsInitialized && !$statsError}
+		<div class="space-y-4">
+			<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+				<div class="h-5 w-56 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+			</div>
+			<div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
+				{#each Array(5) as _unused}
+					<div class="rounded-lg border border-primary/20 bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+						<div class="h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+						<div class="mt-2 h-8 w-12 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+					</div>
+				{/each}
+			</div>
+		</div>
+	{:else if !$stats.online}
+		<!-- Offline banner -->
 		<div in:fade={fadeIn} out:fade={fadeOut} class="flex items-center gap-3 rounded-lg border border-primary/25 bg-page p-4 dark:border-primary/25 dark:bg-page-dark">
 			<div class="h-3 w-3 shrink-0 rounded-full bg-gray-400"></div>
 			<div>
@@ -157,10 +182,8 @@
 				<p class="text-sm text-gray-500 dark:text-gray-400">The transcoder service is not responding. Transcoding features are unavailable.</p>
 			</div>
 		</div>
-	{/if}
-
-	<!-- Worker pool + Stats cards -->
-	{#if $stats.online && $stats.stats}
+	{:else if $stats.online && $stats.stats}
+		<!-- Worker pool + Stats cards -->
 		{@const s = $stats.stats}
 		{@const w = $workers}
 		<div in:fade={fadeIn} out:fade={fadeOut} class="space-y-4">
@@ -333,7 +356,7 @@
 			<div class="space-y-3">
 				{#each jobList as job (job.id)}
 					{@const typeConfig = getVideoTypeConfig(job.video_type ?? null, job.disctype ?? null)}
-					<div in:fade|global={fadeIn} out:fade|global={fadeOut} class="rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
+					<div in:fade={fadeIn} out:fade={fadeOut} class="rounded-lg border border-primary/20 border-l-4 {typeConfig.accentBorder} bg-surface p-4 shadow-xs dark:border-primary/20 dark:bg-surface-dark">
 						<div class="flex gap-4">
 							<!-- Poster -->
 							{#if job.poster_url}
