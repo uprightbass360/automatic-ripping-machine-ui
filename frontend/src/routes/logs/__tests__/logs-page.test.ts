@@ -93,11 +93,11 @@ describe('Logs Page', () => {
 		it('displays orphan log files in modal', async () => {
 			const { fetchOrphanLogs } = await import('$lib/api/maintenance');
 			vi.mocked(fetchOrphanLogs).mockResolvedValueOnce({
-				root: '/tmp/logs',
+				root: '/var/log/arm',
 				total_size_bytes: 4096,
 				files: [
-					{ path: '/tmp/logs/orphan1.log', relative_path: 'orphan1.log', size_bytes: 1024 },
-					{ path: '/tmp/logs/orphan2.log', relative_path: 'orphan2.log', size_bytes: 3072 }
+					{ path: '/var/log/arm/orphan1.log', relative_path: 'orphan1.log', size_bytes: 1024 },
+					{ path: '/var/log/arm/orphan2.log', relative_path: 'orphan2.log', size_bytes: 3072 }
 				]
 			});
 			renderComponent(LogsPage);
